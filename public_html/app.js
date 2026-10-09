@@ -571,7 +571,7 @@ function navGroups(){
  {const gq=$('#q');if(gq&&!$('#gq')){gq.id='gq';gq.placeholder='Search everything…';const hid=document.createElement('input');hid.type='hidden';hid.id='q';hid.value='';document.body.appendChild(hid);
   const gs=document.createElement('select');gs.id='gast';gs.title='Asteroid for the search';
   const names=[...new Set([...asts.map(a=>a.name),...(D.owned||[]).map(a=>(a.Name&&a.Name.name)||('Asteroid #'+a.id)),...(D.crewList||[]).map(c=>c.ast).filter(Boolean)])].sort();
-  gs.innerHTML='<option value="">All asteroids</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join('');gq.after(gs);
+  gs.innerHTML='<option value="">All asteroids</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join('');if(/[?&]beta=1(&|$)/.test(location.search))gs.style.display='none';else gq.after(gs); /* beta: search covers everything, one asteroid box */
   let prev='N';const go=()=>{if(gq.value.trim()){if(view!=='Z')prev=view;setV('Z')}else if(view==='Z')setV(prev)};
   gq.addEventListener('input',go);gs.addEventListener('change',()=>{if(view==='Z')draw();else if(gq.value.trim())go()});
   document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&gq.value)gq.value=''},true)}}
@@ -623,7 +623,7 @@ function drawTrade(m){
  }).catch(e=>{cells.forEach(td=>{td.innerHTML='<span class="a">?</span>'})});
 }
 function drawSearch(m){
- const gq=$('#gq'),q=(gq?gq.value:'').trim().toLowerCase(),an=($('#gast')||{}).value||'';
+ const gq=$('#gq'),q=(gq?gq.value:'').trim().toLowerCase(),an=(/[?&]beta=1(&|$)/.test(location.search)?'':($('#gast')||{}).value)||'';
  if(!q){m.innerHTML='<div class="note">Type in the search box to search everything.</div>';return}
  const has=s=>String(s||'').toLowerCase().includes(q),okA=a=>!an||a===an,cap=200;
  const prod=[];asts.forEach(a=>{if(!okA(a.name))return;const per={};a.buildings.forEach(b=>Object.keys(b.items).forEach(p=>{if(!has(pn(p)))return;const x=per[p]=per[p]||{amt:0,bs:[]};x.amt+=b.items[p];x.bs.push(b.name)}));Object.keys(per).forEach(p=>prod.push({p,a:a.name,amt:per[p].amt,bs:per[p].bs}))});
