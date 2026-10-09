@@ -1,0 +1,5 @@
+# Never commit secrets or generated data
+config.php
+public_html/config.php
+public_html/cache/
+.DS_Store
