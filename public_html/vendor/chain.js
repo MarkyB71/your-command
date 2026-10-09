@@ -33,7 +33,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-where b{color:#e6ebf2;font-weight:600}.pc-have.ok{color:#5fd38d}.pc-have.part{color:#ffb547}
 .pc-wd>summary{list-style:none}.pc-wd>summary::-webkit-details-marker{display:none}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
-.pc-big{font-size:16px}.pc-big .note{font-size:16px}
+.pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
 .pc-big .pc-n{width:280px;padding:11px 14px;gap:5px}
 .pc-big .pc-top img{width:52px;height:52px}
@@ -88,6 +88,7 @@ export function drawChain(m){
   const M0=m;
   function draw(){m=M0;
     raws={};const host=m;host.innerHTML='';m=el('div','pc-root'+(BETA?' pc-big':''));host.appendChild(m);
+    if(BETA)m.appendChild(el('h2','pc-title','The SkippyChain'));
     m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     const ids=Object.keys(makers).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
@@ -108,18 +109,20 @@ export function drawChain(m){
   draw();
 }
 
-/* Adds "Production chain" to the Stock menu */
+/* Adds the SkippyChain button. Beta: its own button next to Market. Live: inside the Stock menu as "Production chain". */
 {
+  const BETA_BTN=/[?&]beta=1(&|$)/.test(location.search);
   const hook=()=>{
-    const vi=document.getElementById('vI'),main=document.getElementById('main');
-    if(!vi||!main||document.getElementById('vH'))return;
-    const b=document.createElement('button');b.id='vH';b.textContent='Production chain';vi.after(b);
+    const vi=document.getElementById('vI'),vk=document.getElementById('vK'),main=document.getElementById('main');
+    if(!vi||!main||document.getElementById('vH')||(BETA_BTN&&!vk))return;
+    const b=document.createElement('button');b.id='vH';
+    if(BETA_BTN){b.textContent='The SkippyChain';vk.before(b)}else{b.textContent='Production chain';vi.after(b)}
     const grp=()=>[...document.querySelectorAll('button')].find(x=>/^Stock/.test(x.textContent)&&!x.id.match(/^v[A-Z]$/));
     b.addEventListener('click',e=>{
       e.stopPropagation();
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));
       b.className='on';document.querySelectorAll('.ddm').forEach(d=>d.style.display='none');
-      const g=grp();if(g){g.classList.add('on');g.textContent='Stock: Production chain ▾'}
+      if(!BETA_BTN){const g=grp();if(g){g.classList.add('on');g.textContent='Stock: Production chain ▾'}}
       drawChain(main);
     });
     document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button[id^="v"]');if(t&&t!==b){b.className='';const g=grp();if(g&&/Production chain/.test(g.textContent))g.textContent='Stock ▾'}},true);
