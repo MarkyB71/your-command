@@ -122,7 +122,7 @@ export function drawHistory(m){
     const r=document.getElementById('vV'),main=document.getElementById('main');
     if(!r||!main||document.getElementById('vJ'))return;
     const b=document.createElement('button');b.id='vJ';b.textContent='Activity log';r.after(b);
-    b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));b.className='on';drawHistory(main)});
+    b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */b.className='on';drawHistory(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vJ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700);

@@ -133,7 +133,7 @@ export function drawChain(m){
     const b=document.createElement('button');b.id='vH';b.textContent='The SkippyChain';vn.after(b);
     b.addEventListener('click',e=>{
       e.stopPropagation();
-      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */
       b.className='on';document.querySelectorAll('.ddm').forEach(d=>d.style.display='none');
       drawChain(main);
     });

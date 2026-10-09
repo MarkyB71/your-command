@@ -138,7 +138,7 @@ export function drawCrewPlan(m){
     if(!vr||!main||document.getElementById('vQ'))return;
     const b=document.createElement('button');b.id='vQ';b.textContent='Crew planner';vr.before(b);
     b.addEventListener('click',()=>{
-      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */
       b.className='on';drawCrewPlan(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vQ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
