@@ -109,15 +109,24 @@ export function drawChain(m){
   draw();
 }
 
-/* Adds the SkippyChain button. Beta: its own button next to Market. Live: inside the Stock menu as "Production chain". */
+/* Adds the SkippyChain button. Beta: its own gold button after Trade finder, plus menu tidy-ups. Live: inside the Stock menu as "Production chain". */
 {
   const BETA_BTN=/[?&]beta=1(&|$)/.test(location.search);
+  const tidy=()=>{ /* beta only: hide Planner, rename Stocklist and move it to the far right */
+    const vi=document.getElementById('vI');if(vi&&vi.style.display!=='none')vi.style.display='none';
+    const csv=document.getElementById('csv');
+    if(csv){if(csv.textContent!=='Download your full stock list')csv.textContent='Download your full stock list';
+      const p=csv.parentElement;if(p&&p.lastElementChild!==csv)p.appendChild(csv);
+      if(!document.getElementById('csv-css')){const st=document.createElement('style');st.id='csv-css';st.textContent='#csv{margin-left:auto}';document.head.appendChild(st)}}
+  };
   const hook=()=>{
-    const vi=document.getElementById('vI'),vk=document.getElementById('vK'),main=document.getElementById('main');
-    if(!vi||!main||document.getElementById('vH')||(BETA_BTN&&!vk))return;
+    if(BETA_BTN)tidy();
+    const vi=document.getElementById('vI'),vy=document.getElementById('vY'),main=document.getElementById('main');
+    if(!vi||!main||document.getElementById('vH')||(BETA_BTN&&!vy))return;
     const b=document.createElement('button');b.id='vH';
-    if(BETA_BTN){b.textContent='The SkippyChain';vk.before(b);
-      if(!document.getElementById('vH-css')){const st=document.createElement('style');st.id='vH-css';st.textContent='#vH{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#vH:hover,#vH:focus-visible,#vH.on{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';document.head.appendChild(st)}}else{b.textContent='Production chain';vi.after(b)}
+    if(BETA_BTN){b.textContent='The SkippyChain';vy.after(b);
+      if(!document.getElementById('vH-css')){const st=document.createElement('style');st.id='vH-css';st.textContent='#vH{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#vH:hover,#vH:focus-visible,#vH.on{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';document.head.appendChild(st)}}
+    else{b.textContent='Production chain';vi.after(b)}
     const grp=()=>[...document.querySelectorAll('button')].find(x=>/^Stock/.test(x.textContent)&&!x.id.match(/^v[A-Z]$/));
     b.addEventListener('click',e=>{
       e.stopPropagation();
@@ -126,7 +135,7 @@ export function drawChain(m){
       if(!BETA_BTN){const g=grp();if(g){g.classList.add('on');g.textContent='Stock: Production chain ▾'}}
       drawChain(main);
     });
-    document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button[id^="v"]');if(t&&t!==b){b.className='';const g=grp();if(g&&/Production chain/.test(g.textContent))g.textContent='Stock ▾'}},true);
   };
-  const iv=setInterval(()=>{hook();if(document.getElementById('vH'))clearInterval(iv)},500);
+  document.addEventListener('click',e=>{const b=document.getElementById('vH'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b){b.className='';const g=[...document.querySelectorAll('button')].find(x=>/^Stock: Production chain/.test(x.textContent));if(g)g.textContent='Stock ▾'}},true);
+  setInterval(hook,700); /* keeps the button in place if the header is rebuilt on refresh */
 }
