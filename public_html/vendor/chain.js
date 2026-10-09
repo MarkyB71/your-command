@@ -134,6 +134,13 @@ export function drawChain(m){
     if(csv){if(csv.textContent!=='Download your full stock list')csv.textContent='Download your full stock list';
       const p=csv.parentElement;if(p&&p.lastElementChild!==csv)p.appendChild(csv);
       if(!document.getElementById('csv-css')){const st=document.createElement('style');st.id='csv-css';st.textContent='#csv{margin-left:auto}';document.head.appendChild(st)}}
+    /* beta: Today's Workload + The SkippyChain first, then the asteroid box, then the other menus */
+    if(/[?&]beta=1(&|$)/.test(location.search)){
+      const ast=document.getElementById('ast'),vn=document.getElementById('vN'),vh=document.getElementById('vH');
+      if(ast&&vn&&vh){let s0=document.getElementById('seg0');
+        if(!s0){s0=document.createElement('div');s0.id='seg0';s0.className='seg'}
+        if(s0.parentElement!==ast.parentElement||s0.nextElementSibling!==ast)ast.before(s0);
+        if(vn.parentElement!==s0||vn.nextElementSibling!==vh){s0.appendChild(vn);s0.appendChild(vh)}}}
   };
   const hook=()=>{
     if(BETA_BTN)tidy();
