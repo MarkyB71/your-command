@@ -53,7 +53,7 @@ function isOpen(key,d){return S.closed.has(key)?false:(S.opened.has(key)||S.all)
 export function drawChain(m){
   if(!document.getElementById('pc-css')){const st=el('style');st.id='pc-css';st.textContent=CSS;document.head.appendChild(st)}
   let raws={};
-  const BETA=/[?&]beta=1(&|$)/.test(location.search);/* stock on cards: beta only for now */
+  const BETA=true;/* stock on cards + larger layout: live for everyone since 2026-10-09 */
   const Y=BETA?window.YIC:null,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
   const have=id=>!Y||id>=1000?null:(ai===null?Y.pooled[id]:(Y.tot[ai]||{})[id])||0;
   const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');
@@ -111,7 +111,7 @@ export function drawChain(m){
 
 /* Adds the SkippyChain button. Beta: its own gold button before Fleet/Logistics, plus menu tidy-ups. Live: inside the Stock menu as "Production chain". */
 {
-  const BETA_BTN=/[?&]beta=1(&|$)/.test(location.search);
+  const BETA_BTN=true; /* SkippyChain button + menu tidy: live since 2026-10-09 */
   const tidy=()=>{ /* beta only: hide Planner, rename Stocklist and move it to the far right */
     const vi=document.getElementById('vI');if(vi&&vi.style.display!=='none')vi.style.display='none';
     const csv=document.getElementById('csv');
