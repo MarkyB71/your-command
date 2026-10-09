@@ -32,7 +32,18 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-where{font-size:11px;color:#b7c3d4;background:#0b1018;border:1px solid #2a3648;border-radius:6px;padding:4px 6px;line-height:1.45}
 .pc-where b{color:#e6ebf2;font-weight:600}.pc-have.ok{color:#5fd38d}.pc-have.part{color:#ffb547}
 .pc-wd>summary{list-style:none}.pc-wd>summary::-webkit-details-marker{display:none}
-.pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}`;
+.pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
+.pc-big{font-size:16px}.pc-big .note{font-size:16px}
+.pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
+.pc-big .pc-n{width:280px;padding:11px 14px;gap:5px}
+.pc-big .pc-top img{width:52px;height:52px}
+.pc-big .pc-nm{font-size:18px}.pc-big .pc-q{font-size:17px}
+.pc-big .pc-t,.pc-big .pc-have,.pc-big .pc-tog,.pc-big .pc-n select{font-size:14px}
+.pc-big .pc-also,.pc-big .pc-where{font-size:13px}
+.pc-big .pc-kids{padding-left:44px}.pc-big .pc-kids::before,.pc-big .pc-kids>.pc-br::before{width:22px}
+.pc-big .pc-kids>.pc-br::before,.pc-big .pc-kids>.pc-br::after{left:-22px}
+.pc-big .pc-kids>.pc-br{padding:7px 0}
+.pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
 const S={prod:170,amt:100,choice:{},closed:new Set(),opened:new Set(),all:false};
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
@@ -74,8 +85,9 @@ export function drawChain(m){
     br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
-  function draw(){
-    raws={};m.innerHTML='';
+  const M0=m;
+  function draw(){m=M0;
+    raws={};const host=m;host.innerHTML='';m=el('div','pc-root'+(BETA?' pc-big':''));host.appendChild(m);
     m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     const ids=Object.keys(makers).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
@@ -92,7 +104,7 @@ export function drawChain(m){
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>Raw materials in the open branches</h3>'+(r.length?r.map(([k,v])=>{const h=have(+k);return fmt(v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fmt(h):'have '+fmt(h))+')</span>')}).join('<br>'):'Open more branches to see them')));
   }
-  if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(m)})}
+  if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(document.getElementById('main'))})}
   draw();
 }
 
