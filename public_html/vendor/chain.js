@@ -76,7 +76,7 @@ export function drawChain(m){
     return br}
   function draw(){
     raws={};m.innerHTML='';
-    m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. Recipes from the game\'s own SDK.'));
+    m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     const ids=Object.keys(makers).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
     [['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000],['Products',x=>x<1000]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
