@@ -116,7 +116,8 @@ export function drawChain(m){
     const vi=document.getElementById('vI'),vk=document.getElementById('vK'),main=document.getElementById('main');
     if(!vi||!main||document.getElementById('vH')||(BETA_BTN&&!vk))return;
     const b=document.createElement('button');b.id='vH';
-    if(BETA_BTN){b.textContent='The SkippyChain';vk.before(b)}else{b.textContent='Production chain';vi.after(b)}
+    if(BETA_BTN){b.textContent='The SkippyChain';vk.before(b);
+      if(!document.getElementById('vH-css')){const st=document.createElement('style');st.id='vH-css';st.textContent='#vH{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#vH:hover,#vH:focus-visible,#vH.on{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';document.head.appendChild(st)}}else{b.textContent='Production chain';vi.after(b)}
     const grp=()=>[...document.querySelectorAll('button')].find(x=>/^Stock/.test(x.textContent)&&!x.id.match(/^v[A-Z]$/));
     b.addEventListener('click',e=>{
       e.stopPropagation();
