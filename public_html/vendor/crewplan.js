@@ -1,6 +1,7 @@
 /* Crew planner for Your Influence Command.
    A "what if" page: drag crewmates between crews and see how each crew's bonuses change.
    Nothing here changes the game. Bonuses use the site's own crewMult (same maths as Best crew). */
+import {fillFaces} from './faces.js?v=1';
 const BETA=/[?&]beta=1(&|$)/.test(location.search);
 const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
@@ -15,7 +16,7 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .cp-slot{min-height:92px;border:1px dashed #2a3648;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#3c4a60;font-size:12px}
 .cp-mate{width:100%;cursor:grab;user-select:none;border:1px solid #2a3648;border-radius:8px;background:#0b1018;padding:4px;text-align:center;font-size:11px;line-height:1.25;position:relative}
-.cp-mate img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;background:#000;display:block}
+.cp-mate img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:50% 0;border-radius:6px;background:#000;display:block}
 .cp-mate .n{color:#e6ebf2;font-weight:600;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cp-mate .c{color:#8fe3ff}
 .cp-mate.moved{border-color:#ffd24a}
@@ -59,7 +60,7 @@ export function drawCrewPlan(m){
 
   function mateEl(id,k){
     const x=cm[id]||{},e=el('div','cp-mate'+(home[id]!=+k?' moved':'')+(S.sel===id?' sel':''),
-      '<img src="cimg.php?id='+id+'&s=1" alt="" loading="lazy"><div class="n" title="'+esc(names[id]||('#'+id))+'">'+esc(names[id]||('#'+id))+'</div><div class="c">'+esc(CMC[x.class]||'')+'</div>');
+      '<img src="cimg.php?id='+id+'&s=1" data-face="'+id+'" alt="" loading="lazy"><div class="n" title="'+esc(names[id]||('#'+id))+'">'+esc(names[id]||('#'+id))+'</div><div class="c">'+esc(CMC[x.class]||'')+'</div>');
     e.draggable=true;e.title=(names[id]||'Crewmate #'+id)+(home[id]!=+k&&home[id]!=null?' · from '+crews[home[id]].name:'');
     e.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',String(id));e.classList.add('dragging')});
     e.addEventListener('dragend',()=>e.classList.remove('dragging'));
@@ -108,7 +109,7 @@ export function drawCrewPlan(m){
       if(far.length)box.appendChild(el('div','cp-warn','⚠ '+far.length+' crewmate'+(far.length>1?'s are':' is')+' from a crew somewhere else'));
       box.insertAdjacentHTML('beforeend',bonusHTML(i));
       dropZone(box,i);g.appendChild(box)});
-    m.appendChild(g);
+    m.appendChild(g);fillFaces(m,cm);
   }
   draw();
 }
