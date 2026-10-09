@@ -2,7 +2,7 @@
    A "what if" page: drag crewmates between crews and see how each crew's bonuses change.
    Nothing here changes the game. Bonuses use the site's own crewMult (same maths as Best crew). */
 import {fillFaces} from './faces.js?v=1';
-const BETA=/[?&]beta=1(&|$)/.test(location.search);
+const BETA=true; /* live for everyone since 2026-10-09 */
 const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
 .cp-bar select,.cp-bar input,.cp-bar button{font-size:15px;padding:6px 10px}
@@ -114,7 +114,7 @@ export function drawCrewPlan(m){
   draw();
 }
 
-/* Beta: adds "Crew planner" to the bottom of the Fleet menu */
+/* Adds "Crew planner" to the bottom of the Fleet menu */
 if(BETA){
   const hook=()=>{
     const w=document.getElementById('vW'),main=document.getElementById('main');
