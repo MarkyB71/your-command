@@ -96,7 +96,7 @@ export function drawHistory(m){
     const bar=el('div','hl-bar'),cs=el('select'),cr=el('select'),q=el('input');
     const rows=H.rows||[];const cnt={};rows.forEach(r=>{const c=cat(r.n)[0];cnt[c]=(cnt[c]||0)+1});
     cs.innerHTML='<option value="">All actions ('+rows.length.toLocaleString()+')</option>'+CATS.filter(c=>cnt[c[0]]).map(c=>'<option value="'+c[0]+'"'+(S.cat===c[0]?' selected':'')+'>'+c[2]+' '+esc(c[1])+' ('+cnt[c[0]].toLocaleString()+')</option>').join('');
-    const crews=[...new Set(rows.map(r=>r.c))].map(id=>[id,crewName[id]||('Crew #'+id)]).sort((a,b)=>a[1].localeCompare(b[1]));
+    const crews=[...new Set(rows.map(r=>r.c))].map(id=>[id,crewName[id]||('Crew #'+id)]).sort((a,b)=>{const ua=/^Crew #\d+$/.test(a[1]),ub=/^Crew #\d+$/.test(b[1]);return ua!==ub?(ua?1:-1):ua?a[0]-b[0]:a[1].localeCompare(b[1])}); /* named crews first, unnamed ones at the bottom */
     cr.innerHTML='<option value="">All crews</option>'+crews.map(([id,n])=>'<option value="'+id+'"'+(String(S.crew)===String(id)?' selected':'')+'>'+esc(n)+'</option>').join('');
     q.placeholder='Search the log';q.value=S.q;
     cs.addEventListener('change',()=>{S.cat=cs.value;S.show=300;draw()});cr.addEventListener('change',()=>{S.crew=cr.value;S.show=300;draw()});
