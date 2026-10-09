@@ -1,5 +1,4 @@
 /* Activity log: everything your crews have done, newest first. Read-only, from the game's own activity records (history.php). */
-const BETA=/[?&]beta=1(&|$)/.test(location.search);
 const CSS=`.hl-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .hl-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 12px}
 .hl-bar select,.hl-bar input,.hl-bar button{font-size:15px;padding:6px 10px}
@@ -117,13 +116,13 @@ export function drawHistory(m){
   if(!H&&!load)load=fetch('history.php?wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{H=j}).catch(e=>{H={error:String(e)}}).finally(()=>{load=null;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))});
 }
 
-/* Beta: adds "Activity log" to the bottom of the Logistics menu */
-if(BETA){
+/* Adds "Activity log" to the Logistics menu, after Deliveries */
+{
   const hook=()=>{
     const r=document.getElementById('vV'),main=document.getElementById('main');
     if(!r||!main||document.getElementById('vJ'))return;
     const b=document.createElement('button');b.id='vJ';b.textContent='Activity log';r.after(b);
-    b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));b.className='on';drawHistory(main)});
+    b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */b.className='on';drawHistory(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vJ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700);

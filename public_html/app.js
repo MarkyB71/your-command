@@ -31,12 +31,12 @@ doc.head.innerHTML='<meta name="viewport" content="width=device-width,initial-sc
 '.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}.card h3{margin:0 0 2px;font-size:15px}.card .t{color:var(--muted);font-size:12px;margin-bottom:8px}'+
 '.card table td{padding:3px 0;border:0}.card table td.num{padding-left:12px}'+
 'h4{margin:12px 0 4px;font-size:13px;color:var(--accent2)}h4.bad{color:#ff7a7a}.steps{margin:0;padding-left:22px;max-width:900px}.steps li{padding:4px 0}.steps li div{font-size:13px}.mk-q input{min-width:0;width:120px}h2{font-size:16px;color:var(--accent);margin:22px 0 10px}h2:first-child{margin-top:0}.note{color:var(--muted);padding:20px}'+
-'.as-3d{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap}.as-b{display:inline-block;font-size:12px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:#0f141c;color:var(--accent);cursor:pointer}.as-b:hover{border-color:var(--accent)}.m3d{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px}.m3d-box{width:min(1000px,96vw);height:min(760px,88vh);background:#05070a;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}.m3d-top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}.m3d-top .a{color:var(--muted);font-size:12px;flex:1}.m3d-x{padding:3px 10px}.m3d-view{flex:1;position:relative;min-height:0}.m3d-view canvas{display:block;width:100%!important;height:100%!important;touch-action:none}.ddm{position:fixed;display:none;flex-direction:column;z-index:50;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;min-width:140px;box-shadow:0 6px 18px rgba(0,0,0,.5)}.ddm button{border:0;border-radius:0;text-align:left;width:100%}.ddm button.on{background:var(--accent);color:#04121a;font-weight:600}'+
+'.as-3d{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap}.as-b{display:inline-block;font-size:12px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:#0f141c;color:var(--accent);cursor:pointer}.as-b:hover{border-color:var(--accent)}.m3d{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px}.m3d-box{width:min(1000px,96vw);height:min(760px,88vh);background:#05070a;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}.m3d-top{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}.m3d-top .a{color:var(--muted);font-size:12px;flex:1}.m3d-x{padding:3px 10px}.m3d-view{flex:1;position:relative;min-height:0}.m3d-view canvas{display:block;width:100%!important;height:100%!important;touch-action:none}.ddm{position:fixed;display:none;flex-direction:column;z-index:50;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;min-width:140px;box-shadow:0 6px 18px rgba(0,0,0,.5)}.ddm button{border:0;border-radius:0;text-align:left;width:100%}.ddm button.on{background:var(--accent);color:#04121a;font-weight:600}#csv{margin-left:auto}'+
 '</style>';
 const asts=D.asteroids;
 doc.body.innerHTML='<header><meta charset="utf-8"><h1>Your <span>Influence</span> Command</h1><div class="sub" id="sub"></div>'+
 '<div class="bar"><input id="q" placeholder="Search product or building…"><select id="ast"></select><select id="cls"></select>'+
-'<span class="seg"><button id="vO">Overview</button><button id="vN" class="on">Today\'s Workload</button><button id="vP">Products</button><button id="vBB">Buildings ▾</button><span class="ddm" id="ddm"><button id="vB">Contents</button><button id="vT">Status</button></span><button id="vI">Planner</button><button id="vA">Asteroids</button><button id="vX">Core Samples</button><button id="vL">Leases</button><button id="vK">Market</button><button id="vY">Trade finder</button><button id="vC">Crews</button><button id="vS">Ships</button><button id="vR">Travel</button></span><button id="csv" title="Download the stock list as a spreadsheet (CSV)">Stocklist</button></div></header><main id="main"></main>';
+'<span class="seg"><button id="vN" class="on">Today\'s Workload</button><button id="vP">Products</button><button id="vBB">Buildings ▾</button><span class="ddm" id="ddm"><button id="vB">Contents</button><button id="vT">Status</button></span><button id="vA">Asteroids</button><button id="vX">Core Samples</button><button id="vL">Leases</button><button id="vK">Market</button><button id="vY">Trade finder</button><button id="vC">Crews</button><button id="vS">Ships</button><button id="vR">Travel</button></span><button id="csv" title="Download the stock list as a spreadsheet (CSV)">Download your full stock list</button></div></header><main id="main"></main>';
 $('#sub').textContent='Updated '+D.when+' · '+asts.reduce((n,a)=>n+a.buildings.length,0)+' storage buildings · '+asts.length+' asteroids · '+D.crews+' crews';
 $('#ast').innerHTML='<option value="">All asteroids</option>'+asts.map((a,i)=>'<option value="'+i+'">'+esc(a.name)+'</option>').join('');
 const classes=[...new Set(Object.keys(PR).map(pc).filter(Boolean))].sort();
@@ -47,7 +47,7 @@ let view='N',sortKey='name',sortDir=1;const open=new Set();
 const tot=asts.map(a=>{const t={};a.buildings.forEach(b=>{for(const p in b.items)t[p]=(t[p]||0)+b.items[p]});return t});
 const allP=[...new Set(tot.flatMap(t=>Object.keys(t)))];
 const pooled={};tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
-window.YIC={asts,tot,pooled,get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},get pfmt(){return fmt},get pn(){return pn}};
+window.YIC={asts,tot,pooled,get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
 function rows(){
  const q=$('#q').value.trim().toLowerCase(),ai=$('#ast').value,cl=$('#cls').value;
  const cols=ai===''?asts.map((a,i)=>i):[+ai];
@@ -56,159 +56,27 @@ function rows(){
   a=sortKey==='total'?kg(x.p,x.total):kg(x.p,x.v[sortKey]);b=sortKey==='total'?kg(y.p,y.total):kg(y.p,y.v[sortKey]);return (a-b)*sortDir});
  return{r,cols};
 }
-const RX=D.recipes||[];const PT={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry Dock'};
+const RX=D.recipes||[];
 const mk={};
-function lp(A,b,c){const m=b.length,n=c.length,W=n+m+1,T=[];
- for(let i=0;i<m;i++){const r=new Float64Array(W);for(let j=0;j<n;j++)r[j]=A[i][j];r[n+i]=1;r[W-1]=b[i];T.push(r)}
- const z=new Float64Array(W);for(let j=0;j<n;j++)z[j]=-c[j];T.push(z);
- const B=[];for(let i=0;i<m;i++)B.push(n+i);
- for(let it=0;it<20000;it++){let e=-1,mv=-1e-9;
-  if(it<3000){for(let j=0;j<W-1;j++)if(z[j]<mv){mv=z[j];e=j}}else{for(let j=0;j<W-1;j++)if(z[j]<-1e-9){e=j;break}}
-  if(e<0)break;let l=-1,br=Infinity;
-  for(let i=0;i<m;i++){const a=T[i][e];if(a>1e-9){const r=T[i][W-1]/a;if(r<br-1e-12||(Math.abs(r-br)<=1e-12&&B[i]<B[l])){br=r;l=i}}}
-  if(l<0)break;const pr=T[l],pv=pr[e];for(let j=0;j<W;j++)pr[j]/=pv;
-  for(let i=0;i<=m;i++){if(i===l)continue;const r=T[i],f=r[e];if(f!==0)for(let j=0;j<W;j++)r[j]-=f*pr[j]}B[l]=e}
- const x=new Array(n).fill(0);for(let i=0;i<m;i++)if(B[i]<n)x[B[i]]=Math.max(0,T[i][W-1]);return x}
-function mkData(ai){if(mk[ai])return mk[ai];
- const stock=ai==='all'?pooled:tot[ai],R=new Set(Object.keys(stock).filter(p=>stock[p]>0)),lvl={};
- for(let it=1,ch=true;ch&&it<100;it++){ch=false;const add=[];
-  RX.forEach((r,i)=>{if(lvl[i]==null&&Object.keys(r[2]).every(x=>R.has(x))){lvl[i]=it;ch=true;for(const o in r[3])add.push(o)}});add.forEach(o=>R.add(o))}
- const usable=Object.keys(lvl).map(Number),byO={};usable.forEach(i=>{for(const o in RX[i][3])(byO[o]=byO[o]||[]).push(i)});
- const mass=p=>isAt(p)?((PR[p]&&PR[p][2])||1000)/1000:1;
- function solve(t,T){const rs=new Set(),seen=new Set([t]),q=[t];
-  while(q.length){const p=q.pop();(byO[p]||[]).forEach(i=>{if(rs.has(i))return;rs.add(i);for(const x in RX[i][2])if(!seen.has(x)){seen.add(x);q.push(x)}})}
-  const js=[...rs];if(!js.length)return null;const ps=[...new Set(js.flatMap(i=>Object.keys(RX[i][2]).concat(Object.keys(RX[i][3]))))];
-  const A=[],b=[];ps.forEach(p=>{A.push(js.map(i=>(RX[i][2][p]||0)-(RX[i][3][p]||0)));b.push(p===t?0:(stock[p]||0))});
-  const net=js.map(i=>(RX[i][3][t]||0)-(RX[i][2][t]||0));
-  A.push(js.map(()=>1));b.push(1e13);
-  const inM=i=>Object.keys(RX[i][2]).reduce((s,x)=>s+RX[i][2][x]*mass(x),0);
-  let c=net;if(T!=null){const x0=lp(A,b,net);let mm=0,cc=0;js.forEach((i,j)=>{mm+=net[j]*x0[j];cc+=inM(i)*x0[j]});const Mw=mm>0?1000*cc/mm+1:1e9;A.push(net);b.push(T);c=js.map((i,j)=>net[j]*Mw-inM(i))}
-  const x=lp(A,b,c);let made=0;const runs={},bal={};
-  js.forEach((i,j)=>{if(x[j]>1e-9){runs[i]=x[j];made+=net[j]*x[j];const r=RX[i];for(const p in r[2])bal[p]=(bal[p]||0)-r[2][p]*x[j];for(const p in r[3])bal[p]=(bal[p]||0)+r[3][p]*x[j]}});
-  const used={},bp={},out=[];for(const p in bal){if(p===t)continue;const v=bal[p];if(v<-1e-6)used[p]=-v;else if(v>1e-6)bp[p]=v}
-  for(const p in used)if(used[p]>=(stock[p]||0)*(1-1e-6))out.push(p);
-  const order=Object.keys(runs).map(Number).sort((a,b)=>lvl[a]-lvl[b]||a-b);return{made,runs,order,used,bp,out}}
- const byAll={};RX.forEach((r,i)=>{for(const o in r[3])(byAll[o]=byAll[o]||[]).push(i)});
- const buyC=p=>+p<=22?1000:1e9*mass(p),gc={},gb={};
- for(let it=0;it<80;it++){let ch=false;const cs=p=>{const v=gc[p]==null?buyC(p):Math.min(gc[p],buyC(p));return stock[p]>0?Math.min(1,v):v};
-  RX.forEach((r,i)=>{let c=0;for(const x in r[2])c+=r[2][x]*cs(x);for(const o in r[3]){const v=c/r[3][o];if(gc[o]==null||v<gc[o]*(1-1e-9)){gc[o]=v;gb[o]=i;ch=true}}});if(!ch)break}
- function solveAny(t,T){const av=Object.assign({},stock),bp={},used={},buy={},runs={},order=[],why={};let n=0;
-  function need(p,q,st,top){if(++n>200000)return;
-   if(!top){let x=Math.min(bp[p]||0,q);if(x>0){bp[p]-=x;q-=x}x=Math.min(av[p]||0,q);if(x>0){av[p]-=x;used[p]=(used[p]||0)+x;q-=x}}
-   if(q<=1e-9)return;const i=gb[p];
-   if(i==null||st.has(p)||(gc[p]>=buyC(p)&&!top)){buy[p]=(buy[p]||0)+q;return}
-   const r=RX[i],k=q/r[3][p];st.add(p);for(const x in r[2])need(x,r[2][x]*k,st,false);st.delete(p);
-   if(!(i in runs)){order.push(i);why[i]=p}runs[i]=(runs[i]||0)+k;for(const o in r[3])if(o!=p)bp[o]=(bp[o]||0)+r[3][o]*k}
-  (Array.isArray(t)?t:[[t,T,true]]).forEach(([x,n,tp])=>need(String(x),n,new Set(),!!tp));for(const p in bp)if(bp[p]<1e-6)delete bp[p];return{runs,order,used,bp,buy,why}}
- const targets=Object.keys(byO);let k=0;const list=[];
- const M=mk[ai]={solve,solveAny,list,stock0:stock,done:false,n:targets.length,k:0};
- M.step=()=>{const t0=Date.now();while(k<targets.length&&Date.now()-t0<60){const p=targets[k++];const s=solve(p);if(s&&s.made>1e-6){let m=isAt(p)?Math.floor(s.made+1e-6):Math.floor(s.made*1000)/1000;
-   if(m>0){const last=s.order.filter(i=>RX[i][3][p]).pop();list.push({p,max:m,used:s.used,steps:s.order.length,bld:last!=null?PT[RX[last][1]]||'':''})}}}
-  M.k=k;M.done=k>=targets.length};
- return M}
+
+
 const fq=(p,a)=>fmt(p,isAt(p)?Math.ceil(a-1e-6):a)||'0';
-const qUnit=p=>isAt(p)?'units':'t';
-const toQ=(p,v)=>isAt(p)?Math.floor(v):v*1000;const fromQ=(p,a)=>isAt(p)?a:+(a/1000).toFixed(3);
-function srcFor(ai,p,q){const out=[];let left=q;asts.map((a,i)=>i).filter(i=>i!==ai&&(tot[i][p]||0)>0).sort((x,y)=>tot[y][p]-tot[x][p]).forEach(i=>{if(left<=1e-9)return;const x=Math.min(left,tot[i][p]);out.push([i,x]);left-=x});return out}
-function importsFor(ai,used){const L=tot[ai],im={};for(const p in used){const n=used[p]-(L[p]||0);if(n>1e-6)im[p]=n}return im}
-const stepsH=pl=>'<ol class="steps">'+pl.order.map(i=>{const r=RX[i],k=pl.runs[i];
- return '<li><b>'+esc(PT[r[1]]||'')+'</b> · '+esc(r[0])+'<div>Makes: '+Object.keys(r[3]).map(o=>fq(o,r[3][o]*k)+' '+ricon(o,16)+esc(pn(o))).join(', ')+'</div><div class="a">Uses: '+Object.keys(r[2]).map(o=>fq(o,r[2][o]*k)+' '+ricon(o,16)+esc(pn(o))).join(', ')+'</div></li>'}).join('')+'</ol>';
-let needP=null,needQ=null;const needCache={};
-function whFor(i,o,q){let left=q,h='';asts[i].buildings.filter(b=>b.items[o]>0).sort((x,y)=>y.items[o]-x.items[o]).forEach(b=>{if(left<=1e-9)return;const x=Math.min(left,b.items[o]);left-=x;
-  h+='<div class="b a" style="padding-left:16px"><span>↳ '+esc(b.name)+' · '+esc(b.type)+(b.lot?' · Lot #'+b.lot:'')+' <span style="opacity:.7">(has '+fq(o,b.items[o])+')</span></span><span>take '+fq(o,x)+'</span></div>'});return h}
-const VOL={"1":971,"2":14100,"3":1370,"4":1240,"5":684,"6":801,"7":1250,"8":2220,"9":521,"10":1600,"11":615,"12":606,"13":617,"14":476,"15":327,"16":521,"17":358,"18":233,"19":737,"20":208,"21":362,"22":156,"23":876,"24":1000,"25":775,"26":629,"27":1300,"28":909,"29":140,"30":123,"31":161,"32":599,"33":1440,"34":1330,"35":870,"36":595,"37":344,"38":219,"39":319,"40":329,"41":415,"42":1260,"43":123,"44":1130,"45":1410,"46":842,"47":963,"48":948,"49":718,"50":2040,"51":805,"52":159,"53":715,"54":893,"55":687,"56":714,"57":271,"58":521,"59":1050,"60":119,"61":65,"62":171,"63":387,"64":2500,"65":426,"66":755,"67":148,"68":886,"69":1100,"70":150,"71":1200,"72":150,"73":1230,"74":1570,"75":632,"76":4020,"77":787,"78":775,"79":739,"80":751,"81":1040,"82":1090,"83":694,"84":1390,"85":357,"86":300,"87":559,"88":460,"89":671,"90":674,"91":1530,"92":1520,"93":1110,"94":681,"95":222,"96":172,"97":316,"98":135,"99":152,"100":472,"101":182,"102":1210,"103":1820,"104":58,"105":805,"106":175,"107":1060,"108":1040,"109":272,"110":1090,"111":463,"112":1290,"113":617,"114":333,"115":593,"116":1520,"117":435,"118":220,"119":800,"120":800,"121":1480,"122":3190,"123":436,"124":3190,"125":2820,"126":1725,"127":1725,"128":1750,"129":1250,"130":87000,"131":595,"132":212,"133":8640000,"134":543,"135":3770,"136":1680,"137":251,"138":363,"139":661,"140":1020,"141":168,"142":370,"143":435,"144":570000,"145":21000000,"146":50520000,"147":21100000,"148":347500000,"149":262700000,"150":511000000,"151":140,"152":417,"153":228,"154":17260,"155":100000,"156":11808000,"157":52640,"158":3160,"159":404,"161":348,"162":1670,"163":165,"164":65,"165":16011400000,"166":35987000000,"167":1550000000,"168":60530400000,"169":104,"170":13300,"171":150,"172":1200,"173":84,"174":79,"175":107100,"176":178,"178":174,"179":271,"180":1240,"181":242,"182":143,"183":142,"184":327,"185":327,"186":385,"187":179,"188":96,"189":689,"190":321,"191":561,"192":686,"193":397,"194":110,"195":672,"196":365,"197":833,"199":75,"200":989,"201":256,"202":8550,"203":500,"204":906,"205":1308,"206":1572,"207":1876800,"208":982080,"209":6624,"210":12150000,"211":118,"212":94200,"213":333,"214":808000,"215":3600000,"217":833,"218":509,"219":414,"220":7410,"221":25440,"222":220110,"224":63460,"225":23400,"226":116750,"227":112580,"229":396000,"230":6991200,"231":18139000,"232":583200,"233":51600000,"234":54600000,"235":264000000,"236":4860000,"237":301320000,"238":11736000,"239":2976000,"240":12200000,"241":339915000,"242":2976600,"243":3800000,"244":399000,"245":106560000};
-function shipsHTML(src,dst,M,V){const sh=(D.ships||[]).filter(x=>x.capM>0);
- const line=(x)=>{const fm=Math.max(0,x.capM-x.useM),fv=Math.max(0,x.capV-x.useV),tr=fm>0&&fv>0?Math.ceil(Math.max(M/fm,V/fv)-1e-9):Infinity;
-  return '<div class="b a" style="padding-left:16px"><span>🚀 '+esc(x.name)+' · '+esc(x.type)+' · '+(x.fl?'<b>':'')+esc(x.place)+(x.fl?'</b>':'')+' <span style="opacity:.75">(room for '+fmtT(fm/1e6)+' / '+(+(fv/1e6).toFixed(0)).toLocaleString()+' m³'+(x.useM>0?', carrying '+esc(x.carry||'cargo'):'')+' · '+fmtT(x.prop)+' propellant)</span></span><span>'+(tr===Infinity?'full':tr+' trip'+(tr>1?'s':''))+'</span></div>'};
- const here=sh.filter(x=>x.ast===asts[src].name),there=sh.filter(x=>x.ast===asts[dst].name);
- let h='<div class="a" style="margin:4px 0 0 16px">Load: '+fmtT(M/1e6)+' · '+(+(V/1e6).toFixed(0)).toLocaleString()+' m³</div>';
- if(here.length)h+=here.map(line).join('');
- else h+='<div class="a" style="padding-left:16px">No cargo ships at '+esc(asts[src].name)+'.'+(there.length?' Ships at '+esc(asts[dst].name)+' that could fetch it:':'')+'</div>'+there.map(line).join('');
- return h}
-function needHTML(P,a,p,q){const key=a+'|'+p+'|'+q;if(needCache[key])return needCache[key];
- const isB=String(p)[0]==='B',req=isB?BX[String(p).slice(1)][1]:null;
- const pl=isB?P.solveAny(Object.keys(req).map(x=>[x,req[x]*q,false])):P.solveAny(p,q),L=tot[a],im=importsFor(a,pl.used),by={};
- Object.keys(im).forEach(o=>srcFor(a,o,im[o]).forEach(([i,x])=>{(by[i]=by[i]||[]).push([o,x])}));
- const li=(o,x,ex)=>'<div class="b"><span>'+ricon(o,20)+esc(pn(o))+(ex||'')+'</span><span>'+fq(o,x)+'</span></div>';
- let h='';if(isB){h+='<h4>Materials for '+q+' × '+esc(BX[String(p).slice(1)][0])+'</h4><div class="wrap" style="margin-top:6px"><table><thead><tr><th>Material</th><th class="num">Needed</th><th class="num">On '+esc(asts[a].name)+'</th><th></th></tr></thead><tbody>'+
-  Object.keys(req).map(x=>{const n=req[x]*q,hv=L[x]||0;return '<tr><td>'+ricon(x,20)+esc(pn(x))+'</td><td class="num">'+fq(x,n)+'</td><td class="num">'+fq(x,hv)+'</td><td class="cls">'+(hv>=n-1e-6?'✓ have it':hv>0?'part':'')+'</td></tr>'}).join('')+'</tbody></table></div>'}
- if(!isB&&L[p])h+='<div class="a" style="margin:4px 0">You already have '+fq(p,L[p])+' of '+esc(pn(p))+' here.</div>';
- const ks=Object.keys(by);
- if(ks.length){h+='<h4>Fly in to '+esc(asts[a].name)+'</h4>';
-  ks.sort((x,y)=>asts[x].name.localeCompare(asts[y].name)).forEach(i=>{const t=by[i].reduce((s,[o,x])=>s+kg(o,x),0);
-   const M=by[i].reduce((s,[o,x])=>s+x*((PR[o]&&PR[o][2])||0),0),V=by[i].reduce((s,[o,x])=>s+x*(VOL[o]||0),0);
-   h+='<div style="margin:8px 0 2px"><b>From '+esc(asts[i].name)+'</b> <span class="a">· '+fmtT(M/1e6)+' in total</span></div>'+by[i].sort((x,y)=>pn(x[0]).localeCompare(pn(y[0]))).map(([o,x])=>li(o,x)+whFor(i,o,x)).join('')+shipsHTML(+i,a,M,V)});
-  h+='<div class="a" style="margin-top:6px">Trips count cargo room only – it doesn\'t check fuel or travel time.</div>'}
- const bk=Object.keys(pl.buy).filter(o=>isAt(o)||pl.buy[o]>=0.05).sort((x,y)=>pn(x).localeCompare(pn(y)));
- if(bk.length)h+='<h4 class="bad">Not enough on any of your asteroids – mine or buy</h4>'+bk.map(o=>li(o,pl.buy[o])).join('');
- if(pl.order.length){const cnt={};pl.order.forEach(i=>{const b=PT[RX[i][1]]||'';cnt[b]=(cnt[b]||0)+1});
-  const rn=v=>(+v.toFixed(v<10?2:1)).toLocaleString();
-  h+='<h4>Production plan · '+pl.order.length+' process'+(pl.order.length>1?'es':'')+' <span class="a" style="font-weight:400">('+Object.keys(cnt).map(b=>cnt[b]+' '+esc(b)).join(', ')+')</span></h4>'+
-  '<div class="wrap" style="margin-top:6px"><table><thead><tr><th>#</th><th>Make</th><th class="num">Amount</th><th>Process</th><th>Building</th><th class="num">Runs</th></tr></thead><tbody>'+
-  pl.order.map((i,n)=>{const r=RX[i],k=pl.runs[i],o=pl.why[i]||Object.keys(r[3])[0],last=n===pl.order.length-1;
-   return '<tr'+(last?' style="font-weight:600"':'')+'><td class="cls">'+(n+1)+'</td><td>'+ricon(o,20)+esc(pn(o))+'</td><td class="num">'+fq(o,r[3][o]*k)+'</td><td class="cls">'+esc(r[0])+'</td><td class="cls">'+esc(PT[r[1]]||'')+'</td><td class="num tot">'+rn(k)+'</td></tr>'}).join('')+'</tbody></table></div>'}
- if(!ks.length&&!bk.length)h+='<h4>Nothing to fly in – you have it all on '+esc(asts[a].name)+'.</h4>';
- const uk=Object.keys(pl.used).filter(o=>(L[o]||0)>0).sort((x,y)=>pn(x).localeCompare(pn(y)));
- h+='<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--accent)">Show full details (inputs, stock used, left-overs)</summary>';
- if(uk.length)h+='<h4>Taken from stock here</h4>'+uk.map(o=>'<div class="b"><span>'+ricon(o,20)+esc(pn(o))+' <span class="a">of '+fq(o,L[o])+'</span></span><span>'+fq(o,Math.min(pl.used[o],L[o]))+'</span></div>').join('');
- if(pl.order.length)h+='<h4>Steps, in order</h4>'+stepsH(pl);
- const lo=Object.keys(pl.bp);if(lo.length)h+='<h4>Left over (by-products)</h4>'+lo.sort((x,y)=>pn(x).localeCompare(pn(y))).map(o=>li(o,pl.bp[o])).join('');
- h+='</details>';return needCache[key]=h}
-function drawImport(m){
- const ai=$('#ast').value;
- if(ai===''){m.innerHTML='<div class="note">Pick an asteroid above.</div>';return}
- if(asts.length<2){m.innerHTML='<div class="note">You only have stock on one asteroid, so there is nothing to bring in.</div>';return}
- const a=+ai,P=mkData('all');
- const byName={};Object.keys(PR).forEach(k=>{if(k[0]==='B'||RX.some(r=>r[3][k]))byName[pn(k).toLowerCase()]=k});
- m.innerHTML='<div class="card" style="margin-bottom:16px"><h3>How many do you need?</h3><div class="t">Pick a product or a building (e.g. Warehouse (building)) to make on '+esc(asts[a].name)+' and how many. It works out what to fly in, and from which asteroid.</div>'+
-  '<div class="bar" style="margin-top:0"><input id="np" list="npl" placeholder="Product or part…" value="'+(needP?esc(pn(needP)):'')+'"><datalist id="npl">'+Object.keys(byName).sort().map(n=>'<option value="'+esc(pn(byName[n]))+'">').join('')+'</datalist>'+
-  '<input id="nq" type="number" min="0" step="any" style="min-width:0;width:110px" value="'+(needP&&needQ?fromQ(needP,needQ):'')+'"><span id="nu" class="a">'+(needP?qUnit(needP):'')+'</span><button id="ngo">Work it out</button></div>'+
-  '<div id="nout" class="det">'+(needP&&needQ?needHTML(P,a,needP,needQ):'')+'</div></div><div class="bar" style="margin:0 0 10px"><span class="seg"><button id="lsH">Can make here</button><button id="lsF">Needs fly-ins</button></span></div><div id="imlist"></div>';
- const pi=m.querySelector('#np'),qi=m.querySelector('#nq'),u=m.querySelector('#nu'),out=m.querySelector('#nout');
- const cur=()=>byName[pi.value.trim().toLowerCase()];
- pi.addEventListener('change',()=>{const p=cur();u.textContent=p?qUnit(p):''});
- const go=()=>{const p=cur();if(!p){out.innerHTML='<div class="a">Pick a product from the list.</div>';return}
-  const v=parseFloat(qi.value);if(!(isFinite(v)&&v>0)){out.innerHTML='<div class="a">Enter how many you need.</div>';qi.focus();return}
-  needP=p;needQ=toQ(p,v);qi.value=fromQ(p,needQ);u.textContent=qUnit(p);
-  out.innerHTML='<div class="a">Working…</div>';setTimeout(()=>{out.innerHTML=needHTML(P,a,p,needQ)},10)};
- m.querySelector('#ngo').addEventListener('click',go);[pi,qi].forEach(e=>e.addEventListener('keydown',k=>{if(k.key==='Enter')go()}));
- const lsSet=()=>{m.querySelector('#lsH').className=lsMode==='H'?'on':'';m.querySelector('#lsF').className=lsMode==='F'?'on':'';(lsMode==='H'?hereList:imList)(m.querySelector('#imlist'),a,ai)};
- m.querySelector('#lsH').onclick=()=>{lsMode='H';lsSet()};m.querySelector('#lsF').onclick=()=>{lsMode='F';lsSet()};lsSet();
-}
-let lsMode='H';
-function hereList(el,a,ai){const M=mkData(a);
- if(!M.done){el.innerHTML='<div class="note">Working out what you can make… '+M.k+' of '+M.n+'</div>';setTimeout(()=>{M.step();if(view==='I'&&$('#ast').value===ai&&el.isConnected&&lsMode==='H')hereList(el,a,ai)},10);return}
- const q=$('#q').value.trim().toLowerCase(),cl=$('#cls').value;
- let r=M.list.filter(x=>(!cl||pc(x.p)===cl)&&(!q||pn(x.p).toLowerCase().includes(q)));
- const sk=['name','cls','max'].includes(sortKey)?sortKey:'name';
- r.sort((x,y)=>sk==='name'?pn(x.p).localeCompare(pn(y.p))*sortDir:sk==='cls'?(pc(x.p).localeCompare(pc(y.p))||pn(x.p).localeCompare(pn(y.p)))*sortDir:(kg(x.p,x.max)-kg(y.p,y.max))*sortDir);
- let h='<div class="note" style="padding:0 0 12px">Everything you could make on <b>'+esc(asts[a].name)+'</b> from its own stock. Click one to put it in the box above, then enter how many you need. It doesn\'t check which refineries or factories you have.</div>';
- if(!r.length){el.innerHTML=h+'<div class="note">Nothing matches.</div>';return}
- h+='<div class="wrap"><table><thead><tr><th data-k="name">Product</th><th data-k="cls">Type</th><th class="num tot" data-k="max">Can make</th><th>Last step in</th></tr></thead><tbody>'+r.map(x=>'<tr class="prow" data-p="'+x.p+'"><td>'+ricon(x.p,24)+esc(pn(x.p))+'</td><td class="cls">'+esc(pc(x.p))+'</td><td class="num tot">'+fq(x.p,x.max)+'</td><td class="cls">'+esc(x.bld)+'</td></tr>').join('')+'</tbody></table></div>';
- el.innerHTML=h;
- el.querySelectorAll('tr.prow').forEach(tr=>tr.addEventListener('click',()=>{needP=tr.dataset.p;needQ=null;draw();const qq=doc.querySelector('#nq');if(qq){qq.scrollIntoView({block:'center'});qq.focus()}}));
- el.querySelectorAll('th[data-k]').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=(k==='name'||k==='cls')?1:-1}draw()}));
-}
-function imList(el,a,ai){
- const M=mkData(a),P=mkData('all');
- for(const X of [M,P])if(!X.done){el.innerHTML='<div class="note">Working out what else you could make… '+(M.k+P.k)+' of '+(M.n+P.n)+'</div>';setTimeout(()=>{X.step();if(view==='I'&&$('#ast').value===ai&&el.isConnected&&lsMode==='F')imList(el,a,ai)},10);return}
- const m=el;
- const here=new Set(M.list.map(x=>x.p));
- const q=$('#q').value.trim().toLowerCase(),cl=$('#cls').value;
- let r=P.list.filter(x=>!here.has(x.p)&&(!cl||pc(x.p)===cl)&&(!q||pn(x.p).toLowerCase().includes(q))).map(x=>{const im=importsFor(a,x.used),src=new Set();
-  Object.keys(im).forEach(o=>srcFor(a,o,im[o]).forEach(([i])=>src.add(asts[i].name)));return Object.assign({},x,{src:[...src].sort()})});
- const sk=['name','cls','max'].includes(sortKey)?sortKey:'name';
- r.sort((x,y)=>sk==='name'?pn(x.p).localeCompare(pn(y.p))*sortDir:sk==='cls'?(pc(x.p).localeCompare(pc(y.p))||pn(x.p).localeCompare(pn(y.p)))*sortDir:(kg(x.p,x.max)-kg(y.p,y.max))*sortDir);
- let h='<div class="note" style="padding:0 0 12px">Things you <b>can\'t</b> make on <b>'+esc(asts[a].name)+'</b> from its own stock, but could if you flew in stock from your other asteroids. Click one to put it in the box above, then enter how many you need. It doesn\'t check which refineries or factories you have.</div>';
- if(!r.length){m.innerHTML=h+'<div class="note">Nothing extra – bringing stock in from your other asteroids doesn\'t unlock anything new here.</div>';return}
- h+='<div class="wrap"><table><thead><tr><th data-k="name">Product</th><th data-k="cls">Type</th><th class="num tot" data-k="max">Could make</th><th>Fly in from</th></tr></thead><tbody>';
- r.forEach(x=>{h+='<tr class="prow" data-p="'+x.p+'"><td>'+ricon(x.p,24)+esc(pn(x.p))+'</td><td class="cls">'+esc(pc(x.p))+'</td><td class="num tot">'+fq(x.p,x.max)+'</td><td class="cls">'+esc(x.src.join(', '))+'</td></tr>';});
- m.innerHTML=h+'</tbody></table></div>';
- m.querySelectorAll('tr.prow').forEach(tr=>tr.addEventListener('click',()=>{needP=tr.dataset.p;needQ=null;draw();const q=doc.querySelector('#nq');if(q){q.scrollIntoView({block:'center'});q.focus()}}));
- m.querySelectorAll('th[data-k]').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=(k==='name'||k==='cls')?1:-1}draw()}));
-}
-const FAM=['Raw materials','Refined & processed','Parts & components','Modules & hulls'],FCOL=['#3987e5','#d95926','#199e70','#c98500'];
-const famOf=p=>+p<=22?0:!isAt(p)?1:(['Integration Module','Hull Module','Ship Hull'].includes(pc(p))?3:2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const tonnes=(p,a)=>a*((PR[p]&&PR[p][2])||0)/1e6;
 const fmtT=t=>t<1?(+(t*1000).toFixed(t<0.01?1:0)).toLocaleString()+' kg':t<1000?(+t.toFixed(t<10?2:t<100?1:0)).toLocaleString()+' t':(+(t/1000).toFixed(t<1e4?2:1)).toLocaleString()+' kt';
 const PROCN={"23":["Water Electrolysis",{"2":1,"23":8}],"24":["Water Vacuum-evaporation Desalination",{"24":19,"25":1}],"25":["Sabatier Process",{"8":16,"24":36}],"26":["Olivine Enhanced Weathering",{"26":1322,"58":5140}],"27":["Bitumen Hydro-cracking",{"27":60}],"28":["Taenite Electrolytic Refining",{"29":15,"30":1,"31":3}],"29":["Calcite Calcination",{"6":44,"32":56}],"30":["Huels Process",{"33":13}],"31":["Ammonia Carbonation",{"34":96}],"32":["Salt Sulfidization and Phosphorization",{"36":17}],"33":["Basic Food Cooking and Packaging",{"129":480}],"34":["Troilite Centrifugal Froth Flotation",{"37":160,"38":16,"39":4,"40":10}],"35":["Silica Fusing",{"41":1}],"36":["Silica Pultrusion",{"42":1}],"37":["Copper Wire Drawing",{"43":1}],"38":["Salty Cement Mixing",{"44":7}],"39":["Salt Selective Crystallization",{"45":46,"46":29,"47":2,"48":13,"49":6,"78":5}],"40":["Naphtha Steam-cracking",{"50":3}],"41":["Steel Alloying",{"52":1000}],"42":["Silica Carbothermic Reduction",{"7":56,"53":28}],"43":["Ostwald Process",{"54":87}],"44":["Wet Sulfuric Acid Process",{"55":98}],"45":["Fungal Soilbuilding",{"56":500000}],"46":["Iron Oxide and Silica Carbothermic Reduction",{"6":451,"57":224}],"47":["Methane Steam Reforming and Water-gas Shift",{"2":6,"7":28}],"48":["Acetylene Oxalic Acid Production",{"59":135}],"49":["Lead Sulfide Smelting",{"5":3072,"6":2112,"194":10049}],"50":["Tin Sulfide Smelting",{"5":128,"6":88,"62":238}],"51":["Iron Sulfide Roasting",{"5":192,"63":232}],"52":["Haber-Bosch Process",{"3":34}],"53":["Molybdenum Disulfide Roasting",{"5":256,"65":288}],"54":["Silica Gas Atomization",{"66":1}],"55":["Solder Manufacturing",{"67":150}],"56":["Quartz Filament Drawing and Wrapping",{"68":5}],"57":["Steel Beam Rolling",{"69":1}],"58":["Steel Sheet Rolling",{"70":1}],"59":["Steel Pipe Rolling",{"71":1}],"60":["Steel Wire Drawing",{"72":1}],"61":["Propylene Ammoxidation",{"24":1080,"73":796}],"62":["Propylene Polymerization",{"74":1}],"63":["Magnesium Chloride Molten Salt Electrolysis",{"75":24,"76":71}],"64":["Solvay Process",{"77":106,"78":111}],"65":["Boria Hydration",{"84":124}],"66":["Pyroxene Acid Leaching, Digestion, and Ion Exchange",{"80":294,"117":110}],"67":["Apatite Acid Extraction",{"81":73,"82":40,"83":1176}],"68":["Hydrogen Combustion",{"24":18}],"69":["Carbon Monoxide Combustion",{"6":88}],"70":["Borax Acid Extraction",{"45":117,"84":247}],"71":["Nitrogen Cryocooling and Fractional Distillation",{"180":950,"220":5}],"72":["Olivine Acid Leaching and Calcining",{"5":8456,"6":5809,"23":1984,"24":2378,"63":1852,"85":488,"86":448,"87":3869}],"73":["Anorthite Feldspar Acid Leaching and Carbonation",{"24":144,"189":624,"217":69}],"74":["Sodium Chloralkali Process",{"2":2,"76":71,"89":80}],"75":["Potassium Chloralkali Process",{"2":2,"76":71,"90":112}],"76":["Apatite Acid Re-extraction",{"35":468,"81":73,"82":40}],"77":["Ammonium Carbonate Oxalation",{"6":44,"24":18,"93":124}],"78":["Xenotime Hot Acid Leaching",{"83":784,"94":2006}],"79":["Merrillite Hot Acid Leaching",{"2":8,"45":468,"78":7991,"83":5488,"94":2078}],"80":["Ammonia Catalytic Cracking",{"2":6,"180":34}],"81":["Uraninite Acid Leaching, Solvent Extraction, and Precipitation",{"96":887}],"82":["Coffinite Acid Leaching, Solvent Extraction, and Precipitation",{"24":108,"26":180,"96":1774,"114":556}],"83":["Alumina Forming and Sintering",{"97":1}],"84":["Austenitic Nichrome Alloying",{"98":20}],"85":["Copper Wire Insulating",{"99":20}],"86":["Silicon Czochralski Process and Wafer Slicing",{"100":432000}],"87":["Steel Cable Laying",{"101":1}],"88":["Acrylonitrile Polymerization",{"102":50}],"89":["Soybean Growing",{"91":26000}],"90":["Boric Acid Thermal Decomposition",{"24":54,"79":70}],"91":["Lithium Carbonate Chlorination",{"6":44,"24":18,"105":85}],"92":["Lithium Sulfate Carbonation",{"48":74}],"93":["Iron Oxide Direct Reduction",{"6":176,"29":168}],"94":["Zinc Oxide Direct Reduction",{"6":44,"106":65}],"95":["Nickel Oxide Direct Reduction",{"6":44,"31":59}],"96":["Pidgeon Process",{"26":15,"29":21,"75":12}],"97":["Polypropylene Chlorination and Basification",{"24":18,"45":117,"81":36,"107":93}],"98":["Potato Growing",{"92":75600}],"99":["Rare Earth Sulfates Oxalation and Calcination",{"3":408,"6":528,"7":336,"24":432,"109":1118}],"100":["Ammonia Chlorination",{"110":53}],"101":["Hall–Heroult Process",{"7":84,"111":54}],"102":["Calcium Chloride Molten Salt Electrolysis",{"76":71,"112":40}],"103":["Cement Mixing",{"44":8}],"104":["Natural Flavorings Growing",{"103":15500}],"105":["Yellowcake Digestion, Solvent Extraction, and Precipitation",{"24":72,"115":1182}],"106":["Hydrofluoric Acid Cold Electrolysis",{"2":1,"116":38}],"107":["Rhabdite Roasting and Acid Extraction",{"83":14890,"190":24068}],"108":["Ferrite Sintering",{"118":1426}],"109":["Diode Doping and Assembly",{"119":420}],"110":["Ball Valve Machining",{"121":1}],"111":["Aluminium Beam Rolling",{"122":1}],"112":["Aluminium Sheet Rolling",{"123":1}],"113":["Aluminium Pipe Rolling",{"124":1}],"114":["Polyacrylonitrile Weaving",{"125":1}],"115":["Cold Gas Thruster Printing",{"126":1}],"116":["Polyacrylonitrile Oxidation and Carbonization",{"24":108,"128":144}],"117":["Aluminium Small Propellant Tank Assembly",{"130":1}],"118":["Borosilicate Glassmaking",{"131":20}],"119":["Ball Bearing Machining and Assembly",{"132":55}],"120":["Large Thrust Bearing Machining and Assembly",{"133":1}],"121":["Boria Magnesiothermic Reduction",{"87":121,"134":22}],"122":["Lithium Chloride Molten Salt Electrolysis",{"76":71,"135":7}],"123":["Diepoxy Step Growth Polymerization",{"24":54,"45":175,"197":625}],"124":["Rare Earth Oxides Ion Exchange",{"137":336,"138":452}],"125":["Calcium Oxide Aluminothermic Reduction",{"88":102,"112":120}],"126":["Sodium Chromate Acidification and Crystallization",{"24":18,"45":117,"139":262}],"127":["Sulfuric Acid Hot Catalytic Reduction",{"5":64,"23":16,"24":18}],"128":["Molybdenum Trioxide Aluminothermic Reduction and Alloying",{"88":5098,"141":7199}],"129":["Uranyl Nitrate Redox and Precipitation",{"142":4369}],"130":["Sodium Tungstate Ion Exchange, Precipitation, and Crystallization",{"89":960,"143":3132}],"131":["Stainless Steel Alloying",{"151":200}],"132":["Board Printing",{"152":200}],"133":["Ferrite-bead Inductor Winding",{"153":10}],"134":["Core Drill Bit Milling",{"154":1}],"135":["Core Drill Thruster Assembly",{"155":5}],"136":["Parabolic Dish Assembly",{"156":1}],"137":["Photovoltaic Panel Amorphization and Assembly",{"157":5}],"138":["LiPo Battery Assembly",{"158":10}],"139":["Neodymium Oxide Chlorination",{"3":102,"24":54,"159":501}],"141":["Sodium Dichromate Hot Sulfur Reduction",{"161":152}],"142":["Photoresist Epoxy Stoichiometry and Packaging",{"162":1}],"143":["Ammonium Diuranate Calcination and Hydrogen Reduction",{"3":34,"24":54,"163":540}],"144":["Ammonium Paratungstate Calcination and Hydrogen Reduction",{"3":170,"24":828,"164":2206}],"145":["Engine Bell Additive Manufacturing",{"144":1}],"146":["Steel Truss Construction",{"145":1}],"147":["Aluminium Hull Plate Construction",{"146":1}],"148":["Aluminium Truss Construction",{"147":1}],"149":["Cargo Module Construction",{"148":1}],"150":["Aluminium Pressure Vessel Construction",{"149":1}],"151":["Aluminium Propellant Tank Construction",{"150":1}],"152":["Shuttle Hull Construction",{"165":1}],"153":["Light Transport Hull Construction",{"166":1}],"154":["Cargo Ring Construction",{"167":1}],"155":["Heavy Transport Hull Construction",{"168":1}],"156":["Tungsten Gas Atomization",{"169":1}],"157":["Hydrogen Cryocooling and Reactor Consumables Stoichiometry",{"170":100}],"158":["Stainless Steel Sheet Rolling",{"171":1}],"159":["Stainless Steel Pipe Rolling",{"172":1}],"160":["Silicon Wafer CPU Photolithography, Ball Bonding, and Encapsulation",{"174":101500}],"161":["Core Drill Assembly",{"175":1}],"162":["Neodymium Trichloride Vacuum Calciothermic Reduction",{"78":333,"176":288}],"163":["Neodymium Trichloride Molten Salt Electrolysis",{"76":142,"176":144}],"165":["Chromia Aluminothermic Reduction",{"88":102,"178":104}],"166":["Uranium Dioxide Oxidation",{"24":36,"179":314}],"167":["Leached Coffinite Froth Flotation, Solvent Extraction, and Precipitation",{"3":34,"24":72,"81":73,"104":195}],"168":["Nd:YAG Czochralski Process",{"181":119056}],"169":["Nichrome Alloying",{"182":5}],"170":["Magnet Sintering and Magnetization",{"183":100}],"171":["Uranium Tetrafluoride Oxidation",{"184":352}],"172":["Uranium Hexafluoride Centrifuge Cascade Enrichment",{"185":2672}],"173":["Nd:YAG Laser Assembly",{"186":20}],"174":["Thin-film Resistor Sputtering and Laser-trimming",{"187":15000}],"175":["HEUF6 Magnesiothermic Reduction and Fine Division",{"188":235}],"176":["Spirulina and Chlorella Algae Growing",{"64":4000}],"177":["PEDOT Bacteria Culturing",{"200":410}],"178":["BPA Bacteria Culturing",{"108":410}],"179":["Potassium Hydroxide Carbonation",{"24":18,"192":138}],"180":["Novolak Bacteria Culturing",{"140":410}],"181":["Ferrochromium Alloying",{"95":2}],"182":["Potassium Carbonate Oxidation",{"6":44,"24":18,"195":116}],"183":["Rhabdite Slag Acid Leaching",{"24":180,"193":1048}],"184":["Tantalate-Niobate Liquid-Liquid Extraction and Redox",{"82":80,"196":392}],"185":["Carbon Dioxide Ferrocatalysis",{"7":7,"23":4}],"186":["Potassium Heptafluorotantalate Sodiothermic Reduction",{"76":177,"195":116,"199":181}],"187":["Rhabdite Carbothermic Reduction",{"6":9372,"95":16153,"191":1107}],"188":["Polymer Tantalum Capacitor Assembly",{"201":10000}],"189":["Surface Mount Device Reel Assembly",{"202":1}],"190":["Pick-and-place Board Population",{"203":20}],"191":["Motor Stator Assembly",{"204":10}],"192":["Motor Rotor Assembly",{"205":5}],"193":["Brushless Motor Assembly",{"206":1}],"194":["Landing Leg Assembly",{"207":1}],"195":["Landing Auger Assembly",{"208":1}],"196":["Pump Assembly",{"209":5}],"197":["Antenna Assembly",{"210":10}],"198":["Fiber Optic Gyroscope Assembly",{"211":10}],"199":["Star Tracker Assembly",{"212":50}],"200":["Computer Assembly",{"213":50}],"201":["Control Moment Gyroscope Assembly",{"214":10}],"202":["Robotic Arm Assembly",{"215":1}],"203":["Feldspar Aluminium Hydroxide Calcination",{"24":54,"88":102}],"204":["Ferrochromium Roasting and Hot Base Leaching",{"6":3432,"63":5557,"113":12634}],"205":["Beryllium Carbonate Calcination",{"6":44,"218":25}],"206":["Beryllia Forming and Sintering",{"219":1}],"207":["Silicon Wafer CCD Photolithography, Ball Bonding, and Packaging",{"173":62500}],"208":["Heat Exchanger Assembly",{"221":1}],"209":["Turbopump Assembly",{"222":10}],"210":["Laser Diode Doping, Amorphization, and Assembly",{"120":65000}],"211":["Separator Centrifuge Assembly",{"224":1}],"212":["Fuel Make-up Tank Assembly",{"225":2}],"213":["Neon Make-up Tank Assembly",{"226":2}],"214":["Lightbulb End Moderators Assembly",{"227":1}],"215":["Cold Gas Torque Thruster Printing",{"127":1}],"216":["Fused Quartz Lightbulb Additive/Subtractive Assembly",{"229":1}],"217":["Reactor Plumbing Assembly Squared",{"230":1}],"218":["Flow Divider Moderator Assembly",{"231":1}],"219":["Nuclear Lightbulb Assembly",{"232":1}],"220":["Reactor Shell Assembly",{"233":1}],"221":["Closed-cycle Gas Core Nuclear Reactor Engine Assembly",{"234":1}],"222":["Habitation Module Assembly",{"235":1}],"223":["Mobility Module Assembly",{"236":1}],"224":["Fluids Automation Module Assembly",{"237":1}],"225":["Solids Automation Module Assembly",{"238":1}],"226":["Terrain Interface Module Assembly",{"239":1}],"227":["Avionics Module Assembly",{"240":1}],"228":["Escape Module Assembly",{"241":1}],"229":["Attitude Control Module Assembly",{"242":1}],"230":["Power Module Assembly",{"243":5}],"231":["Thermal Module Assembly",{"244":1}],"232":["Propulsion Module Assembly",{"245":1}],"233":["Sulfur Dioxide Plasma Catalysis",{"24":36,"51":32}],"234":["Parkes Process",{"60":99,"61":1}],"235":["Bicarbonate Solvay Process",{"28":168,"78":111}],"236":["Solvay-Hou Process",{"77":106,"110":107}],"237":["Bicarbonate Solvay-Hou Process",{"28":168,"110":107}],"238":["Sodium Bicarbonate Calcination",{"6":44,"24":18,"77":106}],"239":["Epoxy Stoichiometry and Packaging",{"136":1}],"240":["PEDOT Algae Growing",{"200":400}],"241":["BPA Algae Growing",{"108":400}],"242":["Novolak Algae Growing",{"140":400}],"243":["Hydrochloric Redox",{"81":73}],"244":["Hydrofluoric Redox",{"82":40}],"245":["Methane Combustion",{"6":44,"24":36}],"246":["Carbon Monoxide Arc Decomposition",{"6":44,"23":32}],"247":["Hydrogen Propellant Unbundling",{"2":97,"66":2,"169":1}],"248":["Sulfur Combustion",{"5":64}],"249":["Triple Superphosphate Acid Extraction",{"83":64}],"250":["Shuttle Integration",{}],"251":["Light Transport Integration",{}],"252":["Heavy Transport Integration",{}],"300":["Warehouse Construction",{}],"301":["Extractor Construction",{}],"302":["Refinery Construction",{}],"303":["Bioreactor Construction",{}],"304":["Factory Construction",{}],"305":["Shipyard Construction",{}],"306":["Spaceport Construction",{}],"307":["Marketplace Construction",{}],"308":["Habitat Construction",{}],"309":["Tank Farm Construction",{}]};
@@ -537,11 +405,11 @@ function navGroups(){
  })()}
  if(!window.__imgQ){window.__imgQ=1;let fly=0;setInterval(()=>{document.querySelectorAll('img[data-src]:not([data-busy])').forEach(img=>{if(fly>=3)return;img.dataset.busy='1';fly++;const n=+(img.dataset.n||0);const done=ok=>{fly--;img.onload=img.onerror=null;if(ok){img.removeAttribute('data-src');return}img.dataset.n=n+1;if(n+1>=6){img.removeAttribute('data-src');img.style.visibility='hidden';return}setTimeout(()=>img.removeAttribute('data-busy'),1500*(n+1))};img.onload=()=>done(true);img.onerror=()=>done(false);img.src=img.dataset.src+(n?'&try='+n:'')})},250)}
  if(!window.__imgRetry){window.__imgRetry=1;document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'||t.dataset.retry==null)return;const n=+t.dataset.retry;if(n>=5){t.style.visibility='hidden';return}t.dataset.retry=n+1;const base=t.getAttribute('src').replace(/&try=\d+$/,'');setTimeout(()=>{t.src=base+'&try='+(n+1)},1500+Math.random()*2500*(n+1))},true)}
- const seg=$('#vO')&&$('#vO').parentElement;if(!seg||seg.dataset.grouped)return;seg.dataset.grouped='1';
+ const seg=document.querySelector('header span.seg');if(!seg||seg.dataset.grouped)return;seg.dataset.grouped='1';
  if(!$('#vV')&&$('#vR')){const b=document.createElement('button');b.id='vV';b.textContent='Deliveries';b.addEventListener('click',()=>setV('V'));$('#vR').after(b)}
- if(!$('#vW')&&$('#vC')){const b=document.createElement('button');b.id='vW';b.textContent='Best crew';b.addEventListener('click',()=>setV('W'));$('#vC').after(b)}
+ 
  if(!$('#vF')&&$('#vX')){const b=document.createElement('button');b.id='vF';b.textContent='Lot resources';b.addEventListener('click',()=>setV('F'));$('#vX').after(b)}
- if(!$('#don')&&$('#csv')){const b=document.createElement('button');b.id='don';b.textContent='SkipCoin';b.title='Donate to support this site';{const st=document.createElement('style');st.id='don-css';st.textContent='#don{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#don:hover,#don:focus-visible{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';document.head.appendChild(st)}$('#csv').after(b);
+ if(!$('#don')&&$('#csv')){const b=document.createElement('button');b.id='don';b.textContent='SkipCoin';b.title='Donate to support this site';{const st=document.createElement('style');st.id='don-css';st.textContent='#don{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#don:hover,#don:focus-visible{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';document.head.appendChild(st)}$('#csv').before(b);
   const p=document.createElement('div');p.id='donp';p.style.cssText='display:none;position:fixed;z-index:60;left:50%;top:50%;transform:translate(-50%,-50%);max-height:calc(100vh - 32px);overflow:auto;width:min(440px,calc(100vw - 32px));background:#0f141c;border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.6)';
   const W=[['Ethereum','0x7e2165833c8BDf1ec6BC7c1ACEa0D4E611F2ef01'],['Starknet','0x0631aCdbF5a79758CbCC84301b387aEbFB5C0ec7476aA48a0CeB98662973C5ce']];
   p.innerHTML='<div style="position:relative;text-align:center;padding:0 34px;margin:0 0 8px"><b style="display:block;font-size:17px;font-weight:800;color:#ffd24a;line-height:1.3;text-shadow:0 0 8px rgba(255,210,74,.35)">Help Skippy on his journey through the Adalian Belt</b><button data-x title="Close" style="position:absolute;right:0;top:0">✕</button></div><div class="a" style="margin:0 0 12px;white-space:normal">This site is free to use. If it helps you, a donation helps keep it running. Thank you!</div><a href="https://paypal.me/SkippyInfluence" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:0 0 14px;padding:7px 14px;border-radius:6px;background:#0070ba;color:#fff;text-decoration:none;font-weight:600">Donate with PayPal</a>'+W.map(([n,a])=>'<div style="margin:0 0 12px"><div class="a" style="font-size:12px;margin:0 0 3px">'+n+' wallet – only send on the '+n+' network</div><div style="display:flex;gap:8px;align-items:center"><code style="font-size:11px;word-break:break-all;white-space:normal;flex:1">'+a+'</code><button data-c="'+a+'">Copy</button></div></div>').join('');
@@ -549,17 +417,18 @@ function navGroups(){
   b.addEventListener('click',e=>{e.stopPropagation();p.style.display=p.style.display==='none'?'block':'none'});
   p.addEventListener('click',e=>{e.stopPropagation();const c=e.target.closest('[data-c]');if(c){const t=c.dataset.c,done=()=>{c.textContent='Copied ✓';setTimeout(()=>{c.textContent='Copy'},2000)};if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>{const s=getSelection(),g=document.createRange();g.selectNodeContents(c.previousSibling);s.removeAllRanges();s.addRange(g);c.textContent='Press Ctrl+C'});else{const s=getSelection(),g=document.createRange();g.selectNodeContents(c.previousSibling);s.removeAllRanges();s.addRange(g);c.textContent='Press Ctrl+C'}}if(e.target.closest('[data-x]'))p.style.display='none'});
   document.addEventListener('click',()=>{p.style.display='none'});document.addEventListener('keydown',e=>{if(e.key==='Escape')p.style.display='none'})}
- const G=/[?&]beta=1(&|$)/.test(location.search)?[['Fleet',['S','C']],['Logistics',['P','V']],['Asteroids',['A','X','F']],['Buildings',['B','T','L']],['Trading',['K','Y']],['Planners',['R']]]:[['Fleet',['S','C','W']],['Logistics',['P','V','R']],['Asteroids',['A','X','F']],['Buildings',['B','T','L']]];
- const old=$('#vBB');if(old)old.style.display='none';if($('#vO'))$('#vO').style.display='none';
+ const G=[['Fleet',['S','C']],['Logistics',['P','V']],['Asteroids',['A','X','F']],['Buildings',['B','T','L']],['Trading',['K','Y']],['Planners',['R']]];
+ const old=$('#vBB');if(old)old.style.display='none';
  const menus=[],btns=[];
  const closeAll=()=>menus.forEach(d=>d.style.display='none');
- const frag=[$('#vO'),$('#vN')];
+ const frag=[];
+ {const s0=document.createElement('div');s0.id='seg0';s0.className='seg';s0.appendChild($('#vN'));$('#ast').before(s0)} /* Today's Workload (+ The SkippyChain, added by chain.js) sit before the asteroid box */
  G.forEach(([name,keys])=>{const b=document.createElement('button');b.textContent=name+' ▾';b.dataset.g=name;
   const d=document.createElement('span');d.className='ddm';keys.forEach(k=>{const e=$('#v'+k);if(e)d.appendChild(e)});
   b.addEventListener('click',e=>{e.stopPropagation();const open=d.style.display==='flex';closeAll();const old=$('#ddm');if(old)old.style.display='none';if(open)return;const r=b.getBoundingClientRect();d.style.left=r.left+'px';d.style.top=(r.bottom+4)+'px';d.style.display='flex'});
   d.addEventListener('click',()=>{closeAll();setTimeout(upd,0)});
   menus.push(d);btns.push([b,d,name]);frag.push(b);document.body.appendChild(d)});
- frag.push(...['K','Y'].filter(k=>!G.some(g=>g[1].includes(k))).map(k=>$('#v'+k)));
+ 
  frag.forEach(e=>{if(e)seg.appendChild(e)});if(old)seg.appendChild(old);
  document.addEventListener('click',closeAll);window.addEventListener('scroll',closeAll);
  const upd=()=>btns.forEach(([b,d,name])=>{const on=d.querySelector('button.on');b.className=on?'on':'';b.textContent=(on?name+': '+on.textContent:name)+' ▾'});
@@ -569,11 +438,8 @@ function navGroups(){
    const left=document.createElement('div');left.style.cssText='min-width:0';const right=document.createElement('div');right.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center;margin-left:auto';
    h1.before(row);[h1,...hd.querySelectorAll(':scope > .sub')].forEach(e=>left.appendChild(e));[q,cl].forEach(e=>{if(e)right.appendChild(e)});if(as&&seg&&seg.parentElement){as.title='Pick an asteroid to show just that one';seg.parentElement.insertBefore(as,seg)}row.append(left,right)}}
  {const gq=$('#q');if(gq&&!$('#gq')){gq.id='gq';gq.placeholder='Search everything…';const hid=document.createElement('input');hid.type='hidden';hid.id='q';hid.value='';document.body.appendChild(hid);
-  const gs=document.createElement('select');gs.id='gast';gs.title='Asteroid for the search';
-  const names=[...new Set([...asts.map(a=>a.name),...(D.owned||[]).map(a=>(a.Name&&a.Name.name)||('Asteroid #'+a.id)),...(D.crewList||[]).map(c=>c.ast).filter(Boolean)])].sort();
-  gs.innerHTML='<option value="">All asteroids</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join('');gs.style.display='none'; /* search covers everything; one asteroid box (live 2026-10-09) */
   let prev='N';const go=()=>{if(gq.value.trim()){if(view!=='Z')prev=view;setV('Z')}else if(view==='Z')setV(prev)};
-  gq.addEventListener('input',go);gs.addEventListener('change',()=>{if(view==='Z')draw();else if(gq.value.trim())go()});
+  gq.addEventListener('input',go);
   document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&gq.value)gq.value=''},true)}}
  {const h1=document.querySelector('header h1');if(h1&&!h1.dataset.home){h1.dataset.home='1';h1.style.cursor='pointer';h1.title='Back to Today\'s Workload';h1.setAttribute('role','link');h1.tabIndex=0;const home=()=>{const g=$('#gq');if(g)g.value='';const d=$('#ddm');setV('N');scrollTo({top:0,behavior:'smooth'})};h1.addEventListener('click',home);h1.addEventListener('keydown',e=>{if(e.key==='Enter')home()})}}
  if(!window.__bars&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){window.__bars=1;const main=$('#main');
@@ -718,25 +584,15 @@ function drawDeliveries(m){
 }
 var CMT={"28":["Navigator","+2% propellant speed"],"29":["Dietitian","10% less food used"],"30":["Refiner","+5% refining speed"],"31":["Surveyor","+10% core sampling speed"],"32":["Hauler","+5% cargo mass"],"41":["Buster","+2% propellant flow"],"42":["Mogul","+16% market fees collected"],"43":["Scholar","faster technology"],"44":["Recycler","10% less loss when deconstructing"],"45":["Mechanic","cheaper ship repair"],"46":["Operator","less ship wear"],"47":["Logistician","+5% surface transport speed"],"48":["Experimenter","faster inventions"],"49":["Builder","+5% construction speed"],"50":["Prospector","+5% core sample quality"]};
 var CMC={1:'Pilot',2:'Engineer',3:'Miner',4:'Merchant',5:'Scientist'},TRB=true;
-var FACEB=true; /* crewmate faces on Crews page: live 2026-10-09 */
-function fillFacesIn(m){if(!FACEB||!m.querySelector('img[data-face]'))return;import('./vendor/faces.js?v=1').then(f=>f.fillFaces(m,D.crewmates||{})).catch(()=>{})}
-function crewTraits(c){const cm=D.crewmates||{};return (c.roster||[]).map(id=>{const x=cm[id]||{};const tr=(x.impactful||[]).map(t=>CMT[t]).filter(Boolean);return '<div style="padding:2px 0'+(FACEB?';display:flex;gap:10px;align-items:flex-start':'')+'">'+(FACEB?'<img data-face="'+id+'" src="cimg.php?id='+id+'&s=1" alt="" loading="lazy" style="width:54px;height:72px;object-fit:cover;object-position:50% 0;border-radius:6px;border:1px solid #2a3648;background:#000;flex:none">':'')+'<div><b>'+esc((c.mn&&c.mn[id])||('Crewmate #'+id))+'</b> <span style="color:var(--accent)">'+esc(CMC[x.class]||'')+'</span>'+(tr.length?'<br><span class="a">'+tr.map(t=>esc(t[0])+' – '+esc(t[1])).join('<br>')+'</span>':'')+'</div></div>'}).join('')||'0'}
+function fillFacesIn(m){if(!m.querySelector('img[data-face]'))return;import('./vendor/faces.js?v=1').then(f=>f.fillFaces(m,D.crewmates||{})).catch(()=>{})}
+function crewTraits(c){const cm=D.crewmates||{};return (c.roster||[]).map(id=>{const x=cm[id]||{};const tr=(x.impactful||[]).map(t=>CMT[t]).filter(Boolean);return '<div style="padding:2px 0;display:flex;gap:10px;align-items:flex-start"><img data-face="'+id+'" src="cimg.php?id='+id+'&s=1" alt="" loading="lazy" style="width:54px;height:72px;object-fit:cover;object-position:50% 0;border-radius:6px;border:1px solid #2a3648;background:#000;flex:none"><div><b>'+esc((c.mn&&c.mn[id])||('Crewmate #'+id))+'</b> <span style="color:var(--accent)">'+esc(CMC[x.class]||'')+'</span>'+(tr.length?'<br><span class="a">'+tr.map(t=>esc(t[0])+' – '+esc(t[1])).join('<br>')+'</span>':'')+'</div></div>'}).join('')||'0'}
 var CBA={"1":{"c":3,"d":{"13":0.01},"t":{"31":0.1}},"2":{"c":3,"d":null,"t":{"50":0.05}},"3":{"c":0,"d":{"6":0.0125,"13":0.005},"t":{"47":0.05}},"4":{"c":3,"d":{"13":0.01},"t":null},"5":{"c":2,"d":{"13":0.01},"t":{"49":0.05}},"6":{"c":0,"d":null,"t":{"32":0.05}},"7":{"c":1,"d":{"1":0.01,"13":0.01},"t":{"28":0.02}},"8":{"c":2,"d":{"9":0.0125,"13":0.0075},"t":{"30":0.05}},"9":{"c":2,"d":{"9":0.0125,"13":0.0075},"t":null},"10":{"c":5,"d":{"10":0.025,"13":0.0075},"t":null},"11":{"c":4,"d":null,"t":null},"13":{"c":5,"d":null,"t":null},"14":{"c":0,"d":{"11":0.05},"t":{"29":0.1}},"17":{"c":4,"d":{"12":0.05,"13":0.025},"t":null},"18":{"c":1,"d":{"1":0.01},"t":{"41":0.02}},"19":{"c":0,"d":{"6":0.0125},"t":null},"20":{"c":2,"d":{"9":0.0125,"13":0.005},"t":null}};
 var CBS=[0.5,1,1.25,1.375,1.4375,1.46875];
 function crewMult(aid,ms){const A=CBA[aid];let m=1,cm=0;ms.forEach(x=>{if(!x)return;if(A.c&&x.class===A.c)cm++;const t=x.title;if(A.d&&t>=1&&t<=65){const dep=(t-1)%13+1,tier=Math.floor((t-1)/13)+1+(x.coll===1?0.5:0);if(A.d[dep])m+=A.d[dep]*tier}(x.impactful||[]).forEach(i=>{if(A.t&&A.t[i])m+=A.t[i]})});if(A.c)m*=CBS[Math.min(cm,5)];return m}
 var CBJ=[[1,'Core sampling speed'],[2,'Core sample quality'],[4,'Extraction (mining) speed'],[5,'Construction speed'],[8,'Refining speed'],[9,'Manufacturing speed'],[10,'Bioreactor speed'],[20,'Ship building speed'],[3,'Surface transport speed'],[7,'Ship engine power'],[18,'Propellant flow'],[17,'Lower market fees'],[11,'Free transport distance'],[13,'Extra refining yield'],[14,'Food lasts longer'],[6,'Cargo mass'],[19,'Cargo volume']];
 var CBNF={2:1,6:1,7:1,13:1,14:1,15:1,16:1,18:1,19:1};
 function habEff(c){const s=c&&c.stn&&(D.stations||{})[c.stn];if(!s||s[0]!==3)return 1;const p=s[1];return p>500?1.2-0.2*(Math.min(p,1000)-500)/500:1.2}
-function drawBestCrew(m){const ai=$('#ast').value,an=ai===''?null:asts[+ai].name,cm=D.crewmates||{};
- const cs=(D.crewList||[]).filter(c=>c.mates&&(!an||c.ast===an)).map(c=>({c,ms:(c.roster||[]).map(id=>cm[id]).filter(Boolean)}));
- const pc=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'},col=v=>v>1.0001?'#4cd04c':v<0.9999?'#ff7a7a':'inherit';
- const hun=c=>c.food!=null&&c.food<0.5?' <span style="color:#ff7a7a">hungry</span>':'';
- let h='<div class="note" style="padding:0 0 10px">Each job lists your crews from best to worst'+(an?' on <b>'+esc(an)+'</b>':'')+'. The bonus comes from crewmate classes, titles and useful traits, worked out the same way as the game. Crews living in a Habitat get its bonus (up to +20%) on speed jobs. Hungry crews (food under 50%) work slower. Click a job to see every crew.</div>';
- if(!cs.length){m.innerHTML=h+'<div class="note">No crews with crewmates here.</div>';return}
- h+=CBJ.map(([a,n])=>{const L=cs.map(x=>{const h=CBNF[a]?1:habEff(x.c);return {c:x.c,h,v:crewMult(a,x.ms)*h}}).sort((x,y)=>y.v-x.v||x.c.name.localeCompare(y.c.name)),b=L[0];
-  return '<details style="border:1px solid var(--line);border-radius:8px;margin:0 0 8px;padding:8px 12px;background:#0f141c"><summary style="cursor:pointer"><b>'+esc(n)+'</b> · best: '+esc(b.c.name)+(an?'':' <span class="a">('+esc(b.c.ast||'?')+')</span>')+' <b style="color:'+col(b.v)+'">'+pc(b.v)+'</b></summary><div class="wrap" style="margin-top:8px"><table><thead><tr><th>Crew</th><th>Asteroid</th><th>Where</th><th class="num">Bonus</th></tr></thead><tbody>'+
-  L.map(x=>'<tr><td>'+esc(x.c.name)+hun(x.c)+(x.h>1.0001?'<br><span class="a">Habitat +'+Math.round((x.h-1)*100)+'%</span>':'')+'</td><td class="cls">'+esc(x.c.ast||'–')+'</td><td class="cls" style="white-space:normal">'+esc(x.c.place||'')+'</td><td class="num" style="color:'+col(x.v)+'">'+pc(x.v)+'</td></tr>').join('')+'</tbody></table></div></details>'}).join('');
- m.innerHTML=h}
+
 var LOTS={},lotsLoad={},ABM=null,ABC={},lfAst=null,lfRes=null;
 var BONB=true;
 function resBonus(bon,r){let m=1;const nn=[];(bon||[]).forEach(b=>{const gg=BONG.find(x=>x[0]===b.n);if(gg&&gg[1].map(Number).includes(+r)){m*=(100+b.mod)/100;nn.push(b.n+' +'+b.mod+'%')}});return {m,nn}}
@@ -821,38 +677,13 @@ function drawAssets(m,which){
   sl.map(x=>'<tr><td><a href="shipimg.php?t='+x.st+'&v='+x.sv+'" target="_blank" title="Open picture" style="display:inline-block;width:72px;height:54px;vertical-align:middle;margin-right:10px;border-radius:4px;background:#000 url(shipimg.php?t='+x.st+'&v='+x.sv+'&s=1) no-repeat 50% 42%/170% auto"></a>'+esc(x.name)+'</td><td class="num">'+esc(x.id)+'</td><td class="cls">'+esc(x.type)+(x.sv>1?'<br><span style="color:var(--accent)">'+esc(({2:'Cobalt Pioneer',3:'Titanium Pioneer',4:'Aureate Pioneer'})[x.sv]||('Variant '+x.sv))+'</span>':'')+'</td><td>'+esc(x.ast||'–')+'</td><td class="cls" style="white-space:normal">'+(x.fl?'<b>':'')+esc(x.place)+(x.fl?'</b>':'')+'</td><td class="cls" style="white-space:normal">'+(x.useM>0?fmtT(x.useM/1e6)+(x.carry?' · '+esc(x.carry):''):'Empty')+'</td><td class="num">'+fmtT(x.prop)+'</td></tr>').join('')+'</tbody></table></div>';
  if(which==='C')h+='<div class="note" style="padding:10px 0 0">Food is worked out from when each crew was last fed; crewmate food traits aren\'t included, so treat it as a guide.</div>';
  m.innerHTML=h;if(which==='C')fillFacesIn(m)}
-function drawOverview(m){
- const ai=$('#ast').value,q=$('#q').value.trim().toLowerCase(),cl=$('#cls').value;
- const list=ai===''?asts.map((a,i)=>i):[+ai];
- let h='<style>.ov-ast{margin-bottom:22px}.ov-ast h2{margin:0 0 2px;font-size:17px}.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:10px}'+
-  '.ov-p{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}.ov-p h3{margin:0;font-size:13px;display:flex;align-items:center;gap:8px}.ov-p h3 i{width:10px;height:10px;border-radius:2px;display:inline-block}'+
-  '.ov-p .t{color:var(--muted);font-size:12px;margin:2px 0 8px}.ov-tm{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;max-height:330px;overflow:auto}'+
-  '.ov-b{position:relative;height:84px;background:#0f141c;border:1px solid #232b38;padding:6px 7px 9px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}'+
-  '.ov-b:hover{border-color:#5fc3e4;background:#131a24}.ov-b .am{font-size:12px;font-weight:600;color:#e6ebf2}.ov-b .nm{font-size:11.5px;line-height:1.2;color:#8a96a8;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ov-b i{position:absolute;left:0;bottom:0;height:3px}'+
-  '#ovtip{position:fixed;z-index:20;pointer-events:none;background:#1a212d;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:13px;display:none;max-width:280px}</style>';
- list.forEach(i=>{const t=tot[i],ps=Object.keys(t).filter(p=>t[p]>0&&(!cl||pc(p)===cl)&&(!q||pn(p).toLowerCase().includes(q)));if(!ps.length)return;
-  const all=ps.reduce((s,p)=>s+tonnes(p,t[p]),0);
-  h+='<div class="ov-ast"><h2>'+esc(asts[i].name)+'</h2><div class="sub">'+fmtT(all)+' in stock · '+ps.length+' products · '+asts[i].buildings.length+' storage buildings</div><div class="ov-grid">';
-  FAM.forEach((fn,f)=>{const fp=ps.filter(p=>famOf(p)===f).map(p=>({p,v:tonnes(p,t[p])})).sort((a,b)=>b.v-a.v);const ft=fp.reduce((s,o)=>s+o.v,0);
-   h+='<div class="ov-p"><h3><i style="background:'+FCOL[f]+'"></i>'+fn+'</h3><div class="t">'+(fp.length?fmtT(ft)+' · '+fp.length+' product'+(fp.length>1?'s':''):'None here')+'</div>';
-   if(fp.length){const mx=fp[0].v;h+='<div class="ov-tm">'+fp.map(o=>'<div class="ov-b" data-a="'+i+'" data-p="'+o.p+'"><img src="rimg.php?p='+o.p+'" loading="lazy" alt="" style="position:absolute;right:5px;top:5px;width:36px;height:36px;object-fit:contain" data-hide><span class="am">'+esc(fq(o.p,t[o.p]))+'</span><span class="nm">'+esc(pn(o.p))+'</span><i style="width:'+Math.max(3,o.v/mx*100)+'%;background:'+FCOL[f]+'"></i></div>').join('')+'</div>'}
-   h+='</div>'});
-  h+='</div></div>'});
- m.innerHTML=(h.includes('ov-ast')?h:h+'<div class="note">Nothing matches.</div>')+'<div id="ovtip"></div>';
- const tip=m.querySelector('#ovtip');
- m.querySelectorAll('.ov-b').forEach(b=>{const i=+b.dataset.a,t=tot[i];
-  b.addEventListener('mousemove',e=>{let x;
-   {const p=b.dataset.p,bs=asts[i].buildings.filter(k=>k.items[p]).length;x=ricon(p,24)+'<b>'+esc(pn(p))+'</b><div class="a">'+esc(pc(p))+'</div>'+fq(p,t[p])+(isAt(p)?' units · '+fmtT(tonnes(p,t[p])):'')+'<div class="a">in '+bs+' building'+(bs>1?'s':'')+' · click to see them</div>'}
-   tip.innerHTML=x;tip.style.display='block';const r=tip.getBoundingClientRect();
-   tip.style.left=Math.min(e.clientX+14,innerWidth-r.width-8)+'px';tip.style.top=Math.min(e.clientY+14,innerHeight-r.height-8)+'px'});
-  b.addEventListener('mouseleave',()=>{tip.style.display='none'});
-  b.addEventListener('click',()=>{$('#ast').value=String(i);$('#q').value=pn(b.dataset.p);open.add(b.dataset.p);setV('P')})});
-}
+
 function draw(){
  const m=$('#main');
+ if(view==='M')return; /* an add-on page (SkippyChain, Crew planner, Activity log) is showing */
  
- if(view==='I'){drawImport(m);return}
- if(view==='O'){drawOverview(m);return}
+ 
+ 
  if(view==='N'){drawAlerts(m);animTiles(m);return}
  if(view==='Z'){drawSearch(m);return}
  if(view==='X'){drawSamples(m);return}
@@ -861,7 +692,7 @@ function draw(){
  if(view==='T'){drawStatus(m);return}
  if(view==='A'){drawAsteroids(m);beltMap(m);return}
  if(view==='F'){drawLotRes(m);return}
- if(view==='W'){drawBestCrew(m);return}
+ 
  if(view==='V'){drawDeliveries(m);return}
  if(view==='K'){drawMarket(m);return}
  if(view==='R'){drawTravel(m);return}
@@ -895,10 +726,10 @@ function csv(){
  const a=doc.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'}));const _n=new Date(),_p=x=>String(x).padStart(2,'0');a.download='influence-stock_'+_n.getFullYear()+'-'+_p(_n.getMonth()+1)+'-'+_p(_n.getDate())+'_'+_p(_n.getHours())+'-'+_p(_n.getMinutes())+'.csv';doc.body.appendChild(a);a.click();a.remove();
 }
 $('#q').addEventListener('input',draw);$('#ast').addEventListener('change',draw);$('#cls').addEventListener('change',draw);
-const setV=v=>{view=v;['O','N','P','B','T','I','A','K','C','S','R','X','L','Y','V','W','F'].forEach(k=>{const e=$('#v'+k);if(e)e.className=k===v?'on':''});$('#vBB').className=(v==='B'||v==='T')?'on':'';$('#vBB').textContent=v==='B'?'Buildings: Contents ▾':v==='T'?'Buildings: Status ▾':'Buildings ▾';$('#ddm').style.display='none';draw()};
-$('#vP').addEventListener('click',()=>setV('P'));$('#vB').addEventListener('click',()=>setV('B'));$('#vO').addEventListener('click',()=>setV('O'));$('#vN').addEventListener('click',()=>setV('N'));$('#vC').addEventListener('click',()=>setV('C'));$('#vS').addEventListener('click',()=>setV('S'));$('#vT').addEventListener('click',()=>setV('T'));
+const setV=v=>{view=v;['N','P','B','T','A','K','C','S','R','X','L','Y','V','F'].forEach(k=>{const e=$('#v'+k);if(e)e.className=k===v?'on':''});$('#vBB').className=(v==='B'||v==='T')?'on':'';$('#vBB').textContent=v==='B'?'Buildings: Contents ▾':v==='T'?'Buildings: Status ▾':'Buildings ▾';$('#ddm').style.display='none';draw()};
+$('#vP').addEventListener('click',()=>setV('P'));$('#vB').addEventListener('click',()=>setV('B'));$('#vN').addEventListener('click',()=>setV('N'));$('#vC').addEventListener('click',()=>setV('C'));$('#vS').addEventListener('click',()=>setV('S'));$('#vT').addEventListener('click',()=>setV('T'));
 $('#vBB').addEventListener('click',e=>{e.stopPropagation();const d=$('#ddm');if(d.style.display==='flex'){d.style.display='none';return}const r=$('#vBB').getBoundingClientRect();d.style.left=r.left+'px';d.style.top=(r.bottom+4)+'px';d.style.display='flex'});
-document.addEventListener('click',()=>{const d=$('#ddm');if(d)d.style.display='none'});window.addEventListener('scroll',()=>{const d=$('#ddm');if(d)d.style.display='none'});$('#vI').addEventListener('click',()=>setV('I'));$('#vA').addEventListener('click',()=>setV('A'));$('#vK').addEventListener('click',()=>setV('K'));if($('#vX'))$('#vX').addEventListener('click',()=>setV('X'));$('#vL').addEventListener('click',()=>setV('L'));if($('#vY'))$('#vY').addEventListener('click',()=>setV('Y'));$('#vR').addEventListener('click',()=>setV('R'));
+document.addEventListener('click',()=>{const d=$('#ddm');if(d)d.style.display='none'});window.addEventListener('scroll',()=>{const d=$('#ddm');if(d)d.style.display='none'});$('#vA').addEventListener('click',()=>setV('A'));$('#vK').addEventListener('click',()=>setV('K'));if($('#vX'))$('#vX').addEventListener('click',()=>setV('X'));$('#vL').addEventListener('click',()=>setV('L'));if($('#vY'))$('#vY').addEventListener('click',()=>setV('Y'));$('#vR').addEventListener('click',()=>setV('R'));
 $('#csv').addEventListener('click',csv);
 navGroups();
 draw();

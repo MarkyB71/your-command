@@ -2,7 +2,6 @@
    A "what if" page: drag crewmates between crews and see how each crew's bonuses change.
    Nothing here changes the game. Bonuses use the site's own crewMult (same maths as Best crew). */
 import {fillFaces} from './faces.js?v=1';
-const BETA=true; /* live for everyone since 2026-10-09 */
 const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
 .cp-bar select,.cp-bar input,.cp-bar button{font-size:15px;padding:6px 10px}
@@ -36,7 +35,6 @@ const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=nu
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
 const S={plan:null,orig:null,sel:null,job:'',q:'',best:false};
-const BEST_BETA=/[?&]beta=1(&|$)/.test(location.search); /* 'Best crew for each job' button inside the planner: beta */
 const POOL='pool';
 const store=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
@@ -93,7 +91,7 @@ export function drawCrewPlan(m){
     qs.placeholder='Find a crew';qs.value=S.q;qs.addEventListener('input',()=>{S.q=qs.value;const p=qs.selectionStart;draw();const n=m.querySelector('.cp-bar input');n.focus();n.setSelectionRange(p,p)});
     rs.addEventListener('click',()=>{S.plan=JSON.parse(JSON.stringify(S.orig));S.plan[POOL]=[];S.sel=null;save(key,null);draw()});
     const l1=el('label',null,'Show ');l1.appendChild(js);[l1,qs,rs].forEach(x=>bar.appendChild(x));
-    if(BEST_BETA){const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
+    {const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
       bb.addEventListener('click',()=>{S.best=!S.best;draw()});bar.appendChild(bb)}
     m.appendChild(bar);
     if(S.best){drawBest();return}
@@ -133,15 +131,14 @@ export function drawCrewPlan(m){
   draw();
 }
 
-/* Adds "Crew planner" to the bottom of the Fleet menu */
-if(BETA){
+/* Adds "Crew planner" to the Planners menu, before Travel */
+{
   const hook=()=>{
-    const w=document.getElementById('vW'),main=document.getElementById('main');
-    if(BEST_BETA&&w&&w.style.display!=='none')w.style.display='none';
-    if(!w||!main||document.getElementById('vQ'))return;
-    const b=document.createElement('button');b.id='vQ';b.textContent='Crew planner';const vr=document.getElementById('vR');if(BEST_BETA&&vr)vr.before(b);else w.after(b);
+    const vr=document.getElementById('vR'),main=document.getElementById('main');
+    if(!vr||!main||document.getElementById('vQ'))return;
+    const b=document.createElement('button');b.id='vQ';b.textContent='Crew planner';vr.before(b);
     b.addEventListener('click',()=>{
-      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */
       b.className='on';drawCrewPlan(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vQ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);

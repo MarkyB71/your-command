@@ -48,7 +48,6 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-kids>.pc-br{padding:7px 0}
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
 const S={prod:170,amt:100,choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
-const USEB=true; /* 'Use my stock on …' dropdown: live 2026-10-09 */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -57,8 +56,7 @@ function isOpen(key,d){return S.closed.has(key)?false:(S.opened.has(key)||S.all)
 export function drawChain(m){
   if(!document.getElementById('pc-css')){const st=el('style');st.id='pc-css';st.textContent=CSS;document.head.appendChild(st)}
   let raws={},pool={};
-  const BETA=true;/* stock on cards + larger layout: live for everyone since 2026-10-09 */
-  const Y=BETA?window.YIC:null,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
+  const Y=window.YIC,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
   const have=id=>!Y||id>=1000?null:(ai===null?Y.pooled[id]:(Y.tot[ai]||{})[id])||0;
   const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');
   const spots=id=>{const out=[];(Y&&Y.asts||[]).forEach((a,i)=>{if(ai!==null&&i!==ai)return;(a.buildings||[]).forEach(b=>{const v=b.items&&b.items[id];if(v)out.push([a.name,b.name+(b.lot?' · lot '+b.lot:''),v])})});return out.sort((x,y)=>y[2]-x[2])};
@@ -99,8 +97,8 @@ export function drawChain(m){
     return br}
   const M0=m;
   function draw(){m=M0;
-    raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root'+(BETA?' pc-big':''));host.appendChild(m);
-    if(BETA)m.appendChild(el('h2','pc-title','The SkippyChain'));
+    raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
+    m.appendChild(el('h2','pc-title','The SkippyChain'));
     m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     const ids=Object.keys(makers).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
@@ -113,7 +111,7 @@ export function drawChain(m){
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add('r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);
     [l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
-    if(USEB&&Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
+    if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.appendChild(us)}
     m.appendChild(bar);
@@ -125,40 +123,21 @@ export function drawChain(m){
   draw();
 }
 
-/* Adds the SkippyChain button. Beta: its own gold button before Fleet/Logistics, plus menu tidy-ups. Live: inside the Stock menu as "Production chain". */
+/* Adds The SkippyChain button (gold) next to Today's Workload, in the #seg0 group that app.js builds. */
 {
-  const BETA_BTN=true; /* SkippyChain button + menu tidy: live since 2026-10-09 */
-  const tidy=()=>{ /* beta only: hide Planner, rename Stocklist and move it to the far right */
-    const vi=document.getElementById('vI');if(vi&&vi.style.display!=='none')vi.style.display='none';
-    const csv=document.getElementById('csv');
-    if(csv){if(csv.textContent!=='Download your full stock list')csv.textContent='Download your full stock list';
-      const p=csv.parentElement;if(p&&p.lastElementChild!==csv)p.appendChild(csv);
-      if(!document.getElementById('csv-css')){const st=document.createElement('style');st.id='csv-css';st.textContent='#csv{margin-left:auto}';document.head.appendChild(st)}}
-    /* beta: Today's Workload + The SkippyChain first, then the asteroid box, then the other menus */
-    if(/[?&]beta=1(&|$)/.test(location.search)){
-      const ast=document.getElementById('ast'),vn=document.getElementById('vN'),vh=document.getElementById('vH');
-      if(ast&&vn&&vh){let s0=document.getElementById('seg0');
-        if(!s0){s0=document.createElement('div');s0.id='seg0';s0.className='seg'}
-        if(s0.parentElement!==ast.parentElement||s0.nextElementSibling!==ast)ast.before(s0);
-        if(vn.parentElement!==s0||vn.nextElementSibling!==vh){s0.appendChild(vn);s0.appendChild(vh)}}}
-  };
+  const CSS='#vH{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#vH:hover,#vH:focus-visible,#vH.on{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';
   const hook=()=>{
-    if(BETA_BTN)tidy();
-    const vi=document.getElementById('vI'),lg=document.querySelector('button[data-g="Fleet"]')||document.querySelector('button[data-g="Logistics"]'),main=document.getElementById('main');
-    if(!vi||!main||document.getElementById('vH')||(BETA_BTN&&!lg))return;
-    const b=document.createElement('button');b.id='vH';
-    if(BETA_BTN){b.textContent='The SkippyChain';lg.before(b);
-      if(!document.getElementById('vH-css')){const st=document.createElement('style');st.id='vH-css';st.textContent='#vH{color:#ffd24a!important;font-weight:600;transition:box-shadow .2s,color .2s,border-color .2s}#vH:hover,#vH:focus-visible,#vH.on{color:#ffe680!important;border-color:#ffd24a!important;box-shadow:0 0 6px rgba(255,210,74,.9),0 0 18px rgba(255,190,40,.55)!important;text-shadow:0 0 6px rgba(255,210,74,.7)}';document.head.appendChild(st)}}
-    else{b.textContent='Production chain';vi.after(b)}
-    const grp=()=>[...document.querySelectorAll('button')].find(x=>/^Stock/.test(x.textContent)&&!x.id.match(/^v[A-Z]$/));
+    const vn=document.getElementById('vN'),main=document.getElementById('main');
+    if(!vn||!main||document.getElementById('vH'))return;
+    if(!document.getElementById('vH-css')){const st=document.createElement('style');st.id='vH-css';st.textContent=CSS;document.head.appendChild(st)}
+    const b=document.createElement('button');b.id='vH';b.textContent='The SkippyChain';vn.after(b);
     b.addEventListener('click',e=>{
       e.stopPropagation();
-      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */
       b.className='on';document.querySelectorAll('.ddm').forEach(d=>d.style.display='none');
-      if(!BETA_BTN){const g=grp();if(g){g.classList.add('on');g.textContent='Stock: Production chain ▾'}}
       drawChain(main);
     });
   };
-  document.addEventListener('click',e=>{const b=document.getElementById('vH'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b){b.className='';const g=[...document.querySelectorAll('button')].find(x=>/^Stock: Production chain/.test(x.textContent));if(g)g.textContent='Stock ▾'}},true);
+  document.addEventListener('click',e=>{const b=document.getElementById('vH'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700); /* keeps the button in place if the header is rebuilt on refresh */
 }
