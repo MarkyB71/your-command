@@ -1,6 +1,8 @@
 <?php
 // History (activity log) for a wallet's crews. Reads public game data only; never changes anything in the game.
-// ?wallet=0x… → the latest 100 actions for each crew (deduplicated, newest first). Cached 10 minutes.
+// ?wallet=0x…&range=100|7|30|90|all
+//   100 (default) → the latest 100 actions for each crew; 7/30/90 → everything in the last N days; all → everything.
+// Deduplicated, newest first. Cached 10 minutes (30 for "all"). Long ranges page back through each crew's log.
 require __DIR__ . '/_api.php';
 
 $default = std_addr(DEFAULT_WALLET);
@@ -11,8 +13,10 @@ if ($wallet !== $default && !in_array('*', $allowed, true) && !in_array($wallet,
   fail(403, 'This server is not set up to show that wallet.');
 }
 
-$cf = $CACHE . '/history2_' . sha1($wallet) . '.json';
-if (is_file($cf) && time() - filemtime($cf) < 600) { readfile($cf); exit; }
+$range = $_GET['range'] ?? '100';
+if (!in_array($range, ['100', '7', '30', '90', 'all'], true)) $range = '100';
+$cf = $CACHE . '/history3_' . $range . '_' . sha1($wallet) . '.json';
+if (is_file($cf) && time() - filemtime($cf) < ($range === 'all' ? 1800 : 600)) { readfile($cf); exit; }
 
 // fair use (same limit as api.php)
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -47,27 +51,40 @@ function http_get_json($url, $token) {
 ]);
 
 $token = get_token();
-$out = ['wallet' => $wallet, 'fetched' => $now, 'crews' => count($crews), 'tried' => []];
+@set_time_limit(180);
+$start = microtime(true);
+$cutoff = ctype_digit($range) && $range !== '100' ? $now - intval($range) * 86400 : 0;
+$pageSize = 100; // the game's own page size
+$maxPages = $range === '100' ? 1 : ($range === 'all' ? 50 : 20);
+$out = ['wallet' => $wallet, 'fetched' => $now, 'range' => $range, 'crews' => count($crews), 'tried' => [], 'partial' => false];
 $types = [];
 $rows = [];
 foreach (array_slice($crews, 0, 80) as $c) {
   $hex = '0x' . dechex(intval($c['id']) * 65536 + 1); // crew label = 1
-  $url = API . '/v2/entities/' . $hex . '/activity?page=1&pageSize=100';
-  [$code, $j, $hdr] = http_get_json($url, $token);
-  if ($code === 401) { $token = get_token(true); [$code, $j, $hdr] = http_get_json($url, $token); }
-  $n = is_array($j) ? count($j) : 0;
-  $out['tried'][] = [$c['id'], $code, $n];
-  if (is_array($j)) foreach ($j as $a) {
-    $ev = $a['event']['name'] ?? ($a['event']['event'] ?? ($a['name'] ?? '?'));
-    $types[$ev] = ($types[$ev] ?? 0) + 1;
-    {
+  $got = 0; $code = 0;
+  for ($page = 1; $page <= $maxPages; $page++) {
+    if (microtime(true) - $start > 150) { $out['partial'] = true; break 2; } // stay inside the server's time limit
+    $url = API . '/v2/entities/' . $hex . '/activity?page=' . $page . '&pageSize=' . $pageSize;
+    [$code, $j, $hdr] = http_get_json($url, $token);
+    if ($code === 401) { $token = get_token(true); [$code, $j, $hdr] = http_get_json($url, $token); }
+    if (!is_array($j) || !$j) break;
+    $oldest = PHP_INT_MAX;
+    foreach ($j as $a) {
+      $ts = $a['event']['timestamp'] ?? 0; $oldest = min($oldest, $ts);
+      if ($cutoff && $ts < $cutoff) continue;
+      $ev = $a['event']['name'] ?? ($a['event']['event'] ?? ($a['name'] ?? '?'));
       $id = $a['id'] ?? (($a['event']['transactionHash'] ?? '') . ':' . ($a['event']['logIndex'] ?? ''));
       if (isset($rows[$id])) continue;
+      $types[$ev] = ($types[$ev] ?? 0) + 1;
       $v = $a['event']['returnValues'] ?? [];
       unset($v['caller']);
-      $rows[$id] = ['t' => $a['event']['timestamp'] ?? 0, 'n' => $ev, 'c' => $c['id'], 'v' => $v, 'x' => $a['event']['transactionHash'] ?? ''];
+      $rows[$id] = ['t' => $ts, 'n' => $ev, 'c' => $c['id'], 'v' => $v, 'x' => $a['event']['transactionHash'] ?? ''];
+      $got++;
     }
+    if (count($j) < $pageSize || ($cutoff && $oldest < $cutoff)) break;
+    if ($page === $maxPages) $out['partial'] = true;
   }
+  $out['tried'][] = [$c['id'], $code, $got];
 }
 arsort($types);
 $out['types'] = $types;

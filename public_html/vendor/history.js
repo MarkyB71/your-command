@@ -25,7 +25,8 @@ const CATS=[
   ['other','Other','•',()=>true]];
 const cat=n=>CATS.find(c=>c[3](n));
 const words=n=>n.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()).toLowerCase().replace(/^./,c=>c.toUpperCase());
-let H=null,load=null;const S={cat:'',q:'',crew:'',show:300};
+const HC={},LD={};const S={cat:'',q:'',crew:'',show:300,range:'100'};
+const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
 export function drawHistory(m){
   if(!document.getElementById('hl-css')){const st=el('style');st.id='hl-css';st.textContent=CSS;document.head.appendChild(st)}
@@ -89,10 +90,13 @@ export function drawHistory(m){
   function draw(){
     m.innerHTML='';
     m.appendChild(el('h2','hl-title','Activity log'));
-    if(!H){m.appendChild(el('div','note','Loading your crews\' history from the game… (this can take up to a minute the first time)'));return}
-    if(H.error){m.appendChild(el('div','note','Could not load the history: '+esc(H.error)));return}
-    m.appendChild(el('div','note','Everything your crews have done, newest first – the latest 100 actions for each crew, straight from the game\'s records. Times are in your local time.'));
-    const bar=el('div','hl-bar'),cs=el('select'),cr=el('select'),q=el('input');
+    const H=HC[S.range];
+    const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
+    rs.addEventListener('change',()=>{S.range=rs.value;S.show=300;S.crew='';fetchRange();draw()});
+    if(!H||H.error){const b=el('div','hl-bar');b.appendChild(rs);m.appendChild(b);
+      m.appendChild(el('div','note',H?'Could not load the history: '+esc(H.error):'Loading '+(S.range==='100'?'your crews\' latest actions':RANGES.find(r=>r[0]===S.range)[1].toLowerCase())+' from the game… '+(S.range==='all'||S.range==='90'?'This one can take a couple of minutes the first time.':'This can take up to a minute the first time.')));return}
+    m.appendChild(el('div','note','Everything your crews have done, newest first, straight from the game\'s records – '+(S.range==='100'?'the latest 100 actions for each crew':RANGES.find(r=>r[0]===S.range)[1].toLowerCase())+'. Times are in your local time.'+(H.partial?' <b style="color:#ffb547">Very long history – showing as much as could be fetched in one go.</b>':'')));
+    const bar=el('div','hl-bar'),cs=el('select'),cr=el('select'),q=el('input');bar.appendChild(rs);
     const rows=H.rows||[];const cnt={};rows.forEach(r=>{const c=cat(r.n)[0];cnt[c]=(cnt[c]||0)+1});
     cs.innerHTML='<option value="">All actions ('+rows.length.toLocaleString()+')</option>'+CATS.filter(c=>cnt[c[0]]).map(c=>'<option value="'+c[0]+'"'+(S.cat===c[0]?' selected':'')+'>'+c[2]+' '+esc(c[1])+' ('+cnt[c[0]].toLocaleString()+')</option>').join('');
     const crews=[...new Set(rows.map(r=>r.c))].map(id=>[id,crewName[id]||('Crew #'+id)]).sort((a,b)=>{const ua=/^Crew #\d+$/.test(a[1]),ub=/^Crew #\d+$/.test(b[1]);return ua!==ub?(ua?1:-1):ua?a[0]-b[0]:a[1].localeCompare(b[1])}); /* named crews first, unnamed ones at the bottom */
@@ -113,7 +117,9 @@ export function drawHistory(m){
     if(list.length>S.show){const b=el('button','hl-more','Show more ('+(list.length-S.show).toLocaleString()+' left)');b.addEventListener('click',()=>{S.show+=500;draw()});m.appendChild(b)}
   }
   draw();
-  if(!H&&!load)load=fetch('history.php?wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{H=j}).catch(e=>{H={error:String(e)}}).finally(()=>{load=null;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))});
+  function fetchRange(){const k=S.range;if(HC[k]||LD[k])return;
+    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
+  fetchRange();
 }
 
 /* Adds "Activity log" to the Logistics menu, after Deliveries */
