@@ -405,7 +405,7 @@ function navGroups(){
  })()}
  if(!window.__imgQ){window.__imgQ=1;let fly=0;setInterval(()=>{document.querySelectorAll('img[data-src]:not([data-busy])').forEach(img=>{if(fly>=3)return;img.dataset.busy='1';fly++;const n=+(img.dataset.n||0);const done=ok=>{fly--;img.onload=img.onerror=null;if(ok){img.removeAttribute('data-src');return}img.dataset.n=n+1;if(n+1>=6){img.removeAttribute('data-src');img.style.visibility='hidden';return}setTimeout(()=>img.removeAttribute('data-busy'),1500*(n+1))};img.onload=()=>done(true);img.onerror=()=>done(false);img.src=img.dataset.src+(n?'&try='+n:'')})},250)}
  if(!window.__imgRetry){window.__imgRetry=1;document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'||t.dataset.retry==null)return;const n=+t.dataset.retry;if(n>=5){t.style.visibility='hidden';return}t.dataset.retry=n+1;const base=t.getAttribute('src').replace(/&try=\d+$/,'');setTimeout(()=>{t.src=base+'&try='+(n+1)},1500+Math.random()*2500*(n+1))},true)}
- const seg=$('#vO')&&$('#vO').parentElement;if(!seg||seg.dataset.grouped)return;seg.dataset.grouped='1';
+ const seg=document.querySelector('header span.seg');if(!seg||seg.dataset.grouped)return;seg.dataset.grouped='1';
  if(!$('#vV')&&$('#vR')){const b=document.createElement('button');b.id='vV';b.textContent='Deliveries';b.addEventListener('click',()=>setV('V'));$('#vR').after(b)}
  
  if(!$('#vF')&&$('#vX')){const b=document.createElement('button');b.id='vF';b.textContent='Lot resources';b.addEventListener('click',()=>setV('F'));$('#vX').after(b)}
