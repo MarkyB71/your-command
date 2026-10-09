@@ -64,6 +64,7 @@ foreach (array_slice($crews, 0, 80) as $c) {
   $got = 0; $code = 0;
   for ($page = 1; $page <= $maxPages; $page++) {
     if (microtime(true) - $start > 150) { $out['partial'] = true; break 2; } // stay inside the server's time limit
+    if ($range !== '100') usleep(200000); // longer timeframes read many pages – go gently on the game's server
     $url = API . '/v2/entities/' . $hex . '/activity?page=' . $page . '&pageSize=' . $pageSize;
     [$code, $j, $hdr] = http_get_json($url, $token);
     if ($code === 401) { $token = get_token(true); [$code, $j, $hdr] = http_get_json($url, $token); }
