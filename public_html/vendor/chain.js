@@ -114,7 +114,7 @@ export function drawChain(m){
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);
     [l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
     if(USEB&&Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
-      us.innerHTML='<option value="">Don\'t use my stock</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
+      us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.appendChild(us)}
     m.appendChild(bar);
     const w=el('div','pc-wrap');w.appendChild(node(S.prod,S.amt,[],'r'));m.appendChild(w);
