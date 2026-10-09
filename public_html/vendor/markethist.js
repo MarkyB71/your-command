@@ -49,9 +49,9 @@ export function drawMarketHistory(m){
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
     rs.addEventListener('change',()=>{S.range=rs.value;S.show=200;fetchRange();draw()});
     if(!H||H.error){const b=el('div','mh-bar');b.appendChild(rs);m.appendChild(b);
-      m.appendChild(el('div','note',H?'Could not load the market history: '+esc(H.error):'Reading the trade logs of every marketplace in the belt… '+(S.range==='100'?'this takes about half a minute the first time.':'this can take a couple of minutes the first time.')));return}
+      m.appendChild(el('div','note',H?'Could not load the market history: '+esc(H.error):'Reading the trade logs of every marketplace in the belt… The very first time this can take a couple of minutes – it reads gently, one marketplace at a time, so it doesn\'t strain the game\'s server. After that it\'s quick for everyone.'));return}
     const T=H.trades||[],MK=H.markets||{};
-    m.appendChild(el('div','note','Every trade on every marketplace in the belt, newest first – '+esc(RANGES.find(r=>r[0]===S.range)[1].toLowerCase())+'. Prices are per unit (per kg for bulk goods). Your crews are shown in gold.'+(H.partial?' <b style="color:#ffb547">Very long history – showing as much as could be read in one go.</b>':'')));
+    m.appendChild(el('div','note','Every trade on every marketplace in the belt, newest first – '+esc(RANGES.find(r=>r[0]===S.range)[1].toLowerCase())+'. Prices are per unit (per kg for bulk goods). Your crews are shown in gold.'+(!H.complete&&S.range!=='100'?' <b style="color:#ffb547">Older trades are still being gathered a little at a time ('+H.backfilling+' marketplace'+(H.backfilling===1?'':'s')+' to go), so the longer timeframes will fill in over the next few hours.</b>':'')+' <span style="color:#8b9ab0">Updated '+esc(new Date(H.fetched*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+'.</span>'));
     const bar=el('div','mh-bar'),ps=el('select'),ms=el('select'),me=el('label'),q=el('input');
     const prods=[...new Set(T.map(r=>r[2]))].sort((a,b)=>pName(a).localeCompare(pName(b)));
     ps.innerHTML='<option value="">All products</option>'+prods.map(p=>'<option value="'+p+'"'+(String(p)===S.prod?' selected':'')+'>'+esc(pName(p))+'</option>').join('');
