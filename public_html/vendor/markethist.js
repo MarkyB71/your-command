@@ -90,8 +90,8 @@ export function drawMarketHistory(m){
   draw();fetchRange();
 }
 
-/* Beta: adds "Market history" to the Trading menu, after Trade finder */
-if(/[?&]beta=1(&|$)/.test(location.search)){
+/* Adds "Market history" to the Trading menu, after Trade finder */
+{
   const hook=()=>{
     const y=document.getElementById('vY'),main=document.getElementById('main');
     if(!y||!main||document.getElementById('vM'))return;
