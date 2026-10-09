@@ -109,7 +109,7 @@ export function drawChain(m){
   draw();
 }
 
-/* Adds the SkippyChain button. Beta: its own gold button before Logistics, plus menu tidy-ups. Live: inside the Stock menu as "Production chain". */
+/* Adds the SkippyChain button. Beta: its own gold button before Fleet/Logistics, plus menu tidy-ups. Live: inside the Stock menu as "Production chain". */
 {
   const BETA_BTN=/[?&]beta=1(&|$)/.test(location.search);
   const tidy=()=>{ /* beta only: hide Planner, rename Stocklist and move it to the far right */
@@ -121,7 +121,7 @@ export function drawChain(m){
   };
   const hook=()=>{
     if(BETA_BTN)tidy();
-    const vi=document.getElementById('vI'),lg=document.querySelector('button[data-g="Logistics"]'),main=document.getElementById('main');
+    const vi=document.getElementById('vI'),lg=document.querySelector('button[data-g="Fleet"]')||document.querySelector('button[data-g="Logistics"]'),main=document.getElementById('main');
     if(!vi||!main||document.getElementById('vH')||(BETA_BTN&&!lg))return;
     const b=document.createElement('button');b.id='vH';
     if(BETA_BTN){b.textContent='The SkippyChain';lg.before(b);
