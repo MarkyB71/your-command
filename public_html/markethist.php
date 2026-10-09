@@ -18,12 +18,6 @@ if ($lock && !flock($lock, LOCK_EX | LOCK_NB)) {
   if ($fresh()) { readfile($mf); exit; }
 }
 
-function http_get_json($url, $token) {
-  $ch = curl_init($url);
-  curl_setopt_array($ch, [CURLOPT_HTTPHEADER => ['Accept: application/json', 'Authorization: Bearer ' . $token], CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30]);
-  $res = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-  return [$code, $res === false ? null : json_decode($res, true)];
-}
 
 @set_time_limit(180);
 $start = microtime(true);
@@ -38,15 +32,33 @@ $markets = [];
 foreach ($mk as $b) $markets[$b['id']] = ['name' => $b['Name']['name'] ?? ('Marketplace #' . $b['id']), 'ast' => $b['meta']['asteroid']['name'] ?? null];
 
 $token = get_token();
+// fetch many pages at once (12 at a time) – 200+ marketplaces one by one would be far too slow
+function get_many($urls, $token) {
+  $mh = curl_multi_init(); $hs = [];
+  foreach ($urls as $k => $u) {
+    $ch = curl_init($u);
+    curl_setopt_array($ch, [CURLOPT_HTTPHEADER => ['Accept: application/json', 'Authorization: Bearer ' . $token], CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30]);
+    curl_multi_add_handle($mh, $ch); $hs[$k] = $ch;
+  }
+  do { $st = curl_multi_exec($mh, $running); if ($running) curl_multi_select($mh, 1.0); } while ($running && $st === CURLM_OK);
+  $out = [];
+  foreach ($hs as $k => $ch) { $out[$k] = [curl_getinfo($ch, CURLINFO_HTTP_CODE), json_decode(curl_multi_getcontent($ch), true)]; curl_multi_remove_handle($mh, $ch); curl_close($ch); }
+  curl_multi_close($mh);
+  return $out;
+}
 $trades = []; $seen = []; $partial = false; $types = [];
-foreach (array_keys($markets) as $mid) {
-  $hex = '0x' . dechex(intval($mid) * 65536 + 5); // building label = 5
-  for ($page = 1; $page <= $maxPages; $page++) {
-    if (microtime(true) - $start > 150) { $partial = true; break 2; }
-    $url = API . '/v2/entities/' . $hex . '/activity?page=' . $page . '&pageSize=100';
-    [$code, $j] = http_get_json($url, $token);
-    if ($code === 401) { $token = get_token(true); [$code, $j] = http_get_json($url, $token); }
-    if (!is_array($j) || !$j) break;
+$todo = array_fill_keys(array_keys($markets), 1); // marketplace id => next page to read
+while ($todo) {
+  if (microtime(true) - $start > 140) { $partial = true; break; }
+  $batch = array_slice($todo, 0, 12, true);
+  $urls = [];
+  foreach ($batch as $mid => $page) $urls[$mid] = API . '/v2/entities/0x' . dechex(intval($mid) * 65536 + 5) . '/activity?page=' . $page . '&pageSize=100';
+  $res = get_many($urls, $token);
+  if (array_filter($res, fn($r) => $r[0] === 401)) { $token = get_token(true); continue; }
+  foreach ($batch as $mid => $page) {
+    unset($todo[$mid]);
+    $j = $res[$mid][1];
+    if (!is_array($j) || !$j) continue;
     $oldest = PHP_INT_MAX;
     foreach ($j as $a) {
       $e = $a['event'] ?? []; $n = $e['name'] ?? ($e['event'] ?? '?'); $ts = $e['timestamp'] ?? 0;
@@ -63,8 +75,9 @@ foreach (array_keys($markets) as $mid) {
         intval($isSell ? ($v['callerCrew']['id'] ?? 0) : ($v['buyerCrew']['id'] ?? 0)),
         intval($isSell ? ($v['sellerCrew']['id'] ?? 0) : ($v['callerCrew']['id'] ?? 0))];
     }
-    if (count($j) < 100 || ($cutoff && $oldest < $cutoff)) break;
-    if ($page === $maxPages && $range !== '100') $partial = true;
+    $more = count($j) >= 100 && !($cutoff && $oldest < $cutoff) && $range !== '100';
+    if ($more && $page < $maxPages) $todo[$mid] = $page + 1;   // goes to the back of the queue
+    elseif ($more) $partial = true;
   }
 }
 usort($trades, fn($a, $b) => $b[0] <=> $a[0]);
