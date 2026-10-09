@@ -549,7 +549,7 @@ function navGroups(){
   b.addEventListener('click',e=>{e.stopPropagation();p.style.display=p.style.display==='none'?'block':'none'});
   p.addEventListener('click',e=>{e.stopPropagation();const c=e.target.closest('[data-c]');if(c){const t=c.dataset.c,done=()=>{c.textContent='Copied ✓';setTimeout(()=>{c.textContent='Copy'},2000)};if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>{const s=getSelection(),g=document.createRange();g.selectNodeContents(c.previousSibling);s.removeAllRanges();s.addRange(g);c.textContent='Press Ctrl+C'});else{const s=getSelection(),g=document.createRange();g.selectNodeContents(c.previousSibling);s.removeAllRanges();s.addRange(g);c.textContent='Press Ctrl+C'}}if(e.target.closest('[data-x]'))p.style.display='none'});
   document.addEventListener('click',()=>{p.style.display='none'});document.addEventListener('keydown',e=>{if(e.key==='Escape')p.style.display='none'})}
- const G=[['Fleet',['S','C','W']],['Logistics',['P','V','R']],['Asteroids',['A','X','F']],['Buildings',['B','T','L']]];
+ const G=/[?&]beta=1(&|$)/.test(location.search)?[['Fleet',['S','C']],['Logistics',['P','V']],['Asteroids',['A','X','F']],['Buildings',['B','T','L']],['Trading',['K','Y']],['Planners',['R']]]:[['Fleet',['S','C','W']],['Logistics',['P','V','R']],['Asteroids',['A','X','F']],['Buildings',['B','T','L']]];
  const old=$('#vBB');if(old)old.style.display='none';if($('#vO'))$('#vO').style.display='none';
  const menus=[],btns=[];
  const closeAll=()=>menus.forEach(d=>d.style.display='none');
@@ -559,7 +559,7 @@ function navGroups(){
   b.addEventListener('click',e=>{e.stopPropagation();const open=d.style.display==='flex';closeAll();const old=$('#ddm');if(old)old.style.display='none';if(open)return;const r=b.getBoundingClientRect();d.style.left=r.left+'px';d.style.top=(r.bottom+4)+'px';d.style.display='flex'});
   d.addEventListener('click',()=>{closeAll();setTimeout(upd,0)});
   menus.push(d);btns.push([b,d,name]);frag.push(b);document.body.appendChild(d)});
- frag.push($('#vK'),$('#vY'));
+ frag.push(...['K','Y'].filter(k=>!G.some(g=>g[1].includes(k))).map(k=>$('#v'+k)));
  frag.forEach(e=>{if(e)seg.appendChild(e)});if(old)seg.appendChild(old);
  document.addEventListener('click',closeAll);window.addEventListener('scroll',closeAll);
  const upd=()=>btns.forEach(([b,d,name])=>{const on=d.querySelector('button.on');b.className=on?'on':'';b.textContent=(on?name+': '+on.textContent:name)+' ▾'});

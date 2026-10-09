@@ -139,7 +139,7 @@ if(BETA){
     const w=document.getElementById('vW'),main=document.getElementById('main');
     if(BEST_BETA&&w&&w.style.display!=='none')w.style.display='none';
     if(!w||!main||document.getElementById('vQ'))return;
-    const b=document.createElement('button');b.id='vQ';b.textContent='Crew planner';w.after(b);
+    const b=document.createElement('button');b.id='vQ';b.textContent='Crew planner';const vr=document.getElementById('vR');if(BEST_BETA&&vr)vr.before(b);else w.after(b);
     b.addEventListener('click',()=>{
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));
       b.className='on';drawCrewPlan(main)});

@@ -120,7 +120,7 @@ export function drawHistory(m){
 /* Beta: adds "Activity log" to the bottom of the Logistics menu */
 if(BETA){
   const hook=()=>{
-    const r=document.getElementById('vR'),main=document.getElementById('main');
+    const r=document.getElementById('vV'),main=document.getElementById('main');
     if(!r||!main||document.getElementById('vJ'))return;
     const b=document.createElement('button');b.id='vJ';b.textContent='Activity log';r.after(b);
     b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));b.className='on';drawHistory(main)});
