@@ -28,6 +28,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-also{font-size:11px;color:#8b9ab0}
 .pc-tog{cursor:pointer;color:#8fe3ff;font-size:12px;user-select:none;margin-top:2px}
 .pc-raws{margin-top:14px;background:#121a26;border:1px solid #2a3648;border-radius:8px;padding:10px 14px}
+.pc-have{font-size:12px;color:#8b9ab0}.pc-have.ok{color:#5fd38d}.pc-have.part{color:#ffb547}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}`;
 const S={prod:170,amt:100,choice:{},closed:new Set(),opened:new Set(),all:false};
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
@@ -38,7 +39,12 @@ function isOpen(key,d){return S.closed.has(key)?false:(S.opened.has(key)||S.all)
 export function drawChain(m){
   if(!document.getElementById('pc-css')){const st=el('style');st.id='pc-css';st.textContent=CSS;document.head.appendChild(st)}
   let raws={};
-  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fmt(qty)+'</div></div></div>';
+  const Y=window.YIC,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
+  const have=id=>!Y||id>=1000?null:(ai===null?Y.pooled[id]:(Y.tot[ai]||{})[id])||0;
+  const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');
+  const hv=(id,qty)=>{const h=have(id);if(h===null)return'';const c=h>=qty?'ok':h>0?'part':'';
+    return'<div class="pc-have '+c+'">'+(h>=qty?'✓ You have '+fmt(h):h>0?'You have '+fmt(h)+' · short '+fmt(qty-h):'None in stock')+where+'</div>'};
+  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fmt(qty)+'</div></div></div>'+hv(id,qty);
   function node(id,qty,path,key){
     const br=el('div','pc-br'),all=makers[id]||[],o=opts(id,path);
     if(path.includes(id)){br.appendChild(el('div','pc-n loop',head(id,qty)+'<span class="pc-t pc-lp">made earlier in this chain</span>'));return br}
@@ -62,7 +68,7 @@ export function drawChain(m){
     return br}
   function draw(){
     raws={};m.innerHTML='';
-    m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. Recipes from the game\'s own SDK.'));
+    m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     const ids=Object.keys(makers).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
     [['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000],['Products',x=>x<1000]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
@@ -76,8 +82,9 @@ export function drawChain(m){
     [l1,l2,b1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);
     const w=el('div','pc-wrap');w.appendChild(node(S.prod,S.amt,[],'r'));m.appendChild(w);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
-    m.appendChild(el('div','pc-raws','<h3>Raw materials in the open branches</h3>'+(r.length?r.map(([k,v])=>fmt(v)+' '+esc(N[k])).join('<br>'):'Open more branches to see them')));
+    m.appendChild(el('div','pc-raws','<h3>Raw materials in the open branches</h3>'+(r.length?r.map(([k,v])=>{const h=have(+k);return fmt(v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fmt(h):'have '+fmt(h))+')</span>')}).join('<br>'):'Open more branches to see them')));
   }
+  if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(m)})}
   draw();
 }
 
