@@ -47,7 +47,7 @@ let view='N',sortKey='name',sortDir=1;const open=new Set();
 const tot=asts.map(a=>{const t={};a.buildings.forEach(b=>{for(const p in b.items)t[p]=(t[p]||0)+b.items[p]});return t});
 const allP=[...new Set(tot.flatMap(t=>Object.keys(t)))];
 const pooled={};tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
-window.YIC={asts,tot,pooled};
+window.YIC={asts,tot,pooled,get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT}};
 function rows(){
  const q=$('#q').value.trim().toLowerCase(),ai=$('#ast').value,cl=$('#cls').value;
  const cols=ai===''?asts.map((a,i)=>i):[+ai];
