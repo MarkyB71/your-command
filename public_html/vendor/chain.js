@@ -42,7 +42,8 @@ function isOpen(key,d){return S.closed.has(key)?false:(S.opened.has(key)||S.all)
 export function drawChain(m){
   if(!document.getElementById('pc-css')){const st=el('style');st.id='pc-css';st.textContent=CSS;document.head.appendChild(st)}
   let raws={};
-  const Y=window.YIC,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
+  const BETA=/[?&]beta=1(&|$)/.test(location.search);/* stock on cards: beta only for now */
+  const Y=BETA?window.YIC:null,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
   const have=id=>!Y||id>=1000?null:(ai===null?Y.pooled[id]:(Y.tot[ai]||{})[id])||0;
   const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');
   const spots=id=>{const out=[];(Y&&Y.asts||[]).forEach((a,i)=>{if(ai!==null&&i!==ai)return;(a.buildings||[]).forEach(b=>{const v=b.items&&b.items[id];if(v)out.push([a.name,b.name+(b.lot?' · lot '+b.lot:''),v])})});return out.sort((x,y)=>y[2]-x[2])};
