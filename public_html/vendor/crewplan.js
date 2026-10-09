@@ -28,12 +28,15 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-none{font-size:13px;color:#8b9ab0}
 .cp-warn{font-size:12px;color:#ffb547}
 .cp-pool{background:#0f141c;border:1px dashed #2a3648;border-radius:10px;padding:10px;margin:0 0 12px}
+.cp-job{border:1px solid #2a3648;border-radius:8px;margin:0 0 8px;padding:8px 12px;background:#0f141c}
+.cp-job summary{cursor:pointer;font-size:15px}.cp-job table{width:100%;margin-top:8px;font-size:14px;border-collapse:collapse}.cp-job td{padding:4px 6px;border-top:1px solid #1a2230}.cp-job .num{text-align:right}
 .cp-pool h3{margin:0 0 6px;font-size:15px;color:#8b9ab0;font-weight:600}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
-const S={plan:null,orig:null,sel:null,job:'',q:''};
+const S={plan:null,orig:null,sel:null,job:'',q:'',best:false};
+const BEST_BETA=/[?&]beta=1(&|$)/.test(location.search); /* 'Best crew for each job' button inside the planner: beta */
 const POOL='pool';
 const store=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
@@ -89,7 +92,11 @@ export function drawCrewPlan(m){
     js.addEventListener('change',()=>{S.job=js.value;draw()});
     qs.placeholder='Find a crew';qs.value=S.q;qs.addEventListener('input',()=>{S.q=qs.value;const p=qs.selectionStart;draw();const n=m.querySelector('.cp-bar input');n.focus();n.setSelectionRange(p,p)});
     rs.addEventListener('click',()=>{S.plan=JSON.parse(JSON.stringify(S.orig));S.plan[POOL]=[];S.sel=null;save(key,null);draw()});
-    const l1=el('label',null,'Show ');l1.appendChild(js);[l1,qs,rs].forEach(x=>bar.appendChild(x));m.appendChild(bar);
+    const l1=el('label',null,'Show ');l1.appendChild(js);[l1,qs,rs].forEach(x=>bar.appendChild(x));
+    if(BEST_BETA){const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
+      bb.addEventListener('click',()=>{S.best=!S.best;draw()});bar.appendChild(bb)}
+    m.appendChild(bar);
+    if(S.best){drawBest();return}
 
     const pool=el('div','cp-pool','<h3>Spare bench – drop crewmates here to take them out of a crew</h3>'),ps=el('div','cp-slots');
     S.plan[POOL].forEach(id=>{const s=el('div','cp-slot');s.appendChild(mateEl(id,POOL));ps.appendChild(s)});
@@ -111,6 +118,18 @@ export function drawCrewPlan(m){
       dropZone(box,i);g.appendChild(box)});
     m.appendChild(g);fillFaces(m,cm);
   }
+  function drawBest(){
+    const col=v=>v>1.0001?'#4cd04c':v<0.9999?'#ff7a7a':'inherit',q=S.q.trim().toLowerCase();
+    const changedAny=crews.some((c,i)=>S.plan[i].join(',')!==S.orig[i].join(','));
+    m.appendChild(el('div','note','Each job lists your crews from best to worst'+(an?' on <b>'+esc(an)+'</b>':'')+(changedAny?', <b style="color:#ffd24a">using your planned crews</b>':'')+'. Same maths as the game: crewmate classes, titles and useful traits, plus the Habitat bonus (up to +20%) on speed jobs. Click a job to see every crew.'));
+    const idx=crews.map((c,i)=>i).filter(i=>S.plan[i].length&&(!an||crews[i].ast===an)&&(!q||crews[i].name.toLowerCase().includes(q)));
+    if(!idx.length){m.appendChild(el('div','note','No crews with crewmates here.'));return}
+    const jobs=S.job?CBJ.filter(j=>String(j[0])===S.job):CBJ;
+    jobs.forEach(([a,n])=>{const L=idx.map(i=>({i,v:mult(i,S.plan[i],a),o:mult(i,S.orig[i],a)})).sort((x,y)=>y.v-x.v||crews[x.i].name.localeCompare(crews[y.i].name)),b=L[0];
+      const d=el('details','cp-job','<summary><b>'+esc(n)+'</b> · best: '+esc(crews[b.i].name)+(an?'':' <span style="color:#8b9ab0">('+esc(crews[b.i].ast||'?')+')</span>')+' <b style="color:'+col(b.v)+'">'+pc(b.v)+'</b></summary>'+
+        '<table>'+L.map(x=>'<tr><td>'+esc(crews[x.i].name)+'</td><td style="color:#8b9ab0">'+esc(crews[x.i].ast||'–')+'</td><td class="num" style="color:'+col(x.v)+'">'+pc(x.v)+(Math.abs(x.v-x.o)>0.0001?' <span style="color:#8b9ab0">(was '+pc(x.o)+')</span>':'')+'</td></tr>').join('')+'</table>');
+      m.appendChild(d)})
+  }
   draw();
 }
 
@@ -118,6 +137,7 @@ export function drawCrewPlan(m){
 if(BETA){
   const hook=()=>{
     const w=document.getElementById('vW'),main=document.getElementById('main');
+    if(BEST_BETA&&w&&w.style.display!=='none')w.style.display='none';
     if(!w||!main||document.getElementById('vQ'))return;
     const b=document.createElement('button');b.id='vQ';b.textContent='Crew planner';w.after(b);
     b.addEventListener('click',()=>{
