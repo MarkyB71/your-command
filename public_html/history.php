@@ -12,7 +12,7 @@ if ($wallet !== $default && !in_array('*', $allowed, true) && !in_array($wallet,
 }
 $probe = !empty($_GET['probe']);
 
-$cf = $CACHE . '/history_' . ($probe ? 'p_' : '') . sha1($wallet) . '.json';
+$cf = $CACHE . '/history2_' . ($probe ? 'p_' : '') . sha1($wallet) . '.json';
 if (is_file($cf) && time() - filemtime($cf) < 600) { readfile($cf); exit; }
 
 // fair use (same limit as api.php)
@@ -51,6 +51,7 @@ $token = get_token();
 $out = ['wallet' => $wallet, 'fetched' => $now, 'crews' => count($crews), 'tried' => []];
 $types = [];
 $sample = [];
+$rows = [];
 foreach (array_slice($crews, 0, $probe ? 5 : 80) as $c) {
   $hex = '0x' . dechex(intval($c['id']) * 65536 + 1); // crew label = 1
   $url = API . '/v2/entities/' . $hex . '/activity?page=1&pageSize=' . ($probe ? 25 : 100);
@@ -62,11 +63,19 @@ foreach (array_slice($crews, 0, $probe ? 5 : 80) as $c) {
     $ev = $a['event']['name'] ?? ($a['event']['event'] ?? ($a['name'] ?? '?'));
     $types[$ev] = ($types[$ev] ?? 0) + 1;
     if ($probe && count($sample) < 6) $sample[] = $a;
+    if (!$probe) {
+      $id = $a['id'] ?? (($a['event']['transactionHash'] ?? '') . ':' . ($a['event']['logIndex'] ?? ''));
+      if (isset($rows[$id])) continue;
+      $v = $a['event']['returnValues'] ?? [];
+      unset($v['caller']);
+      $rows[$id] = ['t' => $a['event']['timestamp'] ?? 0, 'n' => $ev, 'c' => $c['id'], 'v' => $v, 'x' => $a['event']['transactionHash'] ?? ''];
+    }
   }
 }
 arsort($types);
 $out['types'] = $types;
 if ($probe) $out['sample'] = $sample;
+else { $rows = array_values($rows); usort($rows, fn($a, $b) => $b['t'] <=> $a['t']); $out['rows'] = $rows; }
 $json = json_encode($out);
 @file_put_contents($cf, $json, LOCK_EX);
 echo $json;
