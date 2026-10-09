@@ -46,16 +46,22 @@ function get_many($urls, $token) {
   curl_multi_close($mh);
   return $out;
 }
-$trades = []; $seen = []; $partial = false; $types = [];
+$trades = []; $seen = []; $partial = false; $types = []; $codes = []; $retry = [];
 $todo = array_fill_keys(array_keys($markets), 1); // marketplace id => next page to read
 while ($todo) {
   if (microtime(true) - $start > 140) { $partial = true; break; }
-  $batch = array_slice($todo, 0, 12, true);
+  $batch = array_slice($todo, 0, 6, true);
   $urls = [];
   foreach ($batch as $mid => $page) $urls[$mid] = API . '/v2/entities/0x' . dechex(intval($mid) * 65536 + 5) . '/activity?page=' . $page . '&pageSize=100';
   $res = get_many($urls, $token);
   if (array_filter($res, fn($r) => $r[0] === 401)) { $token = get_token(true); continue; }
+  $busy = false;
   foreach ($batch as $mid => $page) {
+    $code = $res[$mid][0]; $codes[$code] = ($codes[$code] ?? 0) + 1;
+    if ($code === 429 || $code >= 500 || $code === 0) { // Influence said "slow down" – try this page again shortly
+      $retry[$mid] = ($retry[$mid] ?? 0) + 1;
+      if ($retry[$mid] <= 3) { $busy = true; unset($todo[$mid]); $todo[$mid] = $page; continue; }
+    }
     unset($todo[$mid]);
     $j = $res[$mid][1];
     if (!is_array($j) || !$j) continue;
@@ -79,10 +85,11 @@ while ($todo) {
     if ($more && $page < $maxPages) $todo[$mid] = $page + 1;   // goes to the back of the queue
     elseif ($more) $partial = true;
   }
+  if ($busy) usleep(1500000);
 }
 usort($trades, fn($a, $b) => $b[0] <=> $a[0]);
 if ($range === '100') $trades = array_slice($trades, 0, 100);
 arsort($types);
-$out = json_encode(['fetched' => $now, 'range' => $range, 'partial' => $partial, 'markets' => $markets, 'trades' => $trades, 'types' => $types, 'secs' => round(microtime(true) - $start, 1)]);
+$out = json_encode(['fetched' => $now, 'range' => $range, 'partial' => $partial, 'markets' => $markets, 'trades' => $trades, 'types' => $types, 'secs' => round(microtime(true) - $start, 1), 'codes' => $codes]);
 @file_put_contents($mf, $out, LOCK_EX);
 echo $out;
