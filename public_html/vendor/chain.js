@@ -81,8 +81,8 @@ export function drawChain(m){
   draw();
 }
 
-/* Test hook: adds "Production chain" to the Stock menu when the URL has beta=1 */
-if(/[?&]beta=1(&|$)/.test(location.search)){
+/* Adds "Production chain" to the Stock menu */
+{
   const hook=()=>{
     const vi=document.getElementById('vI'),main=document.getElementById('main');
     if(!vi||!main||document.getElementById('vH'))return;
