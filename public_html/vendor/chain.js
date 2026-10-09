@@ -28,7 +28,10 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-also{font-size:11px;color:#8b9ab0}
 .pc-tog{cursor:pointer;color:#8fe3ff;font-size:12px;user-select:none;margin-top:2px}
 .pc-raws{margin-top:14px;background:#121a26;border:1px solid #2a3648;border-radius:8px;padding:10px 14px}
-.pc-have{font-size:12px;color:#8b9ab0}.pc-have.ok{color:#5fd38d}.pc-have.part{color:#ffb547}
+.pc-have{font-size:12px;color:#8b9ab0}.pc-have.click{cursor:pointer;text-decoration:underline dotted}
+.pc-where{font-size:11px;color:#b7c3d4;background:#0b1018;border:1px solid #2a3648;border-radius:6px;padding:4px 6px;line-height:1.45}
+.pc-where b{color:#e6ebf2;font-weight:600}.pc-have.ok{color:#5fd38d}.pc-have.part{color:#ffb547}
+.pc-wd>summary{list-style:none}.pc-wd>summary::-webkit-details-marker{display:none}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}`;
 const S={prod:170,amt:100,choice:{},closed:new Set(),opened:new Set(),all:false};
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
@@ -42,8 +45,12 @@ export function drawChain(m){
   const Y=window.YIC,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
   const have=id=>!Y||id>=1000?null:(ai===null?Y.pooled[id]:(Y.tot[ai]||{})[id])||0;
   const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');
+  const spots=id=>{const out=[];(Y&&Y.asts||[]).forEach((a,i)=>{if(ai!==null&&i!==ai)return;(a.buildings||[]).forEach(b=>{const v=b.items&&b.items[id];if(v)out.push([a.name,b.name+(b.lot?' · lot '+b.lot:''),v])})});return out.sort((x,y)=>y[2]-x[2])};
   const hv=(id,qty)=>{const h=have(id);if(h===null)return'';const c=h>=qty?'ok':h>0?'part':'';
-    return'<div class="pc-have '+c+'">'+(h>=qty?'✓ You have '+fmt(h):h>0?'You have '+fmt(h)+' · short '+fmt(qty-h):'None in stock')+where+'</div>'};
+    const txt=(h>=qty?'✓ You have '+fmt(h):h>0?'You have '+fmt(h)+' · short '+fmt(qty-h):'None in stock')+where;
+    if(!h)return'<div class="pc-have">'+txt+'</div>';
+    const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fmt(x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
+    return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
   const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fmt(qty)+'</div></div></div>'+hv(id,qty);
   function node(id,qty,path,key){
     const br=el('div','pc-br'),all=makers[id]||[],o=opts(id,path);
