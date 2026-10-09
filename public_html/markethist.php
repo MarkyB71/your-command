@@ -5,13 +5,13 @@
 require __DIR__ . '/_api.php';
 $range = $_GET['range'] ?? '100';
 if (!in_array($range, ['100', '7', '30', '90', 'all'], true)) $range = '100';
-$mf = $CACHE . '/markethist_' . $range . '.json';
+$mf = $CACHE . '/markethist2_' . $range . '.json';
 $keep = $range === 'all' ? 3600 : 900;
 $fresh = fn() => is_file($mf) && time() - filemtime($mf) < $keep;
 if ($fresh()) { readfile($mf); exit; }
 
 // only one visitor rebuilds a range at a time; others get the last copy (or wait for the new one)
-$lock = fopen($CACHE . '/markethist_' . $range . '.lock', 'c');
+$lock = fopen($CACHE . '/markethist2_' . $range . '.lock', 'c');
 if ($lock && !flock($lock, LOCK_EX | LOCK_NB)) {
   if (is_file($mf)) { readfile($mf); exit; }
   flock($lock, LOCK_EX);
