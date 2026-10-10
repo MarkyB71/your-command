@@ -12,9 +12,9 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .cp-nm{font-weight:600;font-size:17px}
 .cp-at{font-size:12px;color:#8b9ab0;text-align:right}
-.cp-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.cp-slot{min-height:92px;border:1px dashed #2a3648;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#3c4a60;font-size:12px}
-.cp-mate{width:100%;cursor:grab;user-select:none;border:1px solid #2a3648;border-radius:8px;background:#0b1018;padding:4px;text-align:center;font-size:11px;line-height:1.25;position:relative}
+.cp-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.cp-slot{min-width:0;overflow:hidden;min-height:92px;border:1px dashed #2a3648;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#3c4a60;font-size:12px}
+.cp-mate{width:100%;min-width:0;box-sizing:border-box;cursor:grab;user-select:none;border:1px solid #2a3648;border-radius:8px;background:#0b1018;padding:4px;text-align:center;font-size:11px;line-height:1.25;position:relative}
 .cp-mate img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:50% 0;border-radius:6px;background:#000;display:block}
 .cp-mate .n{color:#e6ebf2;font-weight:600;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cp-mate .c{color:#8fe3ff}
@@ -30,7 +30,7 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-job{border:1px solid #2a3648;border-radius:8px;margin:0 0 8px;padding:8px 12px;background:#0f141c}
 .cp-job summary{cursor:pointer;font-size:15px}.cp-job table{width:100%;margin-top:8px;font-size:14px;border-collapse:collapse}.cp-job td{padding:4px 6px;border-top:1px solid #1a2230}.cp-job .num{text-align:right}
 .cp-pool h3{margin:0 0 6px;font-size:15px;color:#8b9ab0;font-weight:600}
-.cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}`;
+.cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
