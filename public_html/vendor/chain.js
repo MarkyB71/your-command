@@ -38,7 +38,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-use{font-size:14px}
 .pc-mode{display:inline-flex;border:1px solid #2a3648;border-radius:8px;overflow:hidden}.pc-bar .pc-mode button{border:0;border-radius:0;background:#121a26;color:#8b9ab0}.pc-bar .pc-mode button.on{background:#1d3a52;color:#8fe3ff;font-weight:600}
 .pc-n.use{border-color:#2f5a7a}.pc-ndl{font-size:12px;color:#b7c3d4}.pc-big .pc-ndl{font-size:13px}
-.pc-n.sm{width:220px!important;position:relative}.pc-tip{position:fixed;z-index:9999;max-width:340px;background:#0b1018;border:1px solid #2f5a7a;border-radius:8px;padding:8px 11px;font-size:14px;line-height:1.45;color:#e6ebf2;box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none}.pc-tip>*{display:block}.pc-tip .pc-t,.pc-tip .pc-ndl,.pc-tip .pc-have,.pc-tip .pc-also{font-size:14px}.pc-tip .pc-where{margin-top:4px;font-size:13px}
+.pc-n.sm{width:220px!important;position:relative}.pc-tip{position:fixed;z-index:9999;max-width:340px;background:#0b1018;border:1px solid #2f5a7a;border-radius:8px;padding:8px 11px;font-size:14px;line-height:1.45;color:#e6ebf2;box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none}.pc-tip>*{display:block}.pc-tip .pc-need{color:#8fe3ff;font-weight:600;margin:2px 0}.pc-tip .pc-t,.pc-tip .pc-ndl,.pc-tip .pc-have,.pc-tip .pc-also{font-size:14px}.pc-tip .pc-where{margin-top:4px;font-size:13px}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
@@ -125,7 +125,9 @@ export function drawChain(m){
     let t='<b>'+esc(N[id])+'</b>';
     if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+'</div>');
       const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fmt(x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
-    if(via){t+='<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>';
+    if(via){const pa=path[path.length-1],per=via.inp[pa]/via.out[id];
+      t+='<span class="pc-need">Needs '+fmt(per)+' '+esc(N[pa])+' for each '+esc(N[id])+'</span>';
+      t+='<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>';
       const oth=Object.keys(via.inp).filter(k=>+k!==path[path.length-1]).map(k=>esc(N[k]));
       if(oth.length)t+='<span class="pc-ndl">Also needs: '+oth.join(', ')+'</span>'}
     if(!outs.length)t+='<span class="pc-t">'+(id>=1000?'Final build':'Not used in any further recipe')+'</span>';
