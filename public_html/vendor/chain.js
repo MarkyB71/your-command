@@ -99,7 +99,8 @@ export function drawChain(m){
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  const modeSw=()=>{const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
+  const TEST=/[?&]beta=1/.test(location.search);if(!TEST)S.mode='from';
+  const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){S.mode=v;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
