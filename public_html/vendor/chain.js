@@ -110,6 +110,8 @@ export function drawChain(m){
   const M0=m;
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
+  if(!window.__pcTipW){window.__pcTipW=1;addEventListener('scroll',()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'},true);
+    document.addEventListener('mouseover',e=>{const t=document.getElementById('pc-tip');if(t&&t.style.display!=='none'&&!e.target.closest('.pc-n'))t.style.display='none'})}
   if(!window.__pcStick){window.__pcStick=1;addEventListener('resize',()=>{const b=document.querySelector('.pc-bar.stick');if(b)stick(b)})}
   const TEST=/[?&]beta=1/.test(location.search);if(!TEST)S.mode='from';
   const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(TEST?Object.keys(users):[]).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
@@ -161,7 +163,7 @@ export function drawChain(m){
     const l1=el('label',null,'Product ');l1.appendChild(ps);
     [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
     const w=el('div','pc-wrap');w.appendChild(unode(S.prod,[],'u',0,null));m.appendChild(w)}
-  function draw(){m=M0;
+  function draw(){m=M0;tipHide();
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
     if(S.mode==='use'){drawUse();return}
