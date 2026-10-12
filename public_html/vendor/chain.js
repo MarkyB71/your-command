@@ -123,7 +123,8 @@ export function drawChain(m){
     (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
     const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>');
     let t='<b>'+esc(N[id])+'</b>';
-    if(Y&&id<1000){const v=have(id);t+='<span class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+where+'</span>'}
+    if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+'</div>');
+      const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fmt(x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
     if(via){t+='<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>';
       const oth=Object.keys(via.inp).filter(k=>+k!==path[path.length-1]).map(k=>esc(N[k]));
       if(oth.length)t+='<span class="pc-ndl">Also needs: '+oth.join(', ')+'</span>'}
