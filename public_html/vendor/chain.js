@@ -38,6 +38,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-use{font-size:14px}
 .pc-mode{display:inline-flex;border:1px solid #2a3648;border-radius:8px;overflow:hidden}.pc-bar .pc-mode button{border:0;border-radius:0;background:#121a26;color:#8b9ab0}.pc-bar .pc-mode button.on{background:#1d3a52;color:#8fe3ff;font-weight:600}
 .pc-n.use{border-color:#2f5a7a}.pc-ndl{font-size:12px;color:#b7c3d4}.pc-big .pc-ndl{font-size:13px}
+.pc-n.sm{width:220px!important;position:relative}.pc-tip{position:fixed;z-index:9999;max-width:340px;background:#0b1018;border:1px solid #2f5a7a;border-radius:8px;padding:8px 11px;font-size:14px;line-height:1.45;color:#e6ebf2;box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none}.pc-tip>*{display:block}.pc-tip .pc-t,.pc-tip .pc-ndl,.pc-tip .pc-have{font-size:14px}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
@@ -105,24 +106,32 @@ export function drawChain(m){
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
   const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){S.mode=v;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
+  const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
+  const tipHide=()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'};
+  const tipOn=(c,html)=>{c.addEventListener('mouseenter',()=>{const t=tipEl();t.innerHTML=html;t.style.display='block';
+      const r=c.getBoundingClientRect(),w=t.offsetWidth,h=t.offsetHeight;let x=r.right+10,y=r.top;
+      if(x+w>innerWidth-8)x=Math.max(8,r.left-w-10);if(y+h>innerHeight-8)y=Math.max(8,innerHeight-h-8);t.style.left=x+'px';t.style.top=y+'px'});
+    c.addEventListener('mouseleave',tipHide)};
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
     (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
-    let h='<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>';
-    if(Y&&id<1000){const v=have(id);h+='<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+where+'</div>'}
-    const c=el('div','pc-n'+(d?' use':''),h);
-    if(via){c.insertAdjacentHTML('beforeend','<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>');
+    const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>');
+    let t='<b>'+esc(N[id])+'</b>';
+    if(Y&&id<1000){const v=have(id);t+='<span class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+where+'</span>'}
+    if(via){t+='<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>';
       const oth=Object.keys(via.inp).filter(k=>+k!==path[path.length-1]).map(k=>esc(N[k]));
-      if(oth.length)c.insertAdjacentHTML('beforeend','<span class="pc-ndl">Also needs: '+oth.join(', ')+'</span>')}
-    if(!outs.length){c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(id>=1000?'Final build':'Not used in any further recipe')+'</span>');br.appendChild(c);return br}
+      if(oth.length)t+='<span class="pc-ndl">Also needs: '+oth.join(', ')+'</span>'}
+    if(!outs.length)t+='<span class="pc-t">'+(id>=1000?'Final build':'Not used in any further recipe')+'</span>';
+    tipOn(c,t);
+    if(!outs.length){br.appendChild(c);return br}
     const op=S.closed.has(key)?false:S.opened.has(key)?true:d<2;
-    const t=el('span','pc-tog',op?'◂ hide uses':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▸');
-    t.addEventListener('click',()=>{if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
+    const tg=el('span','pc-tog',op?'◂ hide uses':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▸');
+    tg.addEventListener('click',()=>{tipHide();if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(tg);
     br.appendChild(c);
     if(op){const k=el('div','pc-kids');outs.sort((a,b)=>N[a[0]].localeCompare(N[b[0]])).forEach(([o,p])=>k.appendChild(unode(o,path.concat(id),key+'/'+p.i+':'+o,d+1,p)));br.appendChild(k)}
     return br}
   function drawUse(){
-    m.appendChild(el('div','note','Pick a product. Everything it is used in branches out to the right. Two stages open to start with; click "show uses" to go further. Each card also lists the other inputs that recipe needs.'));
+    m.appendChild(el('div','note','Pick a product. Everything it is used in branches out to the right. Two stages open to start with; click "show uses" to go further. Hover over a card to see the recipe, the other inputs it needs, and your stock.'));
     const bar=el('div','pc-bar'),ps=el('select'),b2=el('button',null,'Close all');
     fillPs(ps);
     ps.addEventListener('change',()=>{S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
