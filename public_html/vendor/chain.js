@@ -39,6 +39,13 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-mode{display:inline-flex;border:1px solid #2a3648;border-radius:8px;overflow:hidden}.pc-bar .pc-mode button{border:0;border-radius:0;background:#121a26;color:#8b9ab0}.pc-bar .pc-mode button.on{background:#1d3a52;color:#8fe3ff;font-weight:600}
 .pc-n.use{border-color:#2f5a7a}.pc-ndl{font-size:12px;color:#b7c3d4}.pc-big .pc-ndl{font-size:13px}
 .pc-n.sm{width:220px!important;position:relative}.pc-tip{position:fixed!important;z-index:99999!important;max-width:340px;background:#0b1018;border:1px solid #2f5a7a;border-radius:8px;padding:8px 11px;font-size:14px;line-height:1.45;color:#e6ebf2;box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none}.pc-tip>*{display:block}.pc-tip .pc-need{color:#8fe3ff;font-weight:600;margin:2px 0}.pc-tip .pc-t,.pc-tip .pc-ndl,.pc-tip .pc-have,.pc-tip .pc-also{font-size:14px}.pc-tip .pc-where{margin-top:4px;font-size:13px}
+.pc-wrap.rtl>.pc-in{width:max-content;min-width:100%;display:flex;justify-content:flex-end}
+.rtl .pc-br{flex-direction:row-reverse}
+.rtl .pc-kids{padding-left:0;padding-right:34px}.pc-big .rtl .pc-kids{padding-left:0;padding-right:44px}
+.rtl .pc-kids::before{left:auto;right:0}
+.rtl .pc-kids>.pc-br::before,.rtl .pc-kids>.pc-br::after{left:auto;right:-17px}
+.pc-big .rtl .pc-kids>.pc-br::before,.pc-big .rtl .pc-kids>.pc-br::after{left:auto;right:-22px}
+.rtl .pc-tog{text-align:right}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
@@ -94,7 +101,7 @@ export function drawChain(m){
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fmt(v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
-    const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸');
+    const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
     t.addEventListener('click',()=>{if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
     br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
@@ -154,7 +161,7 @@ export function drawChain(m){
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
     if(S.mode==='use'){drawUse();return}
-    m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
+    m.appendChild(el('div','note','Pick a product. Its inputs branch out to the '+(TEST?'left':'right')+', back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     fillPs(ps);
     am.type='number';am.min=1;am.value=S.amt;am.style.width='90px';
@@ -168,7 +175,9 @@ export function drawChain(m){
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);
-    const w=el('div','pc-wrap');w.appendChild(node(S.prod,S.amt,[],'r'));m.appendChild(w);
+    const w=el('div','pc-wrap'+(TEST?' rtl':''));const inner=TEST?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(TEST)w.appendChild(inner);m.appendChild(w);
+    if(TEST)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
+    if(TEST)w.addEventListener('scroll',()=>{S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft});
     if(TEST)w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fmt(v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fmt(h):'have '+fmt(h))+')</span>')}).join('<br>'):'Open more branches to see them')));
