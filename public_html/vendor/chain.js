@@ -93,7 +93,7 @@ export function drawChain(m){
     const sel=(c,cur)=>{const s=el('select');
       if(isRaw){const m=el('option',null,'Mine it (raw)');m.value=-1;if(cur===-1)m.selected=true;s.appendChild(m)}
       o.forEach(x=>{const op=el('option');op.value=x.i;op.textContent=x.name;if(x===cur)op.selected=true;s.appendChild(op)});
-      s.addEventListener('change',()=>{S.choice[key]=+s.value;draw()});c.appendChild(s)};
+      s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;draw()});c.appendChild(s)};
     if(!all.length||!o.length||mine){const c=el('div','pc-n raw',head(id,qty));if(isRaw&&o.length)sel(c,-1);
       c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>');
       br.appendChild(c);raws[id]=(raws[id]||0)+qty;return br}
@@ -103,7 +103,7 @@ export function drawChain(m){
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fmt(v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
     const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
-    t.addEventListener('click',()=>{S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
+    t.addEventListener('click',()=>{anc(key,t);S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
     br.dataset.k=key;br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
@@ -150,8 +150,8 @@ export function drawChain(m){
     if(!outs.length){br.appendChild(c);return br}
     const op=S.closed.has(key)?false:S.opened.has(key)?true:d<2;
     const tg=el('span','pc-tog',op?'◂ hide uses':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▸');
-    tg.addEventListener('click',()=>{tipHide();if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(tg);
-    br.appendChild(c);
+    tg.addEventListener('click',()=>{tipHide();anc(key,tg);if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(tg);
+    br.dataset.k=key;    br.appendChild(c);
     if(op){const k=el('div','pc-kids');outs.sort((a,b)=>N[a[0]].localeCompare(N[b[0]])).forEach(([o,p])=>k.appendChild(unode(o,path.concat(id),key+'/'+p.i+':'+o,d+1,p)));br.appendChild(k)}
     return br}
   function drawUse(){
@@ -163,7 +163,10 @@ export function drawChain(m){
     const l1=el('label',null,'Product ');l1.appendChild(ps);
     [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
     const w=el('div','pc-wrap');w.appendChild(unode(S.prod,[],'u',0,null));m.appendChild(w)}
-  function draw(){m=M0;tipHide();
+  const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top}:null};
+  function draw(){const y=scrollY;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
+    if(S.anchor){const a=S.anchor;S.anchor=null;const c=M0.querySelector('[data-k="'+window.CSS.escape(a.k)+'"]>.pc-n');if(c)scrollBy(0,c.getBoundingClientRect().top-a.top)}}
+  function draw0(){m=M0;tipHide();
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
     if(S.mode==='use'){drawUse();return}
