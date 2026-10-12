@@ -38,7 +38,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-use{font-size:14px}
 .pc-mode{display:inline-flex;border:1px solid #2a3648;border-radius:8px;overflow:hidden}.pc-bar .pc-mode button{border:0;border-radius:0;background:#121a26;color:#8b9ab0}.pc-bar .pc-mode button.on{background:#1d3a52;color:#8fe3ff;font-weight:600}
 .pc-n.use{border-color:#2f5a7a}.pc-ndl{font-size:12px;color:#b7c3d4}.pc-big .pc-ndl{font-size:13px}
-.pc-n.sm{width:220px!important;position:relative}.pc-tip{position:fixed;z-index:9999;max-width:340px;background:#0b1018;border:1px solid #2f5a7a;border-radius:8px;padding:8px 11px;font-size:14px;line-height:1.45;color:#e6ebf2;box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none}.pc-tip>*{display:block}.pc-tip .pc-t,.pc-tip .pc-ndl,.pc-tip .pc-have{font-size:14px}
+.pc-n.sm{width:220px!important;position:relative}.pc-tip{position:fixed;z-index:9999;max-width:340px;background:#0b1018;border:1px solid #2f5a7a;border-radius:8px;padding:8px 11px;font-size:14px;line-height:1.45;color:#e6ebf2;box-shadow:0 4px 18px rgba(0,0,0,.6);pointer-events:none;display:none}.pc-tip>*{display:block}.pc-tip .pc-t,.pc-tip .pc-ndl,.pc-tip .pc-have,.pc-tip .pc-also{font-size:14px}.pc-tip .pc-where{margin-top:4px;font-size:13px}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
@@ -112,6 +112,11 @@ export function drawChain(m){
       const r=c.getBoundingClientRect(),w=t.offsetWidth,h=t.offsetHeight;let x=r.right+10,y=r.top;
       if(x+w>innerWidth-8)x=Math.max(8,r.left-w-10);if(y+h>innerHeight-8)y=Math.max(8,innerHeight-h-8);t.style.left=x+'px';t.style.top=y+'px'});
     c.addEventListener('mouseleave',tipHide)};
+  const compact=c=>{let t='<b>'+(c.querySelector('.pc-nm')||{}).innerHTML+'</b>';
+    [...c.children].forEach(x=>{if(x.matches('details.pc-wd')){const sm=x.querySelector('summary'),wh=x.querySelector('.pc-where');
+        t+='<span class="'+sm.className.replace('click','')+'">'+sm.textContent.replace(/\s*▾$/,'')+'</span>'+(wh?'<span class="pc-where">'+wh.innerHTML+'</span>':'');x.remove()}
+      else if(x.matches('.pc-have,.pc-t,.pc-also')){t+='<span class="'+x.className+'">'+x.innerHTML+'</span>';x.remove()}});
+    c.classList.add('sm');tipOn(c,t)};
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
     (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
@@ -158,6 +163,7 @@ export function drawChain(m){
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);
     const w=el('div','pc-wrap');w.appendChild(node(S.prod,S.amt,[],'r'));m.appendChild(w);
+    if(TEST)w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fmt(v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fmt(h):'have '+fmt(h))+')</span>')}).join('<br>'):'Open more branches to see them')));
   }
