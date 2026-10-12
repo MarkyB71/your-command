@@ -8,6 +8,7 @@ P.forEach(p=>{if(Object.keys(p.out).length)return;const m=p.name.match(/^(.*) (C
   const id=m[2]==='Construction'?1000+BLD[m[1]]:2000+SHP[m[1]];if(!id||isNaN(id))return;N[id]=m[1];p.out={[id]:1}});
 const img=id=>id>=2000?'shipimg.php?t='+(id-2000)+'&v=1&s=1':id>=1000?'bimg.php?t='+(id-1000):'rimg.php?p='+id;
 const makers={};P.forEach(p=>{for(const k in p.out)(makers[k]=makers[k]||[]).push(p)});
+const users={};P.forEach(p=>{if(/Unbundling/.test(p.name))return;for(const k in p.inp)(users[k]=users[k]||[]).push(p)});
 const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 14px}
 .pc-wrap{overflow:auto;padding:6px 0 18px}
 .pc-br{display:flex;align-items:center}
@@ -35,6 +36,8 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-usesel{color:#5fd38d!important;font-weight:600;border-color:#2f7a4c!important}
 .pc-use{font-size:13px;color:#5fd38d}.pc-use.part{color:#ffb547}.pc-n.cov{border-color:#2f7a4c}
 .pc-big .pc-use{font-size:14px}
+.pc-mode{display:inline-flex;border:1px solid #2a3648;border-radius:8px;overflow:hidden}.pc-bar .pc-mode button{border:0;border-radius:0;background:#121a26;color:#8b9ab0}.pc-bar .pc-mode button.on{background:#1d3a52;color:#8fe3ff;font-weight:600}
+.pc-n.use{border-color:#2f5a7a}.pc-ndl{font-size:12px;color:#b7c3d4}.pc-big .pc-ndl{font-size:13px}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
@@ -47,7 +50,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-kids>.pc-br::before,.pc-big .pc-kids>.pc-br::after{left:-22px}
 .pc-big .pc-kids>.pc-br{padding:7px 0}
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
-const S={prod:170,amt:100,choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
+const S={mode:'from',uprod:1,prod:170,amt:100,choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -96,9 +99,39 @@ export function drawChain(m){
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
+  const modeSw=()=>{const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
+      b.addEventListener('click',()=>{if(S.mode!==v){S.mode=v;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
+  function unode(id,path,key,d,via){
+    const br=el('div','pc-br'),outs=[];
+    (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
+    let h='<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>';
+    if(Y&&id<1000){const v=have(id);h+='<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+where+'</div>'}
+    const c=el('div','pc-n'+(d?' use':''),h);
+    if(via){c.insertAdjacentHTML('beforeend','<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>');
+      const oth=Object.keys(via.inp).filter(k=>+k!==path[path.length-1]).map(k=>esc(N[k]));
+      if(oth.length)c.insertAdjacentHTML('beforeend','<span class="pc-ndl">Also needs: '+oth.join(', ')+'</span>')}
+    if(!outs.length){c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(id>=1000?'Final build':'Not used in any further recipe')+'</span>');br.appendChild(c);return br}
+    const op=S.closed.has(key)?false:S.opened.has(key)?true:d<2;
+    const t=el('span','pc-tog',op?'◂ hide uses':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▸');
+    t.addEventListener('click',()=>{if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
+    br.appendChild(c);
+    if(op){const k=el('div','pc-kids');outs.sort((a,b)=>N[a[0]].localeCompare(N[b[0]])).forEach(([o,p])=>k.appendChild(unode(o,path.concat(id),key+'/'+p.i+':'+o,d+1,p)));br.appendChild(k)}
+    return br}
+  function drawUse(){
+    m.appendChild(el('div','note','Pick a product. Everything it is used in branches out to the right. Two stages open to start with; click "show uses" to go further. Each card also lists the other inputs that recipe needs.'));
+    const bar=el('div','pc-bar'),ps=el('select'),b2=el('button',null,'Close all');
+    const ids=Object.keys(users).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
+    [['Raw materials',x=>x<=22],['Products',x=>x>22]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
+      ids.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.uprod)o.selected=true;g.appendChild(o)});ps.appendChild(g)});
+    ps.addEventListener('change',()=>{S.uprod=+ps.value;S.closed.clear();S.opened.clear();draw()});
+    b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
+    const l1=el('label',null,'Product ');l1.appendChild(ps);
+    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);
+    const w=el('div','pc-wrap');w.appendChild(unode(S.uprod,[],'u',0,null));m.appendChild(w)}
   function draw(){m=M0;
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
+    if(S.mode==='use'){drawUse();return}
     m.appendChild(el('div','note','Pick a product. Its inputs branch out to the right, back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     const ids=Object.keys(makers).map(Number).sort((a,b)=>N[a].localeCompare(N[b]));
@@ -110,7 +143,7 @@ export function drawChain(m){
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add('r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);
-    [l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
+    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
