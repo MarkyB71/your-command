@@ -102,8 +102,8 @@ export function drawChain(m){
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fmt(v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
     const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
-    t.addEventListener('click',()=>{if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
-    br.appendChild(c);
+    t.addEventListener('click',()=>{S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
+    br.dataset.k=key;br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
@@ -177,6 +177,8 @@ export function drawChain(m){
     m.appendChild(bar);
     const w=el('div','pc-wrap'+(TEST?' rtl':''));const inner=TEST?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(TEST)w.appendChild(inner);m.appendChild(w);
     if(TEST)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
+    if(TEST&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
+      if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
     if(TEST)w.addEventListener('scroll',()=>{S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft});
     if(TEST)w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
