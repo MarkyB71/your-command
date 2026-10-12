@@ -126,7 +126,9 @@ export function drawChain(m){
     if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+'</div>');
       const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fmt(x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
     if(via){const pa=path[path.length-1],per=via.inp[pa]/via.out[id];
-      t+='<span class="pc-need">Needs '+fmt(per)+' '+esc(N[pa])+' for each '+esc(N[id])+'</span>';
+      if(Y&&pa<1000){const hp=have(pa)||0,can=Math.floor(hp/per+1e-9);
+        t+='<span class="pc-need">You can make '+can.toLocaleString()+' '+esc(N[id])+' with your '+fmt(hp)+' '+esc(N[pa])+'</span>'}
+      t+='<span class="pc-t">Needs '+fmt(per)+' '+esc(N[pa])+' for each one</span>';
       t+='<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>';
       const oth=Object.keys(via.inp).filter(k=>+k!==path[path.length-1]).map(k=>esc(N[k]));
       if(oth.length)t+='<span class="pc-ndl">Also needs: '+oth.join(', ')+'</span>'}
