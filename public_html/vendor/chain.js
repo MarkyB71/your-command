@@ -114,8 +114,9 @@ export function drawChain(m){
     c.addEventListener('mouseleave',tipHide)};
   const compact=c=>{let t='<b>'+(c.querySelector('.pc-nm')||{}).innerHTML+'</b>';
     [...c.children].forEach(x=>{if(x.matches('details.pc-wd')){const sm=x.querySelector('summary'),wh=x.querySelector('.pc-where');
-        t+='<span class="'+sm.className.replace('click','')+'">'+sm.textContent.replace(/\s*▾$/,'')+'</span>'+(wh?'<span class="pc-where">'+wh.innerHTML+'</span>':'');x.remove()}
-      else if(x.matches('.pc-have,.pc-t,.pc-also')){t+='<span class="'+x.className+'">'+x.innerHTML+'</span>';x.remove()}});
+        const k=el('div',sm.className.replace('click',''),sm.textContent.replace(/\s*▾$/,''));x.replaceWith(k);if(wh)t+='<span>Where it is:</span><span class="pc-where">'+wh.innerHTML+'</span>'}
+      else if(x.matches('.pc-t,.pc-also')){t+='<span class="'+x.className+'">'+x.innerHTML+'</span>';x.remove()}});
+    const q=c.querySelector('.pc-q');if(q&&!/^Need/.test(q.textContent))q.textContent='Need '+q.textContent;
     c.classList.add('sm');tipOn(c,t)};
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
