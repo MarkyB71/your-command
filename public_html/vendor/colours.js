@@ -39,11 +39,13 @@
        '#pgband .pn{font-size:22px;font-weight:800;color:#eef4fb;text-shadow:0 0 12px var(--pgglow)}'+
        '#pgband.fade{animation:pgin .35s ease-out}@keyframes pgin{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}'+
        '@media (prefers-reduced-motion: reduce){#pgband.fade{animation:none}}';
-  var st=document.createElement('style');st.id='colours-css';st.textContent=css;document.head.appendChild(st);
+  function addCss(){if(document.getElementById('colours-css'))return;var st=document.createElement('style');st.id='colours-css';st.textContent=css;document.head.appendChild(st)}
+  addCss();
 
   /* the coloured strip above the page */
   var last='';
   function tick(){
+    addCss(); /* the site rebuilds <head> while loading, so put the colours back if they vanish */
     var main=document.getElementById('main');if(!main)return;
     var gq=document.getElementById('gq'),key='',name='';
     if(gq&&gq.value.trim()){key='Z';name='Search results'}
