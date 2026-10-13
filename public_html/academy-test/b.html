@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Adalia Academy Belt Map</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@500;600;700&display=swap">
+<style>
+/* Layout: one page at a time, like Your Command. Home = a clickable map of the Adalia system; each place on the map is a section of the Academy */
+:root{
+  --bg:#0b0e13; --panel:#131821; --line:#232b38; --text:#e6ebf2; --muted:#8a96a8; --accent:#5fc3e4;
+  --c-cmd:#ffd24a; --c-campus:#5b9dff; --c-lib:#b388ff; --c-guide:#3fd68a; --c-tut:#ff6fae; --c-link:#ffab3d;
+  --display:"Jura","Segoe UI",sans-serif; --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 var(--body)}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid #8fe3ff;outline-offset:2px}
+header{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between}
+.brand{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.16em;cursor:pointer;background:none;border:0;color:var(--text);padding:0}
+.brand b{color:var(--accent)}
+.crumbs{font-family:var(--display);font-size:14px;letter-spacing:.08em;color:var(--muted)}
+.crumbs button{background:none;border:0;color:var(--accent);font:inherit;cursor:pointer;padding:0}
+.top{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:6px 13px;font-size:13.5px;text-decoration:none;cursor:pointer;font-family:inherit}
+.pill.gold{color:var(--c-cmd);border-color:rgba(255,210,74,.5)}
+.pill:hover{box-shadow:0 0 14px rgba(95,195,228,.3)}
+
+/* map */
+.mapbox{position:relative;border:1px solid var(--line);border-radius:14px;background:radial-gradient(ellipse at 50% 55%,#151c28 0,#0b0e13 70%);overflow:hidden}
+.mapbox svg{display:block;width:100%;height:auto}
+.mapbox .hint{position:absolute;left:16px;top:14px;font-family:var(--display);letter-spacing:.12em;font-size:12px;text-transform:uppercase;color:var(--muted)}
+.mapbox h1{position:absolute;left:16px;bottom:10px;margin:0;font-family:var(--display);font-size:clamp(22px,4vw,40px);letter-spacing:.1em;line-height:1}
+.mapbox h1 span{color:var(--accent);text-shadow:0 0 18px rgba(95,195,228,.5)}
+.place{cursor:pointer}
+.place text{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:.06em;fill:var(--text);paint-order:stroke;stroke:#0b0e13;stroke-width:4px}
+.place .sub{font-size:11.5px;font-weight:500;fill:var(--muted)}
+.place .halo{opacity:0;transition:opacity .2s}
+.place:hover .halo,.place:focus .halo{opacity:.5}
+.place:focus{outline:none}
+.intro{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:12px}
+.intro button{--c:var(--accent);text-align:left;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:8px;padding:10px 12px;color:var(--text);font:inherit;cursor:pointer}
+.intro button b{display:block;font-family:var(--display);letter-spacing:.05em;color:var(--c)}
+.intro button span{font-size:12.5px;color:var(--muted)}
+.intro button:hover{box-shadow:0 0 14px color-mix(in srgb,var(--c) 35%,transparent)}
+.about{max-width:70ch;color:#c9d3e0;margin:16px 2px 0}
+
+/* page */
+.page{--c:var(--accent)}
+.phead{display:flex;align-items:center;gap:18px;padding:18px 0 14px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.phead svg{width:84px;height:84px;flex:none}
+.phead h2{font-family:var(--display);font-size:32px;letter-spacing:.08em;margin:0;color:var(--c);text-wrap:balance}
+.phead p{margin:2px 0 0;color:var(--muted)}
+.page p{max-width:68ch;color:#c9d3e0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{display:block;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;color:var(--text);text-decoration:none}
+a.card:hover{border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
+.card h3{margin:0 0 4px;font-family:var(--display);font-size:15.5px;letter-spacing:.04em;color:var(--c)}
+.card p{margin:0;font-size:13.5px;color:var(--muted)}
+.card .go{display:block;margin-top:8px;font-size:12.5px;color:var(--c)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#0f141c;color:var(--muted)}
+.chip b{color:var(--text)}
+.note{font-size:13px;color:#ffcf7a;background:#2a2210;border:1px solid #5a4a1e;border-radius:7px;padding:8px 12px;max-width:68ch}
+.btn{display:inline-block;padding:10px 16px;border-radius:7px;font-weight:600;text-decoration:none;border:1px solid rgba(255,210,74,.6);background:#2a2410;color:var(--c-cmd)}
+footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-size:13px;padding:20px 16px}
+.preview-tag{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:6;font-size:12px;background:#2a2410;color:var(--c-cmd);border:1px solid rgba(255,210,74,.5);border-radius:999px;padding:5px 11px}
+@media (max-width:640px){.place text{font-size:22px}.place .sub{display:none}}
+@media (prefers-reduced-motion:reduce){.mv{display:none}}
+</style>
+</head><body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<header>
+  <button class="brand" data-go="home">ADALIA <b>ACADEMY</b></button>
+  <div class="crumbs" id="crumbs"></div>
+  <div class="top">
+    <a class="pill" href="https://game.influenceth.io/" target="_blank" rel="noopener">Play Influence ↗</a>
+    <a class="pill gold" href="https://your-command.adalia.academy/" target="_blank" rel="noopener">Your Command ↗</a>
+  </div>
+</header>
+
+<div class="wrap" id="main"></div>
+<footer>Adalia Academy is a community resource for Influence, developed by Grey Area &amp; Skippy.</footer>
+<div class="preview-tag">Design preview · B</div>
+
+<script src="b.js?v=1"></script>
+</body></html>

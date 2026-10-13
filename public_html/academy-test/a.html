@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Adalia Academy Preview</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@500;600;700&display=swap">
+<style>
+/* Layout: Your Command look – dark command console, sticky colour-coded menu, each section opens with a coloured strip + its own drawn scene */
+:root{
+  --bg:#0b0e13; --panel:#131821; --line:#232b38; --text:#e6ebf2; --muted:#8a96a8; --accent:#5fc3e4; --glow:#8fe3ff;
+  --c-home:#6ec6e6; --c-cmd:#ffd24a; --c-campus:#5b9dff; --c-lib:#b388ff; --c-guide:#3fd68a; --c-tut:#ff6fae; --c-link:#ffab3d;
+  --display:"Jura","Segoe UI",sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 var(--body)}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--glow);outline-offset:2px;border-radius:4px}
+
+/* header + menu */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(11,14,19,.86);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.hd{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.14em;color:var(--text);text-decoration:none;white-space:nowrap}
+.brand b{color:var(--accent);font-weight:700}
+nav{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+nav a{--c:var(--accent);color:var(--text);text-decoration:none;font-size:14px;padding:6px 10px;border-radius:6px;border-bottom:2px solid transparent;transition:background .2s,box-shadow .2s}
+nav a:hover{background:#18202c;box-shadow:0 0 12px rgba(95,195,228,.25)}
+nav a.on{color:var(--c);border-bottom-color:var(--c)}
+nav a.cmd{color:var(--c-cmd);border:1px solid rgba(255,210,74,.45)}
+nav a.cmd:hover{box-shadow:0 0 14px rgba(255,210,74,.35)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center;padding-block:44px 28px}
+.eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,6vw,58px);line-height:1.02;letter-spacing:.06em;margin:8px 0 14px;text-wrap:balance}
+h1 span{color:var(--accent);text-shadow:0 0 22px rgba(95,195,228,.45)}
+.lead{font-size:17px;color:#c9d3e0;max-width:56ch;margin:0 0 20px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 16px;border-radius:7px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--text);background:var(--panel);transition:box-shadow .2s}
+.btn:hover{box-shadow:0 0 16px rgba(95,195,228,.35)}
+.btn.gold{background:#2a2410;border-color:rgba(255,210,74,.6);color:var(--c-cmd)}
+.btn.gold:hover{box-shadow:0 0 18px rgba(255,210,74,.4)}
+.hero svg{width:100%;height:auto;max-width:100%}
+
+/* section strip, like the colour bands on Your Command */
+section{padding-block:22px}
+.band{--c:var(--accent);position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;min-height:96px;padding:14px 18px;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 16%,var(--panel)),var(--panel) 65%)}
+.band .crumb{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--c);font-family:var(--display);font-weight:600}
+.band h2{font-family:var(--display);font-size:26px;letter-spacing:.06em;margin:2px 0 0;text-wrap:balance}
+.band .txt{position:relative;z-index:1;min-width:0}
+.band .sc{position:absolute;right:0;top:0;height:100%;width:46%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 45%);mask-image:linear-gradient(90deg,transparent,#000 45%);opacity:.9}
+.band .sc svg{width:100%;height:100%}
+.body{padding:16px 4px 0}
+.body p{max-width:68ch;margin:0 0 12px;color:#c9d3e0}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.chip{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#0f141c;color:var(--muted)}
+.chip b{color:var(--text);font-weight:600}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{--c:var(--accent);display:block;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;text-decoration:none;color:var(--text);transition:border-color .2s,box-shadow .2s}
+a.card:hover{border-color:var(--c);box-shadow:0 0 16px color-mix(in srgb,var(--c) 30%,transparent)}
+.card h3{margin:0 0 4px;font-size:15.5px;font-family:var(--display);letter-spacing:.04em;color:var(--c)}
+.card p{margin:0;color:var(--muted);font-size:13.5px}
+.card .go{display:block;margin-top:8px;font-size:12.5px;color:var(--c)}
+.note{font-size:13px;color:#ffcf7a;background:#2a2210;border:1px solid #5a4a1e;border-radius:7px;padding:8px 12px;margin:0 0 12px;max-width:68ch}
+
+/* Your Command feature */
+.cmdbox{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+.feat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.feat div{background:#0f141c;border:1px solid var(--line);border-radius:7px;padding:9px 11px;font-size:13.5px}
+.feat div b{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--display)}
+
+.soon{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px dashed var(--line);border-radius:9px;padding:14px;color:var(--muted)}
+footer{position:relative;z-index:1;border-top:1px solid var(--line);margin-top:30px;padding:18px 16px;text-align:center;color:var(--muted);font-size:13px}
+.preview-tag{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:6;font-size:12px;background:#2a2410;color:var(--c-cmd);border:1px solid rgba(255,210,74,.5);border-radius:999px;padding:5px 11px}
+
+@media (max-width:760px){
+  .hero,.cmdbox{grid-template-columns:1fr}
+  .hero svg{max-width:420px}
+  .band .sc{width:60%;opacity:.45}
+  nav a{padding:5px 8px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mv{display:none}}
+</style>
+</head><body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<header>
+  <div class="hd">
+    <a class="brand" href="#home">ADALIA <b>ACADEMY</b></a>
+    <nav id="nav">
+      <a href="#home" style="--c:var(--c-home)">Home</a>
+      <a href="#campus" style="--c:var(--c-campus)">Main Campus</a>
+      <a href="#library" style="--c:var(--c-lib)">Library</a>
+      <a href="#guides" style="--c:var(--c-guide)">Guides</a>
+      <a href="#tutorials" style="--c:var(--c-tut)">Tutorials</a>
+      <a href="#links" style="--c:var(--c-link)">Links</a>
+      <a href="#command" class="cmd" style="--c:var(--c-cmd)">Your Command ↗</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section id="home" class="hero">
+  <div>
+    <div class="eyebrow">Community school for Influence</div>
+    <h1>ADALIA <span>ACADEMY</span></h1>
+    <p class="lead">INFLUENCE is an online strategy game set in Adalia, a star system with no habitable planets but a vast asteroid belt holding every mineral its colonists need to survive and thrive. The Academy helps new and old players find their way.</p>
+    <div class="btns">
+      <a class="btn" href="#guides">Start learning</a>
+      <a class="btn gold" href="#command">Open Your Command</a>
+      <a class="btn" href="https://game.influenceth.io/" target="_blank" rel="noopener">Play Influence ↗</a>
+    </div>
+  </div>
+  <svg viewBox="0 0 400 300" role="img" aria-label="The Adalia star with the asteroid belt around it">
+    <defs>
+      <radialGradient id="sun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".35" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff9a3d" stop-opacity="0"/></radialGradient>
+      <radialGradient id="rock" cx="35%" cy="35%" r="70%"><stop offset="0" stop-color="#b9c3d1"/><stop offset="1" stop-color="#3a4250"/></radialGradient>
+    </defs>
+    <circle cx="200" cy="150" r="70" fill="url(#sun)"/>
+    <circle cx="200" cy="150" r="16" fill="#fffaf0"/>
+    <ellipse cx="200" cy="150" rx="170" ry="62" fill="none" stroke="#5fc3e4" stroke-opacity=".35" stroke-dasharray="2 5"/>
+    <ellipse cx="200" cy="150" rx="135" ry="48" fill="none" stroke="#5fc3e4" stroke-opacity=".2"/>
+    <g id="belt"></g>
+    <g>
+      <circle r="7" fill="url(#rock)"/>
+      <animateMotion class="mv" dur="40s" repeatCount="indefinite" path="M370,150 A170,62 0 1,1 30,150 A170,62 0 1,1 370,150"/>
+    </g>
+  </svg>
+</section>
+
+<section id="command">
+  <div class="band" style="--c:var(--c-cmd)">
+    <div class="txt"><div class="crumb">Academy › Tools</div><h2>Your Influence Command</h2></div>
+    <div class="sc" aria-hidden="true"><svg viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice"><g fill="#ffd24a"><rect x="150" y="58" width="22" height="22" rx="3" opacity=".55"/><rect x="150" y="26" width="22" height="22" rx="3" opacity=".4"/><rect x="190" y="42" width="22" height="22" rx="3" opacity=".7"/><rect x="236" y="34" width="38" height="38" rx="5"/></g><path d="M172 69 L190 53 M172 37 L190 53 M212 53 L236 53" stroke="#ffd24a" stroke-width="2" fill="none" opacity=".7"/></svg></div>
+  </div>
+  <div class="body">
+    <div class="cmdbox">
+      <div>
+        <p>The Academy's own player tool. Enter your wallet and it shows everything you run in the belt, live from the game: what's in your warehouses, what needs doing today, where your ships are and what to trade.</p>
+        <div class="btns"><a class="btn gold" href="https://your-command.adalia.academy/" target="_blank" rel="noopener">Open Your Command ↗</a></div>
+      </div>
+      <div class="feat">
+        <div><b style="color:var(--c-home)">Today's Workload</b>Jobs ready, idle buildings, leases ending</div>
+        <div><b style="color:var(--c-cmd)">The SkippyChain</b>Every input back to the raw ore</div>
+        <div><b style="color:#5b9dff">Fleet</b>Ships, crews, travel times</div>
+        <div><b style="color:#ffab3d">Asteroids</b>Core samples, richest free lots</div>
+        <div><b style="color:#b388ff">Buildings</b>Contents, status, leases</div>
+        <div><b style="color:#f5c542">Trading</b>Market, trade finder, history</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="campus">
+  <div class="band" style="--c:var(--c-campus)">
+    <div class="txt"><div class="crumb">Academy › Main Campus</div><h2>Main Campus</h2></div>
+    <div class="sc" aria-hidden="true"><svg viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice"><ellipse cx="230" cy="92" rx="90" ry="22" fill="#5b9dff" opacity=".25"/><rect x="200" y="40" width="50" height="40" rx="4" fill="#5b9dff" opacity=".7"/><path d="M195 42 L225 20 L255 42Z" fill="#5b9dff"/><rect x="262" y="55" width="22" height="25" rx="3" fill="#5b9dff" opacity=".5"/><rect x="170" y="58" width="22" height="22" rx="3" fill="#5b9dff" opacity=".4"/><circle cx="225" cy="32" r="3" fill="#fffaf0"/></svg></div>
+  </div>
+  <div class="body">
+    <div class="meta">
+      <span class="chip">Location <b>Adalia Academy</b></span>
+      <span class="chip">Size <b>2,427 km²</b></span>
+      <span class="chip">Type <b>Rare Main Belt · CMS</b></span>
+      <span class="chip">Chancellor <b>Professor Zakalwe Grey</b></span>
+    </div>
+    <p>Professor Grey welcomes you to Adalia Academy. The campus sits on its own Rare main-belt asteroid and is where every student's education begins.</p>
+  </div>
+</section>
+
+<section id="library">
+  <div class="band" style="--c:var(--c-lib)">
+    <div class="txt"><div class="crumb">Academy › Student Library</div><h2>The Student Library</h2></div>
+    <div class="sc" aria-hidden="true"><svg viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice"><g fill="#b388ff"><rect x="170" y="30" width="12" height="55" opacity=".5"/><rect x="185" y="22" width="14" height="63" opacity=".8"/><rect x="202" y="34" width="10" height="51" opacity=".45"/><rect x="215" y="26" width="16" height="59"/><rect x="234" y="38" width="11" height="47" opacity=".6"/><rect x="248" y="30" width="14" height="55" opacity=".85" transform="rotate(8 255 85)"/></g><rect x="160" y="85" width="120" height="4" fill="#b388ff" opacity=".6"/></svg></div>
+  </div>
+  <div class="body">
+    <p>The Library gives Academy members reference and source material through their studies and on into their careers in Adalia. Its academics share their latest research, including in-depth studies of how class efficiency bonuses and traits change the time or yield of each action in the game.</p>
+    <div class="grid">
+      <div class="card" style="--c:var(--c-lib)"><h3>The Historian</h3><p>Lore and records of the belt.</p></div>
+      <div class="card" style="--c:var(--c-lib)"><h3>The Librarians</h3><p>Research on class bonuses and crewmate traits.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="guides">
+  <div class="band" style="--c:var(--c-guide)">
+    <div class="txt"><div class="crumb">Academy › Guides</div><h2>Guides</h2></div>
+    <div class="sc" aria-hidden="true"><svg viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice"><path d="M150 78 C190 78 190 30 230 30 S270 60 290 50" stroke="#3fd68a" stroke-width="2" stroke-dasharray="5 5" fill="none"/><circle cx="150" cy="78" r="5" fill="#3fd68a"/><circle cx="230" cy="30" r="5" fill="#3fd68a" opacity=".7"/><circle cx="290" cy="50" r="7" fill="#3fd68a"/></svg></div>
+  </div>
+  <div class="body">
+    <p class="note">These guides were written for Testnet Phase 3 and may be out of date.</p>
+    <div class="grid">
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/TestNet-Phase-3-Starter-Guide-326dc348c11e410b8a83fbf8a953ef9f"><h3>Starter guide</h3><p>Your first steps in Adalia.</p><span class="go">Read ↗</span></a>
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/Creating-Crewmates-0e3cf6d88a924d608fa30da94dac3de4"><h3>Recruiting crewmates</h3><p>Building and growing your crew.</p><span class="go">Read ↗</span></a>
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/Mining-Asteroids-7742c46ae3d942ef95fc50d836d545fa"><h3>Mining asteroids</h3><p>Extracting raw materials.</p><span class="go">Read ↗</span></a>
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/Core-Sampling-8f9d82a2cfc4416699fea83955490bfc"><h3>Taking core samples</h3><p>Finding the richest deposits.</p><span class="go">Read ↗</span></a>
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/Minting-Asteroids-7d846eb0346248daa5633c7ad3cddbd9"><h3>Buying asteroids</h3><p>Getting a rock of your own.</p><span class="go">Read ↗</span></a>
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/Scanning-Asteroids-db8f7f2866b84dcda1162c7b2391076f"><h3>Scanning asteroids</h3><p>Revealing what's inside.</p><span class="go">Read ↗</span></a>
+      <a class="card" style="--c:var(--c-guide)" target="_blank" rel="noopener" href="https://mire-limburger-8b4.notion.site/Building-Infrastructure-1c45a5c9f1a2429ca6477c6d829b313a"><h3>Building infrastructure</h3><p>Warehouses, extractors and more.</p><span class="go">Read ↗</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="tutorials">
+  <div class="band" style="--c:var(--c-tut)">
+    <div class="txt"><div class="crumb">Academy › Tutorials</div><h2>Tutorials</h2></div>
+    <div class="sc" aria-hidden="true"><svg viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice"><circle cx="240" cy="50" r="34" fill="none" stroke="#ff6fae" stroke-opacity=".6"/><path d="M230 34 L256 50 L230 66Z" fill="#ff6fae"/></svg></div>
+  </div>
+  <div class="body">
+    <div class="soon">Crewmate tutorial and more step-by-step lessons coming here.</div>
+  </div>
+</section>
+
+<section id="links">
+  <div class="band" style="--c:var(--c-link)">
+    <div class="txt"><div class="crumb">Academy › Links</div><h2>Community links</h2></div>
+    <div class="sc" aria-hidden="true"><svg viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice"><g stroke="#ffab3d" stroke-width="1.5" opacity=".6"><line x1="170" y1="70" x2="215" y2="35"/><line x1="215" y1="35" x2="265" y2="60"/><line x1="170" y1="70" x2="265" y2="60"/><line x1="265" y1="60" x2="285" y2="25"/></g><g fill="#ffab3d"><circle cx="170" cy="70" r="6"/><circle cx="215" cy="35" r="8"/><circle cx="265" cy="60" r="7"/><circle cx="285" cy="25" r="5"/></g></svg></div>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://wiki.influenceth.io/en/community/user-guides"><h3>Influence Wiki</h3><p>Official wiki and user guides.</p><span class="go">wiki.influenceth.io ↗</span></a>
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://gluonic.gg/influence"><h3>Gluonic</h3><p>Community content hub.</p><span class="go">gluonic.gg ↗</span></a>
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://tyrell-yutani.app/"><h3>Tyrell-Yutani</h3><p>Asteroid and crewmate portfolio manager.</p><span class="go">tyrell-yutani.app ↗</span></a>
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://influence.daharius.com/AsteroidLookup/1"><h3>Daharius Influence Tools</h3><p>Asteroid and crewmate manager.</p><span class="go">influence.daharius.com ↗</span></a>
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://starksight.xyz/"><h3>Influence Sales</h3><p>Asteroid and crewmate market activity.</p><span class="go">starksight.xyz ↗</span></a>
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://adalia.info/"><h3>Adalia.info</h3><p>In-depth asteroid data and analysis.</p><span class="go">adalia.info ↗</span></a>
+      <a class="card" style="--c:var(--c-link)" target="_blank" rel="noopener" href="https://influence.elerium.dev/asteroids-planner.html"><h3>Asteroids Planner</h3><p>Production chain planner.</p><span class="go">influence.elerium.dev ↗</span></a>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>Adalia Academy is a community resource for Influence, developed by Grey Area &amp; Skippy.</footer>
+<div class="preview-tag">Design preview · A</div>
+
+<script src="a.js?v=1"></script>
+</body></html>

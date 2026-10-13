@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Adalia Academy Console</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@500;600;700&display=swap">
+<style>
+/* Layout: ship-console look. Fixed side menu (top bar on phones), home = tiles like Today's Workload, each page = panel with a coloured header */
+:root{
+  --bg:#0b0e13; --panel:#131821; --panel2:#0f141c; --line:#232b38; --text:#e6ebf2; --muted:#8a96a8; --accent:#5fc3e4;
+  --c-home:#6ec6e6; --c-cmd:#ffd24a; --c-campus:#5b9dff; --c-lib:#b388ff; --c-guide:#3fd68a; --c-tut:#ff6fae; --c-link:#ffab3d;
+  --display:"Jura","Segoe UI",sans-serif; --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 var(--body)}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid #8fe3ff;outline-offset:2px}
+.shell{position:relative;z-index:1;display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+aside{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;border-right:1px solid var(--line);background:rgba(15,20,28,.92);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{font-family:var(--display);font-weight:700;letter-spacing:.16em;font-size:19px;line-height:1.1;padding:4px 10px 16px}
+.brand b{display:block;color:var(--accent);text-shadow:0 0 14px rgba(95,195,228,.45)}
+.nv{--c:var(--accent);display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;border-radius:0 7px 7px 0;color:var(--text);font:inherit;font-size:14.5px;padding:8px 10px;cursor:pointer}
+.nv i{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);flex:none}
+.nv:hover{background:#18202c}
+.nv.on{border-left-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)}
+.side-foot{margin-top:auto;display:grid;gap:8px;padding:10px 4px 0}
+.gold{display:block;text-align:center;padding:9px;border-radius:7px;text-decoration:none;font-weight:600;background:#2a2410;border:1px solid rgba(255,210,74,.6);color:var(--c-cmd)}
+.gold:hover{box-shadow:0 0 16px rgba(255,210,74,.4)}
+.plain{display:block;text-align:center;padding:8px;border-radius:7px;text-decoration:none;border:1px solid var(--line);color:var(--text);font-size:13.5px}
+main{padding-inline:28px;padding-block:24px 40px;min-width:0;max-width:1000px}
+.ph{--c:var(--accent);border:1px solid var(--line);border-radius:10px;background:linear-gradient(120deg,color-mix(in srgb,var(--c) 22%,var(--panel)),var(--panel) 60%);padding:18px 20px;margin-bottom:18px;position:relative;overflow:hidden}
+.ph .k{font-family:var(--display);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--c)}
+.ph h1{font-family:var(--display);font-size:clamp(26px,4vw,38px);letter-spacing:.07em;margin:2px 0 4px;text-wrap:balance}
+.ph p{margin:0;color:#c9d3e0;max-width:62ch}
+.ph::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--c) 50%,transparent);box-shadow:0 0 0 30px color-mix(in srgb,var(--c) 5%,transparent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:18px}
+.tile{--c:var(--accent);text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 14px;color:var(--text);font:inherit;cursor:pointer;transition:box-shadow .2s,border-color .2s}
+.tile:hover{border-color:var(--c);box-shadow:0 0 16px color-mix(in srgb,var(--c) 30%,transparent)}
+.tile .n{font-family:var(--display);font-size:34px;font-weight:700;line-height:1;color:var(--c);font-variant-numeric:tabular-nums}
+.tile .l{font-weight:600;margin-top:6px}
+.tile .s{font-size:12.5px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px 16px;margin-bottom:12px}
+.panel h2{font-family:var(--display);font-size:16px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px;color:var(--muted)}
+.panel p{margin:0 0 10px;color:#c9d3e0;max-width:68ch}
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tw{overflow-x:auto}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#18202c}
+td a{text-decoration:none;font-weight:600}
+td.m{color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--muted)}
+.chip b{color:var(--text)}
+.note{font-size:13px;color:#ffcf7a;background:#2a2210;border:1px solid #5a4a1e;border-radius:7px;padding:8px 12px;margin-bottom:12px}
+.preview-tag{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:6;font-size:12px;background:#2a2410;color:var(--c-cmd);border:1px solid rgba(255,210,74,.5);border-radius:999px;padding:5px 11px}
+@media (max-width:760px){
+  .shell{grid-template-columns:1fr}
+  aside{position:sticky;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;border-right:0;border-bottom:1px solid var(--line);padding:8px 12px;z-index:3}
+  .brand{padding:0 8px 0 0;font-size:15px}.brand b{display:inline}
+  .nv{width:auto;border-left:0;border-bottom:2px solid transparent;border-radius:6px;padding:5px 8px;font-size:13px}
+  .nv.on{border-bottom-color:var(--c)}
+  .side-foot{display:none}
+  main{padding-inline:16px}
+}
+</style>
+</head><body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="shell">
+  <aside>
+    <div class="brand">ADALIA <b>ACADEMY</b></div>
+    <button class="nv" data-go="home" style="--c:var(--c-home)"><i></i>Home</button>
+    <button class="nv" data-go="campus" style="--c:var(--c-campus)"><i></i>Main Campus</button>
+    <button class="nv" data-go="library" style="--c:var(--c-lib)"><i></i>Student Library</button>
+    <button class="nv" data-go="guides" style="--c:var(--c-guide)"><i></i>Guides</button>
+    <button class="nv" data-go="tutorials" style="--c:var(--c-tut)"><i></i>Tutorials</button>
+    <button class="nv" data-go="links" style="--c:var(--c-link)"><i></i>Links</button>
+    <button class="nv" data-go="command" style="--c:var(--c-cmd)"><i></i>Your Command</button>
+    <div class="side-foot">
+      <a class="gold" href="https://your-command.adalia.academy/" target="_blank" rel="noopener">Open Your Command ↗</a>
+      <a class="plain" href="https://game.influenceth.io/" target="_blank" rel="noopener">Play Influence ↗</a>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div class="preview-tag">Design preview · C</div>
+
+<script src="c.js?v=1"></script>
+</body></html>
