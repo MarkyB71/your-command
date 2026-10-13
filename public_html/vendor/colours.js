@@ -1,11 +1,10 @@
-/* colours.js – TEST (only with ?beta=1): each menu group gets its own colour.
+/* colours.js – LIVE: each menu group gets its own colour.
    - Group buttons (Fleet, Logistics, …) carry their colour all the time.
    - Dropdown items show the group colour.
    - A coloured strip with a big icon sits above the page: "Group › Page".
    It never changes page buttons' class names (other code checks className==='on'). */
 (function(){
   'use strict';
-  if(!/[?&]beta=1/.test(location.search))return;
 
   /* group: [colour, icon, page letters] */
   var GROUPS={
