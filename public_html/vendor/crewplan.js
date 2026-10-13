@@ -33,7 +33,7 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const BETA2=/[?&]beta=1/.test(location.search); /* TEST: bonuses green when positive, red when negative */
+const BETA2=true; /* bonuses green when positive, red when negative – live since v9 */
 const pc0=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
 const pc=v=>{const t=pc0(v),p=Math.round((v-1)*100);return(!BETA2||p===0)?t:'<span style="color:'+(p>0?'#3fd68a':'#ff6b6b')+';font-weight:600">'+t+'</span>'};
 const S={plan:null,orig:null,sel:null,job:'',q:'',best:false};
