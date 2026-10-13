@@ -39,8 +39,8 @@
        '#pgband.fade{animation:pgin .35s ease-out}@keyframes pgin{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}'+
        '@media (prefers-reduced-motion: reduce){#pgband.fade{animation:none}}';
 
-  /* TEST (?beta=1): our own artwork drawn in code, behind the right side of the strip */
-  var BETA=/[?&]beta=1/.test(location.search);
+  /* LIVE: our own artwork drawn in code, behind the right side of the strip */
+  var BETA=true; /* scenes live for everyone since v8 */
   function rnd(seed){return function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}}
   function rock(cx,cy,r,n,seed,j){ /* lumpy closed outline, smoothed through mid-points */
     var R=rnd(seed),p=[],i;for(i=0;i<n;i++){var a=i/n*Math.PI*2,k=r*(1-j/2+R()*j);p.push([cx+Math.cos(a)*k,cy+Math.sin(a)*k*.82])}
