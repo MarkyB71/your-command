@@ -48,6 +48,46 @@
     for(i=0;i<n;i++)d+=' Q'+p[i][0].toFixed(1)+' '+p[i][1].toFixed(1)+' '+m(p[i],p[(i+1)%n]);return d+'Z'}
   function stars(seed,cnt){var R=rnd(seed),s='';for(var i=0;i<cnt;i++)s+='<circle cx="'+(R()*460).toFixed(0)+'" cy="'+(R()*120).toFixed(0)+'" r="'+(R()<.15?1.3:.7)+'" fill="#fff" opacity="'+(.25+R()*.6).toFixed(2)+'"/>';return s}
   var SCENES={
+    'Fleet':function(){ /* a cargo hauler of our own design crossing in front of the star */
+      return '<svg viewBox="0 0 460 120" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><defs>'+
+       '<radialGradient id="fStar" cx=".92" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".15" stop-color="#cfe2ff" stop-opacity=".6"/><stop offset=".55" stop-color="#5b9dff" stop-opacity=".15"/><stop offset="1" stop-color="#5b9dff" stop-opacity="0"/></radialGradient>'+
+       '<linearGradient id="fHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9d6ea"/><stop offset=".5" stop-color="#6d7b92"/><stop offset="1" stop-color="#262d3a"/></linearGradient>'+
+       '<linearGradient id="fPlume" x1="1" x2="0"><stop offset="0" stop-color="#bfe0ff"/><stop offset=".3" stop-color="#5b9dff" stop-opacity=".7"/><stop offset="1" stop-color="#5b9dff" stop-opacity="0"/></linearGradient>'+
+       '<filter id="fGlow"><feGaussianBlur stdDeviation="2.5"/></filter></defs>'+
+       '<rect width="460" height="120" fill="url(#fStar)"/>'+stars(23,50)+
+       '<path d="M0 104 Q230 70 460 40" fill="none" stroke="#5b9dff" stroke-opacity=".25" stroke-dasharray="3 6"/>'+
+       '<g class="fFly"><g transform="translate(150 50) rotate(-7)">'+
+        '<path d="M-78 4 L-8 -3 L-8 11 L-78 6Z" fill="url(#fPlume)" filter="url(#fGlow)"/>'+
+        '<rect x="-12" y="-4" width="10" height="16" rx="2" fill="#3a4456"/><circle cx="-12" cy="4" r="5" fill="#cfe6ff" filter="url(#fGlow)"/>'+
+        '<rect x="-2" y="-8" width="62" height="24" rx="5" fill="url(#fHull)"/>'+
+        '<rect x="6" y="-14" width="18" height="10" rx="2" fill="#4b5870"/><rect x="28" y="-14" width="18" height="10" rx="2" fill="#4b5870"/>'+
+        '<rect x="6" y="14" width="18" height="8" rx="2" fill="#2f3747"/><rect x="28" y="14" width="18" height="8" rx="2" fill="#2f3747"/>'+
+        '<path d="M60 -6 L80 0 Q84 4 80 8 L60 14Z" fill="url(#fHull)"/><path d="M68 -1 L78 2 L78 5 L68 6Z" fill="#8fd0ff"/>'+
+        '<circle cx="10" cy="4" r="1.6" fill="#5b9dff"/><circle cx="50" cy="4" r="1.6" fill="#ff6f6f" class="fBlink"/>'+
+        '<path d="M-2 2 L60 2" stroke="#5b9dff" stroke-opacity=".7" stroke-width="1.5"/>'+
+       '</g></g></svg>'},
+    'Buildings':function(){ /* our own little base on an asteroid's surface */
+      var R=rnd(31),ground='M0 120 L0 92';for(var x=0;x<=460;x+=20)ground+=' L'+x+' '+(86-x*.05+R()*6).toFixed(1);ground+=' L460 120Z';
+      return '<svg viewBox="0 0 460 120" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><defs>'+
+       '<radialGradient id="bStar" cx=".85" cy=".7" r=".55"><stop offset="0" stop-color="#fff1e0" stop-opacity=".9"/><stop offset=".2" stop-color="#d9c2ff" stop-opacity=".45"/><stop offset=".6" stop-color="#b388ff" stop-opacity=".12"/><stop offset="1" stop-color="#b388ff" stop-opacity="0"/></radialGradient>'+
+       '<linearGradient id="bGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4152"/><stop offset="1" stop-color="#121016"/></linearGradient>'+
+       '<linearGradient id="bWall" x1="1" x2="0"><stop offset="0" stop-color="#cbbbe6"/><stop offset="1" stop-color="#3e3550"/></linearGradient>'+
+       '<linearGradient id="bTank" x1="1" x2="0"><stop offset="0" stop-color="#e4dcf3"/><stop offset=".5" stop-color="#8a7da3"/><stop offset="1" stop-color="#2c2638"/></linearGradient>'+
+       '<filter id="bGlow"><feGaussianBlur stdDeviation="2"/></filter></defs>'+
+       '<rect width="460" height="120" fill="url(#bStar)"/>'+stars(41,40)+
+       '<path d="'+ground+'" fill="url(#bGround)"/>'+
+       /* warehouse */
+       '<path d="M170 82 L170 60 Q205 46 240 60 L240 80Z" fill="url(#bWall)"/><path d="M170 66 Q205 52 240 66" fill="none" stroke="#2a2336" stroke-width="1"/>'+
+       '<rect x="196" y="68" width="18" height="12" fill="#1b1724"/><rect x="198" y="70" width="14" height="2" fill="#b388ff" opacity=".8"/>'+
+       /* tank farm */
+       [[262,79],[284,78],[306,77]].map(function(t){return '<rect x="'+(t[0]-9)+'" y="'+(t[1]-22)+'" width="18" height="22" fill="url(#bTank)"/><ellipse cx="'+t[0]+'" cy="'+(t[1]-22)+'" rx="9" ry="3" fill="#efe8fa"/>'}).join('')+
+       '<path d="M240 74 L253 74 M271 70 L275 70 M293 69 L297 69" stroke="#8a7da3" stroke-width="2"/>'+
+       /* extractor tower */
+       '<path d="M128 86 L136 40 L144 86Z" fill="none" stroke="#9c8fbf" stroke-width="2"/><path d="M131 70 L141 70 M133 56 L139 56" stroke="#9c8fbf" stroke-width="1.5"/>'+
+       '<circle cx="136" cy="38" r="3" fill="#b388ff" class="fBlink"/><circle cx="136" cy="38" r="7" fill="#b388ff" opacity=".5" filter="url(#bGlow)" class="fBlink"/>'+
+       /* window lights */
+       '<circle cx="180" cy="74" r="1.5" fill="#ffe7a8"/><circle cx="230" cy="74" r="1.5" fill="#ffe7a8"/>'+
+       '</svg>'},
     'Asteroids':function(){
       var big=rock(250,62,46,23,7,.3),ridge=rock(250,62,46,9,13,.5),craters=[[236,48,9,6],[268,74,7,5],[222,78,5,4],[262,40,4,3],[244,66,3.5,3]];
       return '<svg viewBox="0 0 460 120" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><defs>'+
@@ -64,7 +104,7 @@
        '</svg>'}
   };
   if(BETA)css+='#pgband.has-sc{position:relative;overflow:hidden;min-height:92px}#pgband .sc{position:absolute;top:0;right:0;bottom:0;width:min(62%,460px);pointer-events:none;-webkit-mask-image:linear-gradient(to left,#000 70%,transparent);mask-image:linear-gradient(to left,#000 70%,transparent)}#pgband .sc svg{width:100%;height:100%;display:block}#pgband>span,#pgband>div:not(.sc){position:relative;z-index:1}'+
-    '.scSpin{transform-box:fill-box;transform-origin:center;animation:scSpin 90s linear infinite}.scDrift{animation:scDrift 14s ease-in-out infinite alternate}@keyframes scSpin{to{transform:rotate(360deg)}}@keyframes scDrift{to{transform:translate(-10px,4px)}}@media (prefers-reduced-motion: reduce){.scSpin,.scDrift{animation:none}}';
+    '.scSpin{transform-box:fill-box;transform-origin:center;animation:scSpin 90s linear infinite}.scDrift{animation:scDrift 14s ease-in-out infinite alternate}@keyframes scSpin{to{transform:rotate(360deg)}}.fFly{animation:fFly 18s ease-in-out infinite alternate}@keyframes fFly{from{transform:translate(-14px,5px)}to{transform:translate(18px,-4px)}}.fBlink{animation:fBlink 2.4s steps(1) infinite}@keyframes fBlink{50%{opacity:.15}}@keyframes scDrift{to{transform:translate(-10px,4px)}}@media (prefers-reduced-motion: reduce){.scSpin,.scDrift,.fFly,.fBlink{animation:none}}';
   function addCss(){if(document.getElementById('colours-css'))return;var st=document.createElement('style');st.id='colours-css';st.textContent=css;document.head.appendChild(st)}
   addCss();
 
