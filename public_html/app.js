@@ -436,7 +436,7 @@ function navGroups(){
  {const hd=document.querySelector('header'),q=$('#q'),as=$('#ast'),cl=$('#cls'),h1=hd&&hd.querySelector('h1');
   if(hd&&q&&h1&&!hd.querySelector('.toprow')){const row=document.createElement('div');row.className='toprow';row.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap';
    const left=document.createElement('div');left.style.cssText='min-width:0';const right=document.createElement('div');right.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center;margin-left:auto';
-   h1.before(row);[h1,...hd.querySelectorAll(':scope > .sub')].forEach(e=>left.appendChild(e));[q,cl].forEach(e=>{if(e)right.appendChild(e)});if(as&&seg&&seg.parentElement){as.title='Pick an asteroid to show just that one';seg.parentElement.insertBefore(as,seg)}row.append(left,right)}}
+   h1.before(row);[h1,...hd.querySelectorAll(':scope > .sub')].forEach(e=>left.appendChild(e));right.appendChild(q);if(cl){cl.value='';cl.style.display='none'};if(as&&seg&&seg.parentElement){as.title='Pick an asteroid to show just that one';seg.parentElement.insertBefore(as,seg)}row.append(left,right)}}
  {const gq=$('#q');if(gq&&!$('#gq')){gq.id='gq';gq.placeholder='Search everything…';const hid=document.createElement('input');hid.type='hidden';hid.id='q';hid.value='';document.body.appendChild(hid);
   let prev='N';const go=()=>{if(gq.value.trim()){if(view!=='Z')prev=view;setV('Z')}else if(view==='Z')setV(prev)};
   gq.addEventListener('input',go);
@@ -500,14 +500,16 @@ function drawSearch(m){
  bl.sort((x,y)=>x.a.localeCompare(y.a)||x.n.localeCompare(y.n));
  const cl=(D.crewList||[]).filter(c=>okA(c.ast||'')&&has(c.name)).sort((x,y)=>String(x.name).localeCompare(String(y.name)));
  const sl=(D.ships||[]).filter(s=>okA(s.ast||'')&&(has(s.name)||has(s.type)||String(s.id)===q)).sort((x,y)=>x.name.localeCompare(y.name));
- const tot=prod.length+bl.length+cl.length+sl.length;
+ const al=(D.owned||[]).map(a=>{const c=a.Celestial||{},sp=(SPEC[c.celestialType]||['?'])[0],own=(a.Nft&&a.Nft.owners&&a.Nft.owners.starknet)===D.wallet,ctl=(D.crewN||{})[a.Control&&a.Control.controller&&a.Control.controller.id]||'';return{id:a.id,n:(a.Name&&a.Name.name)||('Asteroid #'+a.id),sp,own,ctl,used:a.lotsUsed||0}}).filter(x=>has(x.n)||has(x.sp+'-type')||String(x.id)===q).sort((x,y)=>x.n.localeCompare(y.n));
+ const tot=prod.length+bl.length+cl.length+sl.length+al.length;
  let h='<div class="note" style="padding:0 0 10px">Search results for <b>“'+esc(q)+'”</b> on '+(an?'<b>'+esc(an)+'</b>':'all asteroids')+' · '+tot+' found. Clear the search box or pick a menu button to go back.</div>';
  if(!tot){m.innerHTML=h+'<div class="note">Nothing matches.</div>';return}
  const sec=(t,n,head,rows)=>n?'<h2>'+t+' <span class="a" style="font-size:14px;font-weight:400">('+n+')</span></h2><div class="wrap"><table><thead><tr>'+head.map(x=>'<th'+(x[1]?' class="num"':'')+'>'+x[0]+'</th>').join('')+'</tr></thead><tbody>'+rows.slice(0,cap).join('')+'</tbody></table></div>'+(n>cap?'<div class="note">…and '+(n-cap)+' more – narrow the search.</div>':''):'';
- h+=sec('Products in stock',prod.length,[['Product'],['Asteroid'],['Amount',1],['In buildings']],prod.map(x=>'<tr><td>'+ricon(x.p,22)+esc(pn(x.p))+'</td><td class="cls">'+esc(x.a)+'</td><td class="num tot">'+fq(x.p,x.amt)+'</td><td class="cls" style="white-space:normal">'+esc(x.bs.join(', '))+'</td></tr>'));
- h+=sec('Buildings',bl.length,[['Building'],['Type'],['Asteroid'],['Crew'],['State']],bl.map(x=>'<tr><td>'+bthumb(x.t,48,36)+esc(x.n)+'</td><td class="cls">'+esc(x.t)+'</td><td class="cls">'+esc(x.a)+'</td><td class="cls">'+esc(x.c)+'</td><td class="cls">'+esc(x.s)+'</td></tr>'));
  h+=sec('Crews',cl.length,[['Crew'],['Asteroid'],['Where'],['Crewmates',1]],cl.map(c=>'<tr><td>'+esc(c.name)+'</td><td class="cls">'+esc(c.ast||'–')+'</td><td class="cls" style="white-space:normal">'+esc(c.place||'')+'</td><td class="num">'+c.mates+'</td></tr>'));
+ h+=sec('Resources',prod.length,[['Product'],['Asteroid'],['Amount',1],['In buildings']],prod.map(x=>'<tr><td>'+ricon(x.p,22)+esc(pn(x.p))+'</td><td class="cls">'+esc(x.a)+'</td><td class="num tot">'+fq(x.p,x.amt)+'</td><td class="cls" style="white-space:normal">'+esc(x.bs.join(', '))+'</td></tr>'));
  h+=sec('Ships',sl.length,[['Ship'],['Type'],['Asteroid'],['Where']],sl.map(s=>'<tr><td>'+esc(s.name)+' <span class="a">#'+esc(s.id)+'</span></td><td class="cls">'+esc(s.type)+'</td><td class="cls">'+esc(s.ast||'–')+'</td><td class="cls" style="white-space:normal">'+esc(s.place||'')+'</td></tr>'));
+ h+=sec('Asteroids',al.length,[['Asteroid'],['Type'],['Owner'],['Lots in use',1]],al.map(x=>'<tr><td>'+esc(x.n)+' <span class="a">#'+esc(x.id)+'</span></td><td class="cls">'+esc(x.sp)+'-type</td><td class="cls">'+(x.own?'Owned':'')+(x.ctl?(x.own?' · ':'')+'Controlled by '+esc(x.ctl):'')+'</td><td class="num">'+x.used+'</td></tr>'));
+ h+=sec('Buildings',bl.length,[['Building'],['Type'],['Asteroid'],['Crew'],['State']],bl.map(x=>'<tr><td>'+bthumb(x.t,48,36)+esc(x.n)+'</td><td class="cls">'+esc(x.t)+'</td><td class="cls">'+esc(x.a)+'</td><td class="cls">'+esc(x.c)+'</td><td class="cls">'+esc(x.s)+'</td></tr>'));
  m.innerHTML=h}
 let BELTO=null,beltOLoad=null;
 function beltMap(m){
