@@ -49,7 +49,7 @@
     var main=document.getElementById('main');if(!main)return;
     var gq=document.getElementById('gq'),key='',name='';
     if(gq&&gq.value.trim()){key='Z';name='Search results'}
-    else{var b=document.querySelector('button.on[id^="v"]');if(b&&/^v[A-Z]$/.test(b.id)){key=b.id.slice(1);name=b.textContent.trim()}}
+    else{var b=[].slice.call(document.querySelectorAll('button.on[id^="v"]')).filter(function(x){return /^v[A-Z]$/.test(x.id)})[0];if(b){key=b.id.slice(1);name=b.textContent.trim()}}
     var g=BY[key],band=document.getElementById('pgband');
     if(!g){if(band)band.style.display='none';last='';return}
     if(!band||band.nextElementSibling!==main){if(band)band.remove();band=document.createElement('div');band.id='pgband';main.before(band);last=''}
