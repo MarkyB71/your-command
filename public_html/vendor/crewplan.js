@@ -80,8 +80,10 @@ export function drawCrewPlan(m){
     const jobs=S.job?CBJ.filter(j=>String(j[0])===S.job):CBJ;
     const rows=jobs.map(([a,n])=>{const v=mult(i,now,a),o=mult(i,was,a);return{n,v,o}}).filter(r=>S.job||Math.abs(r.v-1)>0.0001||Math.abs(r.o-1)>0.0001);
     if(!rows.length)return'<div class="cp-none">No bonuses – standard on every job.</div>';
-    return'<div class="cp-bon">'+rows.map(r=>{const d=r.v-r.o,cl=d>0.0001?'up':d<-0.0001?'dn':'';
-      return'<div class="r"><span>'+esc(r.n)+'</span><span class="'+cl+'">'+pc(r.v)+(Math.abs(d)>0.0001?' <span class="was">(was '+pc(r.o)+')</span>':'')+'</span></div>'}).join('')+'</div>'}
+    const B3=/[?&]beta=1/.test(location.search); /* TEST: biggest bonus first, gap between positive and the rest */
+    if(B3)rows.sort((a,b)=>b.v-a.v);
+    return'<div class="cp-bon">'+rows.map((r,k)=>{const gap=B3&&k>0&&rows[k-1].v>1.0001&&r.v<=1.0001?'<div style="height:12px"></div>':'';const d=r.v-r.o,cl=d>0.0001?'up':d<-0.0001?'dn':'';
+      return gap+'<div class="r"><span>'+esc(r.n)+'</span><span class="'+cl+'">'+pc(r.v)+(Math.abs(d)>0.0001?' <span class="was">(was '+pc(r.o)+')</span>':'')+'</span></div>'}).join('')+'</div>'}
 
   function draw(){
     m.innerHTML='';
