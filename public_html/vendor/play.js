@@ -4,7 +4,7 @@
   const GAME='https://game.influenceth.io';
   // Always glowing (brighter than other buttons), gentle pulse; brightest on hover.
   const CSS='#play{color:#d8f7ff!important;font-weight:700;border-color:#8fe3ff!important;'+
-    'box-shadow:0 0 8px rgba(143,227,255,.95),0 0 22px rgba(91,157,255,.75)!important;'+
+    'box-shadow:0 0 8px rgba(143,227,255,.95),0 0 22px rgba(91,157,255,.75);'+
     'text-shadow:0 0 8px rgba(143,227,255,.9);animation:playGlow 2.4s ease-in-out infinite}'+
     '@keyframes playGlow{0%,100%{box-shadow:0 0 8px rgba(143,227,255,.95),0 0 22px rgba(91,157,255,.75)}'+
     '50%{box-shadow:0 0 12px rgba(180,240,255,1),0 0 34px rgba(91,157,255,.95)}}'+
