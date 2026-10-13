@@ -47,7 +47,53 @@
     var m=function(a,b){return ((a[0]+b[0])/2).toFixed(1)+' '+((a[1]+b[1])/2).toFixed(1)},d='M'+m(p[n-1],p[0]);
     for(i=0;i<n;i++)d+=' Q'+p[i][0].toFixed(1)+' '+p[i][1].toFixed(1)+' '+m(p[i],p[(i+1)%n]);return d+'Z'}
   function stars(seed,cnt){var R=rnd(seed),s='';for(var i=0;i<cnt;i++)s+='<circle cx="'+(R()*460).toFixed(0)+'" cy="'+(R()*120).toFixed(0)+'" r="'+(R()<.15?1.3:.7)+'" fill="#fff" opacity="'+(.25+R()*.6).toFixed(2)+'"/>';return s}
+  var MOVE=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches),SVG0='<svg viewBox="0 0 460 120" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">';
   var SCENES={
+    'Home':function(){ /* our own command station near the star */
+      return SVG0+'<defs><radialGradient id="hStar" cx=".95" cy=".45" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".2" stop-color="#bdf0ff" stop-opacity=".5"/><stop offset=".6" stop-color="#6ec6e6" stop-opacity=".12"/><stop offset="1" stop-color="#6ec6e6" stop-opacity="0"/></radialGradient>'+
+       '<linearGradient id="hMet" x1="1" x2="0"><stop offset="0" stop-color="#dfeaf2"/><stop offset=".6" stop-color="#5e7180"/><stop offset="1" stop-color="#1e262e"/></linearGradient><filter id="hGl"><feGaussianBlur stdDeviation="2.5"/></filter></defs>'+
+       '<rect width="460" height="120" fill="url(#hStar)"/>'+stars(51,48)+
+       '<g transform="translate(250 60)"><g class="scSpin">'+
+        '<ellipse rx="46" ry="46" fill="none" stroke="url(#hMet)" stroke-width="7"/><ellipse rx="46" ry="46" fill="none" stroke="#6ec6e6" stroke-opacity=".5" stroke-width="1" stroke-dasharray="4 8"/>'+
+        '<path d="M-46 0H46M0 -46V46" stroke="#4f606d" stroke-width="3"/></g>'+
+        '<circle r="13" fill="url(#hMet)"/><circle r="5" fill="#bdf0ff"/><circle r="12" fill="#6ec6e6" opacity=".35" filter="url(#hGl)"/>'+
+        '<rect x="54" y="-4" width="40" height="8" fill="#2a3c4c" stroke="#6ec6e6" stroke-opacity=".5"/><rect x="-94" y="-4" width="40" height="8" fill="#2a3c4c" stroke="#6ec6e6" stroke-opacity=".5"/>'+
+        '<circle cx="0" cy="-46" r="2" fill="#ff6f6f" class="fBlink"/></g>'+
+       '<circle cx="130" cy="96" r="5" fill="#3a3a44"/><circle cx="380" cy="22" r="3" fill="#4a4652"/></svg>'},
+    'SkippyChain':function(){ /* glowing production chain: inputs flowing into one product */
+      var N=[[150,30],[150,90],[230,20],[230,60],[230,100],[330,60]],L=[[0,3],[1,3],[2,5],[3,5],[4,5]];
+      return SVG0+'<defs><filter id="cGl"><feGaussianBlur stdDeviation="3"/></filter><linearGradient id="cBox" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2f12"/><stop offset="1" stop-color="#16120a"/></linearGradient></defs>'+stars(61,36)+
+       L.map(function(l,i){var a=N[l[0]],b=N[l[1]],d='M'+(a[0]+14)+' '+a[1]+' C'+(a[0]+50)+' '+a[1]+' '+(b[0]-50)+' '+b[1]+' '+(b[0]-14)+' '+b[1];
+        return '<path d="'+d+'" fill="none" stroke="#ffd24a" stroke-opacity=".45" stroke-width="2"/>'+(MOVE?'<circle r="2.5" fill="#fff3c4"><animateMotion dur="'+(2.2+i*.4)+'s" repeatCount="indefinite" path="'+d+'"/></circle>':'')}).join('')+
+       N.map(function(n,i){var w=i===5?22:14;return '<rect x="'+(n[0]-w)+'" y="'+(n[1]-w*.8)+'" width="'+2*w+'" height="'+1.6*w+'" rx="4" fill="#ffd24a" opacity=".35" filter="url(#cGl)"/><rect x="'+(n[0]-w)+'" y="'+(n[1]-w*.8)+'" width="'+2*w+'" height="'+1.6*w+'" rx="4" fill="url(#cBox)" stroke="#ffd24a" stroke-width="'+(i===5?2:1.2)+'"/>'}).join('')+
+       '<path d="M322 60 L330 52 L338 60 L330 68Z" fill="#ffd24a"/></svg>'},
+    'Logistics':function(){ /* a cargo pod flying between two asteroids */
+      var d='M120 86 Q250 -10 380 70';
+      return SVG0+'<defs><radialGradient id="lR" cx=".75" cy=".3" r="1"><stop offset="0" stop-color="#b9c9a8"/><stop offset=".7" stop-color="#34402f"/><stop offset="1" stop-color="#121611"/></radialGradient><filter id="lGl"><feGaussianBlur stdDeviation="2"/></filter></defs>'+stars(71,46)+
+       '<path d="'+rock(120,92,20,14,17,.3)+'" fill="url(#lR)"/><path d="'+rock(384,76,26,16,19,.3)+'" fill="url(#lR)"/>'+
+       '<path d="'+d+'" fill="none" stroke="#3fd68a" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="4 6"/>'+
+       '<circle cx="120" cy="86" r="3" fill="#3fd68a"/><circle cx="380" cy="70" r="3" fill="#3fd68a"/>'+
+       '<g'+(MOVE?'':' transform="translate(250 36)"')+'><rect x="-9" y="-6" width="18" height="12" rx="2" fill="#cfe9d8" stroke="#3fd68a"/><path d="M-9 0H9M0 -6V6" stroke="#3a6a4f"/><circle cx="-13" r="4" fill="#3fd68a" opacity=".8" filter="url(#lGl)"/>'+
+       (MOVE?'<animateMotion dur="9s" repeatCount="indefinite" rotate="auto" path="'+d+'"/>':'')+'</g></svg>'},
+    'Trading':function(){ /* stacks of coins and a rising price line */
+      var coin=function(x,y,n){var o='';for(var i=0;i<n;i++)o+='<ellipse cx="'+x+'" cy="'+(y-i*6)+'" rx="16" ry="5" fill="#7a5a14" stroke="#f5c542" stroke-width="1"/>';return o+'<ellipse cx="'+x+'" cy="'+(y-n*6)+'" rx="16" ry="5" fill="#f5c542"/><ellipse cx="'+x+'" cy="'+(y-n*6)+'" rx="10" ry="3" fill="none" stroke="#9c7618"/>'};
+      var line='M150 96 L190 84 L220 90 L260 66 L290 72 L330 44 L370 50 L410 24';
+      return SVG0+'<defs><linearGradient id="tA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5c542" stop-opacity=".3"/><stop offset="1" stop-color="#f5c542" stop-opacity="0"/></linearGradient><filter id="tGl"><feGaussianBlur stdDeviation="2.5"/></filter></defs>'+stars(81,36)+
+       '<path d="'+line+' L410 120 L150 120Z" fill="url(#tA)"/><path d="'+line+'" fill="none" stroke="#f5c542" stroke-width="5" opacity=".4" filter="url(#tGl)"/><path d="'+line+'" fill="none" stroke="#ffe08a" stroke-width="2"/>'+
+       '<circle cx="410" cy="24" r="4" fill="#fff3c4" class="fBlink"/>'+coin(200,108,4)+coin(236,112,7)+coin(272,110,2)+'</svg>'},
+    'Planners':function(){ /* a navigation chart with a plotted course */
+      var grid='';for(var x=120;x<=460;x+=30)grid+='<path d="M'+x+' 0V120" stroke="#ff6fae" stroke-opacity=".08"/>';for(var y=0;y<=120;y+=30)grid+='<path d="M100 '+y+'H460" stroke="#ff6fae" stroke-opacity=".08"/>';
+      var c='M160 92 Q230 20 300 54 T420 30';
+      return SVG0+'<defs><filter id="pGl"><feGaussianBlur stdDeviation="2"/></filter></defs>'+grid+stars(91,30)+
+       '<ellipse cx="290" cy="60" rx="150" ry="48" fill="none" stroke="#ff6fae" stroke-opacity=".2"/><ellipse cx="290" cy="60" rx="95" ry="30" fill="none" stroke="#ff6fae" stroke-opacity=".2"/>'+
+       '<path d="'+c+'" fill="none" stroke="#ff6fae" stroke-width="2" stroke-dasharray="6 5" class="pDash"/>'+
+       [[160,92],[300,54],[420,30]].map(function(w){return '<circle cx="'+w[0]+'" cy="'+w[1]+'" r="7" fill="none" stroke="#ff9cc8"/><circle cx="'+w[0]+'" cy="'+w[1]+'" r="2.5" fill="#ffd1e6"/>'}).join('')+
+       '<g transform="translate(400 88)" stroke="#ff9cc8" fill="none"><circle r="14" stroke-opacity=".6"/><path d="M0 -20L4 0L0 20L-4 0Z" fill="#ff6fae" stroke="none"/><path d="M-20 0H20" stroke-opacity=".6"/></g></svg>'},
+    'Search':function(){ /* a radar sweep with a few blips */
+      return SVG0+'<defs><linearGradient id="sSw" x1="0" x2="1"><stop offset="0" stop-color="#9aa8bb" stop-opacity="0"/><stop offset="1" stop-color="#cfe0f2" stop-opacity=".45"/></linearGradient></defs>'+stars(101,30)+
+       '<g transform="translate(300 60)" fill="none" stroke="#9aa8bb" stroke-opacity=".35"><circle r="20"/><circle r="40"/><circle r="58"/><path d="M-60 0H60M0 -58V58"/>'+
+       '<g class="sRad"><path d="M0 0 L58 0 A58 58 0 0 0 41 -41Z" fill="url(#sSw)" stroke="none"/></g>'+
+       '<circle cx="24" cy="-18" r="3" fill="#e6f0ff" stroke="none" class="fBlink"/><circle cx="-34" cy="22" r="2.5" fill="#e6f0ff" stroke="none"/><circle cx="12" cy="40" r="2" fill="#e6f0ff" stroke="none" class="fBlink"/></g></svg>'},
     'Fleet':function(){ /* a cargo hauler of our own design crossing in front of the star */
       return '<svg viewBox="0 0 460 120" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><defs>'+
        '<radialGradient id="fStar" cx=".92" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".15" stop-color="#cfe2ff" stop-opacity=".6"/><stop offset=".55" stop-color="#5b9dff" stop-opacity=".15"/><stop offset="1" stop-color="#5b9dff" stop-opacity="0"/></radialGradient>'+
@@ -104,7 +150,7 @@
        '</svg>'}
   };
   if(BETA)css+='#pgband.has-sc{position:relative;overflow:hidden;min-height:92px}#pgband .sc{position:absolute;top:0;right:0;bottom:0;width:min(62%,460px);pointer-events:none;-webkit-mask-image:linear-gradient(to left,#000 70%,transparent);mask-image:linear-gradient(to left,#000 70%,transparent)}#pgband .sc svg{width:100%;height:100%;display:block}#pgband>span,#pgband>div:not(.sc){position:relative;z-index:1}'+
-    '.scSpin{transform-box:fill-box;transform-origin:center;animation:scSpin 90s linear infinite}.scDrift{animation:scDrift 14s ease-in-out infinite alternate}@keyframes scSpin{to{transform:rotate(360deg)}}.fFly{animation:fFly 18s ease-in-out infinite alternate}@keyframes fFly{from{transform:translate(-14px,5px)}to{transform:translate(18px,-4px)}}.fBlink{animation:fBlink 2.4s steps(1) infinite}@keyframes fBlink{50%{opacity:.15}}@keyframes scDrift{to{transform:translate(-10px,4px)}}@media (prefers-reduced-motion: reduce){.scSpin,.scDrift,.fFly,.fBlink{animation:none}}';
+    '.scSpin{transform-box:fill-box;transform-origin:center;animation:scSpin 90s linear infinite}.scDrift{animation:scDrift 14s ease-in-out infinite alternate}@keyframes scSpin{to{transform:rotate(360deg)}}.fFly{animation:fFly 18s ease-in-out infinite alternate}@keyframes fFly{from{transform:translate(-14px,5px)}to{transform:translate(18px,-4px)}}.fBlink{animation:fBlink 2.4s steps(1) infinite}@keyframes fBlink{50%{opacity:.15}}.pDash{animation:pDash 3s linear infinite}@keyframes pDash{to{stroke-dashoffset:-22}}.sRad{animation:sRad 4s linear infinite}@keyframes sRad{to{transform:rotate(-360deg)}}@keyframes scDrift{to{transform:translate(-10px,4px)}}@media (prefers-reduced-motion: reduce){.scSpin,.scDrift,.fFly,.fBlink,.pDash,.sRad{animation:none}}';
   function addCss(){if(document.getElementById('colours-css'))return;var st=document.createElement('style');st.id='colours-css';st.textContent=css;document.head.appendChild(st)}
   addCss();
 
