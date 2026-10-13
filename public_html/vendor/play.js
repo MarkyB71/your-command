@@ -1,8 +1,6 @@
 // Play Influence button – sits just before SkipCoin in the menu row.
-// TEST: only shown with ?beta=1 in the address.
+// LIVE for everyone (tested on ?beta=1 first).
 (function(){
-  const BETA=/[?&]beta=1/.test(location.search);
-  if(!BETA) return;
   const GAME='https://game.influenceth.io';
   // Always glowing (brighter than other buttons), gentle pulse; brightest on hover.
   const CSS='#play{color:#d8f7ff!important;font-weight:700;border-color:#8fe3ff!important;'+
