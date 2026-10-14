@@ -844,6 +844,6 @@ async function load(wallet){
 const start=new URLSearchParams(location.search).get('wallet')||getSaved();
 if(start&&okAddr(start)){setSaved(start);load(start)}else askWallet();
 })();
-var SARB=/[?&]beta=1/.test(location.search);
+var SARB=true;
 function tLeft(t,now){const s=Math.max(0,t-now),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),mi=Math.floor(s%3600/60);return s<=0?'any moment':d?d+'d '+h+'h '+mi+'m':h?h+'h '+mi+'m':Math.max(1,mi)+'m'}
 setInterval(()=>{const n=Date.now()/1000;document.querySelectorAll('[data-fin]').forEach(e=>{e.textContent=tLeft(+e.dataset.fin,n)})},30000);
