@@ -59,7 +59,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-kids>.pc-br::before,.pc-big .pc-kids>.pc-br::after{left:-22px}
 .pc-big .pc-kids>.pc-br{padding:7px 0}
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
-const BETA2=/[?&]beta=1/.test(location.search),CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
+const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
