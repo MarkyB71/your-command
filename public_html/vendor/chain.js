@@ -60,7 +60,8 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-kids>.pc-br{padding:7px 0}
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
 const BETA2=/[?&]beta=1/.test(location.search),CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
-const S={mode:'from',prod:170,amt:100,unit:'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
+const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
+const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -74,18 +75,18 @@ export function drawChain(m){
   const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');
   const spots=id=>{const out=[];(Y&&Y.asts||[]).forEach((a,i)=>{if(ai!==null&&i!==ai)return;(a.buildings||[]).forEach(b=>{const v=b.items&&b.items[id];if(v)out.push([a.name,b.name+(b.lot?' · lot '+b.lot:''),v])})});return out.sort((x,y)=>y[2]-x[2])};
   const hv=(id,qty)=>{const h=have(id);if(h===null)return'';const c=h>=qty?'ok':h>0?'part':'';
-    const txt=(h>=qty?'✓ You have '+fmt(h):h>0?'You have '+fmt(h)+' · short '+fmt(qty-h):'None in stock')+where;
+    const txt=(h>=qty?'✓ You have '+fu(id,h):h>0?'You have '+fu(id,h)+' · short '+fu(id,qty-h):'None in stock')+where;
     if(!h)return'<div class="pc-have">'+txt+'</div>';
-    const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fmt(x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
+    const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
-  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fmt(qty)+'</div></div></div>'+(S.use!=null?'':hv(id,qty));
+  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+(S.use!=null?'':hv(id,qty));
   const take=(id,qty)=>{if(S.use==null||!Y||id>=1000)return 0;if(pool[id]===undefined)pool[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pool[id],qty);pool[id]-=t;return t};
   function node(id,qty,path,key){
     if(S.use!=null&&!path.includes(id)){const got=take(id,qty);
       if(got>0&&got>=qty-1e-9){const br=el('div','pc-br');br.appendChild(el('div','pc-n cov',head(id,qty)+'<div class="pc-use">✓ Covered from stock on '+esc((Y.asts[S.use]||{}).name||'')+'</div>'));return br}
       if(got>0){const r=node0(id,qty-got,path,key),tp=r.querySelector('.pc-n .pc-top');
-        if(tp)tp.insertAdjacentHTML('afterend','<div class="pc-use part">Using '+fmt(got)+' from stock · still need '+fmt(qty-got)+'</div>');
-        const q=r.querySelector('.pc-n .pc-q');if(q)q.textContent=fmt(qty);return r}}
+        if(tp)tp.insertAdjacentHTML('afterend','<div class="pc-use part">Using '+fu(id,got)+' from stock · still need '+fu(id,qty-got)+'</div>');
+        const q=r.querySelector('.pc-n .pc-q');if(q)q.textContent=fu(id,qty);return r}}
     return node0(id,qty,path,key)}
   function node0(id,qty,path,key){
     const br=el('div','pc-br'),all=makers[id]||[],o=opts(id,path);
@@ -101,7 +102,7 @@ export function drawChain(m){
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
-    const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fmt(v*runs)+' '+esc(N[k]));
+    const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fu(k,v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
     const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
     t.addEventListener('click',()=>{anc(key,t);S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
@@ -137,11 +138,11 @@ export function drawChain(m){
     (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
     const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>');
     let t='<b>'+esc(N[id])+'</b>';
-    if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fmt(v):'None in stock')+'</div>');
-      const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fmt(x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
+    if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fu(id,v):'None in stock')+'</div>');
+      const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
     if(via){const pa=path[path.length-1],per=via.inp[pa]/via.out[id];
       if(Y&&pa<1000){const hp=have(pa)||0,can=Math.floor(hp/per+1e-9);
-        t+='<span class="pc-need">You can make '+can.toLocaleString()+' '+esc(N[id])+' with your '+fmt(hp)+' '+esc(N[pa])+'</span>'}
+        t+='<span class="pc-need">You can make '+can.toLocaleString()+' '+esc(N[id])+' with your '+fu(pa,hp)+' '+esc(N[pa])+'</span>'}
       t+='<span class="pc-t">Needs '+fmt(per)+' '+esc(N[pa])+' for each one</span>';
       t+='<span class="pc-t">'+esc(via.name)+' · '+TYPE[via.type]+'</span>';
       const oth=Object.keys(via.inp).filter(k=>+k!==path[path.length-1]).map(k=>esc(N[k]));
@@ -192,7 +193,7 @@ export function drawChain(m){
     if(TEST)w.addEventListener('scroll',()=>{S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft});
     if(TEST)w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
-    m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fmt(v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fmt(h):'have '+fmt(h))+')</span>')}).join('<br>'):'Open more branches to see them')));
+    m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')}).join('<br>'):'Open more branches to see them')));
   }
   if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(document.getElementById('main'))})}
   draw();
