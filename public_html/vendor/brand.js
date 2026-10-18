@@ -7,7 +7,7 @@
     '#brand-logo{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
       'font-size:40px;letter-spacing:2.5px;text-transform:uppercase;color:#e6ebf2}'+
-    'header h1.brand .brand-t{text-shadow:0 0 8px rgba(143,227,255,.55),0 0 22px rgba(91,157,255,.45)}'+
+    'header h1.brand .brand-t{text-shadow:0 0 10px rgba(143,227,255,.95),0 0 26px rgba(95,195,228,.8)}'+
     'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 10px rgba(143,227,255,.95),0 0 26px rgba(95,195,228,.8)}'+
     'header{border-bottom:0!important}'+
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
