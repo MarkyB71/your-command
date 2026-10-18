@@ -1,4 +1,4 @@
-var SPLIT=/[?&]beta=1/.test(location.search); /* TEST: one-file-per-page – pages in /pages/ are used only with ?beta=1 */
+var SPLIT=true; /* Version 200 (2026-10-18): every page now has its own file in /pages/. The old page code below is no longer used and can be removed later. */
 var SHC=/[?&]beta=1/.test(location.search),SHCOL={d:['#3fd68a','Docked'],o:['#ffab3d','In orbit'],f:['#5b9dff','In flight']}; /* TEST: ship status colours (global so every scope sees it) */
 const CNTB=true;
 (function(){
