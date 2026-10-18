@@ -25,7 +25,7 @@ const CATS=[
   ['other','Other','•',()=>true]];
 const cat=n=>CATS.find(c=>c[3](n));
 const words=n=>n.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()).toLowerCase().replace(/^./,c=>c.toUpperCase());
-const HC={},LD={};const S={cat:'',q:'',crew:'',show:300,range:'100'};
+const HC={},LD={};let HT=0;const BETA2=/[?&]beta=1/.test(location.search);const S={cat:'',q:'',crew:'',show:300,range:'100'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
 export function drawHistory(m){
@@ -93,6 +93,13 @@ export function drawHistory(m){
     const H=HC[S.range];
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
     rs.addEventListener('change',()=>{S.range=rs.value;S.show=300;S.crew='';fetchRange();draw()});
+    if(HT){clearInterval(HT);HT=0}
+    if(H&&H.until){const b=el('div','hl-bar');b.appendChild(rs);m.appendChild(b);
+      const n=el('div','note hl-cool','');m.appendChild(n);
+      const tick=()=>{if(!n.isConnected){clearInterval(HT);HT=0;return}const s=Math.max(0,Math.ceil((H.until-Date.now())/1000));
+        if(!s){clearInterval(HT);HT=0;delete HC[S.range];fetchRange();draw();return}
+        n.innerHTML='<b style="color:#ffb547">⏳ Cool-down</b> – "Everything" reads a lot from the game\'s server, so it can be run '+H.max+' times an hour.<br>You can try again in <b class="hl-cd" style="font-size:20px;color:#8fe3ff">'+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+'</b> – or pick a shorter timeframe above, those work straight away.'};
+      tick();HT=setInterval(tick,1000);return}
     if(!H||H.error){const b=el('div','hl-bar');b.appendChild(rs);m.appendChild(b);
       m.appendChild(el('div','note',H?'Could not load the history: '+esc(H.error):'Loading '+(S.range==='100'?'your crews\' latest actions':RANGES.find(r=>r[0]===S.range)[1].toLowerCase())+' from the game… '+(S.range==='all'||S.range==='90'?'This one can take a couple of minutes the first time.':'This can take up to a minute the first time.')));return}
     m.appendChild(el('div','note','Everything your crews have done, newest first, straight from the game\'s records – '+(S.range==='100'?'the latest 100 actions for each crew':RANGES.find(r=>r[0]===S.range)[1].toLowerCase())+'. Times are in your local time.'+(H.partial?' <b style="color:#ffb547">Very long history – showing as much as could be fetched in one go.</b>':'')));
@@ -118,7 +125,7 @@ export function drawHistory(m){
   }
   draw();
   function fetchRange(){const k=S.range;if(HC[k]||LD[k])return;
-    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
+    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||'')+(BETA2?'&beta=1':''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.wait?{error:'cooldown',until:Date.now()+j.wait*1000,max:j.max||3}:j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
   fetchRange();
 }
 

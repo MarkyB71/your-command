@@ -18,8 +18,25 @@ if (!in_array($range, ['100', '7', '30', '90', 'all'], true)) $range = '100';
 $cf = $CACHE . '/history3_' . $range . '_' . sha1($wallet) . '.json';
 if (is_file($cf) && time() - filemtime($cf) < ($range === 'all' ? 1800 : 600)) { readfile($cf); exit; }
 
-// fair use (same limit as api.php)
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+// "Everything" reads up to thousands of pages from the game, so each visitor may run it only a few times an hour.
+// The answer says how long to wait, so the page can show a cool-down timer. (TEST: only with &beta=1 for now.)
+const HIST_ALL_MAX = 3, HIST_ALL_WINDOW = 3600;
+if ($range === 'all' && isset($_GET['beta'])) {
+  $hf = $CACHE . '/rlh_' . sha1($ip) . '.json';
+  $now = time();
+  $hh = is_file($hf) ? (json_decode(file_get_contents($hf), true) ?: []) : [];
+  $hh = array_values(array_filter($hh, fn($t) => is_int($t) && $t > $now - HIST_ALL_WINDOW));
+  if (count($hh) >= HIST_ALL_MAX) {
+    $wait = max(1, min($hh) + HIST_ALL_WINDOW - $now);
+    http_response_code(429); header('Retry-After: ' . $wait);
+    echo json_encode(['error' => 'cooldown', 'wait' => $wait, 'max' => HIST_ALL_MAX]); exit;
+  }
+  $hh[] = $now;
+  @file_put_contents($hf, json_encode($hh), LOCK_EX);
+}
+
+// fair use (same limit as api.php)
 $rf = $CACHE . '/rl_' . sha1($ip) . '.json';
 $now = time();
 $hits = is_file($rf) ? (json_decode(file_get_contents($rf), true) ?: []) : [];
