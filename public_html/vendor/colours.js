@@ -152,11 +152,25 @@
   if(BETA)css+='#pgband.has-sc{position:relative;overflow:hidden;min-height:92px}#pgband .sc{position:absolute;top:0;right:0;bottom:0;width:min(62%,460px);pointer-events:none;-webkit-mask-image:linear-gradient(to left,#000 70%,transparent);mask-image:linear-gradient(to left,#000 70%,transparent)}#pgband .sc svg{width:100%;height:100%;display:block}#pgband>span,#pgband>div:not(.sc){position:relative;z-index:1}'+
     '.scSpin{transform-box:fill-box;transform-origin:center;animation:scSpin 90s linear infinite}.scDrift{animation:scDrift 14s ease-in-out infinite alternate}@keyframes scSpin{to{transform:rotate(360deg)}}.fFly{animation:fFly 18s ease-in-out infinite alternate}@keyframes fFly{from{transform:translate(-14px,5px)}to{transform:translate(18px,-4px)}}.fBlink{animation:fBlink 2.4s steps(1) infinite}@keyframes fBlink{50%{opacity:.15}}.pDash{animation:pDash 3s linear infinite}@keyframes pDash{to{stroke-dashoffset:-22}}.sRad{animation:sRad 4s linear infinite}@keyframes sRad{to{transform:rotate(-360deg)}}@keyframes scDrift{to{transform:translate(-10px,4px)}}@media (prefers-reduced-motion: reduce){.scSpin,.scDrift,.fFly,.fBlink,.pDash,.sRad{animation:none}}';
   function addCss(){if(document.getElementById('colours-css'))return;var st=document.createElement('style');st.id='colours-css';st.textContent=css;document.head.appendChild(st)}
+  /* TEST (?beta=1): dropdowns slide open, coloured top line + glow in the group colour, stronger item glow on hover */
+  var DDB=/[?&]beta=1/.test(location.search);
+  if(DDB){
+    Object.keys(GROUPS).forEach(function(g){var c=GROUPS[g][0];
+      css+='.ddm[data-gc="'+g+'"]{border-top:3px solid '+c+'!important;box-shadow:0 8px 20px rgba(0,0,0,.55),0 0 16px '+rgba(c,.35)+'!important}';
+      GROUPS[g][2].forEach(function(k){css+='.ddm #v'+k+':hover{box-shadow:0 0 16px '+rgba(c,.7)+',inset 0 0 10px '+rgba(c,.25)+'!important;text-shadow:0 0 8px '+rgba(c,.8)+';padding-left:16px!important}'});
+    });
+    css+='.ddm{transform-origin:top center;animation:ddin .22s ease-out}.ddm button{transition:box-shadow .15s,background-color .15s,color .15s,padding-left .15s,text-shadow .15s!important}'+
+         '@keyframes ddin{from{opacity:0;transform:translateY(-6px) scaleY(.85)}to{opacity:1;transform:none}}'+
+         '@media (prefers-reduced-motion: reduce){.ddm{animation:none}.ddm button{transition:none!important}}';
+  }
+  function tagMenus(){if(!DDB)return;[].forEach.call(document.querySelectorAll('.ddm'),function(d){if(d.dataset.gc)return;var b=d.querySelector('button[id^="v"]'),g=b&&BY[b.id.slice(1)];if(g)d.dataset.gc=g})}
+
   addCss();
 
   /* the coloured strip above the page */
   var last='';
   function tick(){
+    tagMenus();
     addCss(); /* the site rebuilds <head> while loading, so put the colours back if they vanish */
     var main=document.getElementById('main');if(!main)return;
     var gq=document.getElementById('gq'),key='',name='';
