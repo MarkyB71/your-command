@@ -3,3 +3,4 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/yourcommand/public_html/
     - /bin/cp -R public_html/. $DEPLOYPATH
+    - /bin/bash deploy/stamp.sh $DEPLOYPATH
