@@ -9,10 +9,16 @@
       'font-size:40px;letter-spacing:2.5px;text-transform:uppercase;color:#e6ebf2}'+
     'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 10px rgba(95,195,228,.7)}'+
     'header{border-bottom:0!important}'+
+    '#brand-tag{text-align:center;color:#8a96a8;font-family:Jura,sans-serif;font-size:15px;letter-spacing:1px;margin:-6px 0 8px}'+
+    '#brand-try{text-align:center;font-size:12px;color:#ffab3d;margin:0 0 8px}#brand-try button{font-size:12px;padding:3px 8px}#brand-try button.sel{background:#5fc3e4;color:#04121a;font-weight:600}'+
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
       'background:linear-gradient(90deg,transparent,#5fc3e4 20%,#8fe3ff 50%,#5fc3e4 80%,transparent);'+
       'box-shadow:0 0 10px rgba(95,195,228,.8),0 0 22px rgba(91,157,255,.5)}'+
     '@media (max-width:600px){header h1.brand{font-size:24px;gap:10px}#brand-logo{width:50px;height:50px}}';
+  const NAMES=[
+    ['Belt <span>Command</span> Deck','Belt Command Deck','Your view of the belt'],
+    ['Your Belt <span>Command</span> Deck','Your Belt Command Deck','']];
+  let NAMEI=0;
   const NS='http://www.w3.org/2000/svg';
   const MOVE=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   const LOGO=
@@ -44,6 +50,20 @@
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
     if(h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
+    // TEST name: two versions to compare
+    const t=h1&&h1.querySelector('.brand-t');
+    if(t&&t.dataset.n!==String(NAMEI)){
+      t.dataset.n=String(NAMEI);
+      t.innerHTML=NAMES[NAMEI][0];
+      d.title=NAMES[NAMEI][1];
+      let tg=d.getElementById('brand-tag');
+      if(!tg){tg=d.createElement('div');tg.id='brand-tag';h1.after(tg)}
+      tg.textContent=NAMES[NAMEI][2];tg.style.display=NAMES[NAMEI][2]?'':'none';
+      let tr=d.getElementById('brand-try');
+      if(!tr){tr=d.createElement('div');tr.id='brand-try';(tg||h1).after(tr);
+        tr.addEventListener('click',e=>{const b=e.target.closest('[data-ni]');if(!b)return;NAMEI=+b.dataset.ni;tick()})}
+      tr.innerHTML='Test – pick a name: '+NAMES.map((n,i)=>'<button type="button" data-ni="'+i+'"'+(i===NAMEI?' class="sel"':'')+'>'+n[1]+'</button>').join(' ');
+    }
   }
   setInterval(tick,300);tick();
 })();
