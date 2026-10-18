@@ -78,6 +78,12 @@
         t.innerHTML=esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
         d.title=T.filter(Boolean).join(' ');}
     }
+    // Title scrolls away; header stops with the menu buttons at the top
+    if(hd){const bar=hd.querySelector(':scope > .bar');
+      if(bar){const top=-Math.max(0,bar.offsetTop-8);
+        if(hd.style.top!==top+'px')hd.style.setProperty('top',top+'px','important');
+        const vis=hd.offsetHeight+top;
+        d.querySelectorAll('.pc-bar.stick').forEach(b=>{if(b.style.top!==vis+'px')b.style.top=vis+'px'});}}
   }
   setInterval(tick,300);tick();
 })();
