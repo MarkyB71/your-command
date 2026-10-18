@@ -1,3 +1,4 @@
+var SHC=/[?&]beta=1/.test(location.search),SHCOL={d:['#3fd68a','Docked'],o:['#ffab3d','In orbit'],f:['#5b9dff','In flight']}; /* TEST: ship status colours (global so every scope sees it) */
 const CNTB=true;
 (function(){
 const VER=(document.currentScript&&new URL(document.currentScript.src).searchParams.get('v'))||'';
@@ -307,8 +308,7 @@ function drawAlerts(m){
  {const g={};S.idle.forEach(x=>{const k=x.a+'|'+x.type;(g[k]=g[k]||{lvl:1,t:0,a:x.a,type:x.type,n:[],crew:new Set()}).n.push(x.name);if(x.crew)g[k].crew.add(x.crew)});
   S.idle=Object.values(g).map(x=>({lvl:1,t:-x.n.length,a:x.a,type:x.type,pic:x.type,what:x.n.length+' '+x.type+(x.n.length>1?'s':'')+' with nothing running',name:x.type,html:x.n.length>1?'<details><summary style="cursor:pointer">'+x.n.length+' '+esc(x.type)+'s</summary><div class="a" style="white-space:normal;max-width:420px">'+x.n.map(esc).join(', ')+'</div></details>':esc(x.n[0]),crew:[...x.crew].join(', ')}))}
  leaseInfo().forEach(x=>{if(x.st==='ok')return;add('lease',{lvl:x.st==='soon'?1:2,what:x.st==='none'?'No lease – owner can seize it':x.left<=0?'Lease ended '+Math.floor(-x.left/86400)+' days ago – owner can seize it':'Lease ends in '+tLeft(x.end,Date.now()/1000),t:x.end,a:x.a,name:'Lot #'+x.lot.toLocaleString()+(x.b.length?' · '+x.b.map(b=>b.name).join(', '):''),type:'Lot',crew:x.crew})});
- const SHC=/[?&]beta=1/.test(location.search),SHCOL={d:['#3fd68a','Docked'],o:['#ffab3d','In orbit'],f:['#5b9dff','In flight']}; /* TEST: ship status colours */
-const BETA=true;
+ const BETA=true;
  if(BETA){if(!DLV&&!dlvLoad)dlvLoad=fetch('deliveries.php?wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);DLV=j}).catch(e=>{DLV={err0:(e&&e.message)||'error'}}).finally(()=>{dlvLoad=null;if(view==='N'||view==='V')draw()});
   if(DLV&&!DLV.err0){const bI={};(D.allB||[]).forEach(b=>{bI[b.id]=b});const sI={};(D.ships||[]).forEach(s=>{sI[s.id]=s});
    const nm=e=>{if(e[0]===5){const b=bI[e[1]];if(!b)return ['Building #'+e[1],'','Building'];const ty=BT[b.Building&&b.Building.buildingType]||'Building';return [(b.Name&&b.Name.name)||(ty+' #'+e[1]),astOf(b),ty]}const s=sI[e[1]];return s?[s.name,s.ast||'','Ship']:['Ship #'+e[1],'','Ship']};
