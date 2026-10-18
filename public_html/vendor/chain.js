@@ -81,7 +81,7 @@ export function drawChain(m){
     if(!h)return'<div class="pc-have">'+txt+'</div>';
     const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
-  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+(S.use!=null?'':hv(id,qty));
+  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm"'+(UL1?' data-fid="'+id+'" title="See what '+esc(N[id])+' is used in"':'')+'>'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+(S.use!=null?'':hv(id,qty));
   const take=(id,qty)=>{if(S.use==null||!Y||id>=1000)return 0;if(pool[id]===undefined)pool[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pool[id],qty);pool[id]-=t;return t};
   function node(id,qty,path,key){
     if(S.use!=null&&!path.includes(id)){const got=take(id,qty);
@@ -112,6 +112,9 @@ export function drawChain(m){
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
+  if(UL1){M0.__pcUse=id=>{tipHide();S.mode='use';S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
+    if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-nm[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid)})}
+    if(!document.getElementById('pc-use-css')){const st=el('style');st.id='pc-use-css';st.textContent='.pc-nm[data-fid]{cursor:pointer;color:#8fe3ff}.pc-nm[data-fid]:hover{text-decoration:underline}';document.head.appendChild(st)}}
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
   if(!window.__pcTipW){window.__pcTipW=1;addEventListener('scroll',()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'},true);
@@ -138,7 +141,7 @@ export function drawChain(m){
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
     (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
-    const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>');
+    const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm"'+(UL1?' data-fid="'+id+'" title="See what '+esc(N[id])+' is used in"':'')+'>'+esc(N[id])+'</div></div></div>');
     let t='<b>'+esc(N[id])+'</b>';
     if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fu(id,v):'None in stock')+'</div>');
       const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
