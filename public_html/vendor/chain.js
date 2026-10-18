@@ -112,9 +112,9 @@ export function drawChain(m){
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  if(BETA3){M0.__pcFlip=id=>{tipHide();S.mode=S.mode==='use'?'from':'use';S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();scrollTo(0,0)};
-    if(!M0.dataset.pcflip){M0.dataset.pcflip=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-top[data-fid]');if(!t||!M0.__pcFlip||document.getElementById('vH')?.className!=='on')return;e.preventDefault();M0.__pcFlip(+t.dataset.fid)})}
-    if(!document.getElementById('pc-flip-css')){const st=el('style');st.id='pc-flip-css';st.textContent='.pc-top[data-fid]{cursor:pointer}.pc-top[data-fid]:hover .pc-nm{color:#8fe3ff;text-decoration:underline}';document.head.appendChild(st)}}
+  if(BETA3){M0.__pcFlip=id=>{tipHide();S.mode=S.mode==='use'?'from':'use';S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="r"]>.pc-n,[data-k="u"]>.pc-n')||M0.querySelector('.pc-n');if(r)r.scrollIntoView({block:'center',inline:'center'})};
+    if(!M0.dataset.pcflip){M0.dataset.pcflip=1;M0.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('button,select,summary,details,a,input,label'))return;const n=e.target.closest&&e.target.closest('.pc-n'),t=n&&n.querySelector('.pc-top[data-fid]');if(!t||!M0.__pcFlip||document.getElementById('vH')?.className!=='on')return;e.preventDefault();M0.__pcFlip(+t.dataset.fid)})}
+    if(!document.getElementById('pc-flip-css')){const st=el('style');st.id='pc-flip-css';st.textContent='.pc-n:has(.pc-top[data-fid]){cursor:pointer}.pc-top[data-fid]:hover .pc-nm{color:#8fe3ff;text-decoration:underline}';document.head.appendChild(st)}}
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
   if(!window.__pcTipW){window.__pcTipW=1;addEventListener('scroll',()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'},true);
