@@ -7,8 +7,8 @@
     '#brand-logo{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
       'font-size:40px;letter-spacing:1px;text-transform:uppercase;color:#e6ebf2}'+
-    'header h1.brand .brand-t{text-shadow:0 0 10px rgba(143,227,255,.95),0 0 26px rgba(95,195,228,.8)}'+
-    'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 10px rgba(143,227,255,.95),0 0 26px rgba(95,195,228,.8)}'+
+    'header h1.brand .brand-t{text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
+    'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
     'header{border-bottom:0!important}'+
     '#brand-fp{text-align:center;font-size:12px;color:#ffab3d;margin:-4px 0 8px}#brand-fp button{font-size:15px;padding:3px 10px}#brand-fp button.sel{background:#5fc3e4;color:#04121a}'+
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
