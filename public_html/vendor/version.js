@@ -1,7 +1,5 @@
 // Site version in the footer, from version.json (written automatically on every deploy by deploy/stamp.sh).
-// TEST: only with ?beta=1 for now.
 (function(){
-  if(!/[?&]beta=1/.test(location.search)) return;
   fetch('version.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){
     if(!v||!v.n) return;
     var txt='Version '+v.n+(v.date?' · '+v.date:'');
