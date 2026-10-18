@@ -429,6 +429,7 @@ function navGroups(){
  G.forEach(([name,keys])=>{const b=document.createElement('button');b.textContent=name+' ▾';b.dataset.g=name;
   const d=document.createElement('span');d.className='ddm';keys.forEach(k=>{const e=$('#v'+k);if(e)d.appendChild(e)});
   b.addEventListener('click',e=>{e.stopPropagation();const open=d.style.display==='flex';closeAll();const old=$('#ddm');if(old)old.style.display='none';if(open)return;const r=b.getBoundingClientRect();d.style.left=r.left+'px';d.style.top=(r.bottom+4)+'px';d.style.display='flex'});
+  if(/[?&]beta=1/.test(location.search))b.addEventListener('mouseenter',()=>{if(d.style.display==='flex'||!menus.some(m=>m.style.display==='flex'))return;closeAll();const r=b.getBoundingClientRect();d.style.left=r.left+'px';d.style.top=(r.bottom+4)+'px';d.style.display='flex'}); /* hover-to-switch once a menu is open (test) */
   d.addEventListener('click',()=>{closeAll();setTimeout(upd,0)});
   menus.push(d);btns.push([b,d,name]);frag.push(b);document.body.appendChild(d)});
  
