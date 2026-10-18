@@ -5,20 +5,27 @@
   if(!ON)return;
   const CSS=
     '#brand-logo{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
-    'header h1.brand{display:flex;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
+    'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
       'font-size:40px;letter-spacing:2.5px;text-transform:uppercase;color:#e6ebf2}'+
     'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 10px rgba(95,195,228,.7)}'+
     'header{border-bottom:0!important}'+
-    '#brand-tag{text-align:center;color:#8a96a8;font-family:Jura,sans-serif;font-size:15px;letter-spacing:1px;margin:-6px 0 8px}'+
-    '#brand-try{text-align:center;font-size:12px;color:#ffab3d;margin:0 0 8px}#brand-try button{font-size:12px;padding:3px 8px}#brand-try button.sel{background:#5fc3e4;color:#04121a;font-weight:600}'+
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
       'background:linear-gradient(90deg,transparent,#5fc3e4 20%,#8fe3ff 50%,#5fc3e4 80%,transparent);'+
       'box-shadow:0 0 10px rgba(95,195,228,.8),0 0 22px rgba(91,157,255,.5)}'+
     '@media (max-width:600px){header h1.brand{font-size:24px;gap:10px}#brand-logo{width:50px;height:50px}}';
-  const NAMES=[
-    ['Belt <span>Command</span> Deck','Belt Command Deck','Your view of the belt'],
-    ['Your Belt <span>Command</span> Deck','Your Belt Command Deck','']];
-  let NAMEI=0;
+  const GRP={S:'Fleet',C:'Fleet',P:'Logistics',V:'Logistics',J:'Logistics',A:'Asteroids',X:'Asteroids',F:'Asteroids',
+    B:'Buildings',T:'Buildings',L:'Buildings',K:'Trading',Y:'Trading',M:'Trading',R:'Planners',Q:'Planners'};
+  const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  // returns [before, highlighted word(s), after]
+  function title(){
+    const gq=document.getElementById('gq');
+    if(gq&&gq.value.trim())return ['','Search','Results'];
+    const b=[].slice.call(document.querySelectorAll('button.on[id^="v"]')).filter(x=>/^v[A-Z]$/.test(x.id))[0];
+    const k=b?b.id.slice(1):'N';
+    if(k==='N'||!b)return ['Belt','Command','Deck'];
+    const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
+    return [GRP[k]||'',name,''];
+  }
   const NS='http://www.w3.org/2000/svg';
   const MOVE=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   const LOGO=
@@ -50,19 +57,13 @@
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
     if(h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
-    // TEST name: two versions to compare
+    // Title follows the page: landing = Your Belt Command Deck, others = Your <Group> <Page>
     const t=h1&&h1.querySelector('.brand-t');
-    if(t&&t.dataset.n!==String(NAMEI)){
-      t.dataset.n=String(NAMEI);
-      t.innerHTML=NAMES[NAMEI][0];
-      d.title=NAMES[NAMEI][1];
-      let tg=d.getElementById('brand-tag');
-      if(!tg){tg=d.createElement('div');tg.id='brand-tag';h1.after(tg)}
-      tg.textContent=NAMES[NAMEI][2];tg.style.display=NAMES[NAMEI][2]?'':'none';
-      let tr=d.getElementById('brand-try');
-      if(!tr){tr=d.createElement('div');tr.id='brand-try';(tg||h1).after(tr);
-        tr.addEventListener('click',e=>{const b=e.target.closest('[data-ni]');if(!b)return;NAMEI=+b.dataset.ni;tick()})}
-      tr.innerHTML='Test – pick a name: '+NAMES.map((n,i)=>'<button type="button" data-ni="'+i+'"'+(i===NAMEI?' class="sel"':'')+'>'+n[1]+'</button>').join(' ');
+    if(t){
+      const T=title();
+      if(t.dataset.n!==T.join('|')){t.dataset.n=T.join('|');
+        t.innerHTML='Your '+esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
+        d.title='Your '+T.filter(Boolean).join(' ');}
     }
   }
   setInterval(tick,300);tick();
