@@ -213,7 +213,7 @@
         return APP.BELTO;
       });
     Promise.all([
-      import('./vendor/travel.js?v=' + APP.VER),
+      import('../vendor/travel.js?v=' + APP.VER),
       APP.BELTO ? Promise.resolve(APP.BELTO) : APP.beltOLoad,
     ])
       .then(([T, BO]) => {

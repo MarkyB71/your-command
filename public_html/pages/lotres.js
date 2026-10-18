@@ -27,7 +27,7 @@
     const A = own.find((a) => a.id === APP.lfAst);
     if (!APP.ABM) {
       m.innerHTML = '<div class="note">Loading the game\'s resource maths…</div>';
-      import('./vendor/abund.js?v=' + APP.VER)
+      import('../vendor/abund.js?v=' + APP.VER)
         .then((x) => {
           APP.ABM = x;
           if (APP.view === 'F') APP.draw();
