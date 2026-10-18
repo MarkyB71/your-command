@@ -1,3 +1,4 @@
+var SPLIT=/[?&]beta=1/.test(location.search); /* TEST: one-file-per-page – pages in /pages/ are used only with ?beta=1 */
 var SHC=/[?&]beta=1/.test(location.search),SHCOL={d:['#3fd68a','Docked'],o:['#ffab3d','In orbit'],f:['#5b9dff','In flight']}; /* TEST: ship status colours (global so every scope sees it) */
 const CNTB=true;
 (function(){
@@ -49,7 +50,7 @@ let view='N',sortKey='name',sortDir=1;const open=new Set();
 const tot=asts.map(a=>{const t={};a.buildings.forEach(b=>{for(const p in b.items)t[p]=(t[p]||0)+b.items[p]});return t});
 const allP=[...new Set(tot.flatMap(t=>Object.keys(t)))];
 const pooled={};tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
-window.YIC={asts,tot,pooled,get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
+window.YIC={asts,tot,pooled,get esc(){return esc},get fmtT(){return fmtT},get tLeft(){return tLeft},get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
 function rows(){
  const q=$('#q').value.trim().toLowerCase(),ai=$('#ast').value,cl=$('#cls').value;
  const cols=ai===''?asts.map((a,i)=>i):[+ai];
@@ -706,7 +707,8 @@ function draw(){
  if(view==='V'){drawDeliveries(m);return}
  if(view==='K'){drawMarket(m);return}
  if(view==='R'){drawTravel(m);return}
- if(view==='C'||view==='S'){drawAssets(m,view);return}
+ if(view==='S'&&SPLIT&&window.PAGES&&PAGES.S){PAGES.S(m);return}
+  if(view==='C'||view==='S'){drawAssets(m,view);return}
  if(view==='P'){
   const{r,cols}=rows();
   if(!r.length){m.innerHTML='<div class="note">Nothing matches.</div>';return}
