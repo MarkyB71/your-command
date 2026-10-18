@@ -1,8 +1,6 @@
 // Site logo + header style (our own artwork – not the Influence logo).
-// TEST: only on ?beta=1 until Mark says go live.
+// LIVE for everyone (tested on ?beta=1 first, 19 Oct 2026).
 (function(){
-  const ON=/[?&]beta=1/.test(location.search);
-  if(!ON)return;
   const CSS=
     '#brand-logo,#brand-logo2{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
@@ -10,7 +8,6 @@
     'header h1.brand .brand-t{text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
     'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
     'header{border-bottom:0!important}'+
-    '#brand-fp{text-align:center;font-size:12px;color:#ffab3d;margin:-4px 0 8px}#brand-fp button{font-size:15px;padding:3px 10px}#brand-fp button.sel{background:#5fc3e4;color:#04121a}'+
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
       'background:linear-gradient(90deg,transparent,#5fc3e4 20%,#8fe3ff 50%,#5fc3e4 80%,transparent);'+
       'box-shadow:0 0 10px rgba(95,195,228,.8),0 0 22px rgba(91,157,255,.5)}'+
@@ -28,7 +25,6 @@
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     return ['Your'+(GRP[k]?' '+GRP[k]:''),name,''];
   }
-  const FONTS=['Rye','Sancreek','Smokum','Jura'];let FI=0;
   const NS='http://www.w3.org/2000/svg';
   const MOVE=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   const LOGO=
@@ -47,7 +43,7 @@
     if(!d.head)return;
     if(!d.getElementById('brand-font')){
       const l=d.createElement('link');l.id='brand-font';l.rel='stylesheet';
-      l.href='https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600&family=Rye&family=Sancreek&family=Smokum&display=swap';d.head.appendChild(l);
+      l.href='https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600&family=Rye&display=swap';d.head.appendChild(l);
     }
     if(!d.getElementById('brand-css')){const st=d.createElement('style');st.id='brand-css';st.textContent=CSS;d.head.appendChild(st)}
     const h1=d.querySelector('header h1');
@@ -61,15 +57,8 @@
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
     if(h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
-    // TEST: title font picker (western style, like a whiskey label)
-    if(h1){
-      const t0=h1.querySelector('.brand-t');if(t0)t0.style.fontFamily=FONTS[FI]+',Jura,serif';
-      let fp=d.getElementById('brand-fp');
-      if(!fp){fp=d.createElement('div');fp.id='brand-fp';h1.after(fp);
-        fp.addEventListener('click',e=>{const b=e.target.closest('[data-fi]');if(!b)return;FI=+b.dataset.fi;fp.dataset.k='';tick()})}
-      if(fp.dataset.k!==String(FI)){fp.dataset.k=String(FI);
-        fp.innerHTML='Test – title font: '+FONTS.map((f,i)=>'<button type="button" data-fi="'+i+'" style="font-family:'+f+'"'+(i===FI?' class="sel"':'')+'>'+f+'</button>').join(' ');}
-    }
+    // Title font: Rye (western whiskey-label style)
+    if(h1){const t0=h1.querySelector('.brand-t');if(t0&&t0.style.fontFamily.indexOf('Rye')<0)t0.style.fontFamily='Rye,Jura,serif'}
     // Title follows the page: landing = Quartermaster Skippy's Command Deck, others = Your <Group> <Page>
     const t=h1&&h1.querySelector('.brand-t');
     if(t){

@@ -757,7 +757,7 @@ const SITE='https://adalia.academy/';
 const NAV=[['Home',SITE],['About Influence',SITE+'about_influence/'],['Main Campus',SITE+'main-campus/'],['Student Library',SITE+'libraries/'],['Tutorials',SITE+'tutorialv1/']];
 function siteHeader(){
  const d=document;
- if(/[?&]beta=1/.test(location.search)){const o=d.getElementById('aa-head');if(o)o.remove();return}
+ {const o=d.getElementById('aa-head');if(o)o.remove();return} // Adalia Academy bar removed for now (site rebuild being discussed)
  if(!d.getElementById('aa-font')){const l=d.createElement('link');l.id='aa-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Jura:wght@300;400;500&display=swap';d.head.appendChild(l)}
  if(!d.getElementById('aa-css')){const st=d.createElement('style');st.id='aa-css';st.textContent=
   'body{padding:0!important}.aa{background:#000;padding:10px 10px 0;font-family:Jura,sans-serif}'+
