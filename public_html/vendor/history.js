@@ -25,7 +25,7 @@ const CATS=[
   ['other','Other','•',()=>true]];
 const cat=n=>CATS.find(c=>c[3](n));
 const words=n=>n.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()).toLowerCase().replace(/^./,c=>c.toUpperCase());
-const HC={},LD={};let HT=0;const BETA2=/[?&]beta=1/.test(location.search);const S={cat:'',q:'',crew:'',show:300,range:'100'};
+const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
 export function drawHistory(m){
@@ -125,7 +125,7 @@ export function drawHistory(m){
   }
   draw();
   function fetchRange(){const k=S.range;if(HC[k]||LD[k])return;
-    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||'')+(BETA2?'&beta=1':''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.wait?{error:'cooldown',until:Date.now()+j.wait*1000,max:j.max||3}:j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
+    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.wait?{error:'cooldown',until:Date.now()+j.wait*1000,max:j.max||3}:j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
   fetchRange();
 }
 

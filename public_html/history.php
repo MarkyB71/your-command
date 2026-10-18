@@ -20,9 +20,9 @@ if (is_file($cf) && time() - filemtime($cf) < ($range === 'all' ? 1800 : 600)) {
 
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 // "Everything" reads up to thousands of pages from the game, so each visitor may run it only a few times an hour.
-// The answer says how long to wait, so the page can show a cool-down timer. (TEST: only with &beta=1 for now.)
+// The answer says how long to wait, so the page can show a cool-down timer.
 const HIST_ALL_MAX = 3, HIST_ALL_WINDOW = 3600;
-if ($range === 'all' && isset($_GET['beta'])) {
+if ($range === 'all') {
   $hf = $CACHE . '/rlh_' . sha1($ip) . '.json';
   $now = time();
   $hh = is_file($hf) ? (json_decode(file_get_contents($hf), true) ?: []) : [];
