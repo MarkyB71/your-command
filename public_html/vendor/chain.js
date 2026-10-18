@@ -61,6 +61,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
 const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
 const UL1=/[?&]beta=1/.test(location.search); /* test: Used in opens only 1 level by default */
+const SW=id=>UL1?'<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>':'';
 const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
@@ -81,7 +82,7 @@ export function drawChain(m){
     if(!h)return'<div class="pc-have">'+txt+'</div>';
     const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
-  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm"'+(UL1?' data-fid="'+id+'" title="See what '+esc(N[id])+' is used in"':'')+'>'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+(S.use!=null?'':hv(id,qty));
+  const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+SW(id)+(S.use!=null?'':hv(id,qty));
   const take=(id,qty)=>{if(S.use==null||!Y||id>=1000)return 0;if(pool[id]===undefined)pool[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pool[id],qty);pool[id]-=t;return t};
   function node(id,qty,path,key){
     if(S.use!=null&&!path.includes(id)){const got=take(id,qty);
@@ -112,9 +113,9 @@ export function drawChain(m){
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  if(UL1){M0.__pcUse=id=>{tipHide();S.mode=S.mode==='use'?'from':'use';S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
-    if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-nm[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid)})}
-    if(!document.getElementById('pc-use-css')){const st=el('style');st.id='pc-use-css';st.textContent='.pc-nm[data-fid]{cursor:pointer;color:#8fe3ff}.pc-nm[data-fid]:hover{text-decoration:underline}';document.head.appendChild(st)}}
+  if(UL1){M0.__pcUse=(id,md)=>{tipHide();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
+    if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-sw a[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid,t.dataset.m)})}
+    if(!document.getElementById('pc-use-css')){const st=el('style');st.id='pc-use-css';st.textContent='.pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}';document.head.appendChild(st)}}
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
   if(!window.__pcTipW){window.__pcTipW=1;addEventListener('scroll',()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'},true);
@@ -141,7 +142,7 @@ export function drawChain(m){
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
     (users[id]||[]).forEach(p=>{for(const k in p.out)if(!path.includes(+k)&&+k!==id)outs.push([+k,p])});
-    const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm"'+(UL1?' data-fid="'+id+'" title="See what '+esc(N[id])+' is made from"':'')+'>'+esc(N[id])+'</div></div></div>');
+    const c=el('div','pc-n sm'+(d?' use':''),'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div></div></div>'+SW(id));
     let t='<b>'+esc(N[id])+'</b>';
     if(Y&&id<1000){const v=have(id);c.insertAdjacentHTML('beforeend','<div class="pc-have'+(v>0?' ok':'')+'">'+(v>0?'You have '+fu(id,v):'None in stock')+'</div>');
       const sp=v>0?spots(id):[];if(sp.length)t+='<span>Where it is:</span><span class="pc-where">'+sp.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' ('+esc(x[0])+')':'')).join('<br>')+(sp.length>8?'<br>…and '+(sp.length-8)+' more':'')+'</span>'}
