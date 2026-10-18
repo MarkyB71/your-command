@@ -19,12 +19,12 @@
   // returns [before, highlighted word(s), after]
   function title(){
     const gq=document.getElementById('gq');
-    if(gq&&gq.value.trim())return ['','Search','Results'];
+    if(gq&&gq.value.trim())return ['Your','Search','Results'];
     const b=[].slice.call(document.querySelectorAll('button.on[id^="v"]')).filter(x=>/^v[A-Z]$/.test(x.id))[0];
     const k=b?b.id.slice(1):'N';
-    if(k==='N'||!b)return ['Belt','Command','Deck'];
+    if(k==='N'||!b)return ['Quartermaster Skippy\'s','Command','Deck'];
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
-    return [GRP[k]||'',name,''];
+    return ['Your'+(GRP[k]?' '+GRP[k]:''),name,''];
   }
   const NS='http://www.w3.org/2000/svg';
   const MOVE=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -57,13 +57,13 @@
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
     if(h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
-    // Title follows the page: landing = Your Belt Command Deck, others = Your <Group> <Page>
+    // Title follows the page: landing = Quartermaster Skippy's Command Deck, others = Your <Group> <Page>
     const t=h1&&h1.querySelector('.brand-t');
     if(t){
       const T=title();
       if(t.dataset.n!==T.join('|')){t.dataset.n=T.join('|');
-        t.innerHTML='Your '+esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
-        d.title='Your '+T.filter(Boolean).join(' ');}
+        t.innerHTML=esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
+        d.title=T.filter(Boolean).join(' ');}
     }
   }
   setInterval(tick,300);tick();
