@@ -50,7 +50,7 @@ let view='N',sortKey='name',sortDir=1;const open=new Set();
 const tot=asts.map(a=>{const t={};a.buildings.forEach(b=>{for(const p in b.items)t[p]=(t[p]||0)+b.items[p]});return t});
 const allP=[...new Set(tot.flatMap(t=>Object.keys(t)))];
 const pooled={};tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
-window.YIC={asts,tot,pooled,get esc(){return esc},get fmtT(){return fmtT},get tLeft(){return tLeft},get crewTraits(){return crewTraits},get fillFacesIn(){return fillFacesIn},get draw(){return draw},get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
+window.YIC={asts,tot,pooled,get esc(){return esc},get fmtT(){return fmtT},get tLeft(){return tLeft},get crewTraits(){return crewTraits},get fillFacesIn(){return fillFacesIn},get draw(){return draw},get pc(){return pc},get ricon(){return ricon},get rows(){return rows},get prodOpen(){return open},get sortKey(){return sortKey},set sortKey(v){sortKey=v},get sortDir(){return sortDir},set sortDir(v){sortDir=v},get fq(){return fq},get BT(){return BT},get viewNow(){return view},get DLV(){return DLV},set DLV(v){DLV=v},get dlvLoad(){return dlvLoad},set dlvLoad(v){dlvLoad=v},get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
 function rows(){
  const q=$('#q').value.trim().toLowerCase(),ai=$('#ast').value,cl=$('#cls').value;
  const cols=ai===''?asts.map((a,i)=>i):[+ai];
@@ -695,6 +695,7 @@ function draw(){
  
  
  
+ if(SPLIT&&window.PAGES&&PAGES[view]){PAGES[view](m);return} /* TEST: page has its own file in /pages/ */
  if(view==='N'){drawAlerts(m);animTiles(m);return}
  if(view==='Z'){drawSearch(m);return}
  if(view==='X'){drawSamples(m);return}
@@ -707,8 +708,7 @@ function draw(){
  if(view==='V'){drawDeliveries(m);return}
  if(view==='K'){drawMarket(m);return}
  if(view==='R'){drawTravel(m);return}
- if((view==='S'||view==='C')&&SPLIT&&window.PAGES&&PAGES[view]){PAGES[view](m);return}
-  if(view==='C'||view==='S'){drawAssets(m,view);return}
+ if(view==='C'||view==='S'){drawAssets(m,view);return}
  if(view==='P'){
   const{r,cols}=rows();
   if(!r.length){m.innerHTML='<div class="note">Nothing matches.</div>';return}
