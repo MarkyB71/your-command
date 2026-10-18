@@ -6,6 +6,10 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 <FilesMatch "^(config|_.*)\.php$">
   Require all denied
 </FilesMatch>
+# Never serve archives, backups or leftover copies, even if one is left here by mistake
+<FilesMatch "(?i)\.(zip|tar|gz|tgz|rar|7z|bak|old|orig|sql|log|swp)$|~$">
+  Require all denied
+</FilesMatch>
 Options -Indexes
 DirectoryIndex index.html
 
