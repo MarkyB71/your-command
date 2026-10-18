@@ -4,7 +4,7 @@
   const ON=/[?&]beta=1/.test(location.search);
   if(!ON)return;
   const CSS=
-    '#brand-logo{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
+    '#brand-logo,#brand-logo2{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
       'font-size:40px;letter-spacing:1px;text-transform:uppercase;color:#e6ebf2}'+
     'header h1.brand .brand-t{text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
@@ -14,7 +14,7 @@
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
       'background:linear-gradient(90deg,transparent,#5fc3e4 20%,#8fe3ff 50%,#5fc3e4 80%,transparent);'+
       'box-shadow:0 0 10px rgba(95,195,228,.8),0 0 22px rgba(91,157,255,.5)}'+
-    '@media (max-width:600px){header h1.brand{font-size:24px;gap:10px}#brand-logo{width:50px;height:50px}}';
+    '@media (max-width:600px){header h1.brand{font-size:24px;gap:10px}#brand-logo,#brand-logo2{width:50px;height:50px}}';
   const GRP={S:'Fleet',C:'Fleet',P:'Logistics',V:'Logistics',J:'Logistics',A:'Asteroids',X:'Asteroids',F:'Asteroids',
     B:'Buildings',T:'Buildings',L:'Buildings',K:'Trading',Y:'Trading',M:'Trading',R:'Planners',Q:'Planners'};
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -55,7 +55,8 @@
       const s=d.createElementNS(NS,'svg');s.id='brand-logo';s.setAttribute('viewBox','-26 -26 52 52');
       s.setAttribute('aria-hidden','true');s.innerHTML=LOGO;
       const t=d.createElement('span');t.className='brand-t';while(h1.firstChild)t.appendChild(h1.firstChild);
-      h1.classList.add('brand');h1.append(s,t);
+      const s2=s.cloneNode(true);s2.id='brand-logo2';s2.style.transform='scaleX(-1)';
+      h1.classList.add('brand');h1.append(s,t,s2);
     }
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
