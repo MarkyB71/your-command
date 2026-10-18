@@ -58,10 +58,13 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-kids{padding-left:44px}.pc-big .pc-kids::before,.pc-big .pc-kids>.pc-br::before{width:22px}
 .pc-big .pc-kids>.pc-br::before,.pc-big .pc-kids>.pc-br::after{left:-22px}
 .pc-big .pc-kids>.pc-br{padding:7px 0}
-.pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}`;
+.pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}
+.pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px;position:relative}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}
+.pc-sw a::after{content:"";position:absolute;top:50%;width:22px;height:10px;margin-top:-5px;background:no-repeat center/contain;pointer-events:none}.pc-sw a[data-m=from]::after{right:100%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 10'%3E%3Cpath d='M21 5H3M7 1L2 5l5 4' fill='none' stroke='%238fe3ff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}.pc-sw a[data-m=use]::after{left:100%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 10'%3E%3Cpath d='M1 5h18M15 1l5 4-5 4' fill='none' stroke='%238fe3ff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}`;
 const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
-const UL1=/[?&]beta=1/.test(location.search); /* test: Used in opens only 1 level by default */
-const SW=id=>UL1?'<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in</a></div>':'';
+/* TEST (?beta=1): "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
+const SWT=/[?&]beta=1/.test(location.search);
+const SW=id=>SWT?'<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in</a></div>':'';
 const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
@@ -113,9 +116,8 @@ export function drawChain(m){
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  if(UL1){M0.__pcUse=(id,md)=>{tipHide();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
-    if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-sw a[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid,t.dataset.m)})}
-    if(!document.getElementById('pc-use-css')){const st=el('style');st.id='pc-use-css';st.textContent='.pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}.pc-sw a{position:relative}.pc-sw a::after{content:"";position:absolute;top:50%;width:22px;height:10px;margin-top:-5px;background:no-repeat center/contain;pointer-events:none}.pc-sw a[data-m=from]::after{right:100%;background-image:url(\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 22 10%27%3E%3Cpath d=%27M21 5H3M7 1L2 5l5 4%27 fill=%27none%27 stroke=%27%238fe3ff%27 stroke-width=%271.6%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E\")}.pc-sw a[data-m=use]::after{left:100%;background-image:url(\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 22 10%27%3E%3Cpath d=%27M1 5h18M15 1l5 4-5 4%27 fill=%27none%27 stroke=%27%238fe3ff%27 stroke-width=%271.6%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E\")}';document.head.appendChild(st)}}
+  if(SWT){M0.__pcUse=(id,md)=>{tipHide();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
+    if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-sw a[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid,t.dataset.m)})}}
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
   if(!window.__pcTipW){window.__pcTipW=1;addEventListener('scroll',()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'},true);
@@ -156,7 +158,7 @@ export function drawChain(m){
     if(!outs.length)t+='<span class="pc-t">'+(id>=1000?'Final build':'Not used in any further recipe')+'</span>';
     tipOn(c,t);
     if(!outs.length){br.appendChild(c);return br}
-    const op=S.closed.has(key)?false:S.opened.has(key)?true:d<(UL1?1:2);
+    const op=S.closed.has(key)?false:S.opened.has(key)?true:d<(SWT?1:2);
     const tg=el('span','pc-tog',op?'◂ hide uses':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▸');
     tg.addEventListener('click',()=>{tipHide();anc(key,tg);if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(tg);
     br.dataset.k=key;    br.appendChild(c);
