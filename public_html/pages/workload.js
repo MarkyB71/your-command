@@ -6,7 +6,8 @@
    (Today's Workload and other pages use some of them too). */
 (function () {
   'use strict';
-  const APP = window.YIC;
+  // window.YIC is only set once app.js has loaded your data, so look it up each time
+  const APP = new Proxy({}, { get: (_, k) => window.YIC[k], set: (_, k, v) => ((window.YIC[k] = v), true) });
 
   function drawAlerts(m) {
     const ai = APP.$('#ast').value,
