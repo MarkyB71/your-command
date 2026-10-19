@@ -12,7 +12,13 @@
   };
   // Test (?beta=1): place / destination name in its own bright colour
   const BETA = /[?&]beta=1/.test(location.search);
-  const PLACE = '#f2f6ff';
+  const FROM = '#c9d3e0', TO = '#ffd24a';   // from = soft silver, destination = gold
+  function routeHTML(r, esc) {
+    const m = /^on route from (.*) to (.*)$/.exec(r || '');
+    if (!m) return '<b>' + esc(r) + '</b>';
+    return 'on route from <b style="color:' + FROM + '">' + esc(m[1]) + '</b> to ' +
+      '<b style="color:' + TO + '">' + esc(m[2]) + '</b>';
+  }
   const VARIANTS = { 2: 'Cobalt Pioneer', 3: 'Titanium Pioneer', 4: 'Aureate Pioneer' };
 
   function drawShips(m) {
@@ -55,7 +61,7 @@
     const whereCell = '<td class="cls" style="white-space:normal;color:' + st.colour + '">' +
       '<span class="shst" style="border-color:' + st.colour + ';color:' + st.colour + '">' + st.label + '</span> ' +
       (BETA
-        ? '<b style="color:' + PLACE + '">' + esc(x.fl ? x.route : x.place) + '</b>'
+        ? (x.fl ? routeHTML(x.route, esc) : esc(x.place))
         : (x.fl ? '<b>' + esc(x.route) + '</b>' : esc(x.place))) + '</td>';
 
     const arrivesCell = '<td class="cls">' + (x.arrT
