@@ -215,7 +215,7 @@ export function drawChain(m){
     if(DN&&S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
         const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
-      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.insertBefore(tr,w)}m.appendChild(w);
+      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}m.appendChild(w);
     if(RT)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
     if(RT&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
       if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
