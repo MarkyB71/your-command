@@ -16,8 +16,9 @@
   function routeHTML(r, esc) {
     const m = /^on route from (.*) to (.*)$/.exec(r || '');
     if (!m) return '<b>' + esc(r) + '</b>';
-    return 'on route from <b style="color:' + FROM + '">' + esc(m[1]) + '</b> to ' +
-      '<b style="color:' + TO + '">' + esc(m[2]) + '</b>';
+    return '<b style="color:' + FROM + '">' + esc(m[1]) + '</b>' +
+      ' <span style="color:#8a96a8">→</span> ' +
+      '<b style="color:' + TO + ';font-size:1.15em;text-shadow:0 0 8px rgba(255,210,74,.7)">' + esc(m[2]) + '</b>';
   }
   const VARIANTS = { 2: 'Cobalt Pioneer', 3: 'Titanium Pioneer', 4: 'Aureate Pioneer' };
 
