@@ -10,8 +10,8 @@
     o: { colour: '#ffab3d', label: 'In orbit' },
     f: { colour: '#5b9dff', label: 'In flight' }
   };
-  // Test (?beta=1): place / destination name in its own bright colour
-  const BETA = /[?&]beta=1/.test(location.search);
+  // Live 19 Oct 2026: from (purple) → destination (soft gold, glow)
+  const BETA = true;
   const FROM = '#b388ff', TO = '#e0b04a';   // from = soft purple, destination = soft gold
   function routeHTML(r, esc) {
     const m = /^on route from (.*) to (.*)$/.exec(r || '');
