@@ -12,7 +12,7 @@
   };
   // Test (?beta=1): place / destination name in its own bright colour
   const BETA = /[?&]beta=1/.test(location.search);
-  const FROM = '#c9d3e0', TO = '#ffd24a';   // from = soft silver, destination = gold
+  const FROM = '#b388ff', TO = '#ffd24a';   // from = soft purple, destination = gold
   function routeHTML(r, esc) {
     const m = /^on route from (.*) to (.*)$/.exec(r || '');
     if (!m) return '<b>' + esc(r) + '</b>';
