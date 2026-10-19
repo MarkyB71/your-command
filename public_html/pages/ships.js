@@ -10,6 +10,9 @@
     o: { colour: '#ffab3d', label: 'In orbit' },
     f: { colour: '#5b9dff', label: 'In flight' }
   };
+  // Test (?beta=1): place / destination name in its own bright colour
+  const BETA = /[?&]beta=1/.test(location.search);
+  const PLACE = '#f2f6ff';
   const VARIANTS = { 2: 'Cobalt Pioneer', 3: 'Titanium Pioneer', 4: 'Aureate Pioneer' };
 
   function drawShips(m) {
@@ -51,7 +54,9 @@
 
     const whereCell = '<td class="cls" style="white-space:normal;color:' + st.colour + '">' +
       '<span class="shst" style="border-color:' + st.colour + ';color:' + st.colour + '">' + st.label + '</span> ' +
-      (x.fl ? '<b>' + esc(x.route) + '</b>' : esc(x.place)) + '</td>';
+      (BETA
+        ? '<b style="color:' + PLACE + '">' + esc(x.fl ? x.route : x.place) + '</b>'
+        : (x.fl ? '<b>' + esc(x.route) + '</b>' : esc(x.place))) + '</td>';
 
     const arrivesCell = '<td class="cls">' + (x.arrT
       ? esc(new Date(x.arrT * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) +
