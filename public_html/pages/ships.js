@@ -12,13 +12,13 @@
   };
   // Test (?beta=1): place / destination name in its own bright colour
   const BETA = /[?&]beta=1/.test(location.search);
-  const FROM = '#b388ff', TO = '#ffd24a';   // from = soft purple, destination = gold
+  const FROM = '#b388ff', TO = '#e0b04a';   // from = soft purple, destination = soft gold
   function routeHTML(r, esc) {
     const m = /^on route from (.*) to (.*)$/.exec(r || '');
     if (!m) return '<b>' + esc(r) + '</b>';
     return '<b style="color:' + FROM + '">' + esc(m[1]) + '</b>' +
       ' <span style="color:#8a96a8">→</span> ' +
-      '<b style="color:' + TO + ';font-size:1.15em;text-shadow:0 0 8px rgba(255,210,74,.7)">' + esc(m[2]) + '</b>';
+      '<b style="color:' + TO + ';font-size:1.15em;text-shadow:0 0 8px rgba(224,176,74,.45)">' + esc(m[2]) + '</b>';
   }
   const VARIANTS = { 2: 'Cobalt Pioneer', 3: 'Titanium Pioneer', 4: 'Aureate Pioneer' };
 
