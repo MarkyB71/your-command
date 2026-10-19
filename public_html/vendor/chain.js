@@ -55,6 +55,9 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .dn .pc-kids>.pc-br::after{left:0;right:0;top:0;bottom:auto;height:0;border-left:0;border-top:2px solid #2a3648}
 .pc-big .dn .pc-kids>.pc-br:first-child::after{top:0;left:50%}.pc-big .dn .pc-kids>.pc-br:last-child::after{bottom:auto;right:50%}
 .pc-big .dn .pc-tog{text-align:center}
+.pc-foc{cursor:pointer;color:#ffd24a;font-size:14px;text-align:center;user-select:none;margin-top:2px}.pc-foc:hover{text-decoration:underline}
+.pc-trail{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:17px;margin:0 0 10px;padding:8px 12px;background:#121a26;border:1px solid #6b5a1c;border-radius:8px}
+.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
 .pc-bar.stick{position:sticky!important;z-index:50;background:#0b1018;padding:8px 0;margin-top:0;box-shadow:0 6px 10px -6px rgba(0,0,0,.8)}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
@@ -81,7 +84,8 @@ const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleS
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
-function isOpen(key,d){return S.closed.has(key)?false:(S.opened.has(key)||S.all)?true:d<3}
+const inF=k=>!S.foc||k===S.foc||k.startsWith(S.foc+'/');
+function isOpen(key,d){if(S.foc){if(S.foc.startsWith(key+'/'))return true;d-=S.foc.split('/').length-1}return S.closed.has(key)?false:(S.opened.has(key)||S.all)?true:d<3}
 export function drawChain(m){
   if(!document.getElementById('pc-css')){const st=el('style');st.id='pc-css';st.textContent=CSS;document.head.appendChild(st)}
   let raws={},pool={};
@@ -113,7 +117,7 @@ export function drawChain(m){
       s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;draw()});c.appendChild(s)};
     if(!all.length||!o.length||mine){const c=el('div','pc-n raw',head(id,qty));if(isRaw&&o.length)sel(c,-1);
       c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>');
-      br.appendChild(c);raws[id]=(raws[id]||0)+qty;return br}
+      br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
@@ -121,11 +125,12 @@ export function drawChain(m){
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
     const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(DN?(op?'hide inputs ▴':'show '+n+' input'+(n>1?'s':'')+' ▾'):TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
     t.addEventListener('click',()=>{anc(key,t);S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
+    if(DN&&key!==(S.foc||'r')){const f=el('span','pc-foc','⌖ Focus on this');f.title='Show only this part of the chain';f.addEventListener('click',()=>{tipHide();S.foc=key;S.anchor=null;draw();const b=M0.querySelector('.pc-trail');if(b)b.scrollIntoView({block:'center'})});c.appendChild(f)}
     br.dataset.k=key;br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  if(SWT){M0.__pcUse=(id,md)=>{tipHide();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
+  if(SWT){M0.__pcUse=(id,md)=>{tipHide();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.foc=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
     if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-sw a[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid,t.dataset.m)})}}
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
@@ -138,7 +143,7 @@ export function drawChain(m){
     (TEST?[['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]]:[['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000],['Products',x=>x<1000]]).forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
   const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
-      b.addEventListener('click',()=>{if(S.mode!==v){S.mode=v;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
+      b.addEventListener('click',()=>{if(S.mode!==v){S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
   const tipHide=()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'};
   const tipOn=(c,html)=>{c.addEventListener('mouseenter',()=>{const t=tipEl();t.innerHTML=html;t.style.display='block';
@@ -195,17 +200,22 @@ export function drawChain(m){
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     fillPs(ps);
     const bulk=BETA2&&S.prod<1000&&!CNT.has(S.prod),uf=bulk?UF[S.unit]:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
-    ps.addEventListener('change',()=>{S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;draw()});
+    ps.addEventListener('change',()=>{S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw()});
     am.addEventListener('change',()=>{S.amt=bulk?Math.max(1,(+am.value||0)*uf):Math.max(1,Math.round(+am.value||1));draw()});
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
-    b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add('r');draw()});
+    b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(BETA2&&S.prod<1000)l2.appendChild(document.createTextNode(' each'));
     [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap'+(RT?' rtl':DN?' dn':''));const inner=(RT||DN)?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(RT||DN)w.appendChild(inner);m.appendChild(w);
+    const w=el('div','pc-wrap'+(RT?' rtl':DN?' dn':''));const inner=(RT||DN)?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(RT||DN)w.appendChild(inner);
+    if(DN&&S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
+    if(DN&&S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
+      ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
+        const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
+      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.insertBefore(tr,w)}m.appendChild(w);
     if(RT)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
     if(RT&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
       if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
