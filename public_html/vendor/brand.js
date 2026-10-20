@@ -23,6 +23,7 @@
     const k=b?b.id.slice(1):'N';
     if(k==='N'||!b)return ['Quartermaster Skippy\'s','Command','Deck'];
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
+    if(/^The /.test(name))return ['The',name.slice(4),''];
     return ['Your'+(GRP[k]?' '+GRP[k]:''),name,''];
   }
   const NS='http://www.w3.org/2000/svg';
