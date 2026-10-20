@@ -15,7 +15,7 @@ const kg=(p,a)=>isAt(p)?a:a*((PR[p]&&PR[p][2])||0)/1000;
 const fmt=(p,a)=>{if(!a)return '';if(isAt(p))return a.toLocaleString();const k=a*((PR[p]&&PR[p][2])||0)/1000;
  if(k<1000)return (+k.toFixed(k<10?1:0)).toLocaleString()+' kg';const t=k/1000;if(t<1000)return (+t.toFixed(t<10?2:t<100?1:0)).toLocaleString()+' t';return (+(t/1000).toFixed(t<1e4?2:1)).toLocaleString()+' kt'};
 doc.title='Your Influence Command';
-doc.head.innerHTML='<meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Influence Command</title><style>'+
+doc.head.innerHTML='<meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Influence Command</title><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><style>'+
 ':root{--bg:#0b0e13;--panel:#131821;--line:#232b38;--text:#e6ebf2;--muted:#8a96a8;--accent:#5fc3e4;--accent2:#e4a85f}'+
 '*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'+
 'header{position:sticky;top:0;z-index:5;background:rgba(11,14,19,.96);border-bottom:1px solid var(--line);padding:14px 20px}'+
