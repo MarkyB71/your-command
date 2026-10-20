@@ -814,7 +814,7 @@ async function load(wallet){
  const groups={},astName={};
  for(const b of blds){const a=astOf(b);astName[a]=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||('Asteroid #'+a);(groups[a]=groups[a]||[]).push(b)}
  const aKeys=Object.keys(groups).sort((x,y)=>astName[x].localeCompare(astName[y]));
- if(!aKeys.length){askWallet('Found '+crews.length+' crew(s) for that wallet, but no warehouses or tank farms with stock.');return}
+ if(!aKeys.length&&!/[?&]beta=1/.test(location.search)){askWallet('Found '+crews.length+' crew(s) for that wallet, but no warehouses or tank farms with stock.');return}
  const used={};
  const D={when:new Date(j.fetched*1000).toLocaleString(),crews:crews.length,products:used,recipes:RX,asteroids:aKeys.map(a=>({name:astName[a],buildings:groups[a].map(b=>{const it={};(b.Inventories||[]).filter(i=>PRIM[i.inventoryType]).forEach(i=>(i.contents||[]).forEach(c=>{if(c.amount){it[c.product]=(it[c.product]||0)+c.amount;used[c.product]=PX[c.product]||['Product '+c.product,'',0,false]}}));
   const cn=crews.find(c=>b.Control&&c.id===b.Control.controller.id);
