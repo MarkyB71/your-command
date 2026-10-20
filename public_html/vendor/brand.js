@@ -24,6 +24,9 @@
     if(k==='N'||!b)return ['Quartermaster Skippy\'s','Command','Deck'];
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
+    // Trading and Planners read better without the group word
+    if(k==='R')return ['Your','Travel Planner',''];
+    if(GRP[k]==='Trading'||GRP[k]==='Planners')return ['Your',name,''];
     return ['Your'+(GRP[k]?' '+GRP[k]:''),name,''];
   }
   const NS='http://www.w3.org/2000/svg';
