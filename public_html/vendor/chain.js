@@ -57,7 +57,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .dn .pc-tog{text-align:center}
 .pc-foc{cursor:pointer;color:#ffd24a;font-size:14px;text-align:center;user-select:none;margin-top:2px}.pc-foc:hover{text-decoration:underline}
 .pc-trail{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:17px;margin:0 0 10px;padding:8px 12px;background:#121a26;border:1px solid #6b5a1c;border-radius:8px}
-.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
+.pc-trail .pc-up{margin-left:auto;font-size:15px}.pc-trail .pc-up+.pc-full{margin-left:6px}.pc-back{color:#ffd24a;border-color:#6b5a1c}.pc-back:disabled{opacity:.4;cursor:default}.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
 .pc-bar.stick{position:sticky!important;z-index:50;background:#0b1018;padding:8px 0;margin-top:0;box-shadow:0 6px 10px -6px rgba(0,0,0,.8)}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
@@ -81,6 +81,8 @@ const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
+const BK=/[?&]beta=1/.test(location.search),HS=[]; /* BK = Back button (test) */
+const snap=()=>{if(!BK)return;HS.push({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},closed:new Set(S.closed),opened:new Set(S.opened),all:S.all,foc:S.foc||null,y:scrollY});if(HS.length>50)HS.shift()};
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
@@ -125,12 +127,12 @@ export function drawChain(m){
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
     const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(DN?(op?'hide inputs ▴':'show '+n+' input'+(n>1?'s':'')+' ▾'):TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
     t.addEventListener('click',()=>{anc(key,t);S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
-    if(DN&&key!==(S.foc||'r')){const f=el('span','pc-foc','⌖ Focus on this');f.title='Show only this part of the chain';f.addEventListener('click',()=>{tipHide();S.foc=key;S.anchor=null;draw();const b=M0.querySelector('.pc-trail');if(b)b.scrollIntoView({block:'center'})});c.appendChild(f)}
+    if(DN&&key!==(S.foc||'r')){const f=el('span','pc-foc','⌖ Focus on this');f.title='Show only this part of the chain';f.addEventListener('click',()=>{tipHide();snap();S.foc=key;S.anchor=null;draw();const b=M0.querySelector('.pc-trail');if(b)b.scrollIntoView({block:'center'})});c.appendChild(f)}
     br.dataset.k=key;br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  if(SWT){M0.__pcUse=(id,md)=>{tipHide();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.foc=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
+  if(SWT){M0.__pcUse=(id,md)=>{tipHide();snap();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.foc=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
     if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-sw a[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid,t.dataset.m)})}}
   const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
@@ -142,8 +144,10 @@ export function drawChain(m){
   const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(TEST?Object.keys(users):[]).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
     (TEST?[['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]]:[['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000],['Products',x=>x<1000]]).forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
+  const backBtn=()=>{if(!BK)return document.createTextNode('');const b=el('button','pc-back','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
+    b.addEventListener('click',()=>{const h=HS.pop();if(!h)return;tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))});return b};
   const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
-      b.addEventListener('click',()=>{if(S.mode!==v){S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
+      b.addEventListener('click',()=>{if(S.mode!==v){snap();S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
   const tipHide=()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'};
   const tipOn=(c,html)=>{c.addEventListener('mouseenter',()=>{const t=tipEl();t.innerHTML=html;t.style.display='block';
@@ -183,10 +187,10 @@ export function drawChain(m){
     m.appendChild(el('div','note',(DN?'Pick a product. Everything it is used in opens out below it. One stage opens to start with;':'Pick a product. Everything it is used in branches out to the right. Two stages open to start with;')+' click "show uses" to go further. Hover over a card to see the recipe, the other inputs it needs, and your stock.'));
     const bar=el('div','pc-bar'),ps=el('select'),b2=el('button',null,'Close all');
     fillPs(ps);
-    ps.addEventListener('change',()=>{S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
+    ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
-    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
+    [backBtn(),modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
     const w=el('div','pc-wrap'+(DN?' dn':'')),inner=DN?el('div','pc-in'):w;inner.appendChild(unode(S.prod,[],'u',0,null));if(DN)w.appendChild(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
@@ -200,12 +204,12 @@ export function drawChain(m){
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     fillPs(ps);
     const bulk=BETA2&&S.prod<1000&&!CNT.has(S.prod),uf=bulk?UF[S.unit]:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
-    ps.addEventListener('change',()=>{S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw()});
+    ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw()});
     am.addEventListener('change',()=>{S.amt=bulk?Math.max(1,(+am.value||0)*uf):Math.max(1,Math.round(+am.value||1));draw()});
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(BETA2&&S.prod<1000)l2.appendChild(document.createTextNode(' each'));
-    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
+    [backBtn(),modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
@@ -214,8 +218,9 @@ export function drawChain(m){
     if(DN&&S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
     if(DN&&S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
-        const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
-      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}m.appendChild(w);
+        const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();snap();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
+      if(BK){const up=el('button','pc-up','▲ Up one level');up.title='Show the box above this one';up.addEventListener('click',()=>{snap();S.foc=ks.length>2?ks.slice(0,-1).join('/'):null;S.anchor=null;draw()});tr.appendChild(up)}
+      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}m.appendChild(w);
     if(RT)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
     if(RT&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
       if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
