@@ -26,7 +26,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-q{color:#8fe3ff;font-weight:600;font-size:14px}
 .pc-t{font-size:12px;color:#8b9ab0}.pc-raw{color:#ffd24a}.pc-lp{color:#ff8f8f}
 .pc-n select{font-size:12px;padding:3px 4px;width:100%}
-.pc-proc{font-size:12px;padding:3px 6px;border:1px solid #3a4658;border-radius:4px;color:#cfd8e3;background:#0f1622;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.pc-big .pc-proc{font-size:14px}
+.pc-proc{font-size:12px;padding:3px 6px;border:1px solid #3a4658;border-radius:4px;color:#cfd8e3;background:#0f1622;white-space:normal;line-height:1.3;margin-top:2px}.pc-big .pc-proc{font-size:14px}
 .pc-also{font-size:11px;color:#8b9ab0}
 .pc-tog{cursor:pointer;color:#8fe3ff;font-size:12px;user-select:none;margin-top:2px}
 .pc-raws{margin-top:14px;background:#121a26;border:1px solid #2a3648;border-radius:8px;padding:10px 14px}
