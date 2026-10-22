@@ -26,6 +26,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-q{color:#8fe3ff;font-weight:600;font-size:14px}
 .pc-t{font-size:12px;color:#8b9ab0}.pc-raw{color:#ffd24a}.pc-lp{color:#ff8f8f}
 .pc-n select{font-size:12px;padding:3px 4px;width:100%}
+.pc-have.none{color:#ff6b6b!important;font-weight:600}
 .pc-proc{font-size:12px;padding:3px 6px;border:1px solid #2a3442;border-radius:4px;color:#8b9ab0;background:#0f1622;white-space:nowrap;overflow:hidden;line-height:1.3;margin-top:2px}.pc-proc>span{display:inline-block}.pc-proc.mv>span{animation:pcmq var(--t,6s) ease-in-out infinite}@keyframes pcmq{0%,15%{transform:translateX(0)}50%,65%{transform:translateX(var(--dx))}100%{transform:translateX(0)}}@media (prefers-reduced-motion:reduce){.pc-proc{white-space:normal}.pc-proc.mv>span{animation:none}}.pc-big .pc-proc{font-size:14px}
 .pc-also{font-size:11px;color:#8b9ab0}
 .pc-tog{cursor:pointer;color:#8fe3ff;font-size:12px;user-select:none;margin-top:2px}
@@ -99,7 +100,7 @@ export function drawChain(m){
   const spots=id=>{const out=[];(Y&&Y.asts||[]).forEach((a,i)=>{if(ai!==null&&i!==ai)return;(a.buildings||[]).forEach(b=>{const v=b.items&&b.items[id];if(v)out.push([a.name,b.name+(b.lot?' · lot '+b.lot:''),v])})});return out.sort((x,y)=>y[2]-x[2])};
   const hv=(id,qty)=>{const h=have(id);if(h===null)return'';const c=h>=qty?'ok':h>0?'part':'';
     const txt=(h>=qty?'✓ You have '+fu(id,h):h>0?'You have '+fu(id,h)+' · short '+fu(id,qty-h):'None in stock')+where;
-    if(!h)return'<div class="pc-have">'+txt+'</div>';
+    if(!h)return'<div class="pc-have'+(ONE?' none':'')+'">'+txt+'</div>';
     const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
   const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+SW(id)+(S.use!=null?'':hv(id,qty));
