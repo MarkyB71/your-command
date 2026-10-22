@@ -26,6 +26,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-q{color:#8fe3ff;font-weight:600;font-size:14px}
 .pc-t{font-size:12px;color:#8b9ab0}.pc-raw{color:#ffd24a}.pc-lp{color:#ff8f8f}
 .pc-n select{font-size:12px;padding:3px 4px;width:100%}
+.pc-proc{font-size:12px;padding:3px 6px;border:1px solid #3a4658;border-radius:4px;color:#cfd8e3;background:#0f1622;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.pc-big .pc-proc{font-size:14px}
 .pc-also{font-size:11px;color:#8b9ab0}
 .pc-tog{cursor:pointer;color:#8fe3ff;font-size:12px;user-select:none;margin-top:2px}
 .pc-raws{margin-top:14px;background:#121a26;border:1px solid #2a3648;border-radius:8px;padding:10px 14px}
@@ -76,6 +77,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
 const SWT=true;
+const ONE=/[?&]beta=1/.test(location.search); /* ONE = show the process on single-recipe boxes (test) */
 const SW=id=>SWT?'<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>':'';
 const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
@@ -122,6 +124,7 @@ export function drawChain(m){
       br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
+    else if(ONE){const d=el('div','pc-proc',esc(p.name));d.title=p.name+' · '+TYPE[p.type];c.appendChild(d)}
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fu(k,v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
