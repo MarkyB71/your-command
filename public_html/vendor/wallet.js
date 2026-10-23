@@ -141,10 +141,12 @@
     b.id = 'wc-top';
     b.textContent = 'Connect wallet';
     b.title = 'Pick your Starknet wallet – only reads your address';
-    b.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:#04121a;background:#5fc3e4;border:0;border-radius:6px;' +
-      'padding:3px 10px;margin:0 6px 0 4px;cursor:pointer;box-shadow:0 0 8px rgba(95,195,228,.6)';
-    chg.parentNode.insertBefore(b, chg);
-    chg.parentNode.insertBefore(document.createTextNode(' '), chg);
+    b.style.cssText = 'font:inherit;font-size:14px;font-weight:600;color:#04121a;background:#5fc3e4;border:0;border-radius:6px;' +
+      'padding:6px 14px;cursor:pointer;box-shadow:0 0 10px rgba(95,195,228,.6);position:absolute;top:10px;right:14px;z-index:5';
+    var hd = document.querySelector('header');
+    if (!hd) return;
+    if (getComputedStyle(hd).position === 'static') hd.style.position = 'relative';
+    hd.appendChild(b);
     b.onclick = function (e) {
       e.preventDefault();
       if (document.getElementById('wc-list')) { closeList(); return; }
