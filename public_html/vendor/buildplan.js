@@ -22,7 +22,7 @@ const CSS=`#bpw .bp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
 #bpw .ok{color:#5fd38d;font-weight:600}#bpw .part{color:#ffb547;font-weight:600}#bpw .none{color:#ff6b6b;font-weight:600}
 #bpw .a{color:#8b9ab0;font-size:12px}#bpw .bp-hd{display:flex;align-items:center;gap:12px;margin:0 0 10px}
 #bpw .bp-hd img{width:64px;height:48px;object-fit:contain}
-#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-it{margin-top:6px;font-size:15px}#bpw .bp-it>summary{cursor:pointer}#bpw .bp-it[open]>summary{margin-bottom:2px}#bpw .bp-shb{color:#c9b8ff;font-weight:600}#bpw .bp-two{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:16px}#bpw .bp-l{flex:1 1 380px;min-width:0}#bpw .bp-r{flex:1 1 380px;min-width:0}#bpw .bp-plan{background:#121a26;border:1px solid #2f5a7a;border-radius:10px;padding:10px 14px;margin:0 0 12px}#bpw .bp-plan h3{margin:0 0 4px;color:#8fe3ff}#bpw .bp-ps{font-size:18px;font-weight:600;margin:0 0 8px;padding:8px 12px;background:#0f2233;border:1px solid #3a7fb0;border-radius:8px;box-shadow:0 0 10px rgba(80,170,255,.25)}#bpw .bp-ps b{color:#ffd24a;font-size:20px}#bpw .bp-first{display:block;margin:6px 0 2px;padding:6px 10px;font-size:16px;font-weight:700;color:#ffd24a;background:rgba(255,210,74,.08);border:1px solid #b8932a;border-radius:6px}#bpw .bp-first b{color:#fff}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
+#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-it{margin-top:6px;font-size:15px}#bpw .bp-it>summary{cursor:pointer}#bpw .bp-it[open]>summary{margin-bottom:2px}#bpw .bp-shb{color:#c9b8ff;font-weight:600}#bpw .bp-two{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:16px}#bpw .bp-l{flex:1 1 380px;min-width:0}#bpw .bp-r{flex:1 1 380px;min-width:0}#bpw .bp-plan{background:#121a26;border:1px solid #2f5a7a;border-radius:10px;padding:10px 14px;margin:0 0 12px}#bpw .bp-plan h3{margin:0 0 4px;color:#8fe3ff}#bpw .bp-ps{font-size:18px;font-weight:600;margin:0 0 8px;padding:8px 12px;background:#0f2233;border:1px solid #3a7fb0;border-radius:8px;box-shadow:0 0 10px rgba(80,170,255,.25)}#bpw .bp-ps b{color:#ffd24a;font-size:20px}#bpw .bp-first{display:block;margin:6px 0 2px;padding:6px 10px;font-size:16px;font-weight:700;color:#ffd24a;background:rgba(255,210,74,.08);border:1px solid #b8932a;border-radius:6px}#bpw .bp-first b{color:#fff}#bpw .bp-shsel{font-size:15px;font-weight:600;padding:3px 6px;margin:0 2px;color:#fff;background:#1a1408;border:1px solid #b8932a;border-radius:5px}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
 
 function asteroids(){
   const Y=window.YIC,D=Y.D||{},out=[],seen={};
@@ -161,10 +161,15 @@ export function drawBuildPlan(m){
       for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
         const L=cand(+x.dataset.kg).filter(sh=>O[sh.dId]&&to).map(sh=>({sh,d:T.distance(O[sh.dId].o,to.o,now)/AU})).sort((a,b)=>a.d-b.d);
         if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
-        const b=L[0].sh,an=(A.find(a=>a.id===b.dId)||{}).name||b.ast||('Asteroid #'+b.dId);let f=null;
-        try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000))}catch(e){}
-        if(me!==run||!x.isConnected)return;
-        x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top){top.appendChild(x)}x.innerHTML='🚀 First send <b>'+esc(b.name)+'</b> from <b>'+esc(an)+'</b>'+(top?' to <b>'+esc((A.find(a=>a.id===+x.dataset.to)||{}).name||'')+'</b>':'')+' ('+(f?f.tof+' h, empty':L[0].d.toFixed(2)+' AU away – may be out of range')+')'}
+        const anOf=sh=>(A.find(a=>a.id===sh.dId)||{}).name||sh.ast||('Asteroid #'+sh.dId),toN=(A.find(a=>a.id===+x.dataset.to)||{}).name||'';
+        const show=async k=>{const it=L[k],b=it.sh;let f=null;
+          try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000))}catch(e){}
+          if(me!==run||!x.isConnected)return;
+          x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
+          const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+esc(anOf(o.sh))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
+          x.innerHTML='🚀 First send '+pickB+(top?' to <b>'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(f?f.tof+' h, empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
+          const sel=x.querySelector('.bp-shsel');if(sel)sel.onchange=e=>{x.querySelector('.bp-ft').textContent='(working out…)';show(+e.target.value)}};
+        await show(0)}
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
