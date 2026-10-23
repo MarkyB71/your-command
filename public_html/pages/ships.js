@@ -31,6 +31,7 @@
       const cl = (D.crewList || []).find(x => x.id === c.id) || {};
       const nm = (c.Name && c.Name.name) || ('Crew #' + c.id);
       const roster = (c.Crew && c.Crew.roster) || [];
+      if (!roster.length) return;   // skip empty crews
       const food = cl.food;
       const fc = food == null ? '#5d6878' : food < 0.5 ? '#ff6b6b' : food < 0.65 ? '#ffab3d' : '#3fd68a';
       const faces = roster.map(id => {
