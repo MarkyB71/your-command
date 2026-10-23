@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 282 – 24 Oct 2026 – Asteroid planner: when no ship is at a source asteroid, Fewest flights adds the flight to get your nearest ready ship there (with flight time)
+
 ## Version 279 – 24 Oct 2026 – Asteroid planner (Planners › Asteroid planner)
 - Pick an asteroid, how many and which building: materials needed vs stock on that asteroid.
 - Fewest flights: the fewest of your asteroids that can supply the rest (in stock, mine it or make it there), with Light / Heavy Transport trips.
