@@ -268,13 +268,51 @@
             t +
             '</button>',
         ).join('') +
+        (SRTB
+          ? '<label style="margin-left:12px;font-size:15px;color:#c8d3e0;display:inline-flex;align-items:center;gap:6px">Order by <select id="lfSort" style="font-size:15px;padding:4px 6px">' +
+            [
+              ['rich', 'Richest first'],
+              ['lot', 'Lot number'],
+              ['name', 'Building name'],
+              ['type', 'Building type'],
+              ['status', 'Status (built, planned, expired, free)'],
+            ]
+              .map(([k, t]) => '<option value="' + k + '"' + (k === LSORT ? ' selected' : '') + '>' + t + '</option>')
+              .join('') +
+            '</select></label>'
+          : '') +
         (HXB
           ? '<label style="margin-left:12px;font-size:15px;color:#c8d3e0;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="lfHX"' +
             (HIDEX ? ' checked' : '') +
             ' style="width:18px;height:18px">Hide "Planning expired"</label>'
           : '') +
         '</div>';
-    const L2 = APP.lfMode === 'all' ? all : APP.lfMode === 'ext' ? ex : free,
+    let L2 = APP.lfMode === 'all' ? all : APP.lfMode === 'ext' ? ex : free;
+    if (SRTB && LSORT !== 'rich') {
+      const fb = (l) => (mine[l] ? mine[l][0] : null),
+        nm = (b) => (b.Name && b.Name.name) || (APP.BT[(b.Building || {}).buildingType] || 'Building') + ' #' + b.id,
+        st = (l) => {
+          const b = fb(l);
+          if (!b) return used.has(l) ? 5 : 6;
+          const B = b.Building || {};
+          if (B.status === 1) return B.plannedAt && B.plannedAt + 172800 <= Date.now() / 1000 ? 3 : 2;
+          return B.status === 2 ? 1 : 0;
+        },
+        key = (l) => {
+          const b = fb(l);
+          if (LSORT === 'lot') return [l];
+          if (LSORT === 'name') return [b ? 0 : 1, b ? nm(b).toLowerCase() : '', l];
+          if (LSORT === 'type') return [b ? 0 : 1, b ? APP.BT[(b.Building || {}).buildingType] || '' : '', -v[l]];
+          return [st(l), -v[l]];
+        },
+        cmp = (x, y) => {
+          for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1;
+          return 0;
+        };
+      const K = new Map(L2.map((l) => [l, key(l)]));
+      L2 = L2.slice().sort((x, y) => cmp(K.get(x), K.get(y)));
+    }
+    const
       lim = APP.lfMode === 'ext' || ALLL ? L2.length : 30;
     if (!L2.length)
       h +=
@@ -316,6 +354,12 @@
           : '');
     m.innerHTML = h;
     wire();
+    const so = m.querySelector('#lfSort');
+    if (so)
+      so.addEventListener('change', () => {
+        LSORT = so.value;
+        APP.draw();
+      });
     const hx = m.querySelector('#lfHX');
     if (hx)
       hx.addEventListener('change', () => {
@@ -332,6 +376,7 @@
 
   var HXB = /[?&]beta=1/.test(location.search); // Hide 'Planning expired' tick box (test)
   var HIDEX = false;
+  var SRTB = HXB, LSORT = 'rich'; // Order by dropdown (test)
   var BCOL = true; // building picture + game colour (test)
   // Game lot-map colours by building category (influence-client SearchFilters.js)
   var BCAT = { 1: '#ff8c00', 10: '#ff8c00', 2: '#ff4a3d', 3: '#e0458a', 4: '#2ecc1a', 5: '#c99a6e', 6: '#7a7aff', 7: '#19d9ff', 8: '#57ff65', 9: '#ffff00' };
