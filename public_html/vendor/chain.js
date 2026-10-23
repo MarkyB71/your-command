@@ -79,7 +79,7 @@ const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,15
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
 const SWT=true;
 const ONE=true; /* ONE = show the process on single-recipe boxes (test) */
-const FAC=/[?&]beta=1/.test(location.search),FBT={1:3,2:5,3:4,4:6,5:6},FBN={3:'Refinery',4:'Bioreactor',5:'Factory',6:'Shipyard'}
+const FAC=true,FBT={1:3,2:5,3:4,4:6,5:6},FBN={3:'Refinery',4:'Bioreactor',5:'Factory',6:'Shipyard'}
 const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 Built on a construction site</div>';const nm=FBN[bt]+(t===5?' (dry dock)':'');
   if(ai===null)return '<div class="pc-fac">🏭 Needs a '+nm+'</div>';
   const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},an=a.name||'',D=Y.D||{};let ok=0,bld=0,pl=0;
