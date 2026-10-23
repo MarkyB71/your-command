@@ -171,6 +171,7 @@ export function drawChain(m){
         const k=el('div',sm.className.replace('click',''),sm.textContent.replace(/\s*▾$/,''));x.replaceWith(k);if(wh)t+='<span>Where it is:</span><span class="pc-where">'+wh.innerHTML+'</span>'}
       else if(x.matches('.pc-t,.pc-also')){t+='<span class="'+x.className+'">'+x.innerHTML+'</span>';x.remove()}});
     const q=c.querySelector('.pc-q');if(q&&!/^Need/.test(q.textContent))q.textContent='Need '+q.textContent;
+    if(FAC){const hl=[...c.children].find(x=>x.matches('.pc-have'));if(hl)c.appendChild(hl)}
     c.classList.add('sm');tipOn(c,t)};
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
