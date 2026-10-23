@@ -124,9 +124,10 @@ export function drawBuildPlan(m){
     const ready=aid=>(D.ships||[]).filter(sh=>!sh.fl&&sh.dId===aid&&sh.capM>0&&sh.prop>0).sort((x,y)=>(y.capM-y.useM)-(x.capM-x.useM));
     const howTxt=(c,it)=>{const h=c.can[it.k];if(h.how==='stock')return'<span class="ok">in stock</span>';if(h.how==='mine')return'<span class="bp-mn">mine it there</span>';
       return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span>'};
-    return'<div class="bp-plan"><div class="bp-ps">'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)':'None of your asteroids can supply these')+'</div>'+
+    const posN=pick.filter(c=>!ready(c.id).length).length;
+    return'<div class="bp-plan"><div class="bp-ps">'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
       pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);
-        return'<details class="bp-it" open><summary><b>'+esc(c.name)+'</b> – '+c.take.length+' item'+(c.take.length>1?'s':'')+', '+tkg(kg)+' · '+trips(kg)+' LT trip'+(trips(kg)>1?'s':'')+(rd.length?' <span class="bp-shb">· 🚀 '+esc(rd[0].name)+' ready</span>':' <span class="a">· no ship ready there</span>')+'</summary><div class="bp-src">'+
+        return'<details class="bp-it" open><summary><b>'+esc(c.name)+'</b> – '+c.take.length+' item'+(c.take.length>1?'s':'')+', '+tkg(kg)+' · '+trips(kg)+' LT trip'+(trips(kg)>1?'s':'')+(rd.length?' <span class="bp-shb">· 🚀 '+esc(rd[0].name)+' ready</span>':' <span class="a bp-pos" data-to="'+c.id+'" data-kg="'+kg+'">· no ship there – finding your nearest…</span>')+'</summary><div class="bp-src">'+
           c.take.map(it=>'<div>'+amt(it.k,it.q)+' <b>'+esc(nm(it.k))+'</b> – '+howTxt(c,it)+'</div>').join('')+'</div></details>'}).join('')+
       (left.length?'<div class="none" style="margin-top:6px">Not available from any of your asteroids: '+left.map(it=>esc(nm(it.k))).join(', ')+'</div>':'')+
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
@@ -149,7 +150,21 @@ export function drawBuildPlan(m){
       '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td></tr>').join('')+'</tbody></table></div></div>'+(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':'')+'</div>'+
     chainHTML+'</div>';
   m.innerHTML=h;
-  if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected)el.outerHTML=x},60);
+  if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
+  /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
+  const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')];if(!sp.length)return;
+    const cand=kg=>(D.ships||[]).filter(sh=>!sh.fl&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
+    const ids=[...new Set([...sp.map(x=>+x.dataset.to),...(D.ships||[]).filter(sh=>!sh.fl&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
+    Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
+      const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
+      for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
+        const L=cand(+x.dataset.kg).filter(sh=>O[sh.dId]&&to).map(sh=>({sh,d:T.distance(O[sh.dId].o,to.o,now)/AU})).sort((a,b)=>a.d-b.d);
+        if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
+        const b=L[0].sh,an=(A.find(a=>a.id===b.dId)||{}).name||b.ast||('Asteroid #'+b.dId);let f=null;
+        try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000))}catch(e){}
+        if(me!==run||!x.isConnected)return;
+        x.className='bp-shb';x.innerHTML='· 🚀 first send <b>'+esc(b.name)+'</b> from <b>'+esc(an)+'</b> ('+(f?f.tof+' h, empty':L[0].d.toFixed(2)+' AU away – may be out of range')+')'}
+    }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpN').onchange=e=>{S.n=+e.target.value||1;drawBuildPlan(m)};
