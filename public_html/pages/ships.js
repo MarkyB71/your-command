@@ -22,7 +22,11 @@
   }
   // Crew on board each ship (tested on ?beta=1, live 23 Oct 2026) each ship
   const CRB = true;   // live 23 Oct 2026
-  const CLASS_COL = { 1: '#5b9dff', 2: '#ffab3d', 3: '#3fd68a', 4: '#f5c542', 5: '#b388ff' };
+  // Game colours (influence-client theme.js): Pilot purple, Engineer red, Miner orange, Merchant yellow, Scientist blue
+  const GCOL = /[?&]beta=1/.test(location.search);
+  const CLASS_COL = GCOL
+    ? { 1: '#884fff', 2: '#ff564d', 3: '#ff984f', 4: '#ffd94f', 5: '#4f90ff' }
+    : { 1: '#5b9dff', 2: '#ffab3d', 3: '#3fd68a', 4: '#f5c542', 5: '#b388ff' };
   function crewAboard(D, esc) {
     const by = {}, cms = D.crewmates || {}, CMC = window.YIC.CMC || {};
     (D.crewsRaw || []).forEach(c => {
