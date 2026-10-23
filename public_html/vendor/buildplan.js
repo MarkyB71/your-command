@@ -21,7 +21,7 @@ const CSS=`#bpw .bp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
 #bpw .ok{color:#5fd38d;font-weight:600}#bpw .part{color:#ffb547;font-weight:600}#bpw .none{color:#ff6b6b;font-weight:600}
 #bpw .a{color:#8b9ab0;font-size:12px}#bpw .bp-hd{display:flex;align-items:center;gap:12px;margin:0 0 10px}
 #bpw .bp-hd img{width:64px;height:48px;object-fit:contain}
-#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
+#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
 
 function asteroids(){
   const Y=window.YIC,D=Y.D||{},out=[],seen={};
@@ -79,13 +79,16 @@ export function drawBuildPlan(m){
   shortRows.filter(r=>r.others.length).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
   const myFac=t=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===S.ast).length;
   const mineOn=(a,r)=>{const c=a.Celestial||{},sc=(c.scanStatus||0)>=4&&c.abundances;if(sc&&Y.astAbund)return (Y.astAbund(c.abundances)[r]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+r))};
-  const near=id=>{const st=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>'<b>'+esc(a.name)+'</b> '+amt(id,Y.tot[a.i][id]));
+  const near=id=>{const tkT=g=>{const t=g/1e6;return t>=1000?(+(t/1000).toFixed(2)).toLocaleString()+' kt':Math.round(t).toLocaleString()+' t'};
+    const shipsAt=aid=>(D.ships||[]).filter(sh=>!sh.fl&&sh.dId===aid&&sh.capM>0).sort((x,y)=>(y.capM-y.useM)-(x.capM-x.useM));
+    const st=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>{const sp=shipsAt(a.id);
+      return'<b>'+esc(a.name)+'</b> '+amt(id,Y.tot[a.i][id])+'<div class="bp-sh">'+(sp.length?'🚀 Ships there: '+sp.map(sh=>'<b>'+esc(sh.name)+'</b> ('+esc(sh.type)+', '+tkT(Math.max(0,sh.capM-sh.useM))+' free, '+Math.round(sh.prop).toLocaleString()+' t propellant)').join(' · '):'<span class="a">🚀 No cargo ship of yours there right now</span>')+'</div>'});
     const mn=+id<=22?(D.owned||[]).filter(a=>a.id!==S.ast&&mineOn(a,id)).map(a=>'<b>'+esc((a.Name&&a.Name.name)||('Asteroid #'+a.id))+'</b>'):[];
     const now=Date.now()/1000,when=t=>t?(t<=now?'arriving now':'arrives '+new Date(t*1000).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})):'';
     const fls=(D.ships||[]).filter(sh=>sh.fl&&sh.cg&&sh.cg[id]>0).sort((x,y)=>(y.dId===S.ast)-(x.dId===S.ast)||x.arrT-y.arrT);
     const flH=fls.map(sh=>sh.dId===S.ast?'<div class="bp-fl to">✈ On its way here: <b>'+esc(sh.name)+'</b> carrying '+amt(id,sh.cg[id])+' – '+when(sh.arrT)+'</div>':
       '<div class="bp-fl">✈ In flight: <b>'+esc(sh.name)+'</b> carrying '+amt(id,sh.cg[id])+' to <b>'+esc(sh.ast||'?')+'</b> – '+when(sh.arrT)+'</div>').join('');
-    return'<div class="bp-src">'+flH+(st.length?'<div class="ok">📦 In stock on '+st.join(', ')+'</div>':'')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+(!st.length&&!mn.length&&!fls.length?'<div class="none">None of your asteroids has it or can mine it</div>':'')+'</div>'};
+    return'<div class="bp-src">'+flH+(st.length?st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join(''):'')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+(!st.length&&!mn.length&&!fls.length?'<div class="none">None of your asteroids has it or can mine it</div>':'')+'</div>'};
   const lst=(o,f)=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>'<div style="margin-top:6px">'+amt(k,o[k])+' <b>'+esc(nm(k))+'</b>'+(f?f(k):'')+'</div>').join('');
   const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
     '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' (none of your asteroids has '+(chainRows.length>1?'them':'it')+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
