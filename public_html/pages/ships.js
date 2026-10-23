@@ -23,7 +23,7 @@
   // Crew on board each ship (tested on ?beta=1, live 23 Oct 2026) each ship
   const CRB = true;   // live 23 Oct 2026
   // Game colours (influence-client theme.js): Pilot purple, Engineer red, Miner orange, Merchant yellow, Scientist blue
-  const GCOL = /[?&]beta=1/.test(location.search);
+  const GCOL = true;
   const CLASS_COL = GCOL
     ? { 1: '#884fff', 2: '#e0282e', 3: '#ff8c1a', 4: '#ffd94f', 5: '#4f90ff' }
     : { 1: '#5b9dff', 2: '#ffab3d', 3: '#3fd68a', 4: '#f5c542', 5: '#b388ff' };
