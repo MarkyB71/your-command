@@ -18,8 +18,9 @@
 
   // Starknet wallets put themselves on window as starknet, starknet_braavos, starknet_argentX, …
   function wallets() {
-    var seen = {}, out = [];
-    Object.keys(window).forEach(function (k) {
+    var seen = {}, out = [], keys = ['starknet', 'starknet_argentX', 'starknet_ready', 'starknet_braavos', 'starknet_okxwallet', 'starknet_keplr'];
+    try { keys = keys.concat(Object.getOwnPropertyNames(window)); } catch (e) {}
+    keys.forEach(function (k) {
       if (!/^starknet/.test(k)) return;
       var w;
       try { w = window[k]; } catch (e) { return; }
