@@ -162,34 +162,38 @@ export function drawBuildPlan(m){
     Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
       const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
       /* "Then send it": loaded flight from the source asteroid to the build asteroid with the chosen ship */
+      /* crew engine bonus (exhaust velocity): crew aboard the ship, else the crew that controls it – TEST only */
+      const crewOf=sh=>{const cs=D.crewsRaw||[];return cs.find(c=>{const l=(c.Location&&c.Location.location)||{};return l.label===6&&l.id===sh.id&&((c.Crew&&c.Crew.roster)||[]).length})||cs.find(c=>c.id===sh.crewId)};
+      const bon=sh=>{if(!TB||!T.exhaustBonus)return 1;const cr=crewOf(sh),mates=((cr&&cr.Crew&&cr.Crew.roster)||[]).map(id=>(D.crewmates||{})[id]).filter(Boolean);try{return mates.length?T.exhaustBonus(mates)||1:1}catch(e){return 1}};
+      const bonTxt=sh=>{const b=bon(sh),cr=crewOf(sh);return TB?' · crew engine bonus <b>×'+b.toFixed(2)+'</b>'+(cr&&cr.Name&&cr.Name.name?' ('+esc(cr.Name.name)+')':''):''};
       const thenOne=async ln=>{const ft=ln.querySelector('.bp-ft'),sh=(D.ships||[]).find(z=>String(z.id)===ln.dataset.ship),a=O[ln.dataset.from],b=O[S.ast];
         if(!sh){ft.textContent='(no ship chosen yet)';return}if(!a||!b){ft.textContent='(distance unknown)';return}
         const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
-        try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,sh.prop*1000),TB?2000:365)}catch(e){}
+        try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,sh.prop*1000),TB?2000:365)}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
         ft.textContent='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
         /* more detail: propellant this trip uses, or what it would take */
         let dl=ln.querySelector('.bp-tdet');if(!dl){dl=document.createElement('div');dl.className='bp-tdet';ln.appendChild(dl)}
         const SH=(T.SHIPS||{})[sh.st];if(!SH){dl.textContent='';return}
-        const ve=3e4*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=sh.prop*1000,t=x=>tkg(x);
-        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+' propellant · leaves '+t(Math.max(0,has-used));return}
+        const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=sh.prop*1000,t=x=>tkg(x);
+        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh);return}
         dl.innerHTML='<span class="a">working out what it would take…</span>';
         let best=null;for(let h=6;h<=2000;h+=h<200?6:24){let dv;try{dv=await T.deltaV(a.o,b.o,now,h)}catch(e){continue}if(!best||dv<best.dv)best={h,dv}}
         if(me!==run||!ln.isConnected)return;
         if(!best){dl.textContent='';return}
-        const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,tank),TB?2000:365)}catch(e){}
+        const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,tank),TB?2000:365)}catch(e){}
         const maxLoad=Math.max(0,has/(Math.exp(best.dv/ve)-1)-SH[1]/1000);
         dl.innerHTML='⛽ It has <b>'+t(has)+'</b> propellant. The cheapest route right now needs about <b>'+t(need)+'</b> ('+HW(best.h)+' flight).'+
           (need<=tank?' With a full tank ('+t(tank)+') '+(ff?'it takes <b>'+HW(ff.tof)+'</b>.':'it can make the slow route.'):' That\'s more than a full tank ('+t(tank)+') – too far right now with this load.')+
-          (maxLoad<load?(maxLoad>=1000?' With its propellant as it is, it could carry about <b>'+t(maxLoad)+'</b>.':' <b>Refuel it first</b> – even empty it hasn\'t enough propellant.'):'')};
+          (maxLoad<load?(maxLoad>=1000?' With its propellant as it is, it could carry about <b>'+t(maxLoad)+'</b>.':' <b>Refuel it first</b> – even empty it hasn\'t enough propellant.'):'')+bonTxt(sh)};
       const thenFor=(from,shipId)=>{const ln=m.querySelector('.bp-then[data-from="'+from+'"]');if(ln){ln.dataset.ship=shipId;thenOne(ln)}};
       for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
         const L=cand(+x.dataset.kg).filter(sh=>O[sh.dId]&&to).map(sh=>({sh,d:T.distance(O[sh.dId].o,to.o,now)/AU})).sort((a,b)=>a.d-b.d);
         if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
         const anOf=sh=>(A.find(a=>a.id===sh.dId)||{}).name||sh.ast||('Asteroid #'+sh.dId),toN=(A.find(a=>a.id===+x.dataset.to)||{}).name||'';
         const show=async k=>{const it=L[k],b=it.sh;let f=null;
-          try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000),TB?2000:365)}catch(e){}
+          try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,bon(b),0,b.prop*1000),TB?2000:365)}catch(e){}
           if(me!==run||!x.isConnected)return;
           x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
           const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+esc(anOf(o.sh))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
