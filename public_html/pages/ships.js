@@ -20,6 +20,22 @@
       ' <span style="color:#8a96a8">→</span> ' +
       '<b style="color:' + TO + ';font-size:1.15em;text-shadow:0 0 8px rgba(224,176,74,.45)">' + esc(m[2]) + '</b>';
   }
+  // Test 23 Oct 2026 (?beta=1): crew on board each ship
+  const CRB = /[?&]beta=1/.test(location.search);
+  function crewAboard(D, esc) {
+    const by = {};
+    (D.crewsRaw || []).forEach(c => {
+      const loc = (c.Location && c.Location.location) || {};
+      if (loc.label !== 6) return;
+      const cl = (D.crewList || []).find(x => x.id === c.id) || {};
+      const nm = (c.Name && c.Name.name) || ('Crew #' + c.id);
+      const mates = Object.values(cl.mn || {}).filter(Boolean);
+      const n = ((c.Crew && c.Crew.roster) || []).length;
+      (by[loc.id] = by[loc.id] || []).push('<b>' + esc(nm) + '</b><br><span class="a" title="' +
+        esc(mates.join(', ')) + '">' + n + ' crewmate' + (n === 1 ? '' : 's') + '</span>');
+    });
+    return by;
+  }
   const VARIANTS = { 2: 'Cobalt Pioneer', 3: 'Titanium Pioneer', 4: 'Aureate Pioneer' };
 
   function drawShips(m) {
@@ -36,17 +52,18 @@
       .filter(x => okAst(x) && okText(x.name, x.place, x.ast, x.type, '#' + x.id, x.id))
       .sort((a, b) => (a.ast || '~').localeCompare(b.ast || '~') || a.name.localeCompare(b.name));
 
+    const aboard = CRB ? crewAboard(D, esc) : null;
     let h = '<div class="note" style="padding:0 0 10px">' + ships.length + ' ships' +
       (astName ? ' at or heading to <b>' + esc(astName) + '</b>' : '') + '</div>';
 
     h += '<div class="wrap"><table><thead><tr><th>Ship</th><th class="num">ID</th><th>Type</th>' +
-      '<th>Asteroid</th><th>Where</th><th>Arrives</th><th>Cargo</th><th class="num">Propellant</th>' +
-      '</tr></thead><tbody>' + ships.map(x => row(x, esc, fmtT, tLeft)).join('') + '</tbody></table></div>';
+      '<th>Asteroid</th>' + (aboard ? '<th>Crew on board</th>' : '') + '<th>Where</th><th>Arrives</th><th>Cargo</th><th class="num">Propellant</th>' +
+      '</tr></thead><tbody>' + ships.map(x => row(x, esc, fmtT, tLeft, aboard)).join('') + '</tbody></table></div>';
 
     m.innerHTML = h;
   }
 
-  function row(x, esc, fmtT, tLeft) {
+  function row(x, esc, fmtT, tLeft, aboard) {
     const pic = 'shipimg.php?t=' + x.st + '&v=' + x.sv;
     const st = STATUS[x.sst] || STATUS.d;
 
@@ -75,7 +92,9 @@
 
     return '<tr>' + shipCell +
       '<td class="num">' + esc(x.id) + '</td>' + typeCell +
-      '<td>' + esc(x.ast || '–') + '</td>' + whereCell + arrivesCell + cargoCell +
+      '<td>' + esc(x.ast || '–') + '</td>' +
+      (aboard ? '<td class="cls" style="white-space:normal">' + ((aboard[x.id] || []).join('<br>') || '<span class="a">None</span>') + '</td>' : '') +
+      whereCell + arrivesCell + cargoCell +
       '<td class="num">' + fmtT(x.prop) + '</td></tr>';
   }
 
