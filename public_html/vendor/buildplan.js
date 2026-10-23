@@ -1,4 +1,4 @@
-/* Building planner for Your Influence Command (Planners › Building planner).
+/* Asteroid planner for Your Influence Command (Planners › Asteroid planner).
    Pick an asteroid + a building: shows the materials it needs, what you already hold on that asteroid,
    and the nearest of your other asteroids that has the rest.
    Building recipes from @influenceth/sdk 2.7.2 (Apache-2.0, (c) Unstoppable Games, Inc.). */
@@ -151,12 +151,12 @@ export function drawBuildPlan(m){
 
 }
 
-/* Adds "Building planner" to the Planners menu, after Travel (TEST: ?beta=1 only) */
+/* Adds "Asteroid planner" to the Planners menu, after Travel (TEST: ?beta=1 only) */
 if(BETA){
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
     if(!vr||!main||!window.YIC||document.getElementById('vU'))return;
-    const b=document.createElement('button');b.id='vU';b.textContent='Building planner';vr.after(b);
+    const b=document.createElement('button');b.id='vU';b.textContent='Asteroid planner';vr.after(b);
     b.addEventListener('click',()=>{
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){}
       b.className='on';drawBuildPlan(main)});
