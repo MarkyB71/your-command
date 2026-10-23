@@ -9,6 +9,7 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
+const TB=/[?&]beta=1/.test(location.search); /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1};
 let run=0;const memo={};
 
@@ -125,7 +126,7 @@ export function drawBuildPlan(m){
     const howTxt=(c,it)=>{const h=c.can[it.k];if(h.how==='stock')return'<span class="ok">in stock</span>';if(h.how==='mine')return'<span class="bp-mn">mine it there</span>';
       return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span>'};
     const posN=pick.filter(c=>!ready(c.id).length).length;
-    return'<div class="bp-plan"><div class="bp-ps">'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
+    return'<div class="bp-plan">'+(TB?'<div id="bpFirst"></div>':'')+'<div class="bp-ps"'+(TB?' style="display:none"':'')+'>'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
       pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);
         return'<details class="bp-it" open><summary><b>'+esc(c.name)+'</b> – '+c.take.length+' item'+(c.take.length>1?'s':'')+', '+tkg(kg)+' · '+trips(kg)+' LT trip'+(trips(kg)>1?'s':'')+(rd.length?' <span class="bp-shb">· 🚀 '+esc(rd[0].name)+' ready</span>':' <span class="a bp-pos" data-to="'+c.id+'" data-kg="'+kg+'">· no ship there – finding your nearest…</span>')+'</summary><div class="bp-src">'+
           c.take.map(it=>'<div>'+amt(it.k,it.q)+' <b>'+esc(nm(it.k))+'</b> – '+howTxt(c,it)+'</div>').join('')+'</div></details>'}).join('')+
@@ -163,7 +164,7 @@ export function drawBuildPlan(m){
         const b=L[0].sh,an=(A.find(a=>a.id===b.dId)||{}).name||b.ast||('Asteroid #'+b.dId);let f=null;
         try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000))}catch(e){}
         if(me!==run||!x.isConnected)return;
-        x.className='bp-first';x.innerHTML='🚀 First send <b>'+esc(b.name)+'</b> from <b>'+esc(an)+'</b> ('+(f?f.tof+' h, empty':L[0].d.toFixed(2)+' AU away – may be out of range')+')'}
+        x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top){top.appendChild(x)}x.innerHTML='🚀 First send <b>'+esc(b.name)+'</b> from <b>'+esc(an)+'</b>'+(top?' to <b>'+esc((A.find(a=>a.id===+x.dataset.to)||{}).name||'')+'</b>':'')+' ('+(f?f.tof+' h, empty':L[0].d.toFixed(2)+' AU away – may be out of range')+')'}
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
