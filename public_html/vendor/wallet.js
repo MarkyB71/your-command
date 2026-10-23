@@ -1,14 +1,8 @@
 /* Connect wallet – adds a "Connect wallet" button to the wallet page.
    Lists every Starknet wallet the browser has (Braavos, Ready/Argent X, …),
    the player picks one, and we only READ the address. Nothing is ever signed or sent.
-   Test only: shows with ?beta=1 (remembered for this browser tab). */
+   LIVE for everyone (2026-10-23). */
 (function () {
-  var BETA = false;
-  try {
-    if (/[?&]beta=1/.test(location.search)) sessionStorage.setItem('yicBeta', '1');
-    BETA = sessionStorage.getItem('yicBeta') === '1';
-  } catch (e) { BETA = /[?&]beta=1/.test(location.search); }
-  if (!BETA) return;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
