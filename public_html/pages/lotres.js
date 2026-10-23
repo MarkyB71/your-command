@@ -374,7 +374,7 @@
     );
   }
 
-  var HXB = /[?&]beta=1/.test(location.search); // Hide 'Planning expired' tick box (test)
+  var HXB = true; // Hide 'Planning expired' tick box (test)
   var HIDEX = false;
   var SRTB = HXB, LSORT = 'rich'; // Order by dropdown (test)
   var BCOL = true; // building picture + game colour (test)
