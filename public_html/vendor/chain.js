@@ -27,7 +27,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-t{font-size:12px;color:#8b9ab0}.pc-raw{color:#ffd24a}.pc-lp{color:#ff8f8f}
 .pc-n select{font-size:12px;padding:3px 4px;width:100%}
 .pc-have.none{color:#ff6b6b!important;font-weight:600}
-.pc-proc{font-size:12px;padding:3px 6px;border:1px solid #2a3442;border-radius:4px;color:#8b9ab0;background:#0f1622;white-space:nowrap;overflow:hidden;line-height:1.3;margin-top:2px}.pc-proc>span{display:inline-block}.pc-proc.mv>span{animation:pcmq var(--t,6s) ease-in-out infinite}@keyframes pcmq{0%,15%{transform:translateX(0)}50%,65%{transform:translateX(var(--dx))}100%{transform:translateX(0)}}@media (prefers-reduced-motion:reduce){.pc-proc{white-space:normal}.pc-proc.mv>span{animation:none}}.pc-big .pc-proc{font-size:14px}
+.pc-proc{font-size:12px;padding:3px 6px;border:1px solid #2a3442;border-radius:4px;color:#8b9ab0;background:#0f1622;white-space:nowrap;overflow:hidden;line-height:1.3;margin-top:2px}.pc-proc>span{display:inline-block}.pc-fac{font-size:12px;font-weight:700;color:#9fb3cc;margin-top:3px;line-height:1.3}.pc-fac.ok{color:#3fd68a}.pc-fac.no{color:#ff6b6b}.pc-proc.mv>span{animation:pcmq var(--t,6s) ease-in-out infinite}@keyframes pcmq{0%,15%{transform:translateX(0)}50%,65%{transform:translateX(var(--dx))}100%{transform:translateX(0)}}@media (prefers-reduced-motion:reduce){.pc-proc{white-space:normal}.pc-proc.mv>span{animation:none}}.pc-big .pc-proc{font-size:14px}
 .pc-also{font-size:11px;color:#8b9ab0}
 .pc-tog{cursor:pointer;color:#8fe3ff;font-size:12px;user-select:none;margin-top:2px}
 .pc-raws{margin-top:14px;background:#121a26;border:1px solid #2a3648;border-radius:8px;padding:10px 14px}
@@ -79,6 +79,13 @@ const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,15
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
 const SWT=true;
 const ONE=true; /* ONE = show the process on single-recipe boxes (test) */
+const FAC=/[?&]beta=1/.test(location.search),FBT={1:3,2:5,3:4,4:6,5:6},FBN={3:'Refinery',4:'Bioreactor',5:'Factory',6:'Shipyard'}
+const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 Built on a construction site</div>';const nm=FBN[bt]+(t===5?' (dry dock)':'');
+  if(ai===null)return '<div class="pc-fac">🏭 Needs a '+nm+'</div>';
+  const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},an=a.name||'',D=Y.D||{};let ok=0,bld=0,pl=0;
+  (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt)return;const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3);const n=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');if(n!==an)return;if(B.status===3)ok++;else if(B.status===2)bld++;else if(B.status===1)pl++});
+  if(ok)return '<div class="pc-fac ok">✓ '+nm+' – you have '+ok+'</div>';
+  return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
 const SW=id=>SWT?'<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>':'';
 const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
@@ -126,6 +133,7 @@ export function drawChain(m){
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
     else if(ONE){const d=el('div','pc-proc','<span>'+esc(p.name)+'</span>');d.title=p.name+' · '+TYPE[p.type];c.appendChild(d);setTimeout(()=>{const sp=d.firstChild;if(!d.isConnected||!sp)return;const o=sp.scrollWidth-d.clientWidth+12;if(o>4){d.style.setProperty('--dx',-o+'px');d.style.setProperty('--t',Math.max(5,3+o/15)+'s');d.classList.add('mv')}},60)}
+    if(FAC)c.insertAdjacentHTML('beforeend',facHTML(p.type,ai));
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fu(k,v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
