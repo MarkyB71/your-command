@@ -215,8 +215,12 @@
         const e = (b.Extractors || []).find((x) => x.status === 1);
         s = e ? 'extracting ' + APP.pn(String(e.outputProduct)) : 'idle';
       }
+      const col = BCOL ? (B.status === 1 || B.status === 2 ? '#9a9a9a' : BCAT[B.buildingType] || '') : '';
       return (
-        '<b>' +
+        (BCOL ? APP.bthumb(ty, 40, 30) : '') +
+        '<b' +
+        (col ? ' style="color:' + col + '"' : '') +
+        '>' +
         APP.esc(bn) +
         '</b> <span class="a">· ' +
         APP.esc(ty) +
@@ -314,6 +318,9 @@
     );
   }
 
+  var BCOL = /[?&]beta=1/.test(location.search); // building picture + game colour (test)
+  // Game lot-map colours by building category (influence-client SearchFilters.js)
+  var BCAT = { 1: '#ff8c00', 10: '#ff8c00', 2: '#ff4a3d', 3: '#e0458a', 4: '#2ecc1a', 5: '#c99a6e', 6: '#7a7aff', 7: '#19d9ff', 8: '#57ff65', 9: '#ffff00' };
   var ALLL = /[?&]beta=1/.test(location.search); // show every lot (test)
   window.PAGES = window.PAGES || {};
   window.PAGES.F = function (m) {
