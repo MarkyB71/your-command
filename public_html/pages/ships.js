@@ -20,8 +20,8 @@
       ' <span style="color:#8a96a8">→</span> ' +
       '<b style="color:' + TO + ';font-size:1.15em;text-shadow:0 0 8px rgba(224,176,74,.45)">' + esc(m[2]) + '</b>';
   }
-  // Test 23 Oct 2026 (?beta=1): crew on board each ship
-  const CRB = /[?&]beta=1/.test(location.search);
+  // Crew on board each ship (tested on ?beta=1, live 23 Oct 2026) each ship
+  const CRB = true;   // live 23 Oct 2026
   const CLASS_COL = { 1: '#5b9dff', 2: '#ffab3d', 3: '#3fd68a', 4: '#f5c542', 5: '#b388ff' };
   function crewAboard(D, esc) {
     const by = {}, cms = D.crewmates || {}, CMC = window.YIC.CMC || {};
