@@ -8,7 +8,7 @@ const PROCS=[["Water Electrolysis",1,{"24":9},{"2":1,"23":8}],["Water Vacuum-eva
 const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[]).push([pn,pt,inp,out[k],out])});
 const FBT={1:3,2:5,3:4,4:6,5:6};
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
-const BETA=/[?&]beta=1/.test(location.search); /* TEST: only on ?beta=1 for now */
+const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
 const S={ast:null,bld:9,n:1};
 let run=0;const memo={};
 
@@ -156,7 +156,7 @@ export function drawBuildPlan(m){
 
 }
 
-/* Adds "Asteroid planner" to the Planners menu, after Travel (TEST: ?beta=1 only) */
+/* Adds "Asteroid planner" to the Planners menu, after Travel */
 if(BETA){
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
