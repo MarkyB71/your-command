@@ -216,6 +216,7 @@
         s = e ? 'extracting ' + APP.pn(String(e.outputProduct)) : 'idle';
       }
       const col = BCOL ? BCAT[B.buildingType] || '' : '';
+      const pxs = px && !HIDEX;
       return (
         (BCOL ? APP.bthumb(ty, 40, 30) : '') +
         '<b' +
@@ -227,9 +228,9 @@
         (s ? ' · ' + APP.esc(s) : '') +
         '</span>' +
         gl('/building/' + b.id, 'Open this building in the game') +
-        (px
+        (pxs
           ? ' <span title="The 2-day site reservation has run out. The game makes any materials sent here public." style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;' + (BCOL ? 'background:transparent;border:1px solid #4a5568;color:#9aa8bb' : 'background:rgba(255,90,90,.15);border:1px solid #ff6b6b;color:#ff7a7a') + ';font-size:12px;font-weight:600;white-space:nowrap">Planning expired – site is public</span>'
-          : pl
+          : pl && !px
             ? ' <span style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;background:rgba(250,178,25,.15);border:1px solid #fab219;color:#fab219;font-size:12px;font-weight:600;white-space:nowrap">Planning approved – reserved for ' +
               (B.plannedAt ? APP.tLeft(B.plannedAt + 172800, Date.now() / 1000) : '2 days') +
               '</span>'
@@ -267,6 +268,11 @@
             t +
             '</button>',
         ).join('') +
+        (HXB
+          ? '<label style="margin-left:12px;font-size:15px;color:#c8d3e0;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="lfHX"' +
+            (HIDEX ? ' checked' : '') +
+            ' style="width:18px;height:18px">Hide "Planning expired"</label>'
+          : '') +
         '</div>';
     const L2 = APP.lfMode === 'all' ? all : APP.lfMode === 'ext' ? ex : free,
       lim = APP.lfMode === 'ext' || ALLL ? L2.length : 30;
@@ -310,6 +316,12 @@
           : '');
     m.innerHTML = h;
     wire();
+    const hx = m.querySelector('#lfHX');
+    if (hx)
+      hx.addEventListener('change', () => {
+        HIDEX = hx.checked;
+        APP.draw();
+      });
     m.querySelectorAll('[data-lm]').forEach((b) =>
       b.addEventListener('click', () => {
         APP.lfMode = b.dataset.lm;
@@ -318,6 +330,8 @@
     );
   }
 
+  var HXB = /[?&]beta=1/.test(location.search); // Hide 'Planning expired' tick box (test)
+  var HIDEX = false;
   var BCOL = true; // building picture + game colour (test)
   // Game lot-map colours by building category (influence-client SearchFilters.js)
   var BCAT = { 1: '#ff8c00', 10: '#ff8c00', 2: '#ff4a3d', 3: '#e0458a', 4: '#2ecc1a', 5: '#c99a6e', 6: '#7a7aff', 7: '#19d9ff', 8: '#57ff65', 9: '#ffff00' };
