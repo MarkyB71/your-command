@@ -2,6 +2,12 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 295 – 24 Oct 2026 – Asteroid planner: Fewest flights reworked
+- "First send" line at the top (no summary box), with a dropdown when more than one ship could go.
+- "Then send it" line at the bottom: ship, flight time, load, propellant used or what the trip would need (full tank time, max load, refuel).
+- Crew engine bonus in all flight and propellant maths; flight times in weeks / days / hours; slow routes up to ~12 weeks found (no more false "out of range").
+- Softer gold, blue destination, green times.
+
 ## Version 284 – 24 Oct 2026 – Asteroid planner: Fewest flights summary in a glowing box with gold numbers; "First send" ship line in gold
 ## Version 282 – 24 Oct 2026 – Asteroid planner: when no ship is at a source asteroid, Fewest flights adds the flight to get your nearest ready ship there (with flight time)
 
