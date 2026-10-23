@@ -22,20 +22,45 @@
   }
   // Test 23 Oct 2026 (?beta=1): crew on board each ship
   const CRB = /[?&]beta=1/.test(location.search);
+  const CLASS_COL = { 1: '#5b9dff', 2: '#ffab3d', 3: '#3fd68a', 4: '#f5c542', 5: '#b388ff' };
   function crewAboard(D, esc) {
-    const by = {};
+    const by = {}, cms = D.crewmates || {}, CMC = window.YIC.CMC || {};
     (D.crewsRaw || []).forEach(c => {
       const loc = (c.Location && c.Location.location) || {};
       if (loc.label !== 6) return;
       const cl = (D.crewList || []).find(x => x.id === c.id) || {};
       const nm = (c.Name && c.Name.name) || ('Crew #' + c.id);
-      const mates = Object.values(cl.mn || {}).filter(Boolean);
-      const n = ((c.Crew && c.Crew.roster) || []).length;
-      (by[loc.id] = by[loc.id] || []).push('<b>' + esc(nm) + '</b><br><span class="a" title="' +
-        esc(mates.join(', ')) + '">' + n + ' crewmate' + (n === 1 ? '' : 's') + '</span>');
+      const roster = (c.Crew && c.Crew.roster) || [];
+      const food = cl.food;
+      const fc = food == null ? '#5d6878' : food < 0.5 ? '#ff6b6b' : food < 0.65 ? '#ffab3d' : '#3fd68a';
+      const faces = roster.map(id => {
+        const x = cms[id] || {}, k = x.class, col = CLASS_COL[k] || '#6b7a90';
+        const mn = (cl.mn && cl.mn[id]) || ('Crewmate #' + id);
+        const first = mn.split(' ')[0];
+        return '<div class="cob-m" title="' + esc(mn + (CMC[k] ? ' · ' + CMC[k] : '')) + '">' +
+          '<img data-face="' + id + '" src="cimg.php?id=' + id + '&s=1" alt="" loading="lazy" style="border-color:' + col + ';box-shadow:0 0 6px ' + col + '55">' +
+          '<span class="cob-n">' + esc(first) + '</span>' +
+          (CMC[k] ? '<span class="cob-c" style="color:' + col + '">' + esc(CMC[k]) + '</span>' : '') + '</div>';
+      }).join('');
+      (by[loc.id] = by[loc.id] || []).push('<div class="cob">' +
+        '<div class="cob-h"><span class="cob-t">👥 ' + esc(nm) + '</span>' +
+        (food != null ? '<span class="cob-f" title="Food ' + Math.round(food * 100) + '%"><i style="width:' + Math.round(food * 100) + '%;background:' + fc + '"></i></span>' : '') +
+        '</div><div class="cob-r">' + faces + '</div></div>');
     });
     return by;
   }
+  const COB_CSS = '.cob{background:linear-gradient(180deg,#121a26,#0d131c);border:1px solid #2a3648;border-radius:10px;padding:8px 10px;margin:2px 0 6px;min-width:250px}' +
+    '.cob-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}' +
+    '.cob-t{font-weight:700;color:#cfe6ff;text-shadow:0 0 6px rgba(91,157,255,.35)}' +
+    '.cob-f{flex:1;max-width:70px;height:6px;border-radius:3px;background:#232b38;overflow:hidden}.cob-f i{display:block;height:100%}' +
+    '.cob-r{display:flex;flex-wrap:wrap;gap:8px}' +
+    '.cob-m{display:flex;flex-direction:column;align-items:center;width:52px;text-align:center;line-height:1.15}' +
+    '.cob-m img{width:46px;height:60px;object-fit:cover;object-position:50% 0;border-radius:6px;border:1.5px solid;background:#000;transition:transform .15s}' +
+    '.cob-m:hover img{transform:scale(1.12)}' +
+    '.cob-n{font-size:11px;color:#dde6f2;margin-top:3px;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '.cob-c{font-size:10px;opacity:.9}' +
+    '.cob-none{color:#5d6878;font-style:italic}' +
+    '@media (prefers-reduced-motion:reduce){.cob-m img{transition:none}.cob-m:hover img{transform:none}}';
   const VARIANTS = { 2: 'Cobalt Pioneer', 3: 'Titanium Pioneer', 4: 'Aureate Pioneer' };
 
   function drawShips(m) {
@@ -60,7 +85,9 @@
       '<th>Asteroid</th>' + (aboard ? '<th>Crew on board</th>' : '') + '<th>Where</th><th>Arrives</th><th>Cargo</th><th class="num">Propellant</th>' +
       '</tr></thead><tbody>' + ships.map(x => row(x, esc, fmtT, tLeft, aboard)).join('') + '</tbody></table></div>';
 
+    if (aboard) h = '<style>' + COB_CSS + '</style>' + h;
     m.innerHTML = h;
+    if (aboard && Y.fillFacesIn) Y.fillFacesIn(m);
   }
 
   function row(x, esc, fmtT, tLeft, aboard) {
@@ -93,7 +120,7 @@
     return '<tr>' + shipCell +
       '<td class="num">' + esc(x.id) + '</td>' + typeCell +
       '<td>' + esc(x.ast || '–') + '</td>' +
-      (aboard ? '<td class="cls" style="white-space:normal">' + ((aboard[x.id] || []).join('<br>') || '<span class="a">None</span>') + '</td>' : '') +
+      (aboard ? '<td class="cls" style="white-space:normal">' + ((aboard[x.id] || []).join('') || '<span class="cob-none">No crew aboard</span>') + '</td>' : '') +
       whereCell + arrivesCell + cargoCell +
       '<td class="num">' + fmtT(x.prop) + '</td></tr>';
   }
