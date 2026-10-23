@@ -215,7 +215,7 @@
         const e = (b.Extractors || []).find((x) => x.status === 1);
         s = e ? 'extracting ' + APP.pn(String(e.outputProduct)) : 'idle';
       }
-      const col = BCOL ? (B.status === 1 || B.status === 2 ? '#9a9a9a' : BCAT[B.buildingType] || '') : '';
+      const col = BCOL ? BCAT[B.buildingType] || '' : '';
       return (
         (BCOL ? APP.bthumb(ty, 40, 30) : '') +
         '<b' +
