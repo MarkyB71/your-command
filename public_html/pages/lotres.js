@@ -318,10 +318,10 @@
     );
   }
 
-  var BCOL = /[?&]beta=1/.test(location.search); // building picture + game colour (test)
+  var BCOL = true; // building picture + game colour (test)
   // Game lot-map colours by building category (influence-client SearchFilters.js)
   var BCAT = { 1: '#ff8c00', 10: '#ff8c00', 2: '#ff4a3d', 3: '#e0458a', 4: '#2ecc1a', 5: '#c99a6e', 6: '#7a7aff', 7: '#19d9ff', 8: '#57ff65', 9: '#ffff00' };
-  var ALLL = /[?&]beta=1/.test(location.search); // show every lot (test)
+  var ALLL = true; // show every lot (test)
   window.PAGES = window.PAGES || {};
   window.PAGES.F = function (m) {
     drawLotRes(m);
