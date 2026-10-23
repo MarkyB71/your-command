@@ -70,21 +70,24 @@
     if (p) p.remove();
   }
 
-  async function pick(w) {
+  async function pick(w, btn) {
     closeList();
     setErr('');
-    var b = document.getElementById('wc-btn');
-    if (b) { b.disabled = true; b.textContent = 'Waiting for ' + w.name + '…'; }
+    var label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Waiting for ' + w.name + '…'; }
     try {
       var a = await getAddress(w);
       if (!a || !/^0x[0-9a-fA-F]{1,64}$/.test(a)) throw new Error('No address');
       var inp = document.getElementById('w'), go = document.getElementById('go');
-      if (!inp || !go) return;
-      inp.value = a;
-      go.click();
+      if (inp && go) { inp.value = a; go.click(); return; }
+      // Main page: remember it and reload with this wallet
+      try { localStorage.setItem('influenceStockWallet', a); } catch (e) {}
+      location.href = location.pathname + '?wallet=' + encodeURIComponent(a);
     } catch (e) {
-      setErr(w.name + ' did not share an address. Check the wallet is unlocked and try again, or paste your address below.');
-      if (b) { b.disabled = false; b.textContent = 'Connect wallet'; }
+      var t = w.name + ' did not share an address. Check the wallet is unlocked and try again.';
+      if (document.getElementById('err')) setErr(t + ' Or paste your address below.');
+      else alert(t);
+      if (btn) { btn.disabled = false; btn.textContent = label; }
     }
   }
 
@@ -107,7 +110,7 @@
             '<span>' + esc(w.name) + '</span></button>';
         }).join('');
       p.querySelectorAll('[data-wi]').forEach(function (el) {
-        el.onclick = function () { pick(ws[+el.getAttribute('data-wi')]); };
+        el.onclick = function () { pick(ws[+el.getAttribute('data-wi')], btn); };
       });
     }
     btn.insertAdjacentElement('afterend', p);
@@ -129,5 +132,40 @@
     };
   }
 
-  setInterval(addButton, 300);
+  // Main page: bright "Connect wallet" button next to "Change wallet"
+  function addTopButton() {
+    var chg = document.getElementById('chg');
+    if (!chg || document.getElementById('wc-top')) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'wc-top';
+    b.textContent = 'Connect wallet';
+    b.title = 'Pick your Starknet wallet – only reads your address';
+    b.style.cssText = 'font:inherit;font-size:13px;font-weight:600;color:#04121a;background:#5fc3e4;border:0;border-radius:6px;' +
+      'padding:3px 10px;margin:0 6px 0 4px;cursor:pointer;box-shadow:0 0 8px rgba(95,195,228,.6)';
+    chg.parentNode.insertBefore(b, chg);
+    chg.parentNode.insertBefore(document.createTextNode(' '), chg);
+    b.onclick = function (e) {
+      e.preventDefault();
+      if (document.getElementById('wc-list')) { closeList(); return; }
+      showList(b);
+      var p = document.getElementById('wc-list');
+      if (!p) return;
+      var r = b.getBoundingClientRect();
+      p.style.position = 'fixed';
+      p.style.zIndex = '99999';
+      p.style.top = (r.bottom + 6) + 'px';
+      p.style.left = Math.max(8, Math.min(r.left, innerWidth - 268)) + 'px';
+      p.style.width = '260px';
+      p.style.boxShadow = '0 8px 24px rgba(0,0,0,.5)';
+      document.body.appendChild(p);
+    };
+  }
+
+  document.addEventListener('click', function (e) {
+    var p = document.getElementById('wc-list');
+    if (p && p.style.position === 'fixed' && !p.contains(e.target) && e.target.id !== 'wc-top') closeList();
+  });
+
+  setInterval(function () { addButton(); addTopButton(); }, 300);
 })();
