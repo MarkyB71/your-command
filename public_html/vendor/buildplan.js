@@ -21,7 +21,7 @@ const CSS=`#bpw .bp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
 #bpw .ok{color:#5fd38d;font-weight:600}#bpw .part{color:#ffb547;font-weight:600}#bpw .none{color:#ff6b6b;font-weight:600}
 #bpw .a{color:#8b9ab0;font-size:12px}#bpw .bp-hd{display:flex;align-items:center;gap:12px;margin:0 0 10px}
 #bpw .bp-hd img{width:64px;height:48px;object-fit:contain}
-#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-it{margin-top:6px;font-size:15px}#bpw .bp-it>summary{cursor:pointer}#bpw .bp-it[open]>summary{margin-bottom:2px}#bpw .bp-shb{color:#c9b8ff;font-weight:600}#bpw .bp-two{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:16px}#bpw .bp-l{flex:1 1 380px;min-width:0}#bpw .bp-r{flex:1 1 380px;min-width:0}#bpw .bp-plan{background:#121a26;border:1px solid #2f5a7a;border-radius:10px;padding:10px 14px;margin:0 0 12px}#bpw .bp-plan h3{margin:0 0 4px;color:#8fe3ff}#bpw .bp-ps{font-size:16px;margin-bottom:4px}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
+#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-it{margin-top:6px;font-size:15px}#bpw .bp-it>summary{cursor:pointer}#bpw .bp-it[open]>summary{margin-bottom:2px}#bpw .bp-shb{color:#c9b8ff;font-weight:600}#bpw .bp-two{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:16px}#bpw .bp-l{flex:1 1 380px;min-width:0}#bpw .bp-r{flex:1 1 380px;min-width:0}#bpw .bp-plan{background:#121a26;border:1px solid #2f5a7a;border-radius:10px;padding:10px 14px;margin:0 0 12px}#bpw .bp-plan h3{margin:0 0 4px;color:#8fe3ff}#bpw .bp-ps{font-size:18px;font-weight:600;margin:0 0 8px;padding:8px 12px;background:#0f2233;border:1px solid #3a7fb0;border-radius:8px;box-shadow:0 0 10px rgba(80,170,255,.25)}#bpw .bp-ps b{color:#ffd24a;font-size:20px}#bpw .bp-first{display:block;margin:6px 0 2px;padding:6px 10px;font-size:16px;font-weight:700;color:#ffd24a;background:rgba(255,210,74,.08);border:1px solid #b8932a;border-radius:6px}#bpw .bp-first b{color:#fff}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
 
 function asteroids(){
   const Y=window.YIC,D=Y.D||{},out=[],seen={};
@@ -163,7 +163,7 @@ export function drawBuildPlan(m){
         const b=L[0].sh,an=(A.find(a=>a.id===b.dId)||{}).name||b.ast||('Asteroid #'+b.dId);let f=null;
         try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000))}catch(e){}
         if(me!==run||!x.isConnected)return;
-        x.className='bp-shb';x.innerHTML='· 🚀 first send <b>'+esc(b.name)+'</b> from <b>'+esc(an)+'</b> ('+(f?f.tof+' h, empty':L[0].d.toFixed(2)+' AU away – may be out of range')+')'}
+        x.className='bp-first';x.innerHTML='🚀 First send <b>'+esc(b.name)+'</b> from <b>'+esc(an)+'</b> ('+(f?f.tof+' h, empty':L[0].d.toFixed(2)+' AU away – may be out of range')+')'}
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
