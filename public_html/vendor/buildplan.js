@@ -9,7 +9,9 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
-const TB=/[?&]beta=1/.test(location.search); /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
+const TB=/[?&]beta=1/.test(location.search);
+/* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
+const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1};
 let run=0;const memo={};
 
@@ -166,7 +168,7 @@ export function drawBuildPlan(m){
         try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,sh.prop*1000))}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
-        ft.textContent='('+(f?f.tof+' h':'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
+        ft.textContent='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
         /* more detail: propellant this trip uses, or what it would take */
         let dl=ln.querySelector('.bp-tdet');if(!dl){dl=document.createElement('div');dl.className='bp-tdet';ln.appendChild(dl)}
         const SH=(T.SHIPS||{})[sh.st];if(!SH){dl.textContent='';return}
@@ -178,8 +180,8 @@ export function drawBuildPlan(m){
         if(!best){dl.textContent='';return}
         const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,tank))}catch(e){}
         const maxLoad=Math.max(0,has/(Math.exp(best.dv/ve)-1)-SH[1]/1000);
-        dl.innerHTML='⛽ It has <b>'+t(has)+'</b> propellant. The cheapest route right now needs about <b>'+t(need)+'</b> ('+best.h+' h flight).'+
-          (need<=tank?' With a full tank ('+t(tank)+') '+(ff?'the fastest is <b>'+ff.tof+' h</b>.':'it can make the slow route.'):' That\'s more than a full tank ('+t(tank)+') – too far right now with this load.')+
+        dl.innerHTML='⛽ It has <b>'+t(has)+'</b> propellant. The cheapest route right now needs about <b>'+t(need)+'</b> ('+HW(best.h)+' flight).'+
+          (need<=tank?' With a full tank ('+t(tank)+') '+(ff?'the fastest is <b>'+HW(ff.tof)+'</b>.':'it can make the slow route.'):' That\'s more than a full tank ('+t(tank)+') – too far right now with this load.')+
           (maxLoad<load?(maxLoad>=1000?' With its propellant as it is, it could carry about <b>'+t(maxLoad)+'</b>.':' <b>Refuel it first</b> – even empty it hasn\'t enough propellant.'):'')};
       const thenFor=(from,shipId)=>{const ln=m.querySelector('.bp-then[data-from="'+from+'"]');if(ln){ln.dataset.ship=shipId;thenOne(ln)}};
       for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
@@ -191,7 +193,7 @@ export function drawBuildPlan(m){
           if(me!==run||!x.isConnected)return;
           x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
           const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+esc(anOf(o.sh))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
-          x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(f?f.tof+' h, empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
+          x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(f?HW(f.tof)+', empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
           if(TB)thenFor(x.dataset.to,b.id);
           const sel=x.querySelector('.bp-shsel');if(sel)sel.onchange=e=>{x.querySelector('.bp-ft').textContent='(working out…)';show(+e.target.value)}};
         await show(0)}
