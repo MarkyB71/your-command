@@ -816,7 +816,7 @@ async function load(wallet){
  const aKeys=Object.keys(groups).sort((x,y)=>astName[x].localeCompare(astName[y]));
  
  const used={};
- const D={when:new Date(j.fetched*1000).toLocaleString(),crews:crews.length,products:used,recipes:RX,asteroids:aKeys.map(a=>({name:astName[a],buildings:groups[a].map(b=>{const it={};(b.Inventories||[]).filter(i=>PRIM[i.inventoryType]).forEach(i=>(i.contents||[]).forEach(c=>{if(c.amount){it[c.product]=(it[c.product]||0)+c.amount;used[c.product]=PX[c.product]||['Product '+c.product,'',0,false]}}));
+ const D={when:new Date(j.fetched*1000).toLocaleString(),crews:crews.length,products:used,recipes:RX,asteroids:aKeys.map(a=>({id:+a,name:astName[a],buildings:groups[a].map(b=>{const it={};(b.Inventories||[]).filter(i=>PRIM[i.inventoryType]).forEach(i=>(i.contents||[]).forEach(c=>{if(c.amount){it[c.product]=(it[c.product]||0)+c.amount;used[c.product]=PX[c.product]||['Product '+c.product,'',0,false]}}));
   const cn=crews.find(c=>b.Control&&c.id===b.Control.controller.id);
   return{name:(b.Name&&b.Name.name)||((BT[b.Building&&b.Building.buildingType]||'Building')+' #'+b.id),type:BT[b.Building&&b.Building.buildingType]||'Building',crew:cn&&cn.Name&&cn.Name.name||'',lot:(((b.Location&&b.Location.locations)||[]).find(x=>x.label===4)||{}).id?Math.floor(((b.Location.locations.find(x=>x.label===4)).id)/4294967296):0,items:it,fill:(()=>{const CP={10:[1.5e12,7.5e10],19:[7.5e10,9.975e11]},inv=(b.Inventories||[]).find(i=>CP[i.inventoryType]);if(!inv)return null;const c=CP[inv.inventoryType];return{f:Math.max((inv.mass||0)/c[0],(inv.volume||0)/c[1]),m:inv.mass||0,cap:c[0],vo:inv.volume||0,vc:c[1]}})()}}).filter(b=>Object.keys(b.items).length)}))};
  for(const k in PX)if(!used[k])used[k]=PX[k];
