@@ -165,7 +165,7 @@ export function drawBuildPlan(m){
       const thenOne=async ln=>{const ft=ln.querySelector('.bp-ft'),sh=(D.ships||[]).find(z=>String(z.id)===ln.dataset.ship),a=O[ln.dataset.from],b=O[S.ast];
         if(!sh){ft.textContent='(no ship chosen yet)';return}if(!a||!b){ft.textContent='(distance unknown)';return}
         const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
-        try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,sh.prop*1000))}catch(e){}
+        try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,sh.prop*1000),TB?2000:365)}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
         ft.textContent='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
@@ -178,10 +178,10 @@ export function drawBuildPlan(m){
         let best=null;for(let h=6;h<=2000;h+=h<200?6:24){let dv;try{dv=await T.deltaV(a.o,b.o,now,h)}catch(e){continue}if(!best||dv<best.dv)best={h,dv}}
         if(me!==run||!ln.isConnected)return;
         if(!best){dl.textContent='';return}
-        const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,tank))}catch(e){}
+        const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,tank),TB?2000:365)}catch(e){}
         const maxLoad=Math.max(0,has/(Math.exp(best.dv/ve)-1)-SH[1]/1000);
         dl.innerHTML='⛽ It has <b>'+t(has)+'</b> propellant. The cheapest route right now needs about <b>'+t(need)+'</b> ('+HW(best.h)+' flight).'+
-          (need<=tank?' With a full tank ('+t(tank)+') '+(ff?'the fastest is <b>'+HW(ff.tof)+'</b>.':'it can make the slow route.'):' That\'s more than a full tank ('+t(tank)+') – too far right now with this load.')+
+          (need<=tank?' With a full tank ('+t(tank)+') '+(ff?'it takes <b>'+HW(ff.tof)+'</b>.':'it can make the slow route.'):' That\'s more than a full tank ('+t(tank)+') – too far right now with this load.')+
           (maxLoad<load?(maxLoad>=1000?' With its propellant as it is, it could carry about <b>'+t(maxLoad)+'</b>.':' <b>Refuel it first</b> – even empty it hasn\'t enough propellant.'):'')};
       const thenFor=(from,shipId)=>{const ln=m.querySelector('.bp-then[data-from="'+from+'"]');if(ln){ln.dataset.ship=shipId;thenOne(ln)}};
       for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
@@ -189,7 +189,7 @@ export function drawBuildPlan(m){
         if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
         const anOf=sh=>(A.find(a=>a.id===sh.dId)||{}).name||sh.ast||('Asteroid #'+sh.dId),toN=(A.find(a=>a.id===+x.dataset.to)||{}).name||'';
         const show=async k=>{const it=L[k],b=it.sh;let f=null;
-          try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000))}catch(e){}
+          try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,1,0,b.prop*1000),TB?2000:365)}catch(e){}
           if(me!==run||!x.isConnected)return;
           x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
           const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+esc(anOf(o.sh))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
