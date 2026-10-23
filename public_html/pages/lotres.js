@@ -228,7 +228,7 @@
         '</span>' +
         gl('/building/' + b.id, 'Open this building in the game') +
         (px
-          ? ' <span title="The 2-day site reservation has run out. The game makes any materials sent here public." style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;background:rgba(255,90,90,.15);border:1px solid #ff6b6b;color:#ff7a7a;font-size:12px;font-weight:600;white-space:nowrap">Planning expired – site is public</span>'
+          ? ' <span title="The 2-day site reservation has run out. The game makes any materials sent here public." style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;' + (BCOL ? 'background:transparent;border:1px solid #4a5568;color:#9aa8bb' : 'background:rgba(255,90,90,.15);border:1px solid #ff6b6b;color:#ff7a7a') + ';font-size:12px;font-weight:600;white-space:nowrap">Planning expired – site is public</span>'
           : pl
             ? ' <span style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;background:rgba(250,178,25,.15);border:1px solid #fab219;color:#fab219;font-size:12px;font-weight:600;white-space:nowrap">Planning approved – reserved for ' +
               (B.plannedAt ? APP.tLeft(B.plannedAt + 172800, Date.now() / 1000) : '2 days') +
