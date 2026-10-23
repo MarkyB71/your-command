@@ -265,7 +265,7 @@
         ).join('') +
         '</div>';
     const L2 = APP.lfMode === 'all' ? all : APP.lfMode === 'ext' ? ex : free,
-      lim = APP.lfMode === 'ext' ? L2.length : 30;
+      lim = APP.lfMode === 'ext' || ALLL ? L2.length : 30;
     if (!L2.length)
       h +=
         '<div class="note">' +
@@ -314,6 +314,7 @@
     );
   }
 
+  var ALLL = /[?&]beta=1/.test(location.search); // show every lot (test)
   window.PAGES = window.PAGES || {};
   window.PAGES.F = function (m) {
     drawLotRes(m);
