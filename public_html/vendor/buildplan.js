@@ -22,7 +22,7 @@ const CSS=`#bpw .bp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
 #bpw .ok{color:#5fd38d;font-weight:600}#bpw .part{color:#ffb547;font-weight:600}#bpw .none{color:#ff6b6b;font-weight:600}
 #bpw .a{color:#8b9ab0;font-size:12px}#bpw .bp-hd{display:flex;align-items:center;gap:12px;margin:0 0 10px}
 #bpw .bp-hd img{width:64px;height:48px;object-fit:contain}
-#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-it{margin-top:6px;font-size:15px}#bpw .bp-it>summary{cursor:pointer}#bpw .bp-it[open]>summary{margin-bottom:2px}#bpw .bp-shb{color:#c9b8ff;font-weight:600}#bpw .bp-two{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:16px}#bpw .bp-l{flex:1 1 380px;min-width:0}#bpw .bp-r{flex:1 1 380px;min-width:0}#bpw .bp-plan{background:#121a26;border:1px solid #2f5a7a;border-radius:10px;padding:10px 14px;margin:0 0 12px}#bpw .bp-plan h3{margin:0 0 4px;color:#8fe3ff}#bpw .bp-ps{font-size:18px;font-weight:600;margin:0 0 8px;padding:8px 12px;background:#0f2233;border:1px solid #3a7fb0;border-radius:8px;box-shadow:0 0 10px rgba(80,170,255,.25)}#bpw .bp-ps b{color:#ffd24a;font-size:20px}#bpw .bp-first{display:block;margin:6px 0 2px;padding:6px 10px;font-size:16px;font-weight:700;color:#ffd24a;background:rgba(255,210,74,.08);border:1px solid #b8932a;border-radius:6px}#bpw .bp-first b{color:#fff}#bpFirst .bp-first{color:#e8d9a8}#bpFirst .bp-first b{color:#ffd24a}#bpFirst .bp-first b.bp-dst{color:#8fe3ff;text-shadow:0 0 6px rgba(80,170,255,.5)}#bpFirst .bp-ft{color:#3fd68a}#bpFirst .bp-shsel{color:#ffd24a!important;background:#2a1f08!important}#bpw .bp-shsel{font-size:15px;font-weight:600;padding:3px 6px;margin:0 2px;color:#fff;background:#1a1408;border:1px solid #b8932a;border-radius:5px}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
+#bpw .bp-src{font-size:15px;line-height:1.5;margin:2px 0 4px 10px;padding-left:8px;border-left:3px solid #2f5a7a}#bpw .bp-mn{color:#8fe3ff;font-weight:600}#bpw .bp-fl{color:#ffb547;font-weight:600}#bpw .bp-it{margin-top:6px;font-size:15px}#bpw .bp-it>summary{cursor:pointer}#bpw .bp-it[open]>summary{margin-bottom:2px}#bpw .bp-shb{color:#c9b8ff;font-weight:600}#bpw .bp-two{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:16px}#bpw .bp-l{flex:1 1 380px;min-width:0}#bpw .bp-r{flex:1 1 380px;min-width:0}#bpw .bp-plan{background:#121a26;border:1px solid #2f5a7a;border-radius:10px;padding:10px 14px;margin:0 0 12px}#bpw .bp-plan h3{margin:0 0 4px;color:#8fe3ff}#bpw .bp-ps{font-size:18px;font-weight:600;margin:0 0 8px;padding:8px 12px;background:#0f2233;border:1px solid #3a7fb0;border-radius:8px;box-shadow:0 0 10px rgba(80,170,255,.25)}#bpw .bp-ps b{color:#ffd24a;font-size:20px}#bpw .bp-first{display:block;margin:6px 0 2px;padding:6px 10px;font-size:16px;font-weight:700;color:#ffd24a;background:rgba(255,210,74,.08);border:1px solid #b8932a;border-radius:6px}#bpw .bp-first b{color:#fff}#bpFirst .bp-first,#bpThen .bp-first{color:#e8d9a8}#bpThen .bp-first{margin-top:8px}#bpThen .bp-first b{color:#ffd24a}#bpThen b.bp-dst{color:#8fe3ff!important;text-shadow:0 0 6px rgba(80,170,255,.5)}#bpThen .bp-ft{color:#3fd68a}#bpFirst .bp-first b{color:#ffd24a}#bpFirst .bp-first b.bp-dst{color:#8fe3ff;text-shadow:0 0 6px rgba(80,170,255,.5)}#bpFirst .bp-ft{color:#3fd68a}#bpFirst .bp-shsel{color:#ffd24a!important;background:#2a1f08!important}#bpw .bp-shsel{font-size:15px;font-weight:600;padding:3px 6px;margin:0 2px;color:#fff;background:#1a1408;border:1px solid #b8932a;border-radius:5px}#bpw .bp-sh{color:#c9b8ff;font-weight:600;margin-left:22px}#bpw .bp-fl.to{color:#5fd38d}#bpw .bp-src b{color:#fff}`;
 
 function asteroids(){
   const Y=window.YIC,D=Y.D||{},out=[],seen={};
@@ -131,6 +131,7 @@ export function drawBuildPlan(m){
         return'<details class="bp-it" open><summary><b>'+esc(c.name)+'</b> – '+c.take.length+' item'+(c.take.length>1?'s':'')+', '+tkg(kg)+' · '+trips(kg)+' LT trip'+(trips(kg)>1?'s':'')+(rd.length?' <span class="bp-shb">· 🚀 '+esc(rd[0].name)+' ready</span>':' <span class="a bp-pos" data-to="'+c.id+'" data-kg="'+kg+'">· no ship there – finding your nearest…</span>')+'</summary><div class="bp-src">'+
           c.take.map(it=>'<div>'+amt(it.k,it.q)+' <b>'+esc(nm(it.k))+'</b> – '+howTxt(c,it)+'</div>').join('')+'</div></details>'}).join('')+
       (left.length?'<div class="none" style="margin-top:6px">Not available from any of your asteroids: '+left.map(it=>esc(nm(it.k))).join(', ')+'</div>':'')+
+      (TB&&pick.length?'<div id="bpThen">'+pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);return'<div class="bp-first bp-then" data-from="'+c.id+'" data-kg="'+kg+'" data-ship="'+(rd[0]?rd[0].id:'')+'">📦 Then send it from <b>'+esc(c.name)+'</b> to <b class="bp-dst">'+esc(here.name)+'</b> <span class="bp-ft">(working out…)</span></div>'}).join('')+'</div>':'')+
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
   const planHTML=Object.keys(fly).length?'<div id="bpPlan" class="bp-plan"><span class="a">Working it out…</span></div>':'';
   const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
@@ -153,11 +154,20 @@ export function drawBuildPlan(m){
   m.innerHTML=h;
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
   /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
-  const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')];if(!sp.length)return;
+  const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')],th=[...m.querySelectorAll('.bp-then')];if(!sp.length&&!th.length)return;
     const cand=kg=>(D.ships||[]).filter(sh=>!sh.fl&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
-    const ids=[...new Set([...sp.map(x=>+x.dataset.to),...(D.ships||[]).filter(sh=>!sh.fl&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
+    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>!sh.fl&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
     Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
       const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
+      /* "Then send it": loaded flight from the source asteroid to the build asteroid with the chosen ship */
+      const thenOne=async ln=>{const ft=ln.querySelector('.bp-ft'),sh=(D.ships||[]).find(z=>String(z.id)===ln.dataset.ship),a=O[ln.dataset.from],b=O[S.ast];
+        if(!sh){ft.textContent='(no ship chosen yet)';return}if(!a||!b){ft.textContent='(distance unknown)';return}
+        const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
+        try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,1,load,sh.prop*1000))}catch(e){}
+        if(me!==run||!ln.isConnected)return;
+        ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
+        ft.textContent='('+(f?f.tof+' h':'out of range')+', carrying '+tkg(load)+', propellant as it is now)'};
+      const thenFor=(from,shipId)=>{const ln=m.querySelector('.bp-then[data-from="'+from+'"]');if(ln){ln.dataset.ship=shipId;thenOne(ln)}};
       for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
         const L=cand(+x.dataset.kg).filter(sh=>O[sh.dId]&&to).map(sh=>({sh,d:T.distance(O[sh.dId].o,to.o,now)/AU})).sort((a,b)=>a.d-b.d);
         if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
@@ -168,8 +178,10 @@ export function drawBuildPlan(m){
           x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
           const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+esc(anOf(o.sh))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
           x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(f?f.tof+' h, empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
+          if(TB)thenFor(x.dataset.to,b.id);
           const sel=x.querySelector('.bp-shsel');if(sel)sel.onchange=e=>{x.querySelector('.bp-ft').textContent='(working out…)';show(+e.target.value)}};
         await show(0)}
+      for(const ln of th)if(ln.dataset.ship)await thenOne(ln);else if(!m.querySelector('.bp-pos[data-to="'+ln.dataset.from+'"]'))ln.querySelector('.bp-ft').textContent='(no ship found)';
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
