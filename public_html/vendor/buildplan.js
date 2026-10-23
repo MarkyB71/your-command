@@ -44,7 +44,7 @@ export function drawBuildPlan(m){
     const others=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>({a,have:Y.tot[a.i][id]}));
     return{id,need,have,short,others}}).sort((x,y)=>(y.short>0)-(x.short>0)||nm(x.id).localeCompare(nm(y.id)));
   /* None of your asteroids has it: look one step back in the chain, at what makes it, on the asteroid you're building on */
-  const nextLevel=r=>{const L=(MK[r.id]||[]).map(([pn,pt,inp,out])=>{const its=Object.keys(inp).map(k=>{const q=inp[k]*r.short/out,hv=stk[k]||0;return{k,q,hv,c:hv>=q?'ok':hv>0?'part':'none'}});
+  const nextLevel0=r=>{const L=(MK[r.id]||[]).map(([pn,pt,inp,out])=>{const its=Object.keys(inp).map(k=>{const q=inp[k]*r.short/out,hv=stk[k]||0;return{k,q,hv,c:hv>=q?'ok':hv>0?'part':'none'}});
       return{pn,pt,its,n:its.filter(x=>x.c==='ok').length}}).sort((a,b)=>(b.n===b.its.length)-(a.n===a.its.length)||b.n/b.its.length-a.n/a.its.length);
     if(!L.length)return'';
     const one=x=>'<div style="margin-top:6px"><b>'+esc(x.pn)+'</b> <span class="a">('+esc(PTYPE[x.pt]||'')+')</span> '+(x.n===x.its.length?'<span class="ok">✓ you have all of these here</span>':'<span class="a">'+x.n+' of '+x.its.length+' here</span>')+'<br>'+
@@ -74,16 +74,19 @@ export function drawBuildPlan(m){
     for(const k in R[2])want(k,R[2][k]*q/R[3],dep+1,[...stack,id])};
   const chainRows=rows.filter(r=>r.short&&!r.others.length);
   chainRows.forEach(r=>want(r.id,r.short,0,[]));
+  /* materials your other asteroids hold: fly those in as they are */
+  const shortRows=rows.filter(r=>r.short);
+  shortRows.filter(r=>r.others.length).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
   const myFac=t=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===S.ast).length;
   const mineOn=(a,r)=>{const c=a.Celestial||{},sc=(c.scanStatus||0)>=4&&c.abundances;if(sc&&Y.astAbund)return (Y.astAbund(c.abundances)[r]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+r))};
   const near=id=>{const st=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>'<b>'+esc(a.name)+'</b> '+amt(id,Y.tot[a.i][id]));
     const mn=+id<=22?(D.owned||[]).filter(a=>a.id!==S.ast&&mineOn(a,id)).map(a=>'<b>'+esc((a.Name&&a.Name.name)||('Asteroid #'+a.id))+'</b>'):[];
     return'<div class="bp-src">'+(st.length?'<div class="ok">📦 In stock on '+st.join(', ')+'</div>':'')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+(!st.length&&!mn.length?'<div class="none">None of your asteroids has it or can mine it</div>':'')+'</div>'};
   const lst=(o,f)=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>'<div style="margin-top:6px">'+amt(k,o[k])+' <b>'+esc(nm(k))+'</b>'+(f?f(k):'')+'</div>').join('');
-  const chainHTML=!chainRows.length?'':'<h2 style="margin-top:4px">Making the missing materials on '+esc(here.name)+'</h2>'+
-    '<div class="note" style="padding:0 0 8px">For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' (none of your asteroids has '+(chainRows.length>1?'them':'it')+'). Followed all the way down to raw resources, using your stock on '+esc(here.name)+' first and picking the recipe that needs the least flown in.'+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
+  const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
+    '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' (none of your asteroids has '+(chainRows.length>1?'them':'it')+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
     '<div class="wrap"><table><thead><tr><th>✈ Fly in</th><th>⛏ Mine here</th><th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
-    '<td>'+(Object.keys(fly).length?'<span class="none">Can\'t be mined or made here</span>'+lst(fly,near):'<span class="ok">✓ Nothing – it can all be mined or made here</span>')+'</td>'+
+    '<td>'+(Object.keys(fly).length?'<span class="none">Not on '+esc(here.name)+' and can\'t be mined or made there</span>'+lst(fly,near):'<span class="ok">✓ Nothing – it can all be mined or made here</span>')+'</td>'+
     '<td>'+(Object.keys(mine).length?lst(mine):'<span class="a">–</span>')+'</td>'+
     '<td>'+Object.keys(fac).map(t=>{const n=myFac(t);return'<div class="'+(n?'ok':'none')+'">'+(n?'✓ ':'✗ ')+esc(PTYPE[t])+(n?' – you have '+n:' – none on '+esc(here.name))+'</div>'}).join('')+'</td></tr></tbody></table></div>'+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
@@ -92,32 +95,11 @@ export function drawBuildPlan(m){
     Object.keys(BLDS).sort((x,y)=>BLDS[x][0].localeCompare(BLDS[y][0])).map(k=>'<option value="'+k+'"'+(+k===S.bld?' selected':'')+'>'+esc(BLDS[k][0])+'</option>').join('')+'</select></div>'+
     '<div class="bp-hd"><img src="bimg.php?t='+S.bld+'" alt="" data-hide><div class="bp-sum"><b>'+esc(bName)+'</b> on <b>'+esc(here.name)+'</b>: '+
     (done===rows.length?'<span class="ok">✓ you have everything on this asteroid</span>':'<span class="'+(done?'part':'none')+'">'+done+' of '+rows.length+' materials covered here</span>')+'</div></div>'+
-    chainHTML+(chainHTML?'<h2 style="margin-top:18px">Materials</h2>':'')+'<div class="wrap"><table><thead><tr><th>Material</th><th class="num">Needed</th><th class="num">On '+esc(here.name)+'</th><th class="num">Still needed</th><th>Nearest asteroid of yours that has it</th></tr></thead><tbody>'+
-    rows.map(r=>'<tr><td><img src="rimg.php?p='+r.id+'" alt="" data-hide>'+esc(nm(r.id))+'</td><td class="num">'+amt(r.id,r.need)+'</td>'+
-      '<td class="num"><span class="'+(r.have>=r.need?'ok':r.have>0?'part':'none')+'">'+(r.have>0?amt(r.id,r.have):'None')+'</span></td>'+
-      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+
-      '<td data-near="'+r.id+'">'+(!r.short?'<span class="a">–</span>':r.others.length?'<span class="a">working out…</span>':'<span class="none">None of your asteroids has it</span>'+nextLevel(r))+'</td></tr>').join('')+
-    '</tbody></table></div><div class="note" style="padding:10px 0 0">Stock = what is in your warehouses and tank farms. Nearest = closest of your asteroids right now that holds the rest (or the most of it). Flight time is for a standard Light Transport, full tank, carrying the missing amount (up to 2,000 t), leaving now, no crew bonus.</div></div>';
+    chainHTML+'</div>';
   m.innerHTML=h;
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
   m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
 
-  const need=rows.filter(r=>r.short&&r.others.length);if(!need.length)return;
-  const ids=[...new Set([S.ast,...need.flatMap(r=>r.others.map(o=>o.a.id))])];
-  Promise.all([fetch('orbits.php?ids='+ids.slice(0,200).join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
-    const O=j.orbits||{},to=O[S.ast],now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
-    for(const r of need){
-      if(me!==run)return;const td=m.querySelector('td[data-near="'+r.id+'"]');if(!td)continue;
-      const L=r.others.map(o=>({...o,d:to&&O[o.a.id]?T.distance(O[o.a.id].o,to.o,now)/AU:Infinity})).sort((x,y)=>x.d-y.d);
-      const b=L.find(o=>o.have>=r.short)||L.slice().sort((x,y)=>y.have-x.have)[0],full=b.have>=r.short;
-      let fl='';
-      if(to&&O[b.a.id]){const kg=Math.min(kgOf(r.id,Math.min(r.short,b.have)),2e6),k=b.a.id+'>'+S.ast+'>'+Math.round(kg/1e5)+'>'+Math.floor(now);
-        if(!(k in memo)){const ship=T.SHIPS[2];const f=await T.fastest(O[b.a.id].o,to.o,now,T.maxDeltaV(2,1,1,kg,ship[2]/1000));memo[k]=f?f.tof:0;await new Promise(z=>setTimeout(z,0))}
-        fl=memo[k]?' · <b>'+memo[k]+' h</b> by Light Transport':' · out of range for a Light Transport'}
-      if(me!==run||!td.isConnected)return;
-      td.innerHTML='<b>'+esc(b.a.name)+'</b> <span class="'+(full?'ok':'part')+'">has '+amt(r.id,b.have)+(full?'':' (not all)')+'</span><br><span class="a">'+(isFinite(b.d)?b.d.toFixed(2)+' AU away now':'distance unknown')+fl+(L.length>1?' · also on '+L.filter(o=>o!==b).map(o=>esc(o.a.name)).join(', '):'')+'</span>';
-    }
-  }).catch(()=>{m.querySelectorAll('td[data-near]').forEach(td=>{if(/working/.test(td.textContent))td.innerHTML='<span class="a">Couldn\'t work out distances</span>'})});
 }
 
 /* Adds "Building planner" to the Planners menu, after Travel (TEST: ?beta=1 only) */
