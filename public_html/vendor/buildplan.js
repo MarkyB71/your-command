@@ -124,7 +124,7 @@ export function drawBuildPlan(m){
     return{best,more,detail:'<div class="bp-src">'+flH+st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join('')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+'</div>'}};
   const flyList=o=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>{const n=near(k,o[k]);
     const w=FB?'<span class="bp-w">'+amt(k,o[k])+'</span><b class="bp-nm">'+esc(nm(k))+'</b> ':amt(k,o[k])+' <b>'+esc(nm(k))+'</b> – ';
-    return n.more?'<details class="bp-it"><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
+    return n.more?'<details class="bp-it"'+(FB?' open':'')+'><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
   const lst=(o,f)=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>'<div style="margin-top:6px">'+amt(k,o[k])+' <b>'+esc(nm(k))+'</b>'+(f?f(k):'')+'</div>').join('');
   /* Fewest flights: which of your asteroids could supply each fly-in item – from stock, by mining, or by making it there – then the fewest asteroids that cover the most */
   const planCalc=()=>{
@@ -152,10 +152,13 @@ export function drawBuildPlan(m){
       (TB&&pick.length?'<div id="bpThen">'+pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);return'<div class="bp-first bp-then" data-from="'+c.id+'" data-kg="'+kg+'" data-ship="'+(rd[0]?rd[0].id:'')+'">📦 Then send it from <b>'+esc(c.name)+'</b> to <b class="bp-dst">'+esc(here.name)+'</b> <span class="bp-ft">(working out…)</span></div>'}).join('')+'</div>':'')+
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
   const planHTML=Object.keys(fly).length?'<div id="bpPlan" class="bp-plan"><span class="a">Working it out…</span></div>':'';
+  const flyInner=Object.keys(fly).length?'<span class="none">Not on '+esc(here.name)+' and can\'t be mined or made there</span>'+flyList(fly):'<span class="ok">✓ Nothing – it can all be mined or made here</span>';
+  const flyBox='<div class="bp-plan">'+flyInner+'</div>';
   const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
     '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' ('+(FB?'can\'t be had elsewhere, or can be made here with what you have':'none of your asteroids has '+(chainRows.length>1?'them':'it'))+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
-    '<div class="wrap"><table><thead><tr><th>✈ Fly in</th><th>⛏ Mine here</th><th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
-    '<td>'+(Object.keys(fly).length?'<span class="none">Not on '+esc(here.name)+' and can\'t be mined or made there</span>'+flyList(fly):'<span class="ok">✓ Nothing – it can all be mined or made here</span>')+'</td>'+
+    (FB&&planHTML?'<h2 style="margin-top:10px">🚀 Fewest flights</h2>'+planHTML:'')+
+    '<div class="wrap"><table><thead><tr>'+(FB?'':'<th>✈ Fly in</th>')+'<th>⛏ Mine here</th><th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
+    (FB?'':'<td>'+flyInner+'</td>')+
     '<td>'+(Object.keys(mine).length?lst(mine):'<span class="a">–</span>')+'</td>'+
     '<td>'+Object.keys(fac).map(t=>{const n=myFac(t);return'<div class="'+(n?'ok':'none')+'">'+(n?'✓ ':'✗ ')+esc(PTYPE[t])+(n?' – you have '+n:' – none on '+esc(here.name))+'</div>'}).join('')+'</td></tr></tbody></table></div>'+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
@@ -167,7 +170,7 @@ export function drawBuildPlan(m){
     '<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">Materials for '+esc(bLab)+'</h2><div class="wrap"><table><thead><tr><th>Material</th><th class="num">Needed</th><th class="num">On '+esc(here.name)+'</th><th class="num">Still needed</th>'+(MB?'<th>Make it here?</th>':'')+'</tr></thead><tbody>'+
     rows.map(r=>'<tr><td><img src="rimg.php?p='+r.id+'" alt="" data-hide>'+esc(nm(r.id))+'</td><td class="num">'+amt(r.id,r.need)+'</td>'+
       '<td class="num"><span class="'+(r.have>=r.need?'ok':r.have>0?'part':'none')+'">'+(r.have>0?amt(r.id,r.have):'None')+'</span></td>'+
-      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+(MB?'<td class="bp-mh">'+makeHere(r)+'</td>':'')+'</tr>').join('')+'</tbody></table></div></div>'+(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':'')+'</div>'+
+      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+(MB?'<td class="bp-mh">'+makeHere(r)+'</td>':'')+'</tr>').join('')+'</tbody></table></div></div>'+(FB?(shortRows.length?'<div class="bp-r"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>':''):(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''))+'</div>'+
     chainHTML+'</div>';
   m.innerHTML=h;
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
