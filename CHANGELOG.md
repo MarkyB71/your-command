@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 361 – 24 Oct 2026 – Today's Workload: every idle building has its own "in game ↗" link (one per line in the fold-out)
+
 ## Version 359 – 24 Oct 2026 – Page titles tidied: "Your <Page>" with no group word (no more "Your Asteroids Asteroids" or "Your Logistics Products")
 
 ## Version 357 – 24 Oct 2026 – Asteroid planner: each building tile shows what you can build on the chosen asteroid (✓ Stock for N · ⚒ Make it here ↗ opens The SkippyChain in a new tab · ⚒ Needs a facility · ✈ Fly some in)

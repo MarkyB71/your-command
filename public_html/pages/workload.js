@@ -161,7 +161,7 @@
         if (x.crew) g[k].crew.add(x.crew);
       });
       // Each idle building gets its own "in game" link (beta first)
-      const ILK = /[?&]beta=1/.test(location.search);
+      const ILK = true; // was beta=1
       const one = (x, i) => APP.esc(x.n[i]) + (ILK && x.gp[i] && window.GL ? window.GL(x.gp[i], 'Open in the game') : '');
       S.idle = Object.values(g).map((x) => ({
         lvl: 1,
