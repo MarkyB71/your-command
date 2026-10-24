@@ -94,8 +94,11 @@
     }
     var bt = document.getElementById('cdx');
     if (bt) {
-      var t = document.documentElement.dataset.yicGameExt ? '✓ Command Deck' : '⬇ Command Deck';
-      if (bt.textContent !== t) bt.textContent = t;
+      var t = document.documentElement.dataset.yicGameExt ? 'Command Deck ✓' : 'Command Deck';
+      if (bt.dataset.t !== t) {
+        bt.dataset.t = t;
+        bt.innerHTML = '<img src="favicon.svg" alt="" style="width:18px;height:18px;vertical-align:-4px;margin-right:6px;border-radius:4px">' + t;
+      }
     }
   }
   setInterval(installTick, 700);
