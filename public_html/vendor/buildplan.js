@@ -16,6 +16,7 @@ const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{}};
+const IFL=/[?&]beta=1/.test(location.search); /* TEST: First send also offers ships already in flight, leaving once they land */
 const CB=true; /* with 2+ building types, wait for a Calculate button instead of redrawing on every click – LIVE (was ?beta=1 only) */
 const MU=true; /* plan several buildings at once (a count for each) – LIVE (was ?beta=1 only) */
 let run=0;const memo={};
@@ -191,8 +192,8 @@ export function drawBuildPlan(m){
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
   /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
   const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')],th=[...m.querySelectorAll('.bp-then')];if(!sp.length&&!th.length)return;
-    const cand=kg=>(D.ships||[]).filter(sh=>!sh.fl&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
-    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>!sh.fl&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
+    const cand=kg=>(D.ships||[]).filter(sh=>(IFL||!sh.fl)&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
+    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>(IFL||!sh.fl)&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
     Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
       const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
       /* "Then send it": loaded flight from the source asteroid to the build asteroid with the chosen ship */
@@ -223,15 +224,16 @@ export function drawBuildPlan(m){
           (maxLoad<load?(maxLoad>=1000?' With its propellant as it is, it could carry about <b>'+t(maxLoad)+'</b>.':' <b>Refuel it first</b> – even empty it hasn\'t enough propellant.'):'')+bonTxt(sh)};
       const thenFor=(from,shipId)=>{const ln=m.querySelector('.bp-then[data-from="'+from+'"]');if(ln){ln.dataset.ship=shipId;thenOne(ln)}};
       for(const x of sp){if(me!==run||!x.isConnected)return;const to=O[x.dataset.to];
-        const L=cand(+x.dataset.kg).filter(sh=>O[sh.dId]&&to).map(sh=>({sh,d:T.distance(O[sh.dId].o,to.o,now)/AU})).sort((a,b)=>a.d-b.d);
+        const t0=sh=>sh.fl&&sh.arrT?Math.max(now,(sh.arrT-1609459200)/3600):now;
+        const L=cand(+x.dataset.kg).filter(sh=>O[sh.dId]&&to).map(sh=>({sh,w:t0(sh)-now,d:T.distance(O[sh.dId].o,to.o,t0(sh))/AU})).sort((a,b)=>a.d-b.d);
         if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
         const anOf=sh=>(A.find(a=>a.id===sh.dId)||{}).name||sh.ast||('Asteroid #'+sh.dId),toN=(A.find(a=>a.id===+x.dataset.to)||{}).name||'';
         const show=async k=>{const it=L[k],b=it.sh;let f=null;
-          try{f=await T.fastest(O[b.dId].o,to.o,now,T.maxDeltaV(b.st,b.sv||1,bon(b),0,b.prop*1000),TB?2000:365)}catch(e){}
+          try{f=await T.fastest(O[b.dId].o,to.o,t0(b),T.maxDeltaV(b.st,b.sv||1,bon(b),0,b.prop*1000),TB?2000:365)}catch(e){}
           if(me!==run||!x.isConnected)return;
           x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
-          const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+esc(anOf(o.sh))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
-          x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(f?HW(f.tof)+', empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
+          const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+(o.sh.fl?'✈ landing on '+esc(anOf(o.sh))+(o.w>0?' in '+HW(o.w):''):esc(anOf(o.sh)))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
+          x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(b.fl&&it.w>0?'in flight – leaves when it lands in '+HW(it.w)+', then ':'')+(f?HW(f.tof)+', empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
           if(TB)thenFor(x.dataset.to,b.id);
           const sel=x.querySelector('.bp-shsel');if(sel)sel.onchange=e=>{x.querySelector('.bp-ft').textContent='(working out…)';show(+e.target.value)}};
         await show(0)}
