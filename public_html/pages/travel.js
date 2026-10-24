@@ -14,6 +14,7 @@
 
   // Launch windows chart (test: ?beta=1 only)
   const WIN = true; // LIVE (was ?beta=1 only)
+  const CRW = /[?&]beta=1/.test(location.search); // test: only asteroids with a crew
   // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
   // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
   function canMake(Y, D, ast, prod, seen) {
@@ -65,9 +66,9 @@
       .map(a => ({ id: a.id, name: (a.Name && a.Name.name) || ('Asteroid #' + a.id), o: a.Orbit }))
       .sort((a, b) => a.name.localeCompare(b.name));
     if (asts.length < 2) { m.innerHTML = '<div class="note">You need at least two asteroids for a travel table.</div>'; return; }
-    // Test: only asteroids with a crew on them (a button shows them all)
+    // Test (?beta=1): only asteroids with a crew on them (a button shows them all)
     let hidden = 0;
-    if (WIN) {
+    if (CRW) {
       const crewed = new Set((D.crewsRaw || []).filter(c => ((c.Crew && c.Crew.roster) || []).length)
         .map(c => ((((c.Location || {}).locations) || []).find(x => x.label === 3) || {}).id).filter(Boolean));
       const few = asts.filter(a => crewed.has(a.id));
@@ -91,7 +92,7 @@
       ' Propellant ' + sel('trP', S.prop, [['full', 'Full tank'], ['now', 'What it has now']]) +
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
-      (WIN && (hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + '</div>';
+      (CRW && (hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + '</div>';
 
     const ref = WIN ? refuelMap(Y, D, asts) : null;
     if (WIN) {
