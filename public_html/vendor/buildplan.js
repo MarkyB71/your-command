@@ -157,9 +157,9 @@ export function drawBuildPlan(m){
   const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
     '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' ('+(FB?'can\'t be had elsewhere, or can be made here with what you have':'none of your asteroids has '+(chainRows.length>1?'them':'it'))+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
     (FB&&planHTML?'<h2 style="margin-top:10px">🚀 Fewest flights</h2>'+planHTML:'')+
-    '<div class="wrap"><table><thead><tr>'+(FB?'':'<th>✈ Fly in</th>')+'<th>⛏ Mine here</th><th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
+    '<div class="wrap"><table><thead><tr>'+(FB?'':'<th>✈ Fly in</th>')+(FB?'':'<th>⛏ Mine here</th>')+'<th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
     (FB?'':'<td>'+flyInner+'</td>')+
-    '<td>'+(Object.keys(mine).length?lst(mine):'<span class="a">–</span>')+'</td>'+
+    (FB?'':'<td>'+(Object.keys(mine).length?lst(mine):'<span class="a">–</span>')+'</td>')+
     '<td>'+Object.keys(fac).map(t=>{const n=myFac(t);return'<div class="'+(n?'ok':'none')+'">'+(n?'✓ ':'✗ ')+esc(PTYPE[t])+(n?' – you have '+n:' – none on '+esc(here.name))+'</div>'}).join('')+'</td></tr></tbody></table></div>'+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
@@ -170,7 +170,7 @@ export function drawBuildPlan(m){
     '<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">Materials for '+esc(bLab)+'</h2><div class="wrap"><table><thead><tr><th>Material</th><th class="num">Needed</th><th class="num">On '+esc(here.name)+'</th><th class="num">Still needed</th>'+(MB?'<th>Make it here?</th>':'')+'</tr></thead><tbody>'+
     rows.map(r=>'<tr><td><img src="rimg.php?p='+r.id+'" alt="" data-hide>'+esc(nm(r.id))+'</td><td class="num">'+amt(r.id,r.need)+'</td>'+
       '<td class="num"><span class="'+(r.have>=r.need?'ok':r.have>0?'part':'none')+'">'+(r.have>0?amt(r.id,r.have):'None')+'</span></td>'+
-      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+(MB?'<td class="bp-mh">'+makeHere(r)+'</td>':'')+'</tr>').join('')+'</tbody></table></div></div>'+(FB?(shortRows.length?'<div class="bp-r"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>':''):(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''))+'</div>'+
+      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+(MB?'<td class="bp-mh">'+makeHere(r)+'</td>':'')+'</tr>').join('')+'</tbody></table></div>'+(FB&&shortRows.length?'<h2 style="margin-top:14px">⛏ Mine here</h2><div class="bp-plan">'+(Object.keys(mine).length?lst(mine):'<span class="a">Nothing to mine here</span>')+'</div>':'')+'</div>'+(FB?(shortRows.length?'<div class="bp-r"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>':''):(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''))+'</div>'+
     chainHTML+'</div>';
   m.innerHTML=h;
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
