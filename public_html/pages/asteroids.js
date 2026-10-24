@@ -89,6 +89,7 @@
         '"></div></div><div>' +
         '<h3>' +
         APP.esc(x.name) +
+        (window.GL ? window.GL('/asteroids/' + x.id, 'Open this asteroid in the game') : '') +
         '</h3><div class="t">#' +
         +x.id +
         ' · ' +

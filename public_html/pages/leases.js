@@ -44,7 +44,7 @@
 
     h += '<div class="wrap"><table><thead><tr><th>Status</th><th>Lot</th><th>Asteroid</th><th>On this lot</th>' +
       '<th>Leased by</th><th>Lease ends</th><th>Time left</th></tr></thead><tbody>' +
-      list.map(x => '<tr><td>' + dot(x.st) + '</td><td>#' + x.lot.toLocaleString() + '</td><td class="cls">' + esc(x.a) + '</td>' +
+      list.map(x => '<tr><td>' + dot(x.st) + '</td><td>#' + x.lot.toLocaleString() + (window.GL ? window.GL('/lot/' + x.id, 'Open this lot in the game') : '') + '</td><td class="cls">' + esc(x.a) + '</td>' +
         '<td style="white-space:normal">' + (x.b.map(b => Y.bthumb(b.type, 48, 36) + esc(b.name) + (b.planned ? ' <span class="a">(site)</span>' : '')).join('<br>') || '–') + '</td>' +
         '<td class="cls">' + esc(x.crew) + (x.kind && x.kind !== 'Prepaid' ? ' <span class="a">(' + x.kind + ')</span>' : '') + '</td>' +
         '<td class="cls">' + (x.end ? esc(day(x.end)) : '–') + '</td>' +

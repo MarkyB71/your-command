@@ -46,6 +46,7 @@
         a = astOf(b);
       if (!okA(a) || !(has(n) || has(t))) return;
       bl.push({
+        id: b.id,
         n,
         t,
         a,
@@ -111,6 +112,7 @@
         (c) =>
           '<tr><td>' +
           APP.esc(c.name) +
+          (window.GL ? window.GL('/crew/' + c.id, 'Open this crew in the game') : '') +
           '</td><td class="cls">' +
           APP.esc(c.ast || '–') +
           '</td><td class="cls" style="white-space:normal">' +
@@ -148,7 +150,9 @@
           APP.esc(s.name) +
           ' <span class="a">#' +
           APP.esc(s.id) +
-          '</span></td><td class="cls">' +
+          '</span>' +
+          (window.GL ? window.GL('/ship/' + s.id, 'Open this ship in the game') : '') +
+          '</td><td class="cls">' +
           APP.esc(s.type) +
           '</td><td class="cls">' +
           APP.esc(s.ast || '–') +
@@ -167,7 +171,9 @@
           APP.esc(x.n) +
           ' <span class="a">#' +
           APP.esc(x.id) +
-          '</span></td><td class="cls">' +
+          '</span>' +
+          (window.GL ? window.GL('/asteroids/' + x.id, 'Open this asteroid in the game') : '') +
+          '</td><td class="cls">' +
           APP.esc(x.sp) +
           '-type</td><td class="cls">' +
           (x.own ? 'Owned' : '') +
@@ -186,6 +192,7 @@
           '<tr><td>' +
           APP.bthumb(x.t, 48, 36) +
           APP.esc(x.n) +
+          (window.GL ? window.GL('/building/' + x.id, 'Open this building in the game') : '') +
           '</td><td class="cls">' +
           APP.esc(x.t) +
           '</td><td class="cls">' +

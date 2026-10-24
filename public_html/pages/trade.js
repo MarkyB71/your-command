@@ -61,8 +61,8 @@
 
     const cells = d => {
       const t = tonnes(d.p, d.amt), trips = Math.max(1, Math.ceil(t / 2000));
-      return '<td>' + esc(d.from) + '<br><span class="a">' + esc(mN(d.s[4])) + '</span></td><td class="num">' + price(d.p, d.s[3]) + '</td>' +
-        '<td>' + esc(d.to) + '<br><span class="a">' + esc(mN(d.b[4])) + '</span></td><td class="num">' + price(d.p, d.b[3]) + '</td>' +
+      return '<td>' + esc(d.from) + '<br><span class="a">' + esc(mN(d.s[4])) + '</span>' + (window.GL ? window.GL('/building/' + d.s[4], 'Open this marketplace in the game') : '') + '</td><td class="num">' + price(d.p, d.s[3]) + '</td>' +
+        '<td>' + esc(d.to) + '<br><span class="a">' + esc(mN(d.b[4])) + '</span>' + (window.GL ? window.GL('/building/' + d.b[4], 'Open this marketplace in the game') : '') + '</td><td class="num">' + price(d.p, d.b[3]) + '</td>' +
         '<td class="num">' + Y.fq(d.p, d.amt) + (Y.isAt(d.p) ? '' : '<br><span class="a">' + trips + ' LT trip' + (trips > 1 ? 's' : '') + '</span>') + '</td>' +
         '<td class="num tot">' + swayShort(d.profit) + ' <span class="a">SWAY</span></td>' +
         '<td class="num" data-fa="' + d.fa + '" data-ta="' + d.ta + '" data-kg="' + Math.round(Math.min(t, 2000) * 1000) + '">' +

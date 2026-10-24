@@ -72,7 +72,7 @@
       return {
         p: String(o.product), type: o.orderType === 2 ? 'Selling' : 'Buying',
         amt: o.amount || 0, init: o.initialAmount || o.amount || 0, pr, total: (o.amount || 0) * pr,
-        mkt: bName(o.entity && o.entity.id), from: o.storage ? bName(o.storage.id) : '',
+        mkt: bName(o.entity && o.entity.id), mid: o.entity && o.entity.id, from: o.storage ? bName(o.storage.id) : '',
         ast: loc ? (astN[loc.id] || ('Asteroid #' + loc.id)) : '', crew: (D.crewN || {})[o.crew && o.crew.id] || '',
         live: !o.validTime || o.validTime <= now, vt: o.validTime
       };
@@ -100,7 +100,7 @@
         (x.live ? '' : '<br><span class="a">starts ' + esc(new Date(x.vt * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</span>') + '</td>' +
         '<td class="num">' + fq(x.p, x.amt) + (x.init > x.amt ? '<br><span class="a">of ' + fq(x.p, x.init) + '</span>' : '') + '</td>' +
         '<td class="num">' + price(x) + '</td><td class="num tot">' + sway(x.total) + '</td>' +
-        '<td>' + Y.bthumb('Marketplace', 40, 30) + esc(x.mkt) + '</td><td class="cls">' + esc(x.ast) + '</td>' +
+        '<td>' + Y.bthumb('Marketplace', 40, 30) + esc(x.mkt) + (x.mid ? (window.GL ? window.GL('/building/' + x.mid, 'Open this marketplace in the game') : '') : '') + '</td><td class="cls">' + esc(x.ast) + '</td>' +
         '<td class="cls">' + esc(x.from) + '</td><td class="cls">' + esc(x.crew) + '</td></tr>').join('') +
       '</tbody></table></div>';
 
@@ -175,7 +175,7 @@
         x.os.slice(0, 200).map(r => {
           const f = fee(r.mid);
           return '<tr><td class="num">' + priceH(r.p, r.raw) + '</td><td class="num">' + fq(r.p, r.amt) + '</td>' +
-            '<td>' + esc(mName(r.mid)) + (mine.has(r.crew) ? ' <span style="color:var(--accent)">· yours</span>' : '') + '</td>' +
+            '<td>' + esc(mName(r.mid)) + (window.GL ? window.GL('/building/' + r.mid, 'Open this marketplace in the game') : '') + (mine.has(r.crew) ? ' <span style="color:var(--accent)">· yours</span>' : '') + '</td>' +
             '<td class="cls">' + esc(r.ast) + '</td><td class="num cls">' + (f == null ? '–' : (+f.toFixed(2)) + '%') + '</td></tr>';
         }).join('') +
         (x.os.length > 200 ? '<tr><td colspan="5" class="a">…and ' + (x.os.length - 200) + ' more</td></tr>' : '') + '</tbody></table></td></tr>';

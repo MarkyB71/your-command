@@ -72,7 +72,7 @@
       const [label, , ast, mine] = e;
       const b = label === 5 ? bById[e[1]] : null;
       const t = label === 5 ? (b ? (BT[b.Building && b.Building.buildingType] || 'Building') : 'Building') : label === 6 ? 'Ship' : '?';
-      return '<b' + (mine ? '' : ' style="font-weight:400"') + '>' + esc(nameOf(e)) + '</b>' +
+      return '<b' + (mine ? '' : ' style="font-weight:400"') + '>' + esc(nameOf(e)) + '</b>' + (window.GL ? window.GL((label === 6 ? '/ship/' : '/building/') + e[1], 'Open in the game') : '') +
         (mine ? '' : ' <span class="a">(other player)</span>') +
         '<br><span class="a">' + esc(t) + (ast ? ' · ' + esc(aName(ast)) : '') + '</span>';
     };
@@ -114,7 +114,7 @@
       flying.length, ['Ship', 'Type', 'Route', 'Cargo'],
       flying.map(s => '<tr><td><span style="display:inline-block;width:56px;height:42px;vertical-align:middle;margin-right:8px;' +
         'border-radius:4px;background:#000 url(shipimg.php?t=' + s.st + '&v=' + s.sv + '&s=1) no-repeat 50% 42%/170% auto"></span>' +
-        esc(s.name) + '</td><td class="cls">' + esc(s.type) + '</td><td class="cls" style="white-space:normal">' + esc(s.place) +
+        esc(s.name) + (window.GL ? window.GL('/ship/' + s.id, 'Open this ship in the game') : '') + '</td><td class="cls">' + esc(s.type) + '</td><td class="cls" style="white-space:normal">' + esc(s.place) +
         '</td><td class="cls" style="white-space:normal">' + (s.useM > 0 ? Y.fmtT(s.useM / 1e6) + (s.carry ? ' · ' + esc(s.carry) : '') : 'Empty') +
         '</td></tr>'),
       'None of your ships are flying right now.');
