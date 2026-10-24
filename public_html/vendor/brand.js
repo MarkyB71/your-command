@@ -64,7 +64,7 @@
     }
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
-    if(h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
+    if(!MVB&&h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
     // Title font: Rye (western whiskey-label style)
     if(h1){const t0=h1.querySelector('.brand-t');if(t0&&t0.style.fontFamily.indexOf('Rye')<0)t0.style.fontFamily='Rye,Jura,serif'}
     // Title follows the page: landing = Quartermaster Skippy's Command Deck, others = Your <Group> <Page>
@@ -75,13 +75,23 @@
         t.innerHTML=esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
         d.title=T.filter(Boolean).join(' ');}
     }
-    // TEST (MVB): menu row moved below the page band, sticks to the top on its own
-    if(MVB&&hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar');
-      if(main&&hb){hb.dataset.mv='1';main.before(hb);}
+    // TEST (MVB): banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
+    if(MVB&&hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
+      if(main&&hb){hb.dataset.mv='1';main.before(hb)}
+      if(main&&tr){tr.dataset.mv='1';main.before(tr)}
+      if(hd.style.top!=='0px'){hd.style.setProperty('top','0px','important');hd.style.setProperty('position','relative','important')}
+      if(!d.getElementById('mvb-css')){const st=d.createElement('style');st.id='mvb-css';st.textContent=
+        'header{padding:0!important}'+
+        'header #pgband{margin:0!important;border-radius:0!important;min-height:130px!important;padding:10px 20px!important}'+
+        'header h1.brand{position:absolute!important;left:0;right:0;top:65px;transform:translateY(-50%);margin:0!important;z-index:3!important;pointer-events:none}'+
+        'header #pgband>*{position:relative;z-index:2}'+
+        '#wc-top{z-index:5!important}'+
+        '.bar[data-mv="1"]{position:sticky!important;top:0!important;z-index:40!important;background:rgba(5,7,10,.94);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:8px 20px!important;margin:0!important;border-bottom:1px solid rgba(95,195,228,.35);box-shadow:0 4px 14px rgba(0,0,0,.5)}'+
+        '.toprow[data-mv="1"]{display:flex!important;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 20px 10px!important;margin:0!important;font-size:12px;color:#8b9ab0}'+
+        '@media (max-width:700px){header h1.brand{position:static!important;transform:none;padding:6px 0}header #pgband{min-height:0!important}}';
+        d.head.appendChild(st)}
       const mb=d.querySelector('.bar[data-mv="1"]');
-      if(mb){if(hd.style.top!=='0px'){hd.style.setProperty('top','0px','important');hd.style.setProperty('position','relative','important')}
-        if(!d.getElementById('mvb-css')){const st=d.createElement('style');st.id='mvb-css';st.textContent='header{position:relative!important;top:0!important}.bar[data-mv="1"]{position:sticky!important;top:0!important;z-index:40!important;background:rgba(5,7,10,.94);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:8px 20px!important;margin:0 0 10px!important;border-bottom:1px solid rgba(95,195,228,.35);box-shadow:0 4px 14px rgba(0,0,0,.5)}';d.head.appendChild(st)}
-        const vis=mb.offsetHeight;d.querySelectorAll('.pc-bar.stick').forEach(b=>{if(b.style.top!==vis+'px')b.style.top=vis+'px'});}
+      if(mb){const vis=mb.offsetHeight;d.querySelectorAll('.pc-bar.stick').forEach(b=>{if(b.style.top!==vis+'px')b.style.top=vis+'px'});}
       return}
     // Title scrolls away; header stops with the menu buttons at the top
     if(hd){const bar=hd.querySelector(':scope > .bar');

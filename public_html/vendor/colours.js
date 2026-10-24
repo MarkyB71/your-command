@@ -40,6 +40,7 @@
        '@media (prefers-reduced-motion: reduce){#pgband.fade{animation:none}}';
 
   /* LIVE: our own artwork drawn in code, behind the right side of the strip */
+  var MVB=/[?&]beta=1/.test(location.search); /* TEST: banner at the top */
   var BETA=true; /* scenes live for everyone since v8 */
   function rnd(seed){return function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}}
   function rock(cx,cy,r,n,seed,j){ /* lumpy closed outline, smoothed through mid-points */
@@ -178,8 +179,10 @@
     else{var b=[].slice.call(document.querySelectorAll('button.on[id^="v"]')).filter(function(x){return /^v[A-Z]$/.test(x.id)})[0];if(b){key=b.id.slice(1);name=b.textContent.trim()}}
     var g=BY[key],band=document.getElementById('pgband');
     if(!g){if(band)band.style.display='none';last='';return}
-    var mvb=main.previousElementSibling,anc=(mvb&&mvb.dataset&&mvb.dataset.mv==='1')?mvb:main; /* menu moved under the band (brand.js MVB test) */
-    if(!band||band.nextElementSibling!==anc){if(band)band.remove();band=document.createElement('div');band.id='pgband';anc.before(band);last=''}
+    var hdr=document.querySelector('header');
+    if(MVB&&hdr){ /* TEST: banner at the very top of the header (brand.js MVB) */
+      if(!band||hdr.firstElementChild!==band){if(band)band.remove();band=document.createElement('div');band.id='pgband';hdr.prepend(band);last=''}
+    }else if(!band||band.nextElementSibling!==main){if(band)band.remove();band=document.createElement('div');band.id='pgband';main.before(band);last=''}
     var sig=g+'|'+name;if(sig===last)return;last=sig;
     var c=GROUPS[g][0],grp=(g==='Home'||g==='SkippyChain'||g==='Search')?'':g;
     band.style.cssText='--pg:'+c+';--pgbg:'+rgba(c,.22)+';--pgglow:'+rgba(c,.6);
