@@ -5,6 +5,9 @@
 (function () {
   'use strict';
 
+  // Game links on building rows – test on ?beta=1 first
+  const PGL = /[?&]beta=1/.test(location.search);
+
   function drawProducts(m) {
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, pc = Y.pc, fmt = Y.pfmt, ricon = Y.ricon, asts = Y.asts;
     const open = Y.prodOpen;                 // products whose row is opened
@@ -27,7 +30,7 @@
       if (isOpen) {
         let d = '';
         cols.forEach(i => asts[i].buildings.forEach(b => {
-          if (b.items[x.p]) d += '<div class="b"><span>' + esc(b.name) + ' <span class="a">· ' + esc(asts[i].name) +
+          if (b.items[x.p]) d += '<div class="b"><span>' + esc(b.name) + (PGL && window.GL && b.id ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + ' <span class="a">· ' + esc(asts[i].name) +
             '</span></span><span>' + fmt(x.p, b.items[x.p]) + '</span></div>';
         }));
         h += '<tr class="det"><td colspan="' + (3 + (multi ? cols.length : 0)) + '">' + d + '</td></tr>';
