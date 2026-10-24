@@ -14,17 +14,25 @@
 
   // Launch windows chart (test: ?beta=1 only)
   const WIN = /[?&]beta=1/.test(location.search);
-  // Where a ship can refuel (remembered in this browser). Elsewhere it must keep half its propellant to get back.
-  let REF = null;
-  function refuelMap(Y, asts) {
-    if (!REF) { try { REF = JSON.parse(localStorage.getItem('yicRefuel') || 'null'); } catch (e) { REF = null; } }
-    REF = REF || {};
-    asts.forEach(a => {
-      if (REF[a.id] === undefined) {               // first time: yes if there's propellant in stock there
-        const i = (Y.asts || []).findIndex(x => x.id === a.id);
-        REF[a.id] = i >= 0 && ((Y.tot || [])[i] || {})[170] > 0;
-      }
-    });
+  // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
+  // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
+  function canMake(Y, D, ast, prod, seen) {
+    const R = window.YICREC; if (!R) return false;
+    if (+prod <= 22) {                                     // raw material: can it be mined here?
+      const c = ast.Celestial || {};
+      if ((c.scanStatus || 0) >= 4 && c.abundances && Y.astAbund) return (Y.astAbund(c.abundances)[prod] || 0) > 0;
+      const sp = (Y.SPEC || {})[c.celestialType]; return !!(sp && sp[1].includes(+prod));
+    }
+    if (seen[prod]) return false; seen = Object.assign({}, seen, { [prod]: 1 });
+    const has = t => (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[t] && b.Building.status === 3 &&
+      (((b.Location || {}).locations || []).find(x => x.label === 3) || {}).id === ast.id);
+    return (R.MK[prod] || []).some(([, pt, inp, , out]) => has(pt) &&
+      Object.keys(inp).every(k => (out && out[k]) || canMake(Y, D, ast, k, seen)));   // catalysts that come back are fine
+  }
+  let REF = {};
+  function refuelMap(Y, D, asts) {
+    REF = {};
+    asts.forEach(a => { REF[a.id] = canMake(Y, D, (D.owned || []).find(x => x.id === a.id) || {}, '170', {}); });
     return REF;
   }
   const WDAYS = 30, WSTEP = 12;                       // next 30 days, a sample every 12 hours
@@ -75,10 +83,12 @@
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) + '</div>';
 
-    const ref = WIN ? refuelMap(Y, asts) : null;
-    if (WIN) h += '<div class="bar" style="margin:0 0 10px">⛽ Can refuel at: ' + asts.map(a =>
-      '<label style="margin-right:12px;white-space:nowrap"><input type="checkbox" data-rf="' + a.id + '"' + (ref[a.id] ? ' checked' : '') + '> ' + esc(a.name) + '</label>').join('') +
-      '<div class="note" style="padding:4px 0 0">Flying to an asteroid without a tick, the ship only uses half its propellant so it can get back.</div></div>';
+    const ref = WIN ? refuelMap(Y, D, asts) : null;
+    if (WIN) {
+      const yes = asts.filter(a => ref[a.id]).map(a => esc(a.name)), no = asts.filter(a => !ref[a.id]).map(a => esc(a.name));
+      h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (yes.join(', ') || 'none') +
+        (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.join(', ') + ' – flying there, the ship only uses half its propellant so it can get back.' : '') + '</div>';
+    }
     h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div class="wrap"><table id="trT"><thead><tr><th>From \\ To</th>' +
       asts.map(a => '<th class="num">' + esc(a.name) + '</th>').join('') + '</tr></thead><tbody>' +
       asts.map(a => '<tr><td><b>' + esc(a.name) + '</b></td>' + asts.map(b =>
@@ -94,12 +104,6 @@
     const keyOf = { trS: 'ship', trP: 'prop', trC: 'cargo', trL: 'leave' };
     Object.keys(keyOf).forEach(id => m.querySelector('#' + id).addEventListener('change', e => {
       S[keyOf[id]] = id === 'trL' ? +e.target.value : e.target.value;
-      drawTravel(m);
-    }));
-
-    if (WIN) m.querySelectorAll('[data-rf]').forEach(c => c.addEventListener('change', () => {
-      REF[c.dataset.rf] = c.checked;
-      try { localStorage.setItem('yicRefuel', JSON.stringify(REF)); } catch (e) {}
       drawTravel(m);
     }));
 
