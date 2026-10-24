@@ -33,9 +33,9 @@ when you replace the folder yourself.
 
 ## Checking your download
 
-The zip on the site should match this SHA-256 (version 0.3.1):
+The zip on the site should match this SHA-256 (version 0.3.2):
 
-    b58d05a56a80209030cba1a7518349e8d4e6317409ac7cf9fce97d215a513c4b
+    bb04aaee5e8f381efc782a303921d5b7441ee947c5c2639bacc5824eba2edf00
 
 On a Mac: `shasum -a 256 skippys-command-deck.zip` · Windows: `certutil -hashfile skippys-command-deck.zip SHA256`
 
