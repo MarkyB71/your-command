@@ -79,6 +79,7 @@
     if(MVB&&hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
       if(main&&hb){hb.dataset.mv='1';main.before(hb)}
       if(main&&tr){tr.dataset.mv='1';main.before(tr)}
+      if(h1&&h1.parentElement!==hd){const bd=d.getElementById('pgband');if(bd&&bd.parentElement===hd)bd.after(h1);else hd.prepend(h1)}
       if(hd.style.top!=='0px'){hd.style.setProperty('top','0px','important');hd.style.setProperty('position','relative','important')}
       if(!d.getElementById('mvb-css')){const st=d.createElement('style');st.id='mvb-css';st.textContent=
         'header{padding:0!important}'+
