@@ -5,8 +5,8 @@
 (function () {
   'use strict';
 
-  // Game links on building rows – test on ?beta=1 first
-  const PGL = /[?&]beta=1/.test(location.search);
+  // Game links on building rows (live)
+  const PGL = true;
 
   function drawProducts(m) {
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, pc = Y.pc, fmt = Y.pfmt, ricon = Y.ricon, asts = Y.asts;

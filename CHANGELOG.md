@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 363 – 24 Oct 2026 – Products: "in game ↗" links on each building in an opened product row (needs the Command Deck extension).
+
 ## Version 361 – 24 Oct 2026 – Today's Workload: every idle building has its own "in game ↗" link (one per line in the fold-out)
 
 ## Version 359 – 24 Oct 2026 – Page titles tidied: "Your <Page>" with no group word (no more "Your Asteroids Asteroids" or "Your Logistics Products")
