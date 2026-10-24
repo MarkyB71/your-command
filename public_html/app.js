@@ -731,7 +731,7 @@ function draw(){
   m.innerHTML=h||'<div class="note">Nothing matches.</div>';
  }
 }
-const FCSV=/[?&]beta=1/.test(location.search);
+const FCSV=true;
 function csvAll(){const cols=asts.map((a,i)=>i);const r=allP.map(p=>{const v=cols.map(i=>tot[i][p]||0);return{p,v,total:v.reduce((x,y)=>x+y,0)}}).filter(x=>x.total>0);r.sort((x,y)=>pn(x.p).localeCompare(pn(y.p)));return{r,cols}}
 function csv(){
  if(FCSV&&window.YICX){window.YICX($('#csv'));return}

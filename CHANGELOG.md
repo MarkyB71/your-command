@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 368 – 24 Oct 2026 – Download button opens a choice: Spreadsheet (CSV) or PDF. One file with stock (every asteroid, no filters), buildings, crews and ships. PDF in the site's dark blue style, saved from the print window.
+
 ## Version 363 – 24 Oct 2026 – Products: "in game ↗" links on each building in an opened product row (needs the Command Deck extension).
 
 ## Version 361 – 24 Oct 2026 – Today's Workload: every idle building has its own "in game ↗" link (one per line in the fold-out)
