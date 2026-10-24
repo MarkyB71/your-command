@@ -48,6 +48,7 @@
       if (!l) return;
       const e = (ex[l.id] = ex[l.id] || []);
       e.push({
+        id: b.id,
         name: (b.Name && b.Name.name) || 'Extractor #' + b.id,
         busy: (b.Extractors || []).some((x) => x.status === 1),
       });
@@ -121,6 +122,7 @@
               return (
                 '<tr><td>#' +
                 lotN(L.lot).toLocaleString() +
+                (window.GL ? window.GL('/lot/' + L.lot, 'Open this lot in the game') : '') +
                 '</td><td class="num">' +
                 L.n +
                 (L.sale ? ' <span class="a">(' + L.sale + ' for sale)</span>' : '') +
@@ -134,6 +136,7 @@
                       .map(
                         (z) =>
                           APP.esc(z.name) +
+                          (window.GL ? window.GL('/building/' + z.id, 'Open this extractor in the game') : '') +
                           ' · ' +
                           (z.busy
                             ? '<span style="color:#4cd04c">working</span>'
