@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 352 – 24 Oct 2026 – Asteroid planner new layout: Materials + Fewest flights side by side, Fly in full width below, then Facilities and Mine here side by side at the bottom
+
 ## Version 347 – 24 Oct 2026 – Asteroid planner: Fewest flights "First send" also offers ships already in flight (marked ✈ landing on …), counting the wait until they land
 
 ## Version 344 – 24 Oct 2026 – Skippy's Command Deck browser extension: "in game ↗" links on every page jump your open game tab to a building, lot, ship, crew or asteroid with no reload; Command Deck install button next to Play Influence (code + safety notes in extension/ on GitHub)
