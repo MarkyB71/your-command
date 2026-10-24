@@ -103,7 +103,7 @@
     }
     h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div class="wrap"><table id="trT"><thead><tr><th>From \\ To</th>' +
       asts.map(a => '<th class="num">' + esc(a.name) + '</th>').join('') + '</tr></thead><tbody>' +
-      asts.map(a => '<tr><td><b>' + esc(a.name) + '</b></td>' + asts.map(b =>
+      asts.map(a => '<tr><td><b>' + esc(a.name) + '</b>' + (window.GL?window.GL('/asteroids/' + a.id,'Open this asteroid in the game'):'') + '</td>' + asts.map(b =>
         '<td class="num" data-f="' + a.id + '" data-t="' + b.id + '">' + (a.id === b.id ? '<span class="a">–</span>' : '<span class="a">…</span>') + '</td>').join('') + '</tr>').join('') +
       '</tbody></table></div>' +
       '<div class="note" style="padding:10px 0 0">Quickest trip leaving at the chosen time, worked out the same way as the game\'s route planner ' +

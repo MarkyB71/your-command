@@ -29,7 +29,7 @@ export function drawMarketHistory(m){
   const Y=window.YIC;let D=null,pf=null,pn=null;try{D=Y.D;pf=Y.pfmt;pn=Y.pn}catch(e){}
   const pName=p=>pn?pn(p):'Product '+p,pAmt=(p,a)=>{try{return pf?pf(p,a)||'0':String(a)}catch(e){return String(a)}};
   const mine=new Set(((D&&D.crewList)||[]).map(c=>c.id)),crewName={};((D&&D.crewList)||[]).forEach(c=>crewName[c.id]=c.name);
-  const who=id=>crewName[id]?'<span class="mh-me">'+esc(crewName[id])+'</span>':'Crew #'+id;
+  const who=id=>(crewName[id]?'<span class="mh-me">'+esc(crewName[id])+'</span>':'Crew #'+id)+(window.GL?window.GL('/crew/'+id,'Open this crew in the game'):'');
 
   function chart(rows){ /* price per unit over time for one product */
     const pts=rows.map(r=>[r[0],r[4]/1e6]).sort((a,b)=>a[0]-b[0]);if(pts.length<2)return'';
@@ -80,7 +80,7 @@ export function drawMarketHistory(m){
       L.slice(0,S.show).map(r=>{const d=new Date(r[0]*1000),mk=MK[r[5]]||{};
         return '<tr><td>'+esc(d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'2-digit'}))+' <span style="color:#8b9ab0">'+esc(d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+'</span></td>'+
           '<td><span class="mh-p"><img src="rimg.php?p='+r[2]+'" alt="" loading="lazy">'+esc(pName(r[2]))+'</span></td><td class="num">'+esc(pAmt(r[2],r[3]))+'</td><td class="num">'+(+(r[4]/1e6).toPrecision(4)).toLocaleString()+'</td><td class="num">'+esc(fmtS(swayN(r[4],r[3])))+'</td>'+
-          '<td>'+esc(mk.name||('#'+r[5]))+(mk.ast?'<br><span style="color:#8b9ab0;font-size:12px">'+esc(mk.ast)+'</span>':'')+'</td><td>'+who(r[6])+'</td><td>'+who(r[7])+'</td></tr>'}).join('')+'</tbody>';
+          '<td>'+esc(mk.name||('#'+r[5]))+(window.GL?window.GL('/building/'+r[5],'Open this marketplace in the game'):'')+(mk.ast?'<br><span style="color:#8b9ab0;font-size:12px">'+esc(mk.ast)+'</span>':'')+'</td><td>'+who(r[6])+'</td><td>'+who(r[7])+'</td></tr>'}).join('')+'</tbody>';
     m.appendChild(tb);
     if(L.length>S.show){const b=el('button','mh-more','Show more ('+(L.length-S.show).toLocaleString()+' left)');b.addEventListener('click',()=>{S.show+=500;draw()});m.appendChild(b)}
   }

@@ -44,44 +44,47 @@ export function drawHistory(m){
     switch(+e.label){case 1:return crewName[id]||('Crew #'+id);case 2:return 'Crewmate #'+id;case 3:return aName[id]||('Asteroid #'+id);
       case 4:{const a=id%4294967296;return 'Lot '+Math.floor(id/4294967296)+(aName[a]?' on '+aName[a]:'')}case 5:return bName[id]||('Building #'+id);case 6:return sName[id]||('Ship #'+id);
       case 7:return 'Deposit #'+id;case 9:return 'Delivery #'+id;default:return '#'+id}};
+  // Name + game link (beta + extension only, via vendor/gamelinks.js)
+  const GP={1:'/crew/',2:'/crewmate/',3:'/asteroids/',4:'/lot/',5:'/building/',6:'/ship/'};
+  const E=(e,d)=>{const n=esc(ent(e)||d||'');const g=e&&typeof e==='object'&&GP[+e.label];return n+(g&&window.GL?window.GL(g+e.id,'Open in the game'):'')};
   const prods=v=>(v.products||[]).map(x=>'<b>'+esc(pAmt(x.product,x.amount))+' '+esc(pName(x.product))+'</b>').join(', ');
   function describe(r){
     const v=r.v||{},n=r.n;
     const p=v.product!=null?'<b>'+esc(pAmt(v.product,v.amount||0))+' '+esc(pName(v.product))+'</b>':'';
     switch(n){
-      case 'DeliverySent':return 'Sent '+prods(v)+' from '+esc(ent(v.origin))+' to '+esc(ent(v.dest));
-      case 'DeliveryReceived':return 'Received '+prods(v)+' at '+esc(ent(v.dest))+' <span class="s">from '+esc(ent(v.origin))+'</span>';
-      case 'ResourceExtractionStarted':return 'Started mining '+(p||esc(pName(v.resource))+(v.yield?' ('+esc(pAmt(v.resource,v.yield))+')':''))+(v.extractor?' at '+esc(ent(v.extractor)):'');
-      case 'ResourceExtractionFinished':return 'Finished mining '+(v.resource?'<b>'+esc(pAmt(v.resource,v.yield||0))+' '+esc(pName(v.resource))+'</b>':p)+(v.destination?' → '+esc(ent(v.destination)):'');
+      case 'DeliverySent':return 'Sent '+prods(v)+' from '+E(v.origin)+' to '+E(v.dest);
+      case 'DeliveryReceived':return 'Received '+prods(v)+' at '+E(v.dest)+' <span class="s">from '+E(v.origin)+'</span>';
+      case 'ResourceExtractionStarted':return 'Started mining '+(p||esc(pName(v.resource))+(v.yield?' ('+esc(pAmt(v.resource,v.yield))+')':''))+(v.extractor?' at '+E(v.extractor):'');
+      case 'ResourceExtractionFinished':return 'Finished mining '+(v.resource?'<b>'+esc(pAmt(v.resource,v.yield||0))+' '+esc(pName(v.resource))+'</b>':p)+(v.destination?' → '+E(v.destination):'');
       case 'MaterialProcessingStarted':{const io=a=>(a||[]).map(x=>'<b>'+esc(pAmt(x.product,x.amount))+' '+esc(pName(x.product))+'</b>').join(', ');
-        return 'Started making '+(io(v.outputs)||'something')+(v.inputs&&v.inputs.length?' <span class="s">from '+io(v.inputs).replace(/<\/?b>/g,'')+'</span>':'')+(v.processor?' at '+esc(ent(v.processor)):'')}
-      case 'MaterialProcessingFinished':return 'Finished processing'+(v.processor?' at '+esc(ent(v.processor)):'');
-      case 'SamplingDepositStarted':return 'Started a core sample'+(v.resource?' for '+esc(pName(v.resource)):'')+(v.lot?' on '+esc(ent(v.lot)):'');
+        return 'Started making '+(io(v.outputs)||'something')+(v.inputs&&v.inputs.length?' <span class="s">from '+io(v.inputs).replace(/<\/?b>/g,'')+'</span>':'')+(v.processor?' at '+E(v.processor):'')}
+      case 'MaterialProcessingFinished':return 'Finished processing'+(v.processor?' at '+E(v.processor):'');
+      case 'SamplingDepositStarted':return 'Started a core sample'+(v.resource?' for '+esc(pName(v.resource)):'')+(v.lot?' on '+E(v.lot):'');
       case 'SamplingDepositFinished':return 'Core sample finished'+(v.initialYield?' – <b>'+esc(pAmt(1,v.initialYield))+'</b> found':'');
       case 'SellOrderFilled':{const sold=mine.has(v.sellerCrew&&v.sellerCrew.id)&&!mine.has(v.callerCrew&&v.callerCrew.id);
-        return (sold?'Sold ':'Bought ')+(p||'goods')+(v.price!=null?' for <b>'+esc(sway(v.price,v.amount))+'</b>':'')+' <span class="s">'+(sold?'to '+esc(ent(v.callerCrew)):'from '+esc(ent(v.sellerCrew)))+(v.exchange?' at '+esc(ent(v.exchange)):'')+'</span>'}
+        return (sold?'Sold ':'Bought ')+(p||'goods')+(v.price!=null?' for <b>'+esc(sway(v.price,v.amount))+'</b>':'')+' <span class="s">'+(sold?'to '+E(v.callerCrew):'from '+E(v.sellerCrew))+(v.exchange?' at '+E(v.exchange):'')+'</span>'}
       case 'BuyOrderFilled':return 'Bought '+(p||'goods')+(v.price!=null?' <span class="s">at '+esc((v.price/1e6).toLocaleString())+' SWAY each</span>':'');
-      case 'SellOrderCreated':return 'Listed '+(p||'goods')+' for sale'+(v.price!=null?' – <b>'+esc(sway(v.price,v.amount))+'</b> in total':'')+(v.exchange?' <span class="s">at '+esc(ent(v.exchange))+'</span>':'');
-      case 'DepositPurchased':return 'Bought a core sample'+(v.price!=null?' for <b>'+esc(sway(v.price))+'</b>':'')+(v.sellerCrew?' <span class="s">from '+esc(ent(v.sellerCrew))+'</span>':'');
+      case 'SellOrderCreated':return 'Listed '+(p||'goods')+' for sale'+(v.price!=null?' – <b>'+esc(sway(v.price,v.amount))+'</b> in total':'')+(v.exchange?' <span class="s">at '+E(v.exchange)+'</span>':'');
+      case 'DepositPurchased':return 'Bought a core sample'+(v.price!=null?' for <b>'+esc(sway(v.price))+'</b>':'')+(v.sellerCrew?' <span class="s">from '+E(v.sellerCrew)+'</span>':'');
       case 'SellOrderCancelled':return 'Cancelled a sell order'+(p?' for '+p:'');
-      case 'TransitStarted':return esc(ent(v.ship)||'Ship')+' set off from '+esc(ent(v.origin))+' to <b>'+esc(ent(v.destination))+'</b>'+(v.finishTime?' <span class="s">arrives '+esc(new Date(v.finishTime*1000).toLocaleString(undefined,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</span>':'');
-      case 'TransitFinished':return esc(ent(v.ship)||'Ship')+' arrived at <b>'+esc(ent(v.destination))+'</b> <span class="s">from '+esc(ent(v.origin))+'</span>';
-      case 'ShipDocked':return esc(ent(v.ship)||'Ship')+' docked'+(v.dock?' at '+esc(ent(v.dock)):'');
-      case 'ShipUndocked':return esc(ent(v.ship)||'Ship')+' undocked';
-      case 'FoodSupplied':return 'Fed the crew <b>'+esc(pAmt(129,v.food||0))+' food</b>'+(v.origin?' <span class="s">from '+esc(ent(v.origin))+'</span>':'');
-      case 'CrewStationed':return 'Crew moved to <b>'+esc(ent(v.destinationStation||v.station))+'</b>'+(v.originStation?' <span class="s">from '+esc(ent(v.originStation))+'</span>':'');
-      case 'CrewEjected':return esc(ent(v.ejectedCrew)||'Crew')+' left '+esc(ent(v.station));
+      case 'TransitStarted':return E(v.ship,'Ship')+' set off from '+E(v.origin)+' to <b>'+E(v.destination)+'</b>'+(v.finishTime?' <span class="s">arrives '+esc(new Date(v.finishTime*1000).toLocaleString(undefined,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</span>':'');
+      case 'TransitFinished':return E(v.ship,'Ship')+' arrived at <b>'+E(v.destination)+'</b> <span class="s">from '+E(v.origin)+'</span>';
+      case 'ShipDocked':return E(v.ship,'Ship')+' docked'+(v.dock?' at '+E(v.dock):'');
+      case 'ShipUndocked':return E(v.ship,'Ship')+' undocked';
+      case 'FoodSupplied':return 'Fed the crew <b>'+esc(pAmt(129,v.food||0))+' food</b>'+(v.origin?' <span class="s">from '+E(v.origin)+'</span>':'');
+      case 'CrewStationed':return 'Crew moved to <b>'+E(v.destinationStation||v.station)+'</b>'+(v.originStation?' <span class="s">from '+E(v.originStation)+'</span>':'');
+      case 'CrewEjected':return E(v.ejectedCrew,'Crew')+' left '+E(v.station);
       case 'EmergencyPropellantCollected':return 'Collected emergency propellant <b>'+esc(pAmt(170,v.amount||0))+'</b>';
-      case 'ShipCommandeered':return 'Took command of '+esc(ent(v.ship));
-      case 'RandomEventResolved':return 'Dealt with a random event'+(v.actionTarget?' at '+esc(ent(v.actionTarget)):'');
-      case 'PrepaidAgreementAccepted':case 'PrepaidAgreementExtended':return (n.endsWith('Extended')?'Extended':'Took')+' a lease on <b>'+esc(ent(v.target))+'</b>'+(v.term?' <span class="s">for '+Math.round(v.term/86400)+' days</span>':'');
-      case 'PrepaidAgreementTransferred':return 'Lease on <b>'+esc(ent(v.target))+'</b> passed to '+esc(ent(v.permitted))+(v.oldPermitted?' <span class="s">from '+esc(ent(v.oldPermitted))+'</span>':'');
-      case 'CrewmatesExchanged':return 'Swapped crewmates between '+esc(ent(v.crew1))+' and '+esc(ent(v.crew2));
-      case 'ConstructionPlanned':return 'Planned '+esc(['a building','a Warehouse','an Extractor','a Refinery','a Bioreactor','a Factory','a Shipyard','a Spaceport','a Marketplace','a Habitat','a Tank Farm'][v.buildingType]||'a building')+(v.lot?' on '+esc(ent(v.lot)):'');
-      case 'ConstructionStarted':case 'ConstructionFinished':case 'ConstructionAbandoned':case 'ConstructionDeconstructed':return words(n)+' – '+esc(ent(v.building)||'building');
+      case 'ShipCommandeered':return 'Took command of '+E(v.ship);
+      case 'RandomEventResolved':return 'Dealt with a random event'+(v.actionTarget?' at '+E(v.actionTarget):'');
+      case 'PrepaidAgreementAccepted':case 'PrepaidAgreementExtended':return (n.endsWith('Extended')?'Extended':'Took')+' a lease on <b>'+E(v.target)+'</b>'+(v.term?' <span class="s">for '+Math.round(v.term/86400)+' days</span>':'');
+      case 'PrepaidAgreementTransferred':return 'Lease on <b>'+E(v.target)+'</b> passed to '+E(v.permitted)+(v.oldPermitted?' <span class="s">from '+E(v.oldPermitted)+'</span>':'');
+      case 'CrewmatesExchanged':return 'Swapped crewmates between '+E(v.crew1)+' and '+E(v.crew2);
+      case 'ConstructionPlanned':return 'Planned '+esc(['a building','a Warehouse','an Extractor','a Refinery','a Bioreactor','a Factory','a Shipyard','a Spaceport','a Marketplace','a Habitat','a Tank Farm'][v.buildingType]||'a building')+(v.lot?' on '+E(v.lot):'');
+      case 'ConstructionStarted':case 'ConstructionFinished':case 'ConstructionAbandoned':case 'ConstructionDeconstructed':return words(n)+' – '+E(v.building,'building');
       case 'NameChanged':return 'Named '+esc((v.entity&&v.entity.label==5?'building':v.entity&&v.entity.label==6?'ship':v.entity&&v.entity.label==1?'crew':'something'))+' <b>'+esc(v.name||v.newName||'')+'</b>';
       case 'CrewmateRecruited':return 'Recruited <b>'+esc(v.name||('Crewmate #'+(v.crewmate&&v.crewmate.id)))+'</b>';
-      case 'BuildingRepossessed':return 'Repossessed '+esc(ent(v.building));
+      case 'BuildingRepossessed':return 'Repossessed '+E(v.building);
       case 'Transfer':return (/^0x0+$/.test(v.from||'')?'New crew created':'Crew NFT transferred')+(v.tokenId?' <span class="s">(Crew #'+esc(v.tokenId)+')</span>':'');
     }
     const bits=Object.entries(v).map(([k,x])=>{const e=ent(x);if(e)return esc(k)+': '+esc(e);if(typeof x==='number'||typeof x==='string')return esc(k)+': '+esc(x);return null}).filter(Boolean).slice(0,4);

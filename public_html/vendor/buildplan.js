@@ -112,17 +112,17 @@ export function drawBuildPlan(m){
   const mineOn=(a,r)=>{const c=a.Celestial||{},sc=(c.scanStatus||0)>=4&&c.abundances;if(sc&&Y.astAbund)return (Y.astAbund(c.abundances)[r]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+r))};
   const near=(id,q)=>{const tkT=g=>{const t=g/1e6;return t>=1000?(+(t/1000).toFixed(2)).toLocaleString()+' kt':Math.round(t).toLocaleString()+' t'};
     const shipsAt=aid=>(D.ships||[]).filter(sh=>!sh.fl&&sh.dId===aid&&sh.capM>0).sort((x,y)=>(y.prop>0)-(x.prop>0)||(y.capM-y.useM)-(x.capM-x.useM));
-    const shipTxt=sh=>'<b>'+esc(sh.name)+'</b> ('+esc(sh.type)+', '+tkT(Math.max(0,sh.capM-sh.useM))+' free, '+(sh.prop>0?Math.round(sh.prop).toLocaleString()+' t propellant':'<span class="none">no propellant</span>')+')';
+    const shipTxt=sh=>'<b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' ('+esc(sh.type)+', '+tkT(Math.max(0,sh.capM-sh.useM))+' free, '+(sh.prop>0?Math.round(sh.prop).toLocaleString()+' t propellant':'<span class="none">no propellant</span>')+')';
     const srcs=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>({a,have:Y.tot[a.i][id],sp:shipsAt(a.id)}));
     srcs.forEach(x=>{x.ready=x.sp.filter(sh=>sh.prop>0)});
     srcs.sort((x,y)=>(y.have>=q)-(x.have>=q)||(y.ready.length>0)-(x.ready.length>0)||y.have-x.have);
-    const st=srcs.map(x=>'<b>'+esc(x.a.name)+'</b> '+amt(id,x.have)+'<div class="bp-sh">'+(x.sp.length?'🚀 Ships there: '+x.sp.map(shipTxt).join(' · '):'<span class="a">🚀 No cargo ship of yours there right now</span>')+'</div>');
+    const st=srcs.map(x=>'<b>'+esc(x.a.name)+'</b>'+(x.a.id?(window.GL?window.GL('/asteroids/'+x.a.id,'Open this asteroid in the game'):''):'')+' '+amt(id,x.have)+'<div class="bp-sh">'+(x.sp.length?'🚀 Ships there: '+x.sp.map(shipTxt).join(' · '):'<span class="a">🚀 No cargo ship of yours there right now</span>')+'</div>');
     const mnA=+id<=22?(D.owned||[]).filter(a=>a.id!==S.ast&&mineOn(a,id)).map(a=>(a.Name&&a.Name.name)||('Asteroid #'+a.id)):[];
     const mn=mnA.map(n=>'<b>'+esc(n)+'</b>');
     const now=Date.now()/1000,when=t=>t?(t<=now?'arriving now':'arrives '+new Date(t*1000).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})):'';
     const fls=(D.ships||[]).filter(sh=>sh.fl&&sh.cg&&sh.cg[id]>0).sort((x,y)=>(y.dId===S.ast)-(x.dId===S.ast)||x.arrT-y.arrT);
-    const flH=fls.map(sh=>sh.dId===S.ast?'<div class="bp-fl to">✈ On its way here: <b>'+esc(sh.name)+'</b> carrying '+amt(id,sh.cg[id])+' – '+when(sh.arrT)+'</div>':
-      '<div class="bp-fl">✈ In flight: <b>'+esc(sh.name)+'</b> carrying '+amt(id,sh.cg[id])+' to <b>'+esc(sh.ast||'?')+'</b> – '+when(sh.arrT)+'</div>').join('');
+    const flH=fls.map(sh=>sh.dId===S.ast?'<div class="bp-fl to">✈ On its way here: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' – '+when(sh.arrT)+'</div>':
+      '<div class="bp-fl">✈ In flight: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' to <b>'+esc(sh.ast||'?')+'</b> – '+when(sh.arrT)+'</div>').join('');
     /* the one best option, shown on the closed line */
     const here2=fls.find(sh=>sh.dId===S.ast),b=srcs[0];let best;
     if(here2)best='<span class="ok">✈ on its way here on <b>'+esc(here2.name)+'</b>, '+when(here2.arrT)+'</span>';

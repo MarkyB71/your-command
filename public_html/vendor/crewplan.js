@@ -110,7 +110,7 @@ export function drawCrewPlan(m){
       if(an&&c.ast!==an)return;if(q&&!(c.name.toLowerCase().includes(q)||(c.place||'').toLowerCase().includes(q)))return;
       const now=S.plan[i],changed=now.join(',')!==S.orig[i].join(',');
       const box=el('div','cp-crew'+(changed?' changed':''));
-      box.appendChild(el('div','cp-h','<span class="cp-nm">'+esc(c.name)+'</span><span class="cp-at">'+esc(c.ast||'')+(c.place?'<br>'+esc(c.place):'')+'</span>'));
+      box.appendChild(el('div','cp-h','<span class="cp-nm">'+esc(c.name)+(window.GL?window.GL('/crew/'+c.id,'Open this crew in the game'):'')+'</span><span class="cp-at">'+esc(c.ast||'')+(c.place?'<br>'+esc(c.place):'')+'</span>'));
       const sl=el('div','cp-slots');
       for(let s=0;s<5;s++){const z=el('div','cp-slot');if(now[s]!=null)z.appendChild(mateEl(now[s],i));else z.textContent='Empty';sl.appendChild(z)}
       box.appendChild(sl);
@@ -129,7 +129,7 @@ export function drawCrewPlan(m){
     const jobs=S.job?CBJ.filter(j=>String(j[0])===S.job):CBJ;
     jobs.forEach(([a,n])=>{const L=idx.map(i=>({i,v:mult(i,S.plan[i],a),o:mult(i,S.orig[i],a)})).sort((x,y)=>y.v-x.v||crews[x.i].name.localeCompare(crews[y.i].name)),b=L[0];
       const d=el('details','cp-job','<summary><b>'+esc(n)+'</b> · best: '+esc(crews[b.i].name)+(an?'':' <span style="color:#8b9ab0">('+esc(crews[b.i].ast||'?')+')</span>')+' <b style="color:'+col(b.v)+'">'+pc(b.v)+'</b></summary>'+
-        '<table>'+L.map(x=>'<tr><td>'+esc(crews[x.i].name)+'</td><td style="color:#8b9ab0">'+esc(crews[x.i].ast||'–')+'</td><td class="num" style="color:'+col(x.v)+'">'+pc(x.v)+(Math.abs(x.v-x.o)>0.0001?' <span style="color:#8b9ab0">(was '+pc(x.o)+')</span>':'')+'</td></tr>').join('')+'</table>');
+        '<table>'+L.map(x=>'<tr><td>'+esc(crews[x.i].name)+(window.GL?window.GL('/crew/'+crews[x.i].id,'Open this crew in the game'):'')+'</td><td style="color:#8b9ab0">'+esc(crews[x.i].ast||'–')+'</td><td class="num" style="color:'+col(x.v)+'">'+pc(x.v)+(Math.abs(x.v-x.o)>0.0001?' <span style="color:#8b9ab0">(was '+pc(x.o)+')</span>':'')+'</td></tr>').join('')+'</table>');
       m.appendChild(d)})
   }
   draw();
