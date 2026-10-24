@@ -101,6 +101,11 @@ function isOpen(key,d){if(S.foc){if(S.foc.startsWith(key+'/'))return true;d-=S.f
 export function drawChain(m){
   if(!document.getElementById('pc-css')){const st=el('style');st.id='pc-css';st.textContent=CSS;document.head.appendChild(st)}
   let raws={},pool={};
+  /* opened from another page in a new tab: ?pcp=<item id>&pca=<asteroid name> – applied once */
+  if(!window.__pcUrl){window.__pcUrl=1;try{const q=new URLSearchParams(location.search),pp=+q.get('pcp'),pa=q.get('pca');
+    if(pp&&N[pp]){S.mode='from';S.prod=pp;if(pp>=1000)S.amt=1}
+    if(pa&&window.YIC){const i=(window.YIC.asts||[]).findIndex(x=>x.name===pa),s0=document.getElementById('ast');if(i>=0&&s0){s0.value=String(i)}}
+    if(pp||pa){q.delete('pcp');q.delete('pca');const qs=q.toString();history.replaceState(history.state,'',location.pathname+(qs?'?'+qs:'')+location.hash)}}catch(e){}}
   const Y=window.YIC,as=document.getElementById('ast'),ai=as&&as.value!==''?+as.value:null;
   const have=id=>!Y||id>=1000?null:(ai===null?Y.pooled[id]:(Y.tot[ai]||{})[id])||0;
   const where=ai===null?'':' on '+esc(Y&&Y.asts[ai]?Y.asts[ai].name:'');

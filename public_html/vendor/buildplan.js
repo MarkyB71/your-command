@@ -103,7 +103,7 @@ export function drawBuildPlan(m){
     const E=expand(stk,canMine,sh,ucB),fl=Object.keys(E.fly).filter(x=>vis(E.fly,x)),nf=Object.keys(E.fac).filter(t=>!myFac(t));
     if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(nm).join(', '))+'">✈ Fly some in</em>';
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
-    return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain">⚒ Make it here ▸</em>'};
+    return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
   const chainRows=rows.filter(r=>r.short&&(!r.others.length||(FB&&makeOK(r))));
   const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short])),{USED,pool,fly,mine,fac,made}=EX;
   /* materials your other asteroids hold: fly those in as they are */
@@ -259,11 +259,10 @@ export function drawBuildPlan(m){
       x.onchange=set});
     if(calc){calc.onclick=()=>drawBuildPlan(m)}
     const cl=m.querySelector('#bpClr');if(cl)cl.onclick=()=>{S.cnt={};drawBuildPlan(m)}}
-  /* TEST (CANB): "Make it here" badge opens The SkippyChain on that building, using this asteroid's stock */
+  /* TEST (CANB): "Make it here" badge opens The SkippyChain on that building in a NEW TAB, using this asteroid's stock */
   if(CANB)m.querySelectorAll('.bp-go').forEach(g=>{const go=e=>{e.preventDefault();e.stopPropagation();
-      const id=1000+(+g.dataset.go),as=document.getElementById('ast');if(as&&here.i!==null)as.value=String(here.i);
-      const b=document.getElementById('vH');if(!b)return;b.click();let n=0;
-      const t=setInterval(()=>{if(m.__pcUse&&document.getElementById('vH').className==='on'){clearInterval(t);m.__pcUse(id,'from')}else if(++n>50)clearInterval(t)},100)};
+      const q=new URLSearchParams(location.search);q.set('pcp',String(1000+(+g.dataset.go)));q.set('pca',here.name);
+      window.open(location.pathname+'?'+q.toString()+'#vH','_blank')};
     g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go(e)}});
 
 }
