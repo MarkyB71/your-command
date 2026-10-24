@@ -178,7 +178,8 @@
     else{var b=[].slice.call(document.querySelectorAll('button.on[id^="v"]')).filter(function(x){return /^v[A-Z]$/.test(x.id)})[0];if(b){key=b.id.slice(1);name=b.textContent.trim()}}
     var g=BY[key],band=document.getElementById('pgband');
     if(!g){if(band)band.style.display='none';last='';return}
-    if(!band||band.nextElementSibling!==main){if(band)band.remove();band=document.createElement('div');band.id='pgband';main.before(band);last=''}
+    var mvb=main.previousElementSibling,anc=(mvb&&mvb.dataset&&mvb.dataset.mv==='1')?mvb:main; /* menu moved under the band (brand.js MVB test) */
+    if(!band||band.nextElementSibling!==anc){if(band)band.remove();band=document.createElement('div');band.id='pgband';anc.before(band);last=''}
     var sig=g+'|'+name;if(sig===last)return;last=sig;
     var c=GROUPS[g][0],grp=(g==='Home'||g==='SkippyChain'||g==='Search')?'':g;
     band.style.cssText='--pg:'+c+';--pgbg:'+rgba(c,.22)+';--pgglow:'+rgba(c,.6);

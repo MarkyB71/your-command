@@ -1,6 +1,7 @@
 // Site logo + header style (our own artwork – not the Influence logo).
 // LIVE for everyone (tested on ?beta=1 first, 19 Oct 2026).
 (function(){
+  const MVB=/[?&]beta=1/.test(location.search); // TEST: menu under the page band
   const CSS=
     '#brand-logo,#brand-logo2{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
@@ -74,6 +75,14 @@
         t.innerHTML=esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
         d.title=T.filter(Boolean).join(' ');}
     }
+    // TEST (MVB): menu row moved below the page band, sticks to the top on its own
+    if(MVB&&hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar');
+      if(main&&hb){hb.dataset.mv='1';main.before(hb);}
+      const mb=d.querySelector('.bar[data-mv="1"]');
+      if(mb){if(hd.style.top!=='0px'){hd.style.setProperty('top','0px','important');hd.style.setProperty('position','relative','important')}
+        if(!d.getElementById('mvb-css')){const st=d.createElement('style');st.id='mvb-css';st.textContent='header{position:relative!important;top:0!important}.bar[data-mv="1"]{position:sticky!important;top:0!important;z-index:40!important;background:rgba(5,7,10,.94);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:8px 20px!important;margin:0 0 10px!important;border-bottom:1px solid rgba(95,195,228,.35);box-shadow:0 4px 14px rgba(0,0,0,.5)}';d.head.appendChild(st)}
+        const vis=mb.offsetHeight;d.querySelectorAll('.pc-bar.stick').forEach(b=>{if(b.style.top!==vis+'px')b.style.top=vis+'px'});}
+      return}
     // Title scrolls away; header stops with the menu buttons at the top
     if(hd){const bar=hd.querySelector(':scope > .bar');
       if(bar){const top=-Math.max(0,bar.offsetTop-8);
