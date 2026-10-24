@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 374 – 24 Oct 2026 – New top layout: page banner at the very top with the page title in the middle, menu under it (banner + menu stay at the top when scrolling), then a slim strip with Updated/wallet on the left and search on the right.
+
 ## Version 369 – 24 Oct 2026 – Download button renamed "Download your Command Deck".
 
 ## Version 368 – 24 Oct 2026 – Download button opens a choice: Spreadsheet (CSV) or PDF. One file with stock (every asteroid, no filters), buildings, crews and ships. PDF in the site's dark blue style, saved from the print window.

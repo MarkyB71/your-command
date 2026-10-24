@@ -1,7 +1,7 @@
 // Site logo + header style (our own artwork – not the Influence logo).
 // LIVE for everyone (tested on ?beta=1 first, 19 Oct 2026).
 (function(){
-  const MVB=/[?&]beta=1/.test(location.search); // TEST: menu under the page band
+  const MVB=true; // new top layout, live (was beta=1)
   const CSS=
     '#brand-logo,#brand-logo2{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+

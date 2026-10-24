@@ -40,7 +40,7 @@
        '@media (prefers-reduced-motion: reduce){#pgband.fade{animation:none}}';
 
   /* LIVE: our own artwork drawn in code, behind the right side of the strip */
-  var MVB=/[?&]beta=1/.test(location.search); /* TEST: banner at the top */
+  var MVB=true; /* new top layout, live (was beta=1) */
   var BETA=true; /* scenes live for everyone since v8 */
   function rnd(seed){return function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}}
   function rock(cx,cy,r,n,seed,j){ /* lumpy closed outline, smoothed through mid-points */
