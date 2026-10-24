@@ -14,6 +14,7 @@
     '@media (max-width:600px){header h1.brand{font-size:24px;gap:10px}#brand-logo,#brand-logo2{width:50px;height:50px}}';
   const GRP={S:'Fleet',C:'Fleet',P:'Logistics',V:'Logistics',J:'Logistics',A:'Asteroids',X:'Asteroids',F:'Asteroids',
     B:'Buildings',T:'Buildings',L:'Buildings',K:'Trading',Y:'Trading',M:'Trading',R:'Planners',Q:'Planners'};
+  const TT=/[?&]beta=1/.test(location.search);
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   // returns [before, highlighted word(s), after]
   function title(){
@@ -24,6 +25,8 @@
     if(k==='N'||!b)return ['Quartermaster Skippy\'s','Command','Deck'];
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
+    // New titles (beta): "Your <Page>", no group word, no doubles
+    if(TT){const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Asteroid Planner'};if(NM[k])return ['Your',NM[k],''];}
     // Trading and Planners read better without the group word
     if(k==='R')return ['Your','Travel Planner',''];
     if(GRP[k]==='Trading'||GRP[k]==='Planners')return ['Your',name,''];
