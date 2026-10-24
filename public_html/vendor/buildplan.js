@@ -48,7 +48,8 @@ export function drawBuildPlan(m){
   const nm=id=>(PX[id]&&PX[id][0])||('Product '+id);
   const plur=(n,b)=>n>1?n+' '+(/y$/.test(b)?b.slice(0,-1)+'ies':b+'s'):(n+' '+b);
   let [bName,inp]=BLDS[S.bld],N=Math.max(1,Math.min(999,Math.round(S.n)||1)),bLab=N>1?N+' '+(/y$/.test(bName)?bName.slice(0,-1)+'ies':bName+'s'):bName;
-  const bKeys=Object.keys(BLDS).sort((x,y)=>BLDS[x][0].localeCompare(BLDS[y][0]));
+  /* build order: what you usually need first */
+  const BORD=[2,1,10,3,5,4,6,7,8,9],bKeys=Object.keys(BLDS).sort((x,y)=>{const i=BORD.indexOf(+x),j=BORD.indexOf(+y);return(i<0?99:i)-(j<0?99:j)});
   if(MU){const sel=bKeys.filter(k=>(S.cnt[k]||0)>0);inp={};sel.forEach(k=>{const c=S.cnt[k];for(const id in BLDS[k][1])inp[id]=(inp[id]||0)+BLDS[k][1][id]*c});N=1;
     bName=sel.length===1?BLDS[sel[0]][0]:'buildings';bLab=sel.map(k=>plur(S.cnt[k],BLDS[k][0])).join(', ')||'nothing yet'}
   const pickHTML=MU?'<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="bimg.php?t='+k+'" alt="" data-hide><span>'+esc(BLDS[k][0])+'</span><input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+'<button id="bpClr" type="button">Clear all</button></div>':'';
