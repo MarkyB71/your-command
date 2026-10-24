@@ -188,7 +188,10 @@
         if (a && b) routes = [[a, b], [b, a]];          // the trip and the way back
       }
       const btn = '<button class="lwb" id="lwAll">' + (W.all ? 'Show just one trip' : 'Show all trips') + '</button>';
-      let h = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h3>🚀 Launch windows – next 30 days</h3>' + btn + '</div>';
+      let h = '<div class="note" style="padding:0 0 12px">Trip times in the table are coloured by how good leaving <b>now</b> is: ' +
+        '<b style="color:hsl(130,80%,62%)">green</b> = about as quick as it gets in the next 30 days, ' +
+        '<b style="color:hsl(0,80%,62%)">red</b> = slow now, a better time is coming.</div>' +
+        '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h3>🚀 Launch windows – next 30 days</h3>' + btn + '</div>';
       if (!routes.length) {
         h += '<div class="note" style="padding:4px 0">Click a trip time in the table above to see the best times to leave.</div>';
         box.innerHTML = h; box.querySelector('#lwAll').onclick = () => { W.all = true; show(); }; return;
@@ -210,20 +213,40 @@
       (async () => {
         for (const [a, b] of routes) {
           const key = a.id + '_' + b.id;
-          if (!strips[key]) {
-            const v = [];
-            for (let i = 0; i < n; i++) {
-              if (me !== run || mine !== wrun || !m.isConnected) return;
-              v.push(await quick(T, a.o, b.o, now + i * WSTEP, reach(b)));
-              if (i % 6 === 5) await new Promise(r => setTimeout(r, 0));
-            }
-            strips[key] = v;
-          }
-          if (mine !== wrun || !m.isConnected) return;
-          paint(key, strips[key]);
+          const v = await strip(a, b);
+          if (!v || mine !== wrun || !m.isConnected) return;
+          paint(key, v);
         }
       })();
     }
+    // Work out one route's 30 days once (shared by the chart and the table colours)
+    function strip(a, b) {
+      const key = a.id + '_' + b.id;
+      if (!strips[key]) strips[key] = (async () => {
+        const v = [];
+        for (let i = 0; i < n; i++) {
+          if (me !== run || !m.isConnected) { delete strips[key]; return null; }
+          v.push(await quick(T, a.o, b.o, now + i * WSTEP, reach(b)));
+          if (i % 6 === 5) await new Promise(r => setTimeout(r, 0));
+        }
+        return v;
+      })();
+      return strips[key];
+    }
+    // Colour each trip time in the table: how good leaving now is, compared with the next 30 days
+    (async () => {
+      for (const a of asts) for (const b of asts) {
+        if (a.id === b.id) continue;
+        const v = await strip(a, b);
+        if (!v || me !== run || !m.isConnected) return;
+        const td = m.querySelector('td[data-f="' + a.id + '"][data-t="' + b.id + '"]'), bt = td && td.querySelector('b');
+        const ok = v.filter(x => x !== null); if (!bt || !ok.length || v[0] === null) continue;
+        const lo = Math.min(...ok), hi = Math.max(...ok), f = hi > lo ? (v[0] - lo) / (hi - lo) : 0;
+        bt.style.color = 'hsl(' + Math.round(130 - 130 * f) + ',80%,62%)';
+        bt.style.fontSize = '17px';
+        bt.title = f <= 0.15 ? 'Good time to go' : f >= 0.7 ? 'Slow right now – better times coming' : 'OK right now';
+      }
+    })();
     function paint(key, v) {
       const ok = v.filter(x => x !== null), lo = Math.min(...ok), hi = Math.max(...ok);
       m.querySelector('#lw' + key).innerHTML = v.map((x, i) => {
