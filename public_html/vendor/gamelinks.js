@@ -36,7 +36,12 @@
     'line-height:18px;text-decoration:none;vertical-align:middle}' +
     'a.yicg:hover{background:#12384a;color:#fff;box-shadow:0 0 8px #3fb8ff}';
   // Install button + panel (test: ?beta=1). Sits just after "Play Influence".
-  var BCSS = '#cdx{color:#d8f7ff!important;font-weight:700}' +
+  var BCSS = '#cdx{color:#d8f7ff!important;font-weight:700;border-color:#8fe3ff!important;' +
+    'box-shadow:0 0 8px rgba(143,227,255,.95),0 0 22px rgba(91,157,255,.75);' +
+    'text-shadow:0 0 8px rgba(143,227,255,.9);animation:playGlow 2.4s ease-in-out infinite}' +
+    '#cdx:hover,#cdx:focus-visible{color:#fff!important;animation:none;' +
+    'box-shadow:0 0 14px rgba(200,245,255,1),0 0 40px rgba(91,157,255,1)!important;text-shadow:0 0 10px #fff}' +
+    '@media (prefers-reduced-motion:reduce){#cdx{animation:none}}' +
     '#cdxp{display:none;position:fixed!important;z-index:99999!important;left:50%;top:50%;transform:translate(-50%,-50%);' +
     'width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;background:#0d1520;' +
     'border:1px solid #2b5a72;border-radius:12px;padding:18px 20px;box-shadow:0 0 30px rgba(63,184,255,.35);color:#dbe7f5;font-size:15px;line-height:1.5}' +
