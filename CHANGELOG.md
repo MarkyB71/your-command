@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 327 – 24 Oct 2026 – Asteroid planner: one building type updates instantly; with two or more, set the counts then press Calculate (no more delay on every click)
+
 ## Version 323 – 24 Oct 2026 – Travel: crewed asteroids + chosen trip outlined
 - Travel shows only asteroids with a crew on them; a "Show all asteroids" button brings the rest back.
 - Clicking a trip outlines it in the table (glowing blue), with the way back dashed.
