@@ -2,6 +2,10 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 323 – 24 Oct 2026 – Travel: crewed asteroids + chosen trip outlined
+- Travel shows only asteroids with a crew on them; a "Show all asteroids" button brings the rest back.
+- Clicking a trip outlines it in the table (glowing blue), with the way back dashed.
+
 ## Version 319 – 24 Oct 2026 – Asteroid planner: several buildings at once + Travel: launch windows
 - Asteroid planner: a tile with a count box for every building, in game build order (Extractor, Warehouse, Tank Farm, Refinery, Factory, Spaceport, Habitat, Shipyard, Bioreactor, Marketplace); the whole plan adds them all up. Clear all button. Tidier layout (fly in wraps, wider materials table).
 - Travel: "Launch windows – next 30 days" chart for the clicked trip and the way back (green = best time to leave, red = slow), Show all trips button; table trip times coloured by how good leaving now is.
