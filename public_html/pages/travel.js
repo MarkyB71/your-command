@@ -7,7 +7,7 @@
   'use strict';
 
   // Chosen options (kept while you move between pages)
-  const S = { ship: null, prop: 'full', cargo: 'empty', leave: 0 };
+  const S = { ship: null, prop: 'full', cargo: 'empty', leave: 0, allAst: false };
   let run = 0;   // stops an old calculation when the page redraws
 
   const TYPE_NAME = { 2: 'Light Transport', 3: 'Heavy Transport', 4: 'Shuttle' };
@@ -55,7 +55,7 @@
     '.lw .b{width:190px;flex:none;font-size:12px;color:#9aa8bb}.lw .ok{color:#3fd68a;font-weight:bold}' +
     '.lw .ax{display:flex;margin-left:258px;margin-right:198px;font-size:11px;color:#9aa8bb;justify-content:space-between}' +
     '.lw .g{margin:10px 0 4px;font-weight:bold;color:#8fe3ff}' +
-    '.lw .lwb{padding:5px 12px;border-radius:6px;border:1px solid #5fc3e4;background:#14202c;color:#8fe3ff;cursor:pointer;font-weight:bold}' +
+    '.lwb{padding:5px 12px;border-radius:6px;border:1px solid #5fc3e4;background:#14202c;color:#8fe3ff;cursor:pointer;font-weight:bold}' +
     '@media(max-width:700px){.lw .n{width:110px}.lw .b{display:none}.lw .ax{margin-left:118px;margin-right:0}}</style>';
 
   function drawTravel(m) {
@@ -65,6 +65,14 @@
       .map(a => ({ id: a.id, name: (a.Name && a.Name.name) || ('Asteroid #' + a.id), o: a.Orbit }))
       .sort((a, b) => a.name.localeCompare(b.name));
     if (asts.length < 2) { m.innerHTML = '<div class="note">You need at least two asteroids for a travel table.</div>'; return; }
+    // Test: only asteroids with a crew on them (a button shows them all)
+    let hidden = 0;
+    if (WIN) {
+      const crewed = new Set((D.crewsRaw || []).filter(c => ((c.Crew && c.Crew.roster) || []).length)
+        .map(c => ((((c.Location || {}).locations) || []).find(x => x.label === 3) || {}).id).filter(Boolean));
+      const few = asts.filter(a => crewed.has(a.id));
+      if (!S.allAst && few.length >= 2) { hidden = asts.length - few.length; asts.splice(0, asts.length, ...few); }
+    }
 
     // Ship choices: your transports and shuttles, plus generic ones
     const ships = (D.ships || []).filter(s => s.st >= 2 && s.st <= 4).sort((a, b) => a.name.localeCompare(b.name));
@@ -78,11 +86,12 @@
     const sel = (id, cur, list) => '<select id="' + id + '">' + list.map(([v, t]) =>
       '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select>';
 
-    let h = '<div class="bar" style="margin:0 0 10px">' +
+    let h = (WIN ? WIN_CSS : '') + '<div class="bar" style="margin:0 0 10px">' +
       'Ship ' + sel('trS', S.ship, opts) +
       ' Propellant ' + sel('trP', S.prop, [['full', 'Full tank'], ['now', 'What it has now']]) +
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
-      ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) + '</div>';
+      ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
+      (WIN && (hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + '</div>';
 
     const ref = WIN ? refuelMap(Y, D, asts) : null;
     if (WIN) {
@@ -98,7 +107,7 @@
       '<div class="note" style="padding:10px 0 0">Quickest trip leaving at the chosen time, worked out the same way as the game\'s route planner ' +
       '(1 game day = 1 real hour). The fastest in each row is highlighted. Small grey figure = distance between the two asteroids right now. ' +
       'Food, emergency mode and waiting for a better launch window are not included.</div>';
-    if (WIN) h += WIN_CSS + '<div class="lw" id="trW"></div>';
+    if (WIN) h += '<div class="lw" id="trW"></div>';
     m.innerHTML = h;
 
     // Changing an option redraws the page
@@ -107,6 +116,8 @@
       S[keyOf[id]] = id === 'trL' ? +e.target.value : e.target.value;
       drawTravel(m);
     }));
+
+    const ab = m.querySelector('#trAll'); if (ab) ab.onclick = () => { S.allAst = !S.allAst; drawTravel(m); };
 
     // Ship figures
     let st = 2, variant = 1, mates = null, propKg = 0, cargoKg = 0, label;
