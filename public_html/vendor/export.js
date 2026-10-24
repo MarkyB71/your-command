@@ -93,7 +93,7 @@
     const old = document.getElementById('yic-print'); if (old) old.remove();
     const f = document.createElement('iframe');
     f.id = 'yic-print'; f.setAttribute('aria-hidden', 'true');
-    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    f.style.cssText = 'position:fixed!important;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
     f.onload = () => {
       const w = f.contentWindow, go = () => { try { w.focus(); w.print(); } catch (x) {} };
       const fr = w.document.fonts; (fr && fr.ready ? Promise.race([fr.ready, new Promise((r) => setTimeout(r, 2500))]) : Promise.resolve()).then(() => setTimeout(go, 150));
@@ -109,7 +109,7 @@
     if (p) { p.remove(); return; }
     if (!document.getElementById('dlp-css')) {
       const st = document.createElement('style'); st.id = 'dlp-css';
-      st.textContent = '#dlp{position:fixed;z-index:60;background:var(--panel,#0f141c);border:1px solid #5fc3e4;border-radius:8px;padding:10px;box-shadow:0 0 16px rgba(95,195,228,.35),0 8px 20px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:8px;min-width:230px}' +
+      st.textContent = '#dlp{position:fixed!important;z-index:99999!important;background:var(--panel,#0f141c);border:1px solid #5fc3e4;border-radius:8px;padding:10px;box-shadow:0 0 16px rgba(95,195,228,.35),0 8px 20px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:8px;min-width:230px}' +
         '#dlp .t{color:#8fe3ff;font-weight:600;font-size:13px}#dlp .s{color:#8b9ab0;font-size:12px;margin-top:-4px}#dlp button{text-align:left;padding:8px 10px}#dlp button small{display:block;color:#8b9ab0;font-size:11px}';
       document.head.appendChild(st);
     }
