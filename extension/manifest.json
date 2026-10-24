@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Skippy's Command Deck",
-  "version": "0.2.0",
-  "description": "Opens buildings, lots and ships from your-command.adalia.academy in your open Influence game tab, without reloading the game.",
+  "version": "0.3.0",
+  "description": "Opens buildings, lots, ships and crews from Skippy's Command Deck in your open Influence game tab without reloading. Click the icon to jump back to the Command Deck.",
   "permissions": [
     "scripting"
   ],
   "host_permissions": [
-    "https://game.influenceth.io/*"
+    "https://game.influenceth.io/*",
+    "https://your-command.adalia.academy/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -24,8 +25,7 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "Skippy's Command Deck",
+    "default_title": "Skippy's Command Deck – back to your Command Deck",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

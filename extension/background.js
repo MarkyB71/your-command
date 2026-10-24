@@ -9,8 +9,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (!msg || msg.type !== 'yic-open' || typeof msg.path !== 'string' || !OK.test(msg.path)) {
     reply({ ok: false, error: 'bad request' }); return;
   }
-  // Messages come from the popup (no tab) or from our site's page only.
-  if (sender.tab && sender.origin !== SITE) { reply({ ok: false, error: 'not allowed' }); return; }
+  // Messages come from our site's page only.
+  if (!sender.tab || sender.origin !== SITE) { reply({ ok: false, error: 'not allowed' }); return; }
   openInGame(msg.path).then(reply, e => reply({ ok: false, error: String(e) }));
   return true; // reply later
 });
@@ -35,3 +35,12 @@ async function openInGame(path) {
   });
   return { ok: true, mode: 'same-tab' };
 }
+
+// Toolbar icon: jump back to the Command Deck tab (or open it if none).
+chrome.action.onClicked.addListener(async () => {
+  const tabs = await chrome.tabs.query({ url: SITE + '/*' });
+  if (!tabs.length) { await chrome.tabs.create({ url: SITE + '/' }); return; }
+  const t = tabs.find(x => x.active) || tabs[0];
+  await chrome.tabs.update(t.id, { active: true });
+  await chrome.windows.update(t.windowId, { focused: true });
+});
