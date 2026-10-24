@@ -99,7 +99,7 @@ export function drawBuildPlan(m){
   const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
   /* TEST (CANB): what each building needs for ONE of it on this asteroid */
   const ucB={},canBadge=k=>{const need=BLDS[k][1],sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
-    if(!sh.length)return'<em class="bp-cb ok">✓ In stock</em>';
+    if(!sh.length){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
     const E=expand(stk,canMine,sh,ucB),fl=Object.keys(E.fly).filter(x=>vis(E.fly,x)),nf=Object.keys(E.fac).filter(t=>!myFac(t));
     if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(nm).join(', '))+'">✈ Fly some in</em>';
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
