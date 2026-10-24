@@ -9,7 +9,7 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
-const FB=/[?&]beta=1/.test(location.search); /* TEST: make on site instead of flying in when it can be fully made here */
+const FB=true; /* make on site instead of flying in + new layout – LIVE (was ?beta=1 only) */
 const MB=true; /* 'Make it here?' column in the materials table – LIVE (was ?beta=1 only) */
 const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
