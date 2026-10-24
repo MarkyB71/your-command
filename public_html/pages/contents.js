@@ -25,7 +25,7 @@
         if (!shown.length) return '';
 
         return '<div class="card"><div style="display:flex;align-items:center;margin-bottom:4px">' + bthumb(b.type, 64, 48) +
-          '<h3 style="margin:0">' + esc(b.name) + '</h3></div>' +
+          '<h3 style="margin:0">' + esc(b.name) + (window.GL ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + '</h3></div>' +
           '<div class="t">' + esc(b.type) + (b.crew ? ' · ' + esc(b.crew) : '') + '</div>' +
           fullBar(b.fill, fmtT) +
           '<table>' + shown.map(p => '<tr><td>' + ricon(p, 22) + esc(pn(p)) + '</td><td class="num">' + fmt(p, b.items[p]) + '</td></tr>').join('') +

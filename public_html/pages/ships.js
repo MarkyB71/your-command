@@ -48,7 +48,7 @@
           (CMC[k] ? '<span class="cob-c" style="color:' + col + '">' + esc(CMC[k]) + '</span>' : '') + '</div>';
       }).join('');
       (by[loc.id] = by[loc.id] || []).push('<div class="cob">' +
-        '<div class="cob-h"><span class="cob-t">👥 ' + esc(nm) + '</span>' +
+        '<div class="cob-h"><span class="cob-t">👥 ' + esc(nm) + (window.GL ? window.GL('/crew/' + c.id, 'Open this crew in the game') : '') + '</span>' +
         (food != null ? '<span class="cob-f" title="Food ' + Math.round(food * 100) + '%"><i style="width:' + Math.round(food * 100) + '%;background:' + fc + '"></i></span>' : '') +
         '</div><div class="cob-r">' + faces + '</div></div>');
     });
@@ -102,7 +102,7 @@
     const shipCell = '<td><a href="' + pic + '" target="_blank" title="Open picture" ' +
       'style="display:inline-block;width:72px;height:54px;vertical-align:middle;margin-right:10px;' +
       'border-radius:4px;background:#000 url(' + pic + '&s=1) no-repeat 50% 42%/170% auto"></a>' +
-      esc(x.name) + '</td>';
+      esc(x.name) + (window.GL ? window.GL('/ship/' + x.id, 'Open this ship in the game') : '') + '</td>';
 
     const typeCell = '<td class="cls">' + esc(x.type) +
       (x.sv > 1 ? '<br><span style="color:var(--accent)">' + esc(VARIANTS[x.sv] || ('Variant ' + x.sv)) + '</span>' : '') +

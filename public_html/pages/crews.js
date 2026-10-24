@@ -81,7 +81,7 @@
     const pct = Math.round((c.food || 0) * 100);
     return '<div class="crewcard" style="border:1px solid #2a3648;border-radius:10px;padding:10px 12px;margin:0 0 12px;background:#0b1018">' +
       '<div style="display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:center;margin:0 0 10px">' +
-      '<b style="font-size:16px">' + esc(c.name) + ' <span class="cls" style="font-weight:normal">#' + esc(c.id) + '</span></b>' +
+      '<b style="font-size:16px">' + esc(c.name) + ' <span class="cls" style="font-weight:normal">#' + esc(c.id) + '</span>' + (window.GL ? window.GL('/crew/' + c.id, 'Open this crew in the game') : '') + '</b>' +
       '<span><span class="cls">Asteroid</span> ' + esc(c.ast || '–') + '</span>' +
       '<span><span class="cls">Where</span> ' + esc(c.place) + '</span>' +
       '<span><span class="cls">Food</span> <span style="display:inline-block;width:60px;height:6px;background:#232b38;vertical-align:middle;margin:0 6px">' +

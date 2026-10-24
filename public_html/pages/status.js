@@ -57,7 +57,7 @@
 
       const s = jobs.some(j => j.s === 'run') ? 'run' : jobs.some(j => j.s === 'done') ? 'done' : 'idle';
       const fin = Math.min(...jobs.filter(j => j.fin).map(j => j.fin), Infinity);
-      if (okQ(name, BT[bt], crew, ...jobs.map(j => j.what + ' ' + j.out), STATE[s][1])) g.prod.push({ name, type: BT[bt], crew, s, jobs, fin });
+      if (okQ(name, BT[bt], crew, ...jobs.map(j => j.what + ' ' + j.out), STATE[s][1])) g.prod.push({ id: b.id, name, type: BT[bt], crew, s, jobs, fin });
     });
 
     const aKeys = Object.keys(groups).sort();
@@ -90,7 +90,7 @@
   function row(x, Y, now) {
     const esc = Y.esc;
     const js = x.jobs.filter(j => j.s !== 'idle' || j.what);
-    return '<tr><td>' + dot(x.s) + '</td><td>' + Y.bthumb(x.type, 56, 42) + esc(x.name) + '</td>' +
+    return '<tr><td>' + dot(x.s) + '</td><td>' + Y.bthumb(x.type, 56, 42) + esc(x.name) + (window.GL ? window.GL('/building/' + x.id, 'Open this building in the game') : '') + '</td>' +
       '<td class="cls">' + esc(x.type) + '</td><td class="cls">' + esc(x.crew) + '</td>' +
       '<td style="white-space:normal">' + (js.map(j => esc(j.what)).join('<br>') || '–') + '</td>' +
       '<td class="cls" style="white-space:normal">' + js.map(j => esc(j.out || '')).join('<br>') + '</td>' +
