@@ -59,7 +59,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .dn .pc-tog{text-align:center}
 .pc-foc{cursor:pointer;color:#ffd24a;font-size:14px;text-align:center;user-select:none;margin-top:2px}.pc-foc:hover{text-decoration:underline}
 .pc-trail{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:17px;margin:0 0 10px;padding:8px 12px;background:#121a26;border:1px solid #6b5a1c;border-radius:8px}
-.pc-trail .pc-up{margin-left:auto;font-size:15px}.pc-trail .pc-up+.pc-full{margin-left:6px}.pc-back{color:#ffd24a;border-color:#6b5a1c}.pc-back:disabled{opacity:.4;cursor:default}.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
+.pc-trail .pc-up{margin-left:auto;font-size:15px}.pc-trail .pc-up+.pc-full{margin-left:6px}.pc-back{color:#ffd24a;border-color:#6b5a1c}.pc-back:disabled{opacity:.4;cursor:default}.pc-bar .pc-back.big{background:#ffd24a;color:#1a1300;border:2px solid #ffe58a;font-weight:700;font-size:17px;padding:7px 16px;box-shadow:0 0 12px rgba(255,210,74,.6)}.pc-bar .pc-back.big:hover{box-shadow:0 0 18px rgba(255,210,74,.9)}.pc-bar .pc-back.big:disabled{background:#3a3320;color:#9a8a50;border-color:#6b5a1c;box-shadow:none}.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
 .pc-bar.stick{position:sticky!important;z-index:50;background:#0b1018;padding:8px 0;margin-top:0;box-shadow:0 6px 10px -6px rgba(0,0,0,.8)}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
@@ -91,7 +91,7 @@ const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
-const BK=true,HS=[]; /* BK = Back button (live) */
+const BK=true,HS=[],BKV=/[?&]beta=1/.test(location.search); /* BK = Back button (live) */
 const snap=()=>{if(!BK)return;HS.push({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},closed:new Set(S.closed),opened:new Set(S.opened),all:S.all,foc:S.foc||null,y:scrollY});if(HS.length>50)HS.shift()};
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -156,7 +156,7 @@ export function drawChain(m){
   const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(TEST?Object.keys(users):[]).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
     (TEST?[['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]]:[['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000],['Products',x=>x<1000]]).forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
-  const backBtn=()=>{if(!BK)return document.createTextNode('');const b=el('button','pc-back','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
+  const backBtn=()=>{if(!BK)return document.createTextNode('');const b=el('button',BKV?'pc-back big':'pc-back','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
     b.addEventListener('click',()=>{const h=HS.pop();if(!h)return;tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))});return b};
   const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){snap();S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
@@ -203,7 +203,7 @@ export function drawChain(m){
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
-    [backBtn(),modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
+    (BKV?[modeSw(),l1,b2,backBtn()]:[backBtn(),modeSw(),l1,b2]).forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
     const w=el('div','pc-wrap'+(DN?' dn':'')),inner=DN?el('div','pc-in'):w;inner.appendChild(unode(S.prod,[],'u',0,null));if(DN)w.appendChild(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
@@ -222,7 +222,7 @@ export function drawChain(m){
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(BETA2&&S.prod<1000)l2.appendChild(document.createTextNode(' each'));
-    [backBtn(),modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
+    (BKV?[modeSw(),l1,l2,b1,b2,backBtn()]:[backBtn(),modeSw(),l1,l2,b1,b2]).forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
