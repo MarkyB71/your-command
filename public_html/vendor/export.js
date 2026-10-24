@@ -114,7 +114,7 @@
       document.head.appendChild(st);
     }
     p = document.createElement('div'); p.id = 'dlp';
-    p.innerHTML = '<div class="t">Download your full list</div><div class="s">Stock, buildings, crews and ships</div>' +
+    p.innerHTML = '<div class="t">Download your Command Deck</div><div class="s">Stock, buildings, crews and ships</div>' +
       '<button data-dl="csv">📊 Spreadsheet (CSV)<small>Opens in Numbers or Excel</small></button>' +
       '<button data-dl="pdf">📄 PDF<small>Choose "Save as PDF" in the print window</small></button>';
     document.body.appendChild(p);
