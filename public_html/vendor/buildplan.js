@@ -16,7 +16,7 @@ const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{}};
-const CB=/[?&]beta=1/.test(location.search); /* TEST: with 2+ building types, wait for a Calculate button instead of redrawing on every click */
+const CB=true; /* with 2+ building types, wait for a Calculate button instead of redrawing on every click – LIVE (was ?beta=1 only) */
 const MU=true; /* plan several buildings at once (a count for each) – LIVE (was ?beta=1 only) */
 let run=0;const memo={};
 
