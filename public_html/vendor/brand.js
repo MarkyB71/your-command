@@ -1,7 +1,7 @@
 // Site logo + header style (our own artwork – not the Influence logo).
 // LIVE for everyone (tested on ?beta=1 first, 19 Oct 2026).
 (function(){
-  const SRB=/[?&]beta=1/.test(location.search); // TEST: search on the menu row
+  const SRB=true; // search on the menu row, live (was beta=1)
   const INF=true; // Updated/wallet on the menu row + search in the banner, live (was beta=1)
   const MVB=true; // new top layout, live (was beta=1)
   const CSS=
