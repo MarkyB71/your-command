@@ -35,6 +35,66 @@
     'color:#8fe3ff;border:1px solid #2b5a72;border-radius:10px;padding:0 7px;margin-left:6px;' +
     'line-height:18px;text-decoration:none;vertical-align:middle}' +
     'a.yicg:hover{background:#12384a;color:#fff;box-shadow:0 0 8px #3fb8ff}';
+  // Install button + panel (test: ?beta=1). Sits just after "Play Influence".
+  var BCSS = '#cdx{color:#d8f7ff!important;font-weight:700}' +
+    '#cdxp{display:none;position:fixed!important;z-index:99999!important;left:50%;top:50%;transform:translate(-50%,-50%);' +
+    'width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;background:#0d1520;' +
+    'border:1px solid #2b5a72;border-radius:12px;padding:18px 20px;box-shadow:0 0 30px rgba(63,184,255,.35);color:#dbe7f5;font-size:15px;line-height:1.5}' +
+    '#cdxp h3{margin:0 0 8px;color:#8fe3ff;font-size:18px;padding-right:24px}' +
+    '#cdxp ol{margin:8px 0 10px 20px;padding:0}#cdxp li{margin:4px 0}' +
+    '#cdxp code{background:#161d27;padding:1px 6px;border-radius:5px;color:#ffd24a}' +
+    '#cdxp .x{position:absolute;top:8px;right:12px;background:none;border:0;color:#9aa8bb;font-size:20px;cursor:pointer}' +
+    '#cdxp .dl{display:inline-block;margin:6px 0;padding:8px 14px;border-radius:8px;background:#1f6feb;color:#fff;font-weight:700;text-decoration:none}' +
+    '#cdxp .ok{color:#4cd04c;font-weight:700}#cdxp .s{color:#9aa8bb;font-size:13px}';
+  function panel() {
+    var have = !!document.documentElement.dataset.yicGameExt;
+    return '<button class="x" type="button" title="Close">✕</button>' +
+      '<h3>Skippy\'s Command Deck extension</h3>' +
+      (have ? '<div class="ok">✓ Installed – the "in game ↗" links are switched on.</div>' : '') +
+      '<p>Adds <b>in game ↗</b> links to this site. Click one and your open Influence game tab jumps straight to that building, lot, ship, crew or asteroid – <b>no reload, no PLAY screen</b>.</p>' +
+      '<p class="s">It only works on this site and the game site, only moves the game\'s view, and never touches your wallet. Not from the Chrome Web Store (yet), so it\'s your choice whether to install it.</p>' +
+      '<a class="dl" href="downloads/skippys-command-deck.zip" download>⬇ Download the extension</a>' +
+      '<p><b>To install</b> (Chrome, Brave or Edge on a computer):</p><ol>' +
+      '<li>Double-click the download to unzip it.</li>' +
+      '<li>Type <code>chrome://extensions</code> in the address bar (Brave: <code>brave://extensions</code>, Edge: <code>edge://extensions</code>).</li>' +
+      '<li>Switch on <b>Developer mode</b> (top right).</li>' +
+      '<li>Click <b>Load unpacked</b> and choose the <b>skippys-command-deck</b> folder.</li>' +
+      '<li>Reload this page.</li></ol>' +
+      '<p class="s">To update later: download again, replace the folder, then click the ↻ reload arrow on the extension.</p>';
+  }
+  function installTick() {
+    if (!TEST) return;
+    if (!document.getElementById('cdx-css') && document.head) {
+      var st = document.createElement('style'); st.id = 'cdx-css'; st.textContent = BCSS; document.head.appendChild(st);
+    }
+    var play = document.getElementById('play');
+    if (play && !document.getElementById('cdx')) {
+      var b = document.createElement('button');
+      b.id = 'cdx'; b.type = 'button';
+      b.title = 'Install the extension that opens things in your game without reloading';
+      var p = document.createElement('div'); p.id = 'cdxp';
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        p.innerHTML = panel();
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+      });
+      p.addEventListener('click', function (e) {
+        if (e.target.classList.contains('x')) p.style.display = 'none';
+        e.stopPropagation();
+      });
+      document.addEventListener('click', function () { p.style.display = 'none'; });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') p.style.display = 'none'; });
+      play.after(b);
+      document.body.appendChild(p);
+    }
+    var bt = document.getElementById('cdx');
+    if (bt) {
+      var t = document.documentElement.dataset.yicGameExt ? '✓ Command Deck' : '⬇ Command Deck';
+      if (bt.textContent !== t) bt.textContent = t;
+    }
+  }
+  setInterval(installTick, 700);
+
   setInterval(function () {
     if (!on() || document.getElementById('yicg-css')) return;
     var s = document.createElement('style');

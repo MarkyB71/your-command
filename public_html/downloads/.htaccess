@@ -1,0 +1,8 @@
+# Allow the Skippy's Command Deck extension download (the main .htaccess blocks .zip files).
+Options -Indexes
+<FilesMatch "^skippys-command-deck\.zip$">
+  Require all granted
+  <IfModule mod_headers.c>
+    Header set Content-Disposition "attachment; filename=skippys-command-deck.zip"
+  </IfModule>
+</FilesMatch>
