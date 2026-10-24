@@ -734,6 +734,7 @@ function draw(){
 const FCSV=/[?&]beta=1/.test(location.search);
 function csvAll(){const cols=asts.map((a,i)=>i);const r=allP.map(p=>{const v=cols.map(i=>tot[i][p]||0);return{p,v,total:v.reduce((x,y)=>x+y,0)}}).filter(x=>x.total>0);r.sort((x,y)=>pn(x.p).localeCompare(pn(y.p)));return{r,cols}}
 function csv(){
+ if(FCSV&&window.YICX){window.YICX($('#csv'));return}
  const{r,cols}=FCSV?csvAll():rows();const c=v=>{let t=String(v);if(/^[=+\-@\t\r]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'};
  const unit=p=>isAt(p)?'units':'tonnes';const val=(p,a)=>isAt(p)?a:+(kg(p,a)/1000).toFixed(3);
  let s=['Product','Type','Unit',...cols.map(i=>asts[i].name),'Total'].map(c).join(',')+'\n';
