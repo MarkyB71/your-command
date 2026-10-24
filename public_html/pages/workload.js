@@ -58,7 +58,7 @@
         type = APP.BT[bt] || 'Building',
         name = (b.Name && b.Name.name) || type + ' #' + b.id,
         crew = (APP.D.crewN || {})[b.Control && b.Control.controller && b.Control.controller.id] || '';
-      const r = (lvl, what, t) => ({ lvl, what, t: t || 0, a, name, type, crew, pic: type });
+      const r = (lvl, what, t) => ({ lvl, what, t: t || 0, a, name, type, crew, pic: type, gp: '/building/' + b.id });
       if (st === 2) {
         if (B.finishTime && B.finishTime <= now)
           add('build', r(2, 'Construction finished – ready to complete', B.finishTime));
@@ -148,6 +148,7 @@
         a: c.ast,
         name: c.name,
         type: 'Crew',
+        gp: '/crew/' + c.id,
         crew: c.mates + ' crewmate' + (c.mates > 1 ? 's' : ''),
       });
     });
@@ -195,6 +196,7 @@
           'Lot #' + x.lot.toLocaleString() + (x.b.length ? ' · ' + x.b.map((b) => b.name).join(', ') : ''),
         type: 'Lot',
         crew: x.crew,
+        gp: '/lot/' + x.id,
       });
     });
     const BETA = true;
@@ -249,6 +251,7 @@
             crew: r[3][3] ? 'You (' + nm(r[3])[0] + ')' : 'Another player',
             pic: ty === 'Ship' ? '' : ty,
             ship: ty === 'Ship' ? 1 : 0,
+            gp: (r[4][0] === 6 ? '/ship/' : '/building/') + r[4][1],
           });
         });
       }
@@ -269,6 +272,7 @@
         type: s.type,
         crew: (APP.D.crewN || {})[s.crewId] || '',
         ship: 1,
+        gp: '/ship/' + s.id,
       });
     });
     const SEC = [
@@ -411,6 +415,7 @@
             (x.html ||
               APP.esc(x.name || '') +
                 (x.pic || x.ship ? ' <span class="a">· ' + APP.esc(x.type) + '</span>' : '')) +
+            (x.gp && window.GL ? window.GL(x.gp, 'Open in the game') : '') +
             '</td><td class="cls">' +
             APP.esc(x.a || '') +
             '</td><td class="cls">' +
