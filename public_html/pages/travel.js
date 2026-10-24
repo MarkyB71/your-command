@@ -12,6 +12,30 @@
 
   const TYPE_NAME = { 2: 'Light Transport', 3: 'Heavy Transport', 4: 'Shuttle' };
 
+  // Launch windows chart (test: ?beta=1 only)
+  const WIN = /[?&]beta=1/.test(location.search);
+  const WDAYS = 30, WSTEP = 12;                       // next 30 days, a sample every 12 hours
+  const TOFS = [];                                    // trip lengths tried: every hour to 2 days, then coarser
+  for (let t = 1; t <= 48; t++) TOFS.push(t);
+  for (let t = 54; t <= 96; t += 6) TOFS.push(t);
+  for (let t = 108; t <= 365; t += 12) TOFS.push(t);
+  // Quickest trip (rounded to the steps above) within the ship's reach, or null
+  async function quick(T, a, b, dep, maxDv) {
+    for (const t of TOFS) { if ((await T.deltaV(a, b, dep, t)) <= maxDv) return t; }
+    return null;
+  }
+  // 0 = best in this route's 30 days (green) … 1 = worst (red)
+  const hue = f => 'hsl(' + Math.round(130 - 130 * f) + ',70%,' + (42 - 6 * f) + '%)';
+  const WIN_CSS = '<style>.lw{margin-top:22px}.lw h3{margin:0 0 4px}.lw .r{display:flex;align-items:center;gap:8px;margin:3px 0}' +
+    '.lw .n{width:250px;flex:none;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.lw .s{flex:1;display:flex;height:20px;border-radius:4px;overflow:hidden;background:#1a212c;position:relative}' +
+    '.lw .s i{flex:1;display:block;border-right:1px solid rgba(0,0,0,.25)}.lw .s i.x{background:#3a4352}' +
+    '.lw .s:after{content:"";position:absolute;left:0;top:-2px;bottom:-2px;width:3px;background:#fff;box-shadow:0 0 6px #fff}' +
+    '.lw .b{width:190px;flex:none;font-size:12px;color:#9aa8bb}.lw .ok{color:#3fd68a;font-weight:bold}' +
+    '.lw .ax{display:flex;margin-left:258px;margin-right:198px;font-size:11px;color:#9aa8bb;justify-content:space-between}' +
+    '.lw .g{margin:10px 0 4px;font-weight:bold;color:#8fe3ff}' +
+    '@media(max-width:700px){.lw .n{width:110px}.lw .b{display:none}.lw .ax{margin-left:118px;margin-right:0}}</style>';
+
   function drawTravel(m) {
     const Y = window.YIC, D = Y.D, esc = Y.esc;
 
@@ -46,6 +70,7 @@
       '<div class="note" style="padding:10px 0 0">Quickest trip leaving at the chosen time, worked out the same way as the game\'s route planner ' +
       '(1 game day = 1 real hour). The fastest in each row is highlighted. Small grey figure = distance between the two asteroids right now. ' +
       'Food, emergency mode and waiting for a better launch window are not included.</div>';
+    if (WIN) h += WIN_CSS + '<div class="lw" id="trW"></div>';
     m.innerHTML = h;
 
     // Changing an option redraws the page
@@ -101,7 +126,49 @@
         await new Promise(r => setTimeout(r, 0));
       }
       Object.values(best).forEach(x => { x.td.style.background = 'rgba(95,195,228,.15)'; });
+      if (WIN) await drawWindows(m, T, asts, maxDv, me, esc);
     }).catch(e => { info.innerHTML = 'Could not load the travel maths (' + esc((e && e.message) || e) + ').'; });
+  }
+
+  // One strip per route: each block = leaving at that time, coloured by how quick the trip is
+  async function drawWindows(m, T, asts, maxDv, me, esc) {
+    const box = m.querySelector('#trW'); if (!box) return;
+    const now = (Date.now() / 1000 - 1609459200) / 3600, n = WDAYS * 24 / WSTEP;
+    const ticks = [0, 5, 10, 15, 20, 25, 30].map(d => {
+      const t = new Date(Date.now() + d * 86400000);
+      return '<span>' + (d ? t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'Now') + '</span>';
+    }).join('');
+    let h = '<h3>🚀 Launch windows – next 30 days</h3><div class="note" style="padding:0 0 6px">Each strip is one route. ' +
+      'Green = a quick trip if you leave then, red = a slow one, grey = out of reach for this ship. ' +
+      'The white line is now. Hover a block for the trip time.</div><div class="ax">' + ticks + '</div>';
+    for (const a of asts) {
+      h += '<div class="g">From ' + esc(a.name) + '</div>';
+      for (const b of asts) if (a.id !== b.id) h += '<div class="r"><div class="n">→ ' + esc(b.name) + '</div>' +
+        '<div class="s" id="lw' + a.id + '_' + b.id + '"></div><div class="b" id="lb' + a.id + '_' + b.id + '">working out…</div></div>';
+    }
+    box.innerHTML = h;
+    for (const a of asts) for (const b of asts) {
+      if (a.id === b.id) continue;
+      const v = [];
+      for (let i = 0; i < n; i++) {
+        if (me !== run || !m.isConnected) return;
+        v.push(await quick(T, a.o, b.o, now + i * WSTEP, maxDv));
+        if (i % 6 === 5) await new Promise(r => setTimeout(r, 0));
+      }
+      const ok = v.filter(x => x !== null), lo = Math.min(...ok), hi = Math.max(...ok);
+      const fmtH = x => x >= 48 ? (x / 24).toFixed(1) + ' days' : x + ' h';
+      m.querySelector('#lw' + a.id + '_' + b.id).innerHTML = v.map((x, i) => {
+        const when = i ? 'Leave in ' + fmtH(i * WSTEP) : 'Leave now';
+        if (x === null) return '<i class="x" title="' + when + ': out of reach"></i>';
+        const f = hi > lo ? (x - lo) / (hi - lo) : 0;
+        return '<i style="background:' + hue(f) + '" title="' + when + ': about ' + fmtH(x) + ' flight"></i>';
+      }).join('');
+      const lb = m.querySelector('#lb' + a.id + '_' + b.id);
+      if (!ok.length) { lb.textContent = 'out of reach'; continue; }
+      const bi = v.indexOf(lo), cur = v[0];
+      lb.innerHTML = (cur !== null && cur <= lo * 1.15 ? '<span class="ok">✓ good now</span> · ' : '') +
+        'best: ' + (bi ? 'in ' + fmtH(bi * WSTEP) : 'now') + ', ~' + fmtH(lo);
+    }
   }
 
   window.PAGES = window.PAGES || {};
