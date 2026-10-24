@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 332 – 24 Oct 2026 – SkippyChain: big gold Back and Forward buttons, same size, centred above the top box (Made from and Used in)
+
 ## Version 327 – 24 Oct 2026 – Asteroid planner: one building type updates instantly; with two or more, set the counts then press Calculate (no more delay on every click)
 
 ## Version 323 – 24 Oct 2026 – Travel: crewed asteroids + chosen trip outlined

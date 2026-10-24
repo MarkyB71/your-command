@@ -91,7 +91,7 @@ const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math
 const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
-const BK=true,HS=[],BKV=/[?&]beta=1/.test(location.search); /* BK = Back button (live) */
+const BK=true,HS=[],BKV=true; /* BK = Back button (live) */
 const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},closed:new Set(S.closed),opened:new Set(S.opened),all:S.all,foc:S.foc||null,y:scrollY});const snap=()=>{if(!BK)return;HS.push(cap());if(HS.length>50)HS.shift();FS.length=0};
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
