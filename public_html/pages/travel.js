@@ -14,8 +14,8 @@
 
   // Launch windows chart (test: ?beta=1 only)
   const WIN = true; // LIVE (was ?beta=1 only)
-  const CRW = /[?&]beta=1/.test(location.search); // test: only asteroids with a crew
-  const HLT = /[?&]beta=1/.test(location.search); // test: outline the chosen trip in the table
+  const CRW = true; // LIVE: only asteroids with a crew (was ?beta=1 only)
+  const HLT = true; // LIVE: outline the chosen trip in the table (was ?beta=1 only)
   // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
   // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
   function canMake(Y, D, ast, prod, seen) {
