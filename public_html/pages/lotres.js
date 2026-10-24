@@ -180,17 +180,30 @@
         '</div>';
     }
     const BETA = true;
-    const GLB = false,
+    // Game links: only on ?beta=1 AND only when the "Your Command – Game Links"
+    // extension is installed (it marks the page with data-yic-game-ext).
+    const GLB = /[?&]beta=1/.test(location.search) && !!document.documentElement.dataset.yicGameExt,
       GAME = 'https://game.influenceth.io',
       gl = (p, t) =>
         GLB
           ? ' <a href="' +
             GAME +
             p +
+            '" data-yicg="' +
+            p +
             '" target="influencegame" title="' +
             t +
-            ' (reuses your game tab)" style="white-space:nowrap;font-size:12px;color:#8fe3ff">Open in game ↗</a>'
+            ' (moves your open game tab, no reload)" style="white-space:nowrap;font-size:12px;color:#8fe3ff">Open in game ↗</a>'
           : '';
+    if (GLB && !window.__yicgClick) {
+      window.__yicgClick = true;
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest && e.target.closest('a[data-yicg]');
+        if (!a || !document.documentElement.dataset.yicGameExt) return;
+        e.preventDefault();
+        window.postMessage({ type: 'yic-open', path: a.dataset.yicg }, location.origin);
+      });
+    }
     const mine = {};
     (APP.D.allB || []).forEach((b) => {
       const ls = (b.Location && b.Location.locations) || [],
