@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 298 – 24 Oct 2026 – Asteroid planner: "Make it here?" column in the materials table (✓ Yes / ◐ Partly – fly in … / ✗ No, with process, facilities and what to mine)
+
 ## Version 295 – 24 Oct 2026 – Asteroid planner: Fewest flights reworked
 - "First send" line at the top (no summary box), with a dropdown when more than one ship could go.
 - "Then send it" line at the bottom: ship, flight time, load, propellant used or what the trip would need (full tank time, max load, refuel).
