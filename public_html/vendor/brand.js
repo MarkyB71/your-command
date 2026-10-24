@@ -1,6 +1,7 @@
 // Site logo + header style (our own artwork – not the Influence logo).
 // LIVE for everyone (tested on ?beta=1 first, 19 Oct 2026).
 (function(){
+  const INF=/[?&]beta=1/.test(location.search); // TEST: Updated/wallet lines on the menu row
   const MVB=true; // new top layout, live (was beta=1)
   const CSS=
     '#brand-logo,#brand-logo2{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
@@ -79,6 +80,8 @@
     if(MVB&&hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
       if(main&&hb){hb.dataset.mv='1';main.before(hb)}
       if(main&&tr){tr.dataset.mv='1';main.before(tr)}
+      if(INF&&hb&&tr){const info=tr.firstElementChild;if(info&&!info.querySelector('h1')&&!info.dataset.inf&&info.textContent.indexOf('Updated')>=0){info.dataset.inf='1';const cv=hb.querySelector('#csv');cv?cv.before(info):hb.append(info)}}
+      if(INF&&!d.getElementById('inf-css')){const st=d.createElement('style');st.id='inf-css';st.textContent='.bar [data-inf="1"]{font-size:11px;line-height:1.35;color:#8b9ab0;margin-left:auto;text-align:right;padding:0 10px}.bar [data-inf="1"] *{font-size:11px!important;margin:0!important}.bar [data-inf="1"]+#csv{margin-left:0!important}';d.head.appendChild(st)}
       if(h1&&h1.parentElement!==hd){const bd=d.getElementById('pgband');if(bd&&bd.parentElement===hd)bd.after(h1);else hd.prepend(h1)}
       if(hd.style.top!=='0px'||hd.style.position!=='sticky'){hd.style.setProperty('top','0px','important');hd.style.setProperty('position','sticky','important')}
       if(!d.getElementById('mvb-css')){const st=d.createElement('style');st.id='mvb-css';st.textContent=
