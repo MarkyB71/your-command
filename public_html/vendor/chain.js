@@ -59,7 +59,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .dn .pc-tog{text-align:center}
 .pc-foc{cursor:pointer;color:#ffd24a;font-size:14px;text-align:center;user-select:none;margin-top:2px}.pc-foc:hover{text-decoration:underline}
 .pc-trail{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:17px;margin:0 0 10px;padding:8px 12px;background:#121a26;border:1px solid #6b5a1c;border-radius:8px}
-.pc-trail .pc-up{margin-left:auto;font-size:15px}.pc-trail .pc-up+.pc-full{margin-left:6px}.pc-back{color:#ffd24a;border-color:#6b5a1c}.pc-back:disabled{opacity:.4;cursor:default}.pc-nav{display:inline-flex;gap:6px}.pc-bar .pc-back.big{background:#ffd24a;color:#1a1300;border:2px solid #ffe58a;font-weight:700;font-size:17px;padding:7px 16px;box-shadow:0 0 12px rgba(255,210,74,.6)}.pc-bar .pc-back.big:hover{box-shadow:0 0 18px rgba(255,210,74,.9)}.pc-bar .pc-back.big:disabled{background:#3a3320;color:#9a8a50;border-color:#6b5a1c;box-shadow:none}.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
+.pc-trail .pc-up{margin-left:auto;font-size:15px}.pc-trail .pc-up+.pc-full{margin-left:6px}.pc-back{color:#ffd24a;border-color:#6b5a1c}.pc-back:disabled{opacity:.4;cursor:default}.pc-nav{display:inline-flex;gap:6px}.pc-navtop{display:flex;justify-content:center;margin:0 0 10px}.pc-back.big{background:#ffd24a;color:#1a1300;border:2px solid #ffe58a;font-weight:700;font-size:17px;padding:7px 16px;box-shadow:0 0 12px rgba(255,210,74,.6)}.pc-back.big:hover{box-shadow:0 0 18px rgba(255,210,74,.9)}.pc-back.big:disabled{background:#3a3320;color:#9a8a50;border-color:#6b5a1c;box-shadow:none}.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
 .pc-bar.stick{position:sticky!important;z-index:50;background:#0b1018;padding:8px 0;margin-top:0;box-shadow:0 6px 10px -6px rgba(0,0,0,.8)}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
@@ -158,6 +158,7 @@ export function drawChain(m){
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
   const backBtn=()=>{if(!BK)return document.createTextNode('');const b=el('button',BKV?'pc-back big':'pc-back','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
     const go=h=>{tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))};b.addEventListener('click',()=>{if(!HS.length)return;if(BKV)FS.push(cap());go(HS.pop())});if(!BKV)return b;const f=el('button','pc-back big','Forward ▸');f.title=FS.length?'Go forward again to what you were looking at':'Nothing to go forward to';if(!FS.length)f.disabled=true;f.addEventListener('click',()=>{if(!FS.length)return;HS.push(cap());go(FS.pop())});const w=el('span','pc-nav');w.appendChild(b);w.appendChild(f);return w};
+  const navTop=inner=>{if(!BKV)return;const r=inner.firstElementChild;if(!r)return;const d=el('div','pc-navtop');d.appendChild(backBtn());r.prepend(d)};
   const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){snap();S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
@@ -203,8 +204,8 @@ export function drawChain(m){
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
-    (BKV?[modeSw(),l1,b2,backBtn()]:[backBtn(),modeSw(),l1,b2]).forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap'+(DN?' dn':'')),inner=DN?el('div','pc-in'):w;inner.appendChild(unode(S.prod,[],'u',0,null));if(DN)w.appendChild(inner);m.appendChild(w)}
+    (BKV?[modeSw(),l1,b2]:[backBtn(),modeSw(),l1,b2]).forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
+    const w=el('div','pc-wrap'+(DN?' dn':'')),inner=DN?el('div','pc-in'):w;inner.appendChild(unode(S.prod,[],'u',0,null));if(DN)w.appendChild(inner);navTop(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
@@ -222,7 +223,7 @@ export function drawChain(m){
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(BETA2&&S.prod<1000)l2.appendChild(document.createTextNode(' each'));
-    (BKV?[modeSw(),l1,l2,b1,b2,backBtn()]:[backBtn(),modeSw(),l1,l2,b1,b2]).forEach(x=>bar.appendChild(x));
+    (BKV?[modeSw(),l1,l2,b1,b2]:[backBtn(),modeSw(),l1,l2,b1,b2]).forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
@@ -233,7 +234,7 @@ export function drawChain(m){
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
         const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();snap();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
       if(BK){const up=el('button','pc-up','▲ Up one level');up.title='Show the box above this one';up.addEventListener('click',()=>{snap();S.foc=ks.length>2?ks.slice(0,-1).join('/'):null;S.anchor=null;draw()});tr.appendChild(up)}
-      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}m.appendChild(w);
+      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}if(DN)navTop(inner);m.appendChild(w);
     if(RT)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
     if(RT&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
       if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
