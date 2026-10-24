@@ -2,6 +2,11 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 307 – 24 Oct 2026 – Asteroid planner: make it on site + new layout
+- Anything that can be fully made on the build asteroid (its own stock, mining and the facilities you have there) is made there instead of flown in.
+- Layout: Materials, then Mine here and Facilities on the left; Fly in on the right (opened out, weights in their own column); Fewest flights below.
+- Facilities box also lists missing facilities that would let you make a fly-in item on site (e.g. Bioreactor for Soil).
+
 ## Version 298 – 24 Oct 2026 – Asteroid planner: "Make it here?" column in the materials table (✓ Yes / ◐ Partly – fly in … / ✗ No, with process, facilities and what to mine)
 
 ## Version 295 – 24 Oct 2026 – Asteroid planner: Fewest flights reworked
