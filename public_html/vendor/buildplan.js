@@ -89,7 +89,7 @@ export function drawBuildPlan(m){
   const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short])),{USED,pool,fly,mine,fac,made}=EX;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
-  shortRows.filter(r=>r.others.length).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
+  shortRows.filter(r=>r.others.length&&!chainRows.includes(r)).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
   /* Make it here? – can a missing material be made on this asteroid from its own stock + mining (TEST) */
   const ucMH={};
   const makeHere=r=>{if(!r.short)return'';const E=expand(stk,canMine,[[r.id,r.short]],ucMH),R=E.USED[r.id];
