@@ -13,7 +13,7 @@
   const TYPE_NAME = { 2: 'Light Transport', 3: 'Heavy Transport', 4: 'Shuttle' };
 
   // Launch windows chart (test: ?beta=1 only)
-  const WIN = /[?&]beta=1/.test(location.search);
+  const WIN = true; // LIVE (was ?beta=1 only)
   // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
   // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
   function canMake(Y, D, ast, prod, seen) {
