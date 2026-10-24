@@ -9,6 +9,7 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
+const FB=/[?&]beta=1/.test(location.search); /* TEST: make on site instead of flying in when it can be fully made here */
 const MB=true; /* 'Make it here?' column in the materials table – LIVE (was ?beta=1 only) */
 const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
@@ -80,12 +81,15 @@ export function drawBuildPlan(m){
     for(const k in R[2])want(k,R[2][k]*q/R[3],dep+1,[...stack,id])};
   items.forEach(([id,q])=>want(id,q,0,[]));
   return{USED,pool,fly,mine,fac,made}};
-  const chainRows=rows.filter(r=>r.short&&!r.others.length);
+  const myFac=(t,aid=S.ast)=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===aid).length;
+  /* TEST: materials your other asteroids hold but that can be made fully here (own stock + mining, facilities you already have) are made here instead of flown in */
+  const ucOK={},vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
+  const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
+  const chainRows=rows.filter(r=>r.short&&(!r.others.length||(FB&&makeOK(r))));
   const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short])),{USED,pool,fly,mine,fac,made}=EX;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
   shortRows.filter(r=>r.others.length).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
-  const myFac=(t,aid=S.ast)=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===aid).length;
   /* Make it here? – can a missing material be made on this asteroid from its own stock + mining (TEST) */
   const ucMH={};
   const makeHere=r=>{if(!r.short)return'';const E=expand(stk,canMine,[[r.id,r.short]],ucMH),R=E.USED[r.id];
@@ -148,7 +152,7 @@ export function drawBuildPlan(m){
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
   const planHTML=Object.keys(fly).length?'<div id="bpPlan" class="bp-plan"><span class="a">Working it out…</span></div>':'';
   const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
-    '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' (none of your asteroids has '+(chainRows.length>1?'them':'it')+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
+    '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' ('+(FB?'can\'t be had elsewhere, or can be made here with what you have':'none of your asteroids has '+(chainRows.length>1?'them':'it'))+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
     '<div class="wrap"><table><thead><tr><th>✈ Fly in</th><th>⛏ Mine here</th><th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
     '<td>'+(Object.keys(fly).length?'<span class="none">Not on '+esc(here.name)+' and can\'t be mined or made there</span>'+flyList(fly):'<span class="ok">✓ Nothing – it can all be mined or made here</span>')+'</td>'+
     '<td>'+(Object.keys(mine).length?lst(mine):'<span class="a">–</span>')+'</td>'+
