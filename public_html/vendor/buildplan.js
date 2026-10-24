@@ -19,7 +19,7 @@ const S={ast:null,bld:9,n:1,cnt:{}};
 const IFL=true; /* LIVE (was ?beta=1 only): First send also offers ships already in flight, leaving once they land */
 const SWP=true; /* LIVE (was ?beta=1 only): Fewest flights in the right column, Fly in below (swapped) */
 const CB=true; /* with 2+ building types, wait for a Calculate button instead of redrawing on every click – LIVE (was ?beta=1 only) */
-const CANB=/[?&]beta=1/.test(location.search); /* TEST: badge on each building tile – can it be built here now / made here / needs flying in */
+const CANB=true; /* LIVE (was ?beta=1 only): badge on each building tile – can it be built here now / made here / needs flying in */
 const MU=true; /* plan several buildings at once (a count for each) – LIVE (was ?beta=1 only) */
 let run=0;const memo={};
 

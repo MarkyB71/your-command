@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 357 – 24 Oct 2026 – Asteroid planner: each building tile shows what you can build on the chosen asteroid (✓ Stock for N · ⚒ Make it here ↗ opens The SkippyChain in a new tab · ⚒ Needs a facility · ✈ Fly some in)
+
 ## Version 352 – 24 Oct 2026 – Asteroid planner new layout: Materials + Fewest flights side by side, Fly in full width below, then Facilities and Mine here side by side at the bottom
 
 ## Version 347 – 24 Oct 2026 – Asteroid planner: Fewest flights "First send" also offers ships already in flight (marked ✈ landing on …), counting the wait until they land
