@@ -55,6 +55,7 @@
     '.lw .b{width:190px;flex:none;font-size:12px;color:#9aa8bb}.lw .ok{color:#3fd68a;font-weight:bold}' +
     '.lw .ax{display:flex;margin-left:258px;margin-right:198px;font-size:11px;color:#9aa8bb;justify-content:space-between}' +
     '.lw .g{margin:10px 0 4px;font-weight:bold;color:#8fe3ff}' +
+    '.lw .lwb{padding:5px 12px;border-radius:6px;border:1px solid #5fc3e4;background:#14202c;color:#8fe3ff;cursor:pointer;font-weight:bold}' +
     '@media(max-width:700px){.lw .n{width:110px}.lw .b{display:none}.lw .ax{margin-left:118px;margin-right:0}}</style>';
 
   function drawTravel(m) {
@@ -156,49 +157,88 @@
         await new Promise(r => setTimeout(r, 0));
       }
       Object.values(best).forEach(x => { x.td.style.background = 'rgba(95,195,228,.15)'; });
-      if (WIN) await drawWindows(m, T, asts, reach, me, esc);
+      if (WIN) drawWindows(m, T, asts, reach, me, esc);
     }).catch(e => { info.innerHTML = 'Could not load the travel maths (' + esc((e && e.message) || e) + ').'; });
   }
 
   // One strip per route: each block = leaving at that time, coloured by how quick the trip is
-  async function drawWindows(m, T, asts, reach, me, esc) {
+  // Which routes to chart: none until you click a trip in the table, or all of them
+  const W = { sel: null, all: false };
+  const strips = {};                                   // worked-out strips, kept for this ship set-up
+  let wkey = '', wrun = 0;
+  function drawWindows(m, T, asts, reach, me, esc) {
     const box = m.querySelector('#trW'); if (!box) return;
+    // Clicking a trip time in the table picks that route
+    m.querySelectorAll('#trT td[data-f]').forEach(td => {
+      if (td.dataset.f === td.dataset.t) return;
+      td.style.cursor = 'pointer'; td.title = 'Show launch windows for this trip';
+      td.onclick = () => { W.sel = td.dataset.f + '_' + td.dataset.t; W.all = false; show(); };
+    });
+    const k = JSON.stringify([S, REF]); if (k !== wkey) { wkey = k; for (const x in strips) delete strips[x]; }
+    const name = id => esc((asts.find(a => a.id === +id) || {}).name || '');
     const now = (Date.now() / 1000 - 1609459200) / 3600, n = WDAYS * 24 / WSTEP;
-    const ticks = [0, 5, 10, 15, 20, 25, 30].map(d => {
-      const t = new Date(Date.now() + d * 86400000);
-      return '<span>' + (d ? t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'Now') + '</span>';
-    }).join('');
-    let h = '<h3>🚀 Launch windows – next 30 days</h3><div class="note" style="padding:0 0 6px">Each strip is one route. ' +
-      'Green = a quick trip if you leave then, red = a slow one, grey = out of reach for this ship. ' +
-      'The white line is now. Hover a block for the trip time.</div><div class="ax">' + ticks + '</div>';
-    for (const a of asts) {
-      h += '<div class="g">From ' + esc(a.name) + '</div>';
-      for (const b of asts) if (a.id !== b.id) h += '<div class="r"><div class="n">→ ' + esc(b.name) + (REF[b.id] ? '' : ' <span class="a">(½ fuel)</span>') + '</div>' +
-        '<div class="s" id="lw' + a.id + '_' + b.id + '"></div><div class="b" id="lb' + a.id + '_' + b.id + '">working out…</div></div>';
-    }
-    box.innerHTML = h;
-    for (const a of asts) for (const b of asts) {
-      if (a.id === b.id) continue;
-      const v = [];
-      for (let i = 0; i < n; i++) {
-        if (me !== run || !m.isConnected) return;
-        v.push(await quick(T, a.o, b.o, now + i * WSTEP, reach(b)));
-        if (i % 6 === 5) await new Promise(r => setTimeout(r, 0));
+    const fmtH = x => x >= 48 ? (x / 24).toFixed(1) + ' days' : x + ' h';
+
+    function show() {
+      const mine = ++wrun;
+      let routes = [];
+      if (W.all) asts.forEach(a => asts.forEach(b => { if (a.id !== b.id) routes.push([a, b]); }));
+      else if (W.sel) {
+        const [f, t] = W.sel.split('_').map(Number), a = asts.find(x => x.id === f), b = asts.find(x => x.id === t);
+        if (a && b) routes = [[a, b], [b, a]];          // the trip and the way back
       }
+      const btn = '<button class="lwb" id="lwAll">' + (W.all ? 'Show just one trip' : 'Show all trips') + '</button>';
+      let h = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h3>🚀 Launch windows – next 30 days</h3>' + btn + '</div>';
+      if (!routes.length) {
+        h += '<div class="note" style="padding:4px 0">Click a trip time in the table above to see the best times to leave.</div>';
+        box.innerHTML = h; box.querySelector('#lwAll').onclick = () => { W.all = true; show(); }; return;
+      }
+      const ticks = [0, 5, 10, 15, 20, 25, 30].map(d => {
+        const t = new Date(Date.now() + d * 86400000);
+        return '<span>' + (d ? t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'Now') + '</span>';
+      }).join('');
+      h += '<div class="note" style="padding:0 0 6px">Green = a quick trip if you leave then, red = a slow one, grey = out of reach for this ship. ' +
+        'The white line is now. Hover a block for the trip time.</div><div class="ax">' + ticks + '</div>';
+      let last = null;
+      routes.forEach(([a, b]) => {
+        if (W.all && last !== a.id) { h += '<div class="g">From ' + esc(a.name) + '</div>'; last = a.id; }
+        h += '<div class="r"><div class="n">' + (W.all ? '' : esc(a.name) + ' ') + '→ ' + esc(b.name) + (REF[b.id] ? '' : ' <span class="a">(½ fuel)</span>') + '</div>' +
+          '<div class="s" id="lw' + a.id + '_' + b.id + '"></div><div class="b" id="lb' + a.id + '_' + b.id + '">working out…</div></div>';
+      });
+      box.innerHTML = h;
+      box.querySelector('#lwAll').onclick = () => { W.all = !W.all; show(); };
+      (async () => {
+        for (const [a, b] of routes) {
+          const key = a.id + '_' + b.id;
+          if (!strips[key]) {
+            const v = [];
+            for (let i = 0; i < n; i++) {
+              if (me !== run || mine !== wrun || !m.isConnected) return;
+              v.push(await quick(T, a.o, b.o, now + i * WSTEP, reach(b)));
+              if (i % 6 === 5) await new Promise(r => setTimeout(r, 0));
+            }
+            strips[key] = v;
+          }
+          if (mine !== wrun || !m.isConnected) return;
+          paint(key, strips[key]);
+        }
+      })();
+    }
+    function paint(key, v) {
       const ok = v.filter(x => x !== null), lo = Math.min(...ok), hi = Math.max(...ok);
-      const fmtH = x => x >= 48 ? (x / 24).toFixed(1) + ' days' : x + ' h';
-      m.querySelector('#lw' + a.id + '_' + b.id).innerHTML = v.map((x, i) => {
+      m.querySelector('#lw' + key).innerHTML = v.map((x, i) => {
         const when = i ? 'Leave in ' + fmtH(i * WSTEP) : 'Leave now';
         if (x === null) return '<i class="x" title="' + when + ': out of reach"></i>';
         const f = hi > lo ? (x - lo) / (hi - lo) : 0;
         return '<i style="background:' + hue(f) + '" title="' + when + ': about ' + fmtH(x) + ' flight"></i>';
       }).join('');
-      const lb = m.querySelector('#lb' + a.id + '_' + b.id);
-      if (!ok.length) { lb.textContent = 'out of reach'; continue; }
+      const lb = m.querySelector('#lb' + key);
+      if (!ok.length) { lb.textContent = 'out of reach'; return; }
       const bi = v.indexOf(lo), cur = v[0];
       lb.innerHTML = (cur !== null && cur <= lo * 1.15 ? '<span class="ok">✓ good now</span> · ' : '') +
         'best: ' + (bi ? 'in ' + fmtH(bi * WSTEP) : 'now') + ', ~' + fmtH(lo);
     }
+    show();
   }
 
   window.PAGES = window.PAGES || {};
