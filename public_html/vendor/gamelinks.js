@@ -4,7 +4,7 @@
 // extension to move the player's open game tab there, without a reload.
 // While testing, links also need ?beta=1 in the address.
 (function () {
-  var TEST = /[?&]beta=1/.test(location.search);
+  var TEST = true; // live for everyone since 24 Oct 2026 (links still need the extension)
   var GAME = 'https://game.influenceth.io';
   var OK = /^\/(building|lot|ship|asteroids|crew|crewmate)\/\d+$/;
 
