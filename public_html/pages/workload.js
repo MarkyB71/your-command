@@ -156,9 +156,13 @@
       const g = {};
       S.idle.forEach((x) => {
         const k = x.a + '|' + x.type;
-        (g[k] = g[k] || { lvl: 1, t: 0, a: x.a, type: x.type, n: [], crew: new Set() }).n.push(x.name);
+        (g[k] = g[k] || { lvl: 1, t: 0, a: x.a, type: x.type, n: [], gp: [], crew: new Set() }).n.push(x.name);
+        g[k].gp.push(x.gp);
         if (x.crew) g[k].crew.add(x.crew);
       });
+      // Each idle building gets its own "in game" link (beta first)
+      const ILK = /[?&]beta=1/.test(location.search);
+      const one = (x, i) => APP.esc(x.n[i]) + (ILK && x.gp[i] && window.GL ? window.GL(x.gp[i], 'Open in the game') : '');
       S.idle = Object.values(g).map((x) => ({
         lvl: 1,
         t: -x.n.length,
@@ -174,9 +178,9 @@
               ' ' +
               APP.esc(x.type) +
               's</summary><div class="a" style="white-space:normal;max-width:420px">' +
-              x.n.map(APP.esc).join(', ') +
+              (ILK ? x.n.map((_, i) => '<div>' + one(x, i) + '</div>').join('') : x.n.map(APP.esc).join(', ')) +
               '</div></details>'
-            : APP.esc(x.n[0]),
+            : one(x, 0),
         crew: [...x.crew].join(', '),
       }));
     }
