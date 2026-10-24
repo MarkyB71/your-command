@@ -2,6 +2,11 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 319 – 24 Oct 2026 – Asteroid planner: several buildings at once + Travel: launch windows
+- Asteroid planner: a tile with a count box for every building, in game build order (Extractor, Warehouse, Tank Farm, Refinery, Factory, Spaceport, Habitat, Shipyard, Bioreactor, Marketplace); the whole plan adds them all up. Clear all button. Tidier layout (fly in wraps, wider materials table).
+- Travel: "Launch windows – next 30 days" chart for the clicked trip and the way back (green = best time to leave, red = slow), Show all trips button; table trip times coloured by how good leaving now is.
+- Travel: rocks that can't make their own propellant only get half the tank used flying there, so the ship can get back.
+
 ## Version 307 – 24 Oct 2026 – Asteroid planner: make it on site + new layout
 - Anything that can be fully made on the build asteroid (its own stock, mining and the facilities you have there) is made there instead of flown in.
 - Layout: Materials, then Mine here and Facilities on the left; Fly in on the right (opened out, weights in their own column); Fewest flights below.
