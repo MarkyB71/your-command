@@ -9,6 +9,7 @@
       'font-size:40px;letter-spacing:1px;text-transform:uppercase;color:#e6ebf2}'+
     'header h1.brand .brand-t{text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
     'header h1.brand .brand-t>span{color:#5fc3e4;text-shadow:0 0 6px rgba(143,227,255,.7),0 0 16px rgba(95,195,228,.5)}'+
+    'header h1.brand .brand-t .bw{font-weight:inherit;color:#fff!important;text-shadow:0 0 6px rgba(255,255,255,.55),0 0 14px rgba(95,195,228,.4)}'+
     'header{border-bottom:0!important}'+
     'header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;pointer-events:none;'+
       'background:linear-gradient(90deg,transparent,#5fc3e4 20%,#8fe3ff 50%,#5fc3e4 80%,transparent);'+
@@ -73,7 +74,7 @@
     if(t){
       const T=title();
       if(t.dataset.n!==T.join('|')){t.dataset.n=T.join('|');
-        t.innerHTML=esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
+        t.innerHTML=T[0]==='Quartermaster Skippy\'s'?'<span>Quartermaster</span> <b class="bw">Skippy&#39;s</b> <span>Command Deck</span>':esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
         d.title=T.filter(Boolean).join(' ');}
     }
     // TEST (MVB): banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
