@@ -14,6 +14,19 @@
 
   // Launch windows chart (test: ?beta=1 only)
   const WIN = /[?&]beta=1/.test(location.search);
+  // Where a ship can refuel (remembered in this browser). Elsewhere it must keep half its propellant to get back.
+  let REF = null;
+  function refuelMap(Y, asts) {
+    if (!REF) { try { REF = JSON.parse(localStorage.getItem('yicRefuel') || 'null'); } catch (e) { REF = null; } }
+    REF = REF || {};
+    asts.forEach(a => {
+      if (REF[a.id] === undefined) {               // first time: yes if there's propellant in stock there
+        const i = (Y.asts || []).findIndex(x => x.id === a.id);
+        REF[a.id] = i >= 0 && ((Y.tot || [])[i] || {})[170] > 0;
+      }
+    });
+    return REF;
+  }
   const WDAYS = 30, WSTEP = 12;                       // next 30 days, a sample every 12 hours
   const TOFS = [];                                    // trip lengths tried: every hour to 2 days, then coarser
   for (let t = 1; t <= 48; t++) TOFS.push(t);
@@ -62,6 +75,10 @@
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) + '</div>';
 
+    const ref = WIN ? refuelMap(Y, asts) : null;
+    if (WIN) h += '<div class="bar" style="margin:0 0 10px">⛽ Can refuel at: ' + asts.map(a =>
+      '<label style="margin-right:12px;white-space:nowrap"><input type="checkbox" data-rf="' + a.id + '"' + (ref[a.id] ? ' checked' : '') + '> ' + esc(a.name) + '</label>').join('') +
+      '<div class="note" style="padding:4px 0 0">Flying to an asteroid without a tick, the ship only uses half its propellant so it can get back.</div></div>';
     h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div class="wrap"><table id="trT"><thead><tr><th>From \\ To</th>' +
       asts.map(a => '<th class="num">' + esc(a.name) + '</th>').join('') + '</tr></thead><tbody>' +
       asts.map(a => '<tr><td><b>' + esc(a.name) + '</b></td>' + asts.map(b =>
@@ -77,6 +94,12 @@
     const keyOf = { trS: 'ship', trP: 'prop', trC: 'cargo', trL: 'leave' };
     Object.keys(keyOf).forEach(id => m.querySelector('#' + id).addEventListener('change', e => {
       S[keyOf[id]] = id === 'trL' ? +e.target.value : e.target.value;
+      drawTravel(m);
+    }));
+
+    if (WIN) m.querySelectorAll('[data-rf]').forEach(c => c.addEventListener('change', () => {
+      REF[c.dataset.rf] = c.checked;
+      try { localStorage.setItem('yicRefuel', JSON.stringify(REF)); } catch (e) {}
       drawTravel(m);
     }));
 
@@ -107,9 +130,12 @@
       const pk = S.prop === 'full' ? ship[2] / 1000 : propKg;
       const ck = S.cargo === 'empty' ? 0 : S.cargo === 'full' ? ship[3] / 1000 : cargoKg;
       const maxDv = T.maxDeltaV(st, variant, bonus, ck, pk);
+      // Going somewhere you can't refuel: burn only half, carry the other half as extra weight
+      const halfDv = T.maxDeltaV(st, variant, bonus, ck + pk / 2, pk / 2);
+      const reach = b => (!WIN || ref[b.id]) ? maxDv : halfDv;
       const dep = (Date.now() / 1000 - 1609459200) / 3600 + S.leave;   // orbit time in hours
       info.innerHTML = label + ' · ' + Y.fmtT(pk / 1000) + ' propellant · ' + (ck ? Y.fmtT(ck / 1000) + ' cargo' : 'no cargo') +
-        ' · up to ' + (maxDv / 1000).toFixed(1) + ' km/s';
+        ' · up to ' + (maxDv / 1000).toFixed(1) + ' km/s' + (WIN ? ' (' + (halfDv / 1000).toFixed(1) + ' km/s to places you can\'t refuel)' : '');
 
       // Fill each cell, then highlight the fastest in each row
       const best = {};
@@ -118,7 +144,7 @@
         if (me !== run || !m.isConnected) return;
         const td = m.querySelector('td[data-f="' + a.id + '"][data-t="' + b.id + '"]');
         const au = T.distance(a.o, b.o, dep) / 1.495978707e11;
-        const f = await T.fastest(a.o, b.o, dep, maxDv);
+        const f = await T.fastest(a.o, b.o, dep, reach(b));
         td.innerHTML = (f ? '<b>' + f.tof + ' h</b>' + (f.tof >= 48 ? ' <span class="a">(' + (f.tof / 24).toFixed(1) + ' d)</span>' : '') : '<span class="a">out of range</span>') +
           '<br><span class="a">' + au.toFixed(2) + ' AU</span>';
         td.dataset.h = f ? f.tof : '';
@@ -126,12 +152,12 @@
         await new Promise(r => setTimeout(r, 0));
       }
       Object.values(best).forEach(x => { x.td.style.background = 'rgba(95,195,228,.15)'; });
-      if (WIN) await drawWindows(m, T, asts, maxDv, me, esc);
+      if (WIN) await drawWindows(m, T, asts, reach, me, esc);
     }).catch(e => { info.innerHTML = 'Could not load the travel maths (' + esc((e && e.message) || e) + ').'; });
   }
 
   // One strip per route: each block = leaving at that time, coloured by how quick the trip is
-  async function drawWindows(m, T, asts, maxDv, me, esc) {
+  async function drawWindows(m, T, asts, reach, me, esc) {
     const box = m.querySelector('#trW'); if (!box) return;
     const now = (Date.now() / 1000 - 1609459200) / 3600, n = WDAYS * 24 / WSTEP;
     const ticks = [0, 5, 10, 15, 20, 25, 30].map(d => {
@@ -143,7 +169,7 @@
       'The white line is now. Hover a block for the trip time.</div><div class="ax">' + ticks + '</div>';
     for (const a of asts) {
       h += '<div class="g">From ' + esc(a.name) + '</div>';
-      for (const b of asts) if (a.id !== b.id) h += '<div class="r"><div class="n">→ ' + esc(b.name) + '</div>' +
+      for (const b of asts) if (a.id !== b.id) h += '<div class="r"><div class="n">→ ' + esc(b.name) + (REF[b.id] ? '' : ' <span class="a">(½ fuel)</span>') + '</div>' +
         '<div class="s" id="lw' + a.id + '_' + b.id + '"></div><div class="b" id="lb' + a.id + '_' + b.id + '">working out…</div></div>';
     }
     box.innerHTML = h;
@@ -152,7 +178,7 @@
       const v = [];
       for (let i = 0; i < n; i++) {
         if (me !== run || !m.isConnected) return;
-        v.push(await quick(T, a.o, b.o, now + i * WSTEP, maxDv));
+        v.push(await quick(T, a.o, b.o, now + i * WSTEP, reach(b)));
         if (i % 6 === 5) await new Promise(r => setTimeout(r, 0));
       }
       const ok = v.filter(x => x !== null), lo = Math.min(...ok), hi = Math.max(...ok);
