@@ -15,6 +15,7 @@
   // Launch windows chart (test: ?beta=1 only)
   const WIN = true; // LIVE (was ?beta=1 only)
   const CRW = /[?&]beta=1/.test(location.search); // test: only asteroids with a crew
+  const HLT = /[?&]beta=1/.test(location.search); // test: outline the chosen trip in the table
   // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
   // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
   function canMake(Y, D, ast, prod, seen) {
@@ -193,6 +194,13 @@
 
     function show() {
       const mine = ++wrun;
+      if (HLT) m.querySelectorAll('#trT td[data-f]').forEach(td => {
+        const k = td.dataset.f + '_' + td.dataset.t, back = W.sel && W.sel.split('_').reverse().join('_');
+        const on = !W.all && W.sel && (k === W.sel || k === back);
+        td.style.outline = on ? (k === W.sel ? '2px solid #8fe3ff' : '2px dashed #5fc3e4') : '';
+        td.style.outlineOffset = on ? '-2px' : '';
+        td.style.boxShadow = on && k === W.sel ? 'inset 0 0 12px rgba(143,227,255,.45)' : '';
+      });
       let routes = [];
       if (W.all) asts.forEach(a => asts.forEach(b => { if (a.id !== b.id) routes.push([a, b]); }));
       else if (W.sel) {
