@@ -9,7 +9,7 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
-const MB=/[?&]beta=1/.test(location.search); /* TEST: 'Make it here?' column in the materials table */
+const MB=true; /* 'Make it here?' column in the materials table – LIVE (was ?beta=1 only) */
 const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
