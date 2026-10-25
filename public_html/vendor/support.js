@@ -1,7 +1,7 @@
 // "Enjoying the Command Deck?" strip just above the footer: Buy me a coffee + PayPal.
 // The SkipCoin box keeps only the crypto wallets when this is on.
 (function () {
-  var SUP = /[?&]beta=1/.test(location.search); // test – live = true
+  var SUP = true; // live 25 Oct 2026 (was beta=1)
   window.YICSUP = SUP;
   if (!SUP) return;
   var CSS = '#sup{text-align:center;margin:28px auto 6px;padding:12px 16px;color:#9aa8bb;font-size:14px}' +

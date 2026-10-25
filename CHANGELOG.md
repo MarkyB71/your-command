@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 388 – 25 Oct 2026 – "Enjoying the Command Deck?" strip above the footer: Buy me a coffee · SkipCoin · PayPal. SkipCoin removed from the top menu; its box now shows only the crypto wallets.
+
 ## Version 383 – 25 Oct 2026 – Command Deck button now installs the extension from the Chrome Web Store (one click, automatic updates) instead of the zip.
 
 ## Version 381 – 24 Oct 2026 – Search box moved from the banner onto the menu row (slim box, before the Updated lines) so the banner animation is clear.
