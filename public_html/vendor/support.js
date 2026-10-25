@@ -8,6 +8,7 @@
     '#sup a{display:inline-block;margin:4px 5px;padding:5px 12px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none}' +
     '#sup .bmc{background:#ffdd00;color:#111}#sup .pp{background:#0070ba;color:#fff}' +
     '#sup .sc{background:#161d27;color:#ffd24a;border:1px solid #ffd24a}' +
+    '#don{display:none!important}' + // menu SkipCoin hidden; strip button opens its box
     '#sup a:hover,#sup a:focus-visible{filter:brightness(1.12);box-shadow:0 0 10px rgba(143,227,255,.35)}';
   function foot() {
     return [].find.call(document.querySelectorAll('body > div'), function (d) {
