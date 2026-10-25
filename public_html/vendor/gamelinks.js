@@ -51,8 +51,24 @@
     '#cdxp .x{position:absolute;top:8px;right:12px;background:none;border:0;color:#9aa8bb;font-size:20px;cursor:pointer}' +
     '#cdxp .dl{display:inline-block;margin:6px 0;padding:8px 14px;border-radius:8px;background:#1f6feb;color:#fff;font-weight:700;text-decoration:none}' +
     '#cdxp .ok{color:#4cd04c;font-weight:700}#cdxp .s{color:#9aa8bb;font-size:13px}';
+  var STORE = /[?&]beta=1/.test(location.search); // Chrome Web Store install (test)
+  var STORE_URL = 'https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd';
+  function panelStore(have) {
+    return '<button class="x" type="button" title="Close">✕</button>' +
+      '<h3>Skippy\'s Command Deck extension</h3>' +
+      (have ? '<div class="ok">✓ Installed – the "in game ↗" links are switched on.</div>' : '') +
+      '<p>Adds <b>in game ↗</b> links to this site. Click one and your open Influence game tab jumps straight to that building, lot, ship, crew or asteroid – <b>no reload, no PLAY screen</b>.</p>' +
+      '<p class="s">It only works on this site and the game site, only moves the game\'s view, and never touches your wallet. Checked and published on the Chrome Web Store. <a href="https://github.com/MarkyB71/your-command/tree/main/extension" target="_blank" rel="noopener" style="color:#8fe3ff">Read the code and safety notes on GitHub ↗</a></p>' +
+      '<a class="dl" href="' + STORE_URL + '" target="_blank" rel="noopener">⬇ Get it from the Chrome Web Store</a>' +
+      '<p><b>To install</b> (Chrome, Brave or Edge on a computer):</p><ol>' +
+      '<li>Click the button above.</li>' +
+      '<li>Click <b>Add to Chrome</b> (Brave says the same; Edge: allow extensions from other stores first).</li>' +
+      '<li>Reload this page.</li></ol>' +
+      '<p class="s">Updates arrive automatically.</p>';
+  }
   function panel() {
     var have = !!document.documentElement.dataset.yicGameExt;
+    if (STORE) return panelStore(have);
     return '<button class="x" type="button" title="Close">✕</button>' +
       '<h3>Skippy\'s Command Deck extension</h3>' +
       (have ? '<div class="ok">✓ Installed – the "in game ↗" links are switched on.</div>' : '') +
