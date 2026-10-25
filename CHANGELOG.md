@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 383 – 25 Oct 2026 – Command Deck button now installs the extension from the Chrome Web Store (one click, automatic updates) instead of the zip.
+
 ## Version 381 – 24 Oct 2026 – Search box moved from the banner onto the menu row (slim box, before the Updated lines) so the banner animation is clear.
 
 ## Version 379 – 24 Oct 2026 – Updated/wallet lines moved onto the menu row (left of Download); search box moved into the banner (top right); the empty strip is gone.

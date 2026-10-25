@@ -51,7 +51,7 @@
     '#cdxp .x{position:absolute;top:8px;right:12px;background:none;border:0;color:#9aa8bb;font-size:20px;cursor:pointer}' +
     '#cdxp .dl{display:inline-block;margin:6px 0;padding:8px 14px;border-radius:8px;background:#1f6feb;color:#fff;font-weight:700;text-decoration:none}' +
     '#cdxp .ok{color:#4cd04c;font-weight:700}#cdxp .s{color:#9aa8bb;font-size:13px}';
-  var STORE = /[?&]beta=1/.test(location.search); // Chrome Web Store install (test)
+  var STORE = true; // Chrome Web Store install – live 25 Oct 2026 (was beta=1)
   var STORE_URL = 'https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd';
   function panelStore(have) {
     return '<button class="x" type="button" title="Close">✕</button>' +
