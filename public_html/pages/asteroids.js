@@ -463,6 +463,9 @@
       });
   }
 
+  // Shared with The Bridge (Today's Workload) for its viewport
+  window.YICbeltMap = beltMap;
+
   window.PAGES = window.PAGES || {};
   // Asteroids › Supply chain (view 'E') – own page, button only on ?beta=1 for now
   window.PAGES.E = function (m) {

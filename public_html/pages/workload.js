@@ -549,9 +549,119 @@
     requestAnimationFrame(step);
   }
 
+  // ---- The Bridge (ship command look) – test on ?beta=1 first ----
+  const BRG = /[?&]beta=1/.test(location.search);
+  const DECKS = [
+    { k: 'S', name: 'Flight Deck', ico: '🚀', col: '#5b9dff' },
+    { k: 'C', name: 'Crew Quarters', ico: '👥', col: '#3fd68a' },
+    { k: 'H', alt: 'P', name: 'Engineering', ico: '🏭', col: '#ffab3d' },
+    { k: 'K', name: 'Trade Deck', ico: '💰', col: '#ffd24a' },
+  ];
+  const BR_CSS = `
+.br{margin:0 0 18px}
+.br-vp{position:relative;border-radius:18px;padding:10px;background:linear-gradient(180deg,#1b2430,#0c1118);border:1px solid #2c3a4c;box-shadow:inset 0 0 0 2px #070a0f,0 0 24px rgba(91,157,255,.12)}
+.br-vp>div{border-radius:12px!important;border-color:#26364a!important;margin:0!important}
+.br-vp canvas{height:clamp(220px,34vw,360px)!important}
+.br-glass{position:absolute;inset:10px;border-radius:12px;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 28%,rgba(255,255,255,0) 70%,rgba(255,255,255,.04) 100%)}
+.br-strut{position:absolute;top:10px;bottom:10px;width:6px;background:linear-gradient(90deg,#0a0e14,#1e2836,#0a0e14);pointer-events:none;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.br-plate{position:absolute;left:50%;top:-1px;transform:translateX(-50%);padding:3px 18px 4px;background:#0c1118;border:1px solid #2c3a4c;border-top:0;border-radius:0 0 10px 10px;font:600 12px/1.2 system-ui,sans-serif;letter-spacing:.32em;color:#8fe3ff;text-shadow:0 0 8px rgba(91,195,228,.6);pointer-events:none;z-index:2}
+.br-rv{position:absolute;width:6px;height:6px;border-radius:50%;background:#2c3a4c;box-shadow:inset 0 1px 1px rgba(255,255,255,.15)}
+.br-con{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:-6px;padding:0 6px}
+.br-p{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:block;padding:14px 14px 12px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#141c26,#0b1017);border:1px solid #243041;border-top:3px solid var(--dc);box-shadow:0 -6px 18px -8px var(--dc),inset 0 1px 0 rgba(255,255,255,.04);transition:transform .15s,box-shadow .15s}
+.br-p:hover,.br-p:focus-visible{transform:translateY(-2px);box-shadow:0 -8px 26px -6px var(--dc),0 0 18px -4px var(--dc),inset 0 1px 0 rgba(255,255,255,.06)}
+.br-h{display:flex;align-items:center;gap:8px;font:700 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--dc)}
+.br-led{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--dc);box-shadow:0 0 8px var(--dc);animation:brLed 2.6s ease-in-out infinite}
+.br-n{font:700 34px/1.1 ui-monospace,Menlo,monospace;color:#e6ebf2;margin:10px 0 2px;text-shadow:0 0 12px rgba(230,235,242,.15)}
+.br-l{font-size:14px;color:#c4cdd9}
+.br-s{font-size:13px;color:#8b9ab0;margin-top:6px;min-height:18px}
+.br-s b{color:#ff7a7a;font-weight:600}
+.br-go{margin-top:10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dc);opacity:.85}
+@keyframes brLed{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.br-led{animation:none}.br-p{transition:none}}
+`;
+  function bridgeNums() {
+    const D = APP.D || {},
+      now = Date.now() / 1000;
+    const ships = D.ships || [],
+      TANK = { 2: 4000, 3: 24000, 4: 2000 };
+    const fly = ships.filter((s) => s.fl).length,
+      lowP = ships.filter((s) => TANK[s.st] && (s.prop || 0) / TANK[s.st] < 0.25).length;
+    const crews = (D.crewList || []).filter((c) => c.mates),
+      hungry = crews.filter((c) => c.food != null && c.food < 0.5).length;
+    let run = 0,
+      ready = 0,
+      idle = 0;
+    (D.allB || []).forEach((b) => {
+      const B = b.Building || {};
+      if (B.status !== 3 || ![2, 3, 4, 5, 6].includes(B.buildingType)) return;
+      let busy = false;
+      [].concat(b.Extractors || [], b.Processors || [], b.DryDocks || []).forEach((x) => {
+        if (x.status !== 1) return;
+        busy = true;
+        if (x.finishTime <= now) ready++;
+        else run++;
+      });
+      if (!busy) idle++;
+    });
+    const ords = (D.orders || []).length;
+    const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+    return {
+      S: [fly, fly === 1 ? 'ship in flight' : 'ships in flight', pl(ships.length, 'ship') + ' in your fleet', lowP ? pl(lowP, 'ship') + ' low on propellant' : ''],
+      C: [crews.length, crews.length === 1 ? 'crew on duty' : 'crews on duty', '', hungry ? hungry + ' hungry' : 'all crews fed'],
+      H: [run, run === 1 ? 'job running' : 'jobs running', pl(idle, 'idle building'), ready ? ready + ' ready to collect' : ''],
+      K: [ords, ords === 1 ? 'open listing' : 'open listings', 'Market · Trade finder · History', ''],
+    };
+  }
+  function drawBridge(m) {
+    if (!document.getElementById('br-css')) {
+      const st = document.createElement('style');
+      st.id = 'br-css';
+      st.textContent = BR_CSS;
+      document.head.appendChild(st);
+    }
+    const N = bridgeNums(),
+      br = document.createElement('div');
+    br.className = 'br';
+    br.innerHTML =
+      '<div class="br-vp"><div class="br-plate">THE BRIDGE</div><div class="br-glass"></div>' +
+      '<div class="br-strut" style="left:33%"></div><div class="br-strut" style="left:67%"></div>' +
+      '<i class="br-rv" style="left:4px;top:4px"></i><i class="br-rv" style="right:4px;top:4px"></i><i class="br-rv" style="left:4px;bottom:4px"></i><i class="br-rv" style="right:4px;bottom:4px"></i></div>' +
+      '<div class="br-con">' +
+      DECKS.map((d) => {
+        const n = N[d.k];
+        return (
+          '<button type="button" class="br-p" data-dk="' + d.k + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
+          ' style="--dc:' + d.col + '"><div class="br-h"><span>' + d.ico + '</span>' + APP.esc(d.name) + '<i class="br-led"></i></div>' +
+          '<div class="br-n">' + n[0] + '</div><div class="br-l">' + APP.esc(n[1]) + '</div>' +
+          '<div class="br-s">' + (n[3] && /low|hungry|ready/.test(n[3]) && !/all crews/.test(n[3]) ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) +
+          (n[2] ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') + '</div><div class="br-go">Enter deck ▸</div></button>'
+        );
+      }).join('') +
+      '</div>';
+    m.prepend(br);
+    const vp = br.querySelector('.br-vp');
+    if (window.YICbeltMap) {
+      window.YICbeltMap(vp);
+      const lab = vp.querySelector('canvas + .a');
+      if (lab) lab.textContent = 'Viewport · the Adalia system right now · your rocks in blue · drag to turn';
+      // keep the frame bits on top of the map
+      vp.querySelectorAll('.br-glass,.br-strut,.br-plate,.br-rv').forEach((e) => vp.appendChild(e));
+    }
+    br.querySelectorAll('.br-p').forEach((b) =>
+      b.addEventListener('click', () => {
+        const t = document.getElementById('v' + b.dataset.dk) || (b.dataset.alt && document.getElementById('v' + b.dataset.alt));
+        if (t) {
+          t.click();
+          scrollTo(0, 0);
+        }
+      }),
+    );
+  }
+
   window.PAGES = window.PAGES || {};
   window.PAGES.N = function (m) {
     drawAlerts(m);
     animTiles(m);
+    if (BRG) drawBridge(m);
   };
 })();
