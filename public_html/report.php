@@ -39,6 +39,16 @@ if (!is_dir($dir) || !is_writable($dir)) {           // fall back to the private
 }
 if (!is_dir($dir) || !is_writable($dir)) out(500, ['error' => 'Sorry, the report could not be saved. Please tell Skippy on Discord.']);
 
+// Gentle limit: 5 reports per visitor per hour (IP kept only as a hash, only for this).
+$ipH = substr(hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|yic-report'), 0, 16);
+$rl = $dir . '/rl_' . $ipH . '.json';
+$now = time();
+$hits = is_file($rl) ? (json_decode(@file_get_contents($rl), true) ?: []) : [];
+$hits = array_values(array_filter($hits, function ($t) use ($now) { return $t > $now - 3600; }));
+if (count($hits) >= 5) out(429, ['error' => 'Thanks! You have sent a few already – please try again in an hour.']);
+$hits[] = $now;
+@file_put_contents($rl, json_encode($hits), LOCK_EX);
+
 // Overall cap: 30 reports a day for the whole site, so a script can't flood us.
 $dayF = $dir . '/day_' . date('Ymd') . '.txt';
 $fh = @fopen($dayF, 'c+');
@@ -50,16 +60,6 @@ if ($fh) {
   flock($fh, LOCK_UN); fclose($fh);
 }
 foreach (glob($dir . '/day_*.txt') ?: [] as $f) if (filemtime($f) < time() - 7 * 86400) @unlink($f);
-
-// Gentle limit: 5 reports per visitor per hour (IP kept only as a hash, only for this).
-$ipH = substr(hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|yic-report'), 0, 16);
-$rl = $dir . '/rl_' . $ipH . '.json';
-$now = time();
-$hits = is_file($rl) ? (json_decode(@file_get_contents($rl), true) ?: []) : [];
-$hits = array_values(array_filter($hits, function ($t) use ($now) { return $t > $now - 3600; }));
-if (count($hits) >= 5) out(429, ['error' => 'Thanks! You have sent a few already – please try again in an hour.']);
-$hits[] = $now;
-@file_put_contents($rl, json_encode($hits), LOCK_EX);
 
 $id = date('Ymd-His', $now) . '-' . substr(bin2hex(random_bytes(3)), 0, 4);
 $rec = ['id' => $id, 'time' => date('c', $now), 'kind' => $kind, 'page' => $page, 'text' => $text,
