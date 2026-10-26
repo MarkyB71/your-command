@@ -4,7 +4,7 @@
    Shared data and helpers come from window.YIC (set up in app.js). */
 (function () {
   'use strict';
-  const WRP = /[?&]beta=1/.test(location.search); // amounts kept inside the card (test)
+  const WRP = true; // amounts kept inside the card (was beta=1)
 
   function drawContents(m) {
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, pc = Y.pc, fmt = Y.pfmt, ricon = Y.ricon, bthumb = Y.bthumb, fmtT = Y.fmtT;
