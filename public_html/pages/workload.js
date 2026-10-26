@@ -552,33 +552,68 @@
   // ---- The Bridge (ship command look) – test on ?beta=1 first ----
   const BRG = /[?&]beta=1/.test(location.search);
   const DECKS = [
-    { k: 'S', name: 'Flight Deck', ico: '🚀', col: '#5b9dff' },
-    { k: 'C', name: 'Crew Quarters', ico: '👥', col: '#3fd68a' },
-    { k: 'H', alt: 'P', name: 'Engineering', ico: '🏭', col: '#ffab3d' },
-    { k: 'K', name: 'Trade Deck', ico: '💰', col: '#ffd24a' },
+    { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Helm', col: '#5b9dff', ry: 22 },
+    { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Personnel', col: '#3fd68a', ry: 9 },
+    { k: 'H', id: 'eng', alt: 'P', name: 'Engineering', role: 'Production', col: '#ffab3d', ry: -9 },
+    { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -22 },
   ];
   const BR_CSS = `
-.br{margin:0 0 18px}
-.br-vp{position:relative;border-radius:18px;padding:10px;background:linear-gradient(180deg,#1b2430,#0c1118);border:1px solid #2c3a4c;box-shadow:inset 0 0 0 2px #070a0f,0 0 24px rgba(91,157,255,.12)}
-.br-vp>div{border-radius:12px!important;border-color:#26364a!important;margin:0!important}
-.br-vp canvas{height:clamp(220px,34vw,360px)!important}
-.br-glass{position:absolute;inset:10px;border-radius:12px;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 28%,rgba(255,255,255,0) 70%,rgba(255,255,255,.04) 100%)}
-.br-strut{position:absolute;top:10px;bottom:10px;width:6px;background:linear-gradient(90deg,#0a0e14,#1e2836,#0a0e14);pointer-events:none;box-shadow:0 0 6px rgba(0,0,0,.6)}
-.br-plate{position:absolute;left:50%;top:-1px;transform:translateX(-50%);padding:3px 18px 4px;background:#0c1118;border:1px solid #2c3a4c;border-top:0;border-radius:0 0 10px 10px;font:600 12px/1.2 system-ui,sans-serif;letter-spacing:.32em;color:#8fe3ff;text-shadow:0 0 8px rgba(91,195,228,.6);pointer-events:none;z-index:2}
-.br-rv{position:absolute;width:6px;height:6px;border-radius:50%;background:#2c3a4c;box-shadow:inset 0 1px 1px rgba(255,255,255,.15)}
-.br-con{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:-6px;padding:0 6px}
-.br-p{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:block;padding:14px 14px 12px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#141c26,#0b1017);border:1px solid #243041;border-top:3px solid var(--dc);box-shadow:0 -6px 18px -8px var(--dc),inset 0 1px 0 rgba(255,255,255,.04);transition:transform .15s,box-shadow .15s}
-.br-p:hover,.br-p:focus-visible{transform:translateY(-2px);box-shadow:0 -8px 26px -6px var(--dc),0 0 18px -4px var(--dc),inset 0 1px 0 rgba(255,255,255,.06)}
-.br-h{display:flex;align-items:center;gap:8px;font:700 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--dc)}
-.br-led{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--dc);box-shadow:0 0 8px var(--dc);animation:brLed 2.6s ease-in-out infinite}
-.br-n{font:700 34px/1.1 ui-monospace,Menlo,monospace;color:#e6ebf2;margin:10px 0 2px;text-shadow:0 0 12px rgba(230,235,242,.15)}
-.br-l{font-size:14px;color:#c4cdd9}
-.br-s{font-size:13px;color:#8b9ab0;margin-top:6px;min-height:18px}
-.br-s b{color:#ff7a7a;font-weight:600}
-.br-go{margin-top:10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dc);opacity:.85}
+.brs{position:relative;margin:0 0 22px;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
+.brs-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.brs-vs{position:relative;z-index:1;width:84%;margin:26px auto 0;padding:7px;background:linear-gradient(180deg,#2a3646,#121a24);clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);box-shadow:0 0 30px rgba(91,195,228,.2)}
+.brs-vs>div{margin:0!important;border:0!important;border-radius:0!important;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%)}
+.brs-vs canvas{height:clamp(200px,30vw,340px)!important}
+.brs-vs .a{left:50%!important;transform:translateX(-50%);top:auto!important;bottom:6px;white-space:nowrap;opacity:.7}
+.brs-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);padding:3px 22px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#8fe3ff;text-shadow:0 0 8px rgba(91,195,228,.7);pointer-events:none}
+.brs-deck{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr .75fr 1fr 1fr;gap:10px;align-items:end;padding:22px 18px 0;perspective:900px}
+.st{all:unset;box-sizing:border-box;cursor:pointer;display:block;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
+.st:hover,.st:focus-visible{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}
+.st-scr{display:block;position:relative;padding:10px 12px 10px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;border:2px solid #2a3646;border-top:3px solid var(--dc);box-shadow:0 0 16px -6px var(--dc),inset 0 0 22px -10px var(--dc)}
+.st-h{display:flex;align-items:center;gap:6px;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--dc)}
+.st-led{margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--dc);box-shadow:0 0 8px var(--dc);animation:brLed 2.6s ease-in-out infinite}
+.st-r{display:block;font:600 10px/1.2 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#5d6b7e;margin-top:2px}
+.st-n{display:block;font:700 30px/1.1 ui-monospace,Menlo,monospace;color:#e6ebf2;margin:8px 0 0;text-shadow:0 0 10px var(--dc)}
+.st-l{display:block;font-size:13px;color:#c4cdd9}
+.st-s{display:block;font-size:12px;color:#8b9ab0;margin-top:5px;min-height:16px}
+.st-s b{color:#ff7a7a;font-weight:600}
+.st-go{display:block;margin-top:8px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--dc)}
+.st-base{display:flex;justify-content:center;gap:5px;height:22px;align-items:center;margin:0 -6px;background:linear-gradient(180deg,#1f2a38,#0d131b);clip-path:polygon(0 0,100% 0,94% 100%,6% 100%)}
+.st-base i{width:12px;height:5px;border-radius:2px;background:var(--dc);opacity:.35}
+.st-base i:nth-child(2){opacity:.8;box-shadow:0 0 6px var(--dc)}
+.brs-chair{align-self:end;display:flex;justify-content:center}
+.brs-chair svg{width:100%;max-width:140px;height:auto;filter:drop-shadow(0 0 10px rgba(143,227,255,.18))}
+.brs-floor{position:relative;z-index:0;height:26px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,rgba(91,195,228,.18),transparent 70%)}
 @keyframes brLed{0%,100%{opacity:1}50%{opacity:.35}}
-@media (prefers-reduced-motion:reduce){.br-led{animation:none}.br-p{transition:none}}
+@keyframes brBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
+.brs-bg .bl{animation:brBlink 4s infinite}
+@media (max-width:760px){.brs-deck{grid-template-columns:1fr 1fr;perspective:none}.brs-chair{display:none}.st,.st:hover{transform:none}.brs-vs{width:94%}}
+@media (prefers-reduced-motion:reduce){.st-led,.brs-bg .bl{animation:none}.st{transition:none}}
 `;
+  const BR_BG =
+    '<svg class="brs-bg" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><defs>' +
+    '<linearGradient id="brW" x1="0" x2="1"><stop offset="0" stop-color="#0d131b"/><stop offset="1" stop-color="#141c26"/></linearGradient>' +
+    '<linearGradient id="brW2" x1="1" x2="0"><stop offset="0" stop-color="#0d131b"/><stop offset="1" stop-color="#141c26"/></linearGradient>' +
+    '<radialGradient id="brF" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#132131"/><stop offset="1" stop-color="#05070a"/></radialGradient></defs>' +
+    '<rect width="1000" height="620" fill="url(#brF)"/>' +
+    '<polygon points="0,0 1000,0 920,18 80,18" fill="#0f1620"/>' +
+    '<line x1="120" y1="9" x2="880" y2="9" stroke="#8fe3ff" stroke-opacity=".35" stroke-width="2"/>' +
+    '<polygon points="0,0 80,18 80,420 0,620" fill="url(#brW)"/>' +
+    '<polygon points="1000,0 920,18 920,420 1000,620" fill="url(#brW2)"/>' +
+    [30, 55].map((x) => '<line x1="' + x + '" y1="' + (x * 0.25) + '" x2="' + x + '" y2="' + (620 - x * 2.4) + '" stroke="#243041" stroke-width="2"/>').join('') +
+    [945, 970].map((x) => '<line x1="' + x + '" y1="' + ((1000 - x) * 0.25) + '" x2="' + x + '" y2="' + (620 - (1000 - x) * 2.4) + '" stroke="#243041" stroke-width="2"/>').join('') +
+    '<rect x="38" y="120" width="10" height="160" rx="3" fill="#5b9dff" opacity=".22"/><rect x="952" y="120" width="10" height="160" rx="3" fill="#ffd24a" opacity=".22"/>' +
+    [150, 190, 230].map((y, i) => '<circle class="bl" cx="64" cy="' + y + '" r="3" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="bl" cx="936" cy="' + y + '" r="3" fill="#ffab3d" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
+    '<path d="M80,420 Q500,470 920,420" stroke="#8fe3ff" stroke-opacity=".18" stroke-width="2" fill="none"/>' +
+    '<path d="M0,620 Q500,520 1000,620" stroke="#8fe3ff" stroke-opacity=".12" stroke-width="2" fill="none"/></svg>';
+  const CHAIR =
+    '<svg viewBox="0 0 140 150" aria-hidden="true"><defs><linearGradient id="brC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3a4c"/><stop offset="1" stop-color="#121a24"/></linearGradient></defs>' +
+    '<path d="M38,10 Q70,0 102,10 L106,86 L34,86 Z" fill="url(#brC)" stroke="#3a4b60"/>' +
+    '<path d="M48,22 Q70,15 92,22 L94,78 L46,78 Z" fill="#0c1118" stroke="#8fe3ff" stroke-opacity=".25"/>' +
+    '<rect x="14" y="70" width="26" height="12" rx="5" fill="url(#brC)" stroke="#3a4b60"/><rect x="100" y="70" width="26" height="12" rx="5" fill="url(#brC)" stroke="#3a4b60"/>' +
+    '<rect x="20" y="73" width="8" height="4" rx="1" fill="#5b9dff" opacity=".8"/><rect x="112" y="73" width="8" height="4" rx="1" fill="#ffd24a" opacity=".8"/>' +
+    '<path d="M30,86 L110,86 L104,104 L36,104 Z" fill="#1b2430" stroke="#3a4b60"/>' +
+    '<rect x="64" y="104" width="12" height="28" fill="#141c26"/><ellipse cx="70" cy="138" rx="40" ry="8" fill="#141c26" stroke="#3a4b60"/>' +
+    '<ellipse cx="70" cy="138" rx="56" ry="11" fill="none" stroke="#8fe3ff" stroke-opacity=".2"/></svg>';
   function bridgeNums() {
     const D = APP.D || {},
       now = Date.now() / 1000;
@@ -621,34 +656,34 @@
     }
     const N = bridgeNums(),
       br = document.createElement('div');
-    br.className = 'br';
+    br.className = 'brs';
+    const station = (d) => {
+      const n = N[d.k],
+        warn = n[3] && /low|hungry|ready/.test(n[3]);
+      return (
+        '<button type="button" class="st" data-dk="' + d.k + '" data-deck="' + d.id + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
+        ' style="--dc:' + d.col + ';--ry:' + d.ry + 'deg" title="Enter the ' + d.name + '"><span class="st-scr"><span class="st-h">' + APP.esc(d.name) +
+        '<i class="st-led"></i></span><span class="st-r">' + d.role + ' station</span><span class="st-n">' + n[0] + '</span><span class="st-l">' + APP.esc(n[1]) +
+        '</span><span class="st-s">' + (warn ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) + (n[2] ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') +
+        '</span><span class="st-go">Enter deck ▸</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></button>'
+      );
+    };
     br.innerHTML =
-      '<div class="br-vp"><div class="br-plate">THE BRIDGE</div><div class="br-glass"></div>' +
-      '<div class="br-strut" style="left:33%"></div><div class="br-strut" style="left:67%"></div>' +
-      '<i class="br-rv" style="left:4px;top:4px"></i><i class="br-rv" style="right:4px;top:4px"></i><i class="br-rv" style="left:4px;bottom:4px"></i><i class="br-rv" style="right:4px;bottom:4px"></i></div>' +
-      '<div class="br-con">' +
-      DECKS.map((d) => {
-        const n = N[d.k];
-        return (
-          '<button type="button" class="br-p" data-dk="' + d.k + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
-          ' style="--dc:' + d.col + '"><div class="br-h"><span>' + d.ico + '</span>' + APP.esc(d.name) + '<i class="br-led"></i></div>' +
-          '<div class="br-n">' + n[0] + '</div><div class="br-l">' + APP.esc(n[1]) + '</div>' +
-          '<div class="br-s">' + (n[3] && /low|hungry|ready/.test(n[3]) && !/all crews/.test(n[3]) ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) +
-          (n[2] ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') + '</div><div class="br-go">Enter deck ▸</div></button>'
-        );
-      }).join('') +
-      '</div>';
+      BR_BG +
+      '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<div class="brs-chair" title="The captain\'s chair">' + CHAIR + '</div>' +
+      station(DECKS[2]) + station(DECKS[3]) + '</div><div class="brs-floor"></div>';
     m.prepend(br);
-    const vp = br.querySelector('.br-vp');
+    const vs = br.querySelector('.brs-vs');
     if (window.YICbeltMap) {
-      window.YICbeltMap(vp);
-      const lab = vp.querySelector('canvas + .a');
-      if (lab) lab.textContent = 'Viewport · the Adalia system right now · your rocks in blue · drag to turn';
-      // keep the frame bits on top of the map
-      vp.querySelectorAll('.br-glass,.br-strut,.br-plate,.br-rv').forEach((e) => vp.appendChild(e));
+      window.YICbeltMap(vs);
+      const lab = vs.querySelector('canvas + .a');
+      if (lab) lab.textContent = 'The Adalia system right now · your rocks in blue · drag to turn';
+      vs.appendChild(vs.querySelector('.brs-plate'));
     }
-    br.querySelectorAll('.br-p').forEach((b) =>
+    br.querySelectorAll('.st').forEach((b) =>
       b.addEventListener('click', () => {
+        if (window.YICgoDeck) return window.YICgoDeck(b.dataset.deck);
         const t = document.getElementById('v' + b.dataset.dk) || (b.dataset.alt && document.getElementById('v' + b.dataset.alt));
         if (t) {
           t.click();
