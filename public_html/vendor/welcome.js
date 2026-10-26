@@ -18,19 +18,21 @@
     '#wel .cred{margin-top:2px;text-align:center;color:#6b7788;font-size:10px}' +
     '#wel .x{position:absolute;top:14px;right:14px;width:26px;height:26px;border:0;border-radius:50%;' +
     'background:rgba(0,0,0,.6);color:#fff;font-size:14px;cursor:pointer}' +
-    '@media (prefers-reduced-motion:reduce){#wel{transition:none}}';
-  var st, w, v, done = false;
+    '#wel .snd{position:absolute;left:50%;top:40%;transform:translateX(-50%);padding:8px 16px;border:1px solid #8fe3ff;border-radius:18px;' +
+    'background:rgba(0,0,0,.75);color:#8fe3ff;font-weight:700;font-size:14px;cursor:pointer;display:none}' +
+  '@media (prefers-reduced-motion:reduce){#wel{transition:none}}';
+  var st, w, v, snd, done = false, hold = false;
   function build() {
     st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     w = document.createElement('div'); w.id = 'wel';
     w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', "Welcome to Skippy's Command Deck");
     w.innerHTML = '<div class="box"><video playsinline preload="auto" poster="media/skippy-welcome.jpg" src="media/skippy-welcome.mp4"></video>' +
       '<div class="cap">Welcome to Skippy’s Command Deck</div><div class="cred">Made with Vidnoz</div>' +
-      '<button class="x" aria-label="Close">✕</button></div>';
+      '<button class="x" aria-label="Close">✕</button><button class="snd">▶ Hear Skippy</button></div>';
     document.body.appendChild(w);
-    v = w.querySelector('video');
+    v = w.querySelector('video'); snd = w.querySelector('.snd');
     document.addEventListener('keydown', esc);
-    w.addEventListener('click', function (e) { if (e.target === w) close(); });
+    w.addEventListener('click', function (e) { if (e.target === w && !hold) close(); });
     w.querySelector('.x').addEventListener('click', close);
     v.addEventListener('ended', function () { setTimeout(close, 900); });
   }
@@ -50,12 +52,15 @@
   function start() {
     build();
     play().catch(function () {
-      // Sound blocked until the player interacts: hide, then greet on their first click / tap / key.
-      w.classList.remove('on');
-      try { sessionStorage.removeItem(KEY); } catch (e) {}
-      function go() {
+      // Sound blocked until the player interacts: keep Skippy showing (paused) with a play button;
+      // their first click / tap / key anywhere starts him with sound.
+      w.classList.add('on'); snd.style.display = 'block';
+      function go(e) {
         ['pointerdown', 'keydown'].forEach(function (t) { document.removeEventListener(t, go, true); });
-        if (!done) play().catch(close);
+        if (done || (e && e.key === 'Escape')) return;
+        snd.style.display = 'none';
+        hold = true; setTimeout(function () { hold = false; }, 600); // that first click only starts him
+        play().catch(close);
       }
       ['pointerdown', 'keydown'].forEach(function (t) { document.addEventListener(t, go, true); });
     });
