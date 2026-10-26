@@ -552,10 +552,10 @@
   // ---- The Bridge (ship command look) – test on ?beta=1 first ----
   const BRG = /[?&]beta=1/.test(location.search);
   const DECKS = [
-    { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Helm', col: '#5b9dff', ry: 22 },
+    { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Helm', col: '#5b9dff', ry: 14 },
     { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Personnel', col: '#3fd68a', ry: 9 },
     { k: 'H', id: 'eng', alt: 'P', name: 'Engineering', role: 'Production', col: '#ffab3d', ry: -9 },
-    { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -22 },
+    { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -14 },
   ];
   const BR_CSS = `
 .brs{position:relative;margin:0 0 22px;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
@@ -565,7 +565,7 @@
 .brs-vs canvas{height:clamp(200px,30vw,340px)!important}
 .brs-vs .a{left:50%!important;transform:translateX(-50%);top:auto!important;bottom:6px;white-space:nowrap;opacity:.7}
 .brs-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);padding:3px 22px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#8fe3ff;text-shadow:0 0 8px rgba(91,195,228,.7);pointer-events:none}
-.brs-deck{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr .75fr 1fr 1fr;gap:10px;align-items:end;padding:22px 18px 0;perspective:900px}
+.brs-deck{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr .75fr 1fr 1fr;gap:10px;align-items:end;padding:22px 4% 0;perspective:1100px}
 .st{all:unset;box-sizing:border-box;cursor:pointer;display:block;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
 .st:hover,.st:focus-visible{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}
 .st-scr{display:block;position:relative;padding:10px 12px 10px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;border:2px solid #2a3646;border-top:3px solid var(--dc);box-shadow:0 0 16px -6px var(--dc),inset 0 0 22px -10px var(--dc)}
@@ -695,8 +695,13 @@
 
   window.PAGES = window.PAGES || {};
   window.PAGES.N = function (m) {
+    if (BRG) {
+      // Bridge only – the workload lists will move into the decks later (Mark, 26 Oct)
+      m.innerHTML = '';
+      drawBridge(m);
+      return;
+    }
     drawAlerts(m);
     animTiles(m);
-    if (BRG) drawBridge(m);
   };
 })();
