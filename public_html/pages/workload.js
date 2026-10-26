@@ -587,12 +587,14 @@
 .brs-log{position:relative;height:clamp(320px,52vh,600px);overflow:auto;padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:13px;scrollbar-color:#2c3a4c transparent}
 .brs-log h2{font-size:16px!important;color:#8fe3ff;letter-spacing:.04em}
 .brs-log .note{font-size:12px}
-.brs-chair svg{width:100%;max-width:140px;height:auto;filter:drop-shadow(0 0 10px rgba(143,227,255,.18))}
+.brs-cw{position:relative;display:block;width:100%;max-width:170px}
+.brs-sk{position:absolute;left:34.3%;top:14.7%;width:32.9%;height:37.3%;object-fit:cover;border-radius:6px 6px 2px 2px;box-shadow:0 0 10px rgba(143,227,255,.35)}
+.brs-chair svg{display:block;width:100%;max-width:170px;height:auto;filter:drop-shadow(0 0 10px rgba(143,227,255,.18))}
 .brs-floor{position:relative;z-index:0;height:26px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,rgba(91,195,228,.18),transparent 70%)}
 @keyframes brLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes brBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
 .brs-bg .bl{animation:brBlink 4s infinite}
-@media (max-width:760px){.brs-deck{grid-template-columns:1fr 1fr;perspective:none}.brs-chair{grid-column:1/-1;order:5;flex-direction:row;justify-content:center;gap:10px;padding:6px 0}.brs-chair svg{max-width:54px}.brs-log{clip-path:none}.st,.st:hover{transform:none}.brs-vs{width:94%}}
+@media (max-width:760px){.brs-deck{grid-template-columns:1fr 1fr;perspective:none}.brs-chair{grid-column:1/-1;order:5;flex-direction:row;justify-content:center;gap:10px;padding:6px 0}.brs-chair svg,.brs-cw{max-width:70px}.brs-log{clip-path:none}.st,.st:hover{transform:none}.brs-vs{width:94%}}
 @media (prefers-reduced-motion:reduce){.st-led,.brs-bg .bl{animation:none}.st{transition:none}}
 `;
   const BR_BG =
@@ -677,7 +679,7 @@
     br.innerHTML =
       BR_BG +
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
-      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen">' + CHAIR + '<span class="brs-cl">Today\'s workload</span></button>' +
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted autoplay loop playsinline aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       station(DECKS[2]) + station(DECKS[3]) + '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const vs = br.querySelector('.brs-vs');
