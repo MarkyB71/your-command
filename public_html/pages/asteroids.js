@@ -41,13 +41,13 @@
       const v = k.can[x.r];
       if (v === undefined) {
         const from = x.has.map((h) => h.nm).join(', ');
-        return '<td class="sup-no" title="' + APP.esc(k.nm + " can't mine " + APP.pn(x.r) + ' – fly it in from ' + from) + '"' + (SFT ? ' data-to="' + k.id + '" data-from="' + x.has.map((h) => h.id).join(',') + '"' : '') + '>✗ needs' + (SFT ? '<br><span class="sup-ft">…</span>' : '') + '</td>';
+        return '<td class="sup-no" title="' + APP.esc(k.nm + " can't mine " + APP.pn(x.r) + ' – fly it in from ' + from) + '"' + ' data-to="' + k.id + '" data-from="' + x.has.map((h) => h.id).join(',') + '"' + '>✗ needs' + '<br><span class="sup-ft">…</span>' + '</td>';
       }
       return '<td class="sup-ok" data-sort="' + (v < 0 ? 0 : v) + '" title="' + APP.esc(k.nm + ' can mine ' + APP.pn(x.r)) + '">' + (v < 0 ? '✓' : (v * 100).toFixed(1) + '%') + '</td>';
     };
     return (
       '<style>.sup td.sup-ok{color:#4cd04c;font-weight:600;text-align:center}.sup td.sup-no{color:#ff6b6b;text-align:center;background:rgba(255,107,107,.08)}.sup th.rk{text-align:center;white-space:normal;min-width:70px}.sup td .sup-ft{display:block;font-size:12px;color:#c8d3e0;white-space:nowrap}.sup-sw{margin:0 0 8px;display:flex;gap:8px;align-items:center;font-size:14px}</style>' +
-      '<div class="note" style="padding:0 0 8px">Which of your rocks can <b>mine</b> each raw resource. <span style="color:#4cd04c">Green</span> = can mine it here (abundance from the resource scan; ✓ = not scanned yet, but the rock type can hold it). <span style="color:#ff6b6b">✗ needs</span> = can\'t mine it here – the green rocks in that row can supply it. Hover a cell for details.' + (SFT ? ' Under each ✗: the quickest rock to fly it from, leaving now (standard Light Transport, full tank, 2,000 t cargo).' : '') + '</div>' +
+      '<div class="note" style="padding:0 0 8px">Which of your rocks can <b>mine</b> each raw resource. <span style="color:#4cd04c">Green</span> = can mine it here (abundance from the resource scan; ✓ = not scanned yet, but the rock type can hold it). <span style="color:#ff6b6b">✗ needs</span> = can\'t mine it here – the green rocks in that row can supply it. Hover a cell for details.' + ' Under each ✗: the quickest rock to fly it from, leaving now (standard Light Transport, full tank, 2,000 t cargo).' + '</div>' +
       '<label class="sup-sw"><input type="checkbox" id="supAll"' + (supAll ? ' checked' : '') + '> Show every resource (not just ones some rocks are missing)</label>' +
       (res.length
         ? '<div class="wrap"><table class="sup"><thead><tr><th>Resource</th>' + rocks.map((k) => '<th class="rk">' + APP.esc(k.nm) + '</th>').join('') + '<th class="num">Rocks that can mine it</th></tr></thead><tbody>' +
@@ -58,7 +58,6 @@
   }
   // Flight times on the red cells (test on ?beta=1): nearest rock that can supply it, fastest trip leaving now,
   // standard Light Transport, full tank, full 2,000 t cargo (same as Trade finder)
-  const SFT = /[?&]beta=1/.test(location.search);
   const ftMemo = {};
   let ftRun = 0;
   function supplyTimes(m) {
@@ -104,7 +103,7 @@
       .catch(() => tds.forEach((td) => { const sp = td.querySelector('.sup-ft'); if (sp) sp.textContent = '?'; }));
   }
   function wireSupply(m) {
-    if (SFT) supplyTimes(m);
+    supplyTimes(m);
     const b = m.querySelector('#supAll');
     if (b)
       b.onchange = () => {
