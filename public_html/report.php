@@ -39,6 +39,18 @@ if (!is_dir($dir) || !is_writable($dir)) {           // fall back to the private
 }
 if (!is_dir($dir) || !is_writable($dir)) out(500, ['error' => 'Sorry, the report could not be saved. Please tell Skippy on Discord.']);
 
+// Overall cap: 30 reports a day for the whole site, so a script can't flood us.
+$dayF = $dir . '/day_' . date('Ymd') . '.txt';
+$fh = @fopen($dayF, 'c+');
+if ($fh) {
+  flock($fh, LOCK_EX);
+  $n = (int)stream_get_contents($fh);
+  if ($n >= 30) { flock($fh, LOCK_UN); fclose($fh); out(429, ['error' => 'Sorry, the report box is full for today. Please try again tomorrow.']); }
+  ftruncate($fh, 0); rewind($fh); fwrite($fh, (string)($n + 1)); fflush($fh);
+  flock($fh, LOCK_UN); fclose($fh);
+}
+foreach (glob($dir . '/day_*.txt') ?: [] as $f) if (filemtime($f) < time() - 7 * 86400) @unlink($f);
+
 // Gentle limit: 5 reports per visitor per hour (IP kept only as a hash, only for this).
 $ipH = substr(hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|yic-report'), 0, 16);
 $rl = $dir . '/rl_' . $ipH . '.json';
