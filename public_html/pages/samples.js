@@ -14,6 +14,15 @@
     SHOWSM = localStorage.getItem(SKEY) === '1';
   } catch (e) {}
 
+  // Group by rock (test on ?beta=1, 26 Oct 2026): switch "By resource | By rock", remembered
+  const BYR = /[?&]beta=1/.test(location.search);
+  let byRock = false;
+  try { byRock = BYR && localStorage.getItem('yic-samp-group') === 'rock'; } catch (e) {}
+  const SW_CSS = '<style>.sm-sw{display:inline-flex;margin:0 14px 10px 0;border:1px solid #3a4658;border-radius:8px;overflow:hidden;vertical-align:middle}' +
+    '.sm-sw button{border:0;border-radius:0;padding:7px 16px;font-size:15px;background:transparent;color:#c8d3e0;cursor:pointer}' +
+    '.sm-sw button.on{background:#ffab3d;color:#06121c;font-weight:700}' +
+    'tr.sm-rock td{background:#1a2230;color:#ffab3d;font-weight:700;font-size:16px;padding-top:10px}</style>';
+
   function drawSamples(m) {
     if (!APP.SAMP || APP.SAMP.err) {
       if (APP.SAMP && APP.SAMP.err) {
@@ -83,7 +92,7 @@
       L.max = Math.max(L.max, kg);
       L.sale += sale;
     });
-    const list = Object.values(g).sort((x, y) => y.kg - x.kg);
+    const list = Object.values(g).sort((x, y) => (byRock ? x.a.localeCompare(y.a) : 0) || y.kg - x.kg);
     const all = (APP.SAMP.rows || []).length;
     let h =
       '<div class="note" style="padding:0 0 10px">' +
@@ -95,12 +104,22 @@
       ' (refreshes every 5 minutes)' +
       (an ? ' · showing <b>' + APP.esc(an) + '</b> only' : '') +
       '</div>' +
+      (BYR ? SW_CSS + '<div class="sm-sw" role="group" aria-label="Arrange by"><button type="button" data-sg="res"' + (byRock ? '' : ' class="on"') + '>By resource</button><button type="button" data-sg="rock"' + (byRock ? ' class="on"' : '') + '>☄️ By rock</button></div>' : '') +
       ('<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;font-size:15px;color:#c8d3e0;cursor:pointer"><input type="checkbox" id="smHide"' +
           (SHOWSM ? '' : ' checked') +
           '> Hide small samples (under 2 t)' +
           (!SHOWSM && hid ? ' <span class="a">– ' + hid.toLocaleString() + ' hidden</span>' : '') +
           '</label>');
     const wire = () => {
+      m.querySelectorAll('[data-sg]').forEach((b) =>
+        b.addEventListener('click', () => {
+          byRock = b.dataset.sg === 'rock';
+          try {
+            localStorage.setItem('yic-samp-group', byRock ? 'rock' : 'res');
+          } catch (e) {}
+          APP.draw();
+        }),
+      );
       const c = m.querySelector('#smHide');
       if (c)
         c.addEventListener('change', () => {
@@ -119,7 +138,20 @@
     }
     h +=
       '<div class="wrap"><table><thead><tr><th>Resource</th><th>Asteroid</th><th class="num">Total left</th><th class="num">Samples</th><th class="num">Lots</th><th class="num">Biggest sample</th></tr></thead><tbody>';
+    let lastRock = null;
     list.forEach((x) => {
+      if (byRock && x.a !== lastRock) {
+        lastRock = x.a;
+        const mine = list.filter((y) => y.a === x.a);
+        h +=
+          '<tr class="sm-rock"><td colspan="6">☄️ ' +
+          APP.esc(x.a) +
+          ' <span class="a" style="font-weight:400;font-size:13px">– ' +
+          mine.length +
+          (mine.length === 1 ? ' resource, ' : ' resources, ') +
+          mine.reduce((t, y) => t + y.n, 0).toLocaleString() +
+          ' samples</span></td></tr>';
+      }
       const k = x.a + '|' + x.p,
         o = APP.sampOpen === k,
         lots = Object.values(x.lots).sort((a, b) => b.max - a.max || b.kg - a.kg);
