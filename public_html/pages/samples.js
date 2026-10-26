@@ -16,8 +16,8 @@
 
   // Group by rock (test on ?beta=1, 26 Oct 2026): switch "By resource | By rock", remembered
   const BYR = /[?&]beta=1/.test(location.search);
-  let byRock = false;
-  try { byRock = BYR && localStorage.getItem('yic-samp-group') === 'rock'; } catch (e) {}
+  let byRock = BYR;
+  try { if (BYR && localStorage.getItem('yic-samp-group') === 'res') byRock = false; } catch (e) {}
   const SW_CSS = '<style>.sm-sw{display:inline-flex;margin:0 14px 10px 0;border:1px solid #3a4658;border-radius:8px;overflow:hidden;vertical-align:middle}' +
     '.sm-sw button{border:0;border-radius:0;padding:7px 16px;font-size:15px;background:transparent;color:#c8d3e0;cursor:pointer}' +
     '.sm-sw button.on{background:#ffab3d;color:#06121c;font-weight:700}' +
@@ -104,7 +104,7 @@
       ' (refreshes every 5 minutes)' +
       (an ? ' · showing <b>' + APP.esc(an) + '</b> only' : '') +
       '</div>' +
-      (BYR ? SW_CSS + '<div class="sm-sw" role="group" aria-label="Arrange by"><button type="button" data-sg="res"' + (byRock ? '' : ' class="on"') + '>By resource</button><button type="button" data-sg="rock"' + (byRock ? ' class="on"' : '') + '>☄️ By rock</button></div>' : '') +
+      (BYR ? SW_CSS + '<div class="sm-sw" role="group" aria-label="Arrange by"><button type="button" data-sg="rock"' + (byRock ? ' class="on"' : '') + '>☄️ By rock</button><button type="button" data-sg="res"' + (byRock ? '' : ' class="on"') + '>By resource</button></div>' : '') +
       ('<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;font-size:15px;color:#c8d3e0;cursor:pointer"><input type="checkbox" id="smHide"' +
           (SHOWSM ? '' : ' checked') +
           '> Hide small samples (under 2 t)' +
