@@ -17,6 +17,8 @@ const TB=true; /* LIVE (was ?beta=1 only):
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
 const OST=/[?&]beta=1/.test(location.search); /* TEST: raw materials your other asteroids hold or can mine count as cheap (fly them in) – e.g. Taenite for iron instead of the long Olivine route; table and flights share one answer */
+const TAL=/[?&]beta=1/.test(location.search); /* TEST: building tiles line up – badge on one line, number box at the bottom */
+const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
 const FTK=/[?&]beta=1/.test(location.search); /* TEST: Then send – full tank / as it is now, and keep half the propellant when the build rock can't make its own */
 /* can this asteroid make product prod (same rule as the Travel page) */
 function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};if((c.scanStatus||0)>=4&&c.abundances&&Y.astAbund)return(Y.astAbund(c.abundances)[prod]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+prod))}
@@ -198,7 +200,7 @@ export function drawBuildPlan(m){
     '<td>'+facList+'</td></tr></tbody></table></div>')+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
-  let h='<style>'+CSS+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+(MU?'':' <input id="bpN" type="number" min="1" max="999" value="'+N+'" title="How many to build" style="width:64px;font-size:15px;padding:5px 6px"> × <select id="bpB">'+
+  let h='<style>'+CSS+(TAL?TALCSS:'')+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+(MU?'':' <input id="bpN" type="number" min="1" max="999" value="'+N+'" title="How many to build" style="width:64px;font-size:15px;padding:5px 6px"> × <select id="bpB">'+
     Object.keys(BLDS).sort((x,y)=>BLDS[x][0].localeCompare(BLDS[y][0])).map(k=>'<option value="'+k+'"'+(+k===S.bld?' selected':'')+'>'+esc(BLDS[k][0])+'</option>').join('')+'</select>')+'</div>'+(CANB?pickHTML.replace(/<!--bpb(\d+)-->/g,(_,k)=>canBadge(k)):pickHTML)+(CB?'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>':'')+(MU&&!Object.keys(inp).length?'<div class="note" style="padding:6px 0">Set how many of each building you want to plan – everything is added up in one go.</div></div>':
     
     '<div class="bp-hd">'+(MU?'':'<img src="bimg.php?t='+S.bld+'" alt="" data-hide>')+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
