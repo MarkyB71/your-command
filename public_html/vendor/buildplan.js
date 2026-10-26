@@ -15,7 +15,13 @@ const MB=true; /* 'Make it here?' column in the materials table – LIVE (was ?b
 const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
-const S={ast:null,bld:9,n:1,cnt:{}};
+const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
+const FTK=/[?&]beta=1/.test(location.search); /* TEST: Then send – full tank / as it is now, and keep half the propellant when the build rock can't make its own */
+/* can this asteroid make product prod (same rule as the Travel page) */
+function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};if((c.scanStatus||0)>=4&&c.abundances&&Y.astAbund)return(Y.astAbund(c.abundances)[prod]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+prod))}
+  if(seen[prod])return false;seen=Object.assign({},seen,{[prod]:1});
+  const has=t=>(D.allB||[]).some(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===ast.id);
+  return(MK[prod]||[]).some(([,pt,inp,,out])=>has(pt)&&Object.keys(inp).every(k=>(out&&out[k])||canMk(Y,D,ast,k,seen)))}
 const IFL=true; /* LIVE (was ?beta=1 only): First send also offers ships already in flight, leaving once they land */
 const SWP=true; /* LIVE (was ?beta=1 only): Fewest flights in the right column, Fly in below (swapped) */
 const CB=true; /* with 2+ building types, wait for a Calculate button instead of redrawing on every click – LIVE (was ?beta=1 only) */
@@ -213,15 +219,18 @@ export function drawBuildPlan(m){
       const thenOne=async ln=>{const ft=ln.querySelector('.bp-ft'),sh=(D.ships||[]).find(z=>String(z.id)===ln.dataset.ship),a=O[ln.dataset.from],b=O[S.ast];
         if(!sh){ft.textContent='(no ship chosen yet)';return}if(!a||!b){ft.textContent='(distance unknown)';return}
         const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
-        try{f=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,sh.prop*1000),TB?2000:365)}catch(e){}
+        const SH0=(T.SHIPS||{})[sh.st],full=FTK&&S.fuel==='full'&&SH0,P=full?SH0[2]/1000:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{},half=FTK&&!canMk(Y,D,dAst,'170',{});
+        try{f=await T.fastest(a.o,b.o,now,half?T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load+P/2,P/2):T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,P),TB?2000:365)}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
-        ft.textContent='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
+        if(!FTK)ft.textContent='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
+        else{ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option><option value="now"'+(full?'':' selected')+'>propellant as it is now</option></select>'+(half?', <b>½ fuel</b>':'')+')';
+          ft.querySelector('.bp-fuel').onchange=e=>{S.fuel=e.target.value;m.querySelectorAll('.bp-then').forEach(x=>{if(x.dataset.ship)thenOne(x)})}}
         /* more detail: propellant this trip uses, or what it would take */
         let dl=ln.querySelector('.bp-tdet');if(!dl){dl=document.createElement('div');dl.className='bp-tdet';ln.appendChild(dl)}
         const SH=(T.SHIPS||{})[sh.st];if(!SH){dl.textContent='';return}
-        const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=sh.prop*1000,t=x=>tkg(x);
-        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh);return}
+        const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=FTK?P:sh.prop*1000,t=x=>tkg(x);
+        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(FTK&&full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
         dl.innerHTML='<span class="a">working out what it would take…</span>';
         let best=null;for(let h=6;h<=2000;h+=h<200?6:24){let dv;try{dv=await T.deltaV(a.o,b.o,now,h)}catch(e){continue}if(!best||dv<best.dv)best={h,dv}}
         if(me!==run||!ln.isConnected)return;
