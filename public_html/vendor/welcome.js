@@ -8,7 +8,8 @@
   if (!WEL) return;
   var KEY = 'yic-welcome-seen';
   if (!BETA) { try { if (sessionStorage.getItem(KEY)) return; } catch (e) {} }
-  var CSS = '#wel{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-start;justify-content:center;' +
+  // !important: the site's body > :not(...) rule sets position:relative on body's children.
+  var CSS = '#wel{position:fixed!important;inset:0;z-index:9999!important;display:flex;align-items:flex-start;justify-content:center;' +
     'padding-top:16px;background:rgba(5,9,16,.6);opacity:0;transition:opacity .4s;pointer-events:none}' +
     '#wel.on{opacity:1;pointer-events:auto}' +
     '#wel .box{position:relative;width:min(260px,72vw);padding:10px 10px 8px;border-radius:12px;' +
