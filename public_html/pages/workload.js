@@ -723,7 +723,46 @@
     );
   }
 
-  // First visit this session: Skippy talks big on the viewscreen, then shrinks into the chair (Mark, 26 Oct)
+  // First visit: bridge doors with a "Step onto the bridge" button (a click lets the browser play sound),
+  // door swoosh, then Skippy talks big on the viewscreen and shrinks into the chair (Mark, 26 Oct)
+  function doorSound() {
+    try {
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return;
+      const ac = new A(),
+        t = ac.currentTime,
+        len = Math.floor(ac.sampleRate * 1.1),
+        buf = ac.createBuffer(1, len, ac.sampleRate),
+        d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const n = ac.createBufferSource(),
+        f = ac.createBiquadFilter(),
+        g = ac.createGain();
+      n.buffer = buf;
+      f.type = 'bandpass';
+      f.Q.value = 1.2;
+      f.frequency.setValueAtTime(2400, t);
+      f.frequency.exponentialRampToValueAtTime(350, t + 0.8);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.5, t + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+      n.connect(f).connect(g).connect(ac.destination);
+      n.start(t);
+      n.stop(t + 1.1);
+      const o = ac.createOscillator(),
+        og = ac.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(140, t);
+      o.frequency.exponentialRampToValueAtTime(55, t + 0.5);
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(0.25, t + 0.03);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(og).connect(ac.destination);
+      o.start(t);
+      o.stop(t + 0.55);
+      setTimeout(() => ac.close(), 1500);
+    } catch (e) {}
+  }
   function skippyIntro(br) {
     if (window.YICskIntro) return;
     window.YICskIntro = 1;
@@ -734,48 +773,87 @@
       sessionStorage.setItem('yic-sk-intro', '1');
     } catch (e) {}
     if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-    setTimeout(() => {
-      const vs = br.querySelector('.brs-vs'),
-        sk = br.querySelector('.brs-sk');
-      if (!vs || !sk || !br.isConnected) return;
-      const r = vs.getBoundingClientRect();
-      if (r.width < 50 || r.bottom < 0 || r.top > innerHeight) return;
-      const h = Math.min(Math.max(r.height - 30, 220), innerHeight * 0.7),
-        w = (h * 668) / 818,
-        L = r.left + (r.width - w) / 2,
-        T = Math.max(r.top + 15, 10);
+    const st = document.createElement('style');
+    st.textContent =
+      '#brdoor{position:fixed!important;inset:0;z-index:10000!important;overflow:hidden}' +
+      '#brdoor .dw{position:absolute;top:0;bottom:0;width:50.5%;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 60px),linear-gradient(180deg,#1c2633,#0b1017);transition:transform .85s cubic-bezier(.6,0,.3,1)}' +
+      '#brdoor .dl{left:0;border-right:3px solid #8fe3ff;box-shadow:inset -14px 0 30px rgba(143,227,255,.12),6px 0 18px rgba(143,227,255,.35)}' +
+      '#brdoor .dr{right:0;border-left:3px solid #8fe3ff;box-shadow:inset 14px 0 30px rgba(143,227,255,.12),-6px 0 18px rgba(143,227,255,.35)}' +
+      '#brdoor .dl::after,#brdoor .dr::after{content:"";position:absolute;top:50%;width:8px;height:90px;margin-top:-45px;border-radius:4px;background:#5b9dff;box-shadow:0 0 12px #5b9dff}' +
+      '#brdoor .dl::after{right:22px}#brdoor .dr::after{left:22px}' +
+      '#brdoor.open .dl{transform:translateX(-101%)}#brdoor.open .dr{transform:translateX(101%)}' +
+      '#brdoor button{all:unset;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;cursor:pointer;padding:16px 30px;border:2px solid #8fe3ff;border-radius:8px;background:rgba(5,8,13,.85);color:#8fe3ff;font:700 15px/1 system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;text-align:center;box-shadow:0 0 22px rgba(143,227,255,.4);transition:opacity .25s,box-shadow .2s}' +
+      '#brdoor button:hover,#brdoor button:focus-visible{box-shadow:0 0 34px rgba(143,227,255,.75)}' +
+      '#brdoor button small{display:block;margin-top:8px;font-size:10px;letter-spacing:.15em;opacity:.7}' +
+      '#brdoor.open button{opacity:0;pointer-events:none}';
+    document.head.appendChild(st);
+    const dr = document.createElement('div');
+    dr.id = 'brdoor';
+    dr.innerHTML = '<div class="dw dl"></div><div class="dw dr"></div><button type="button">Step onto the bridge<small>🔊 sound on</small></button>';
+    document.body.appendChild(dr);
+    const btn = dr.querySelector('button');
+    btn.focus();
+    btn.addEventListener('click', () => {
+      // Create and unlock the video inside the click, so the browser lets it play with sound
       const v = document.createElement('video');
       v.src = 'media/skippy-intro.mp4';
       v.playsInline = true;
-      v.title = 'Click to skip';
-      v.style.cssText = 'position:fixed!important;z-index:9999!important;left:' + L + 'px;top:' + T + 'px;width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:12px;box-shadow:0 0 30px rgba(143,227,255,.45);transform-origin:0 0;opacity:0;transform:scale(.92);transition:transform .9s ease-in-out,opacity .5s,border-radius .9s;cursor:pointer';
-      document.body.appendChild(v);
-      sk.style.opacity = '0';
-      let done = false;
-      const shrink = () => {
-        if (done) return;
-        done = true;
-        const c = sk.getBoundingClientRect();
-        v.style.borderRadius = '40px';
-        v.style.transform = 'translate(' + (c.left - L) + 'px,' + (c.top - T) + 'px) scale(' + c.width / w + ',' + c.height / h + ')';
-        setTimeout(() => {
-          sk.style.opacity = '';
-          v.remove();
-        }, 950);
-      };
-      v.addEventListener('ended', shrink);
-      v.addEventListener('click', shrink);
-      setTimeout(shrink, 8000);
-      requestAnimationFrame(() => {
-        v.style.opacity = '1';
-        v.style.transform = 'none';
-      });
-      v.play().catch(() => {
-        // Browser blocked sound – play silently instead
-        v.muted = true;
-        v.play().catch(shrink);
-      });
-    }, 600);
+      v.preload = 'auto';
+      const un = v.play();
+      if (un && un.then) un.then(() => v.pause()).catch(() => {});
+      doorSound();
+      const sk0 = br.querySelector('.brs-sk');
+      if (sk0) sk0.style.opacity = '0';
+      dr.classList.add('open');
+      setTimeout(() => {
+        dr.remove();
+        st.remove();
+        showSkippy(br, v);
+      }, 900);
+    });
+  }
+  function showSkippy(br, v) {
+    const vs = br.querySelector('.brs-vs'),
+      sk = br.querySelector('.brs-sk');
+    if (!vs || !sk || !br.isConnected) {
+      if (sk) sk.style.opacity = '';
+      return;
+    }
+    scrollTo(0, 0);
+    const r = vs.getBoundingClientRect();
+    if (r.width < 50) return;
+    const h = Math.min(Math.max(r.height - 30, 220), innerHeight * 0.7),
+      w = (h * 668) / 818,
+      L = r.left + (r.width - w) / 2,
+      T = Math.max(r.top + 15, 10);
+    v.title = 'Click to skip';
+    v.style.cssText = 'position:fixed!important;z-index:9999!important;left:' + L + 'px;top:' + T + 'px;width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:12px;box-shadow:0 0 30px rgba(143,227,255,.45);transform-origin:0 0;opacity:0;transform:scale(.92);transition:transform .9s ease-in-out,opacity .5s,border-radius .9s;cursor:pointer';
+    document.body.appendChild(v);
+    sk.style.opacity = '0';
+    let done = false;
+    const shrink = () => {
+      if (done) return;
+      done = true;
+      const c = sk.getBoundingClientRect();
+      v.style.borderRadius = '40px';
+      v.style.transform = 'translate(' + (c.left - L) + 'px,' + (c.top - T) + 'px) scale(' + c.width / w + ',' + c.height / h + ')';
+      setTimeout(() => {
+        sk.style.opacity = '';
+        v.remove();
+      }, 950);
+    };
+    v.addEventListener('ended', shrink);
+    v.addEventListener('click', shrink);
+    setTimeout(shrink, 8000);
+    requestAnimationFrame(() => {
+      v.style.opacity = '1';
+      v.style.transform = 'none';
+    });
+    v.currentTime = 0;
+    v.play().catch(() => {
+      v.muted = true;
+      v.play().catch(shrink);
+    });
   }
 
   window.PAGES = window.PAGES || {};
