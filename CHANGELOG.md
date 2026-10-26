@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 430 – 26 Oct 2026 – New page Asteroids › Supply chain: which of your rocks can mine each raw resource, and which rocks need it flown in.
+
 ## Version 423 – 26 Oct 2026 – Every table: headings stay in view under the menu, soft row stripes, sort arrows only where you can sort, and click-to-sort on simple tables (Ships, Leases, Status and more).
 
 ## Version 422 – 26 Oct 2026 – Today's Workload: Idle buildings and Storage nearly full now show one row per asteroid (click to open); counts are buildings, e.g. "Idle buildings (126 on 6 asteroids)".
