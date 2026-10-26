@@ -10,7 +10,7 @@
     ['🧩', 'Influence Tools', 'https://chromewebstore.google.com/detail/influence-tools/kopdkjlnbfiegpdjiebogkakjfppfglj', 'Chrome extension by Elerium: shopping list and market prices inside the game']
   ];
   var CSS = '#comm{text-align:center;margin:28px auto 0;padding:12px 16px 4px;color:#9aa8bb;font-size:14px}' +
-    '#comm .ct{display:block;margin-bottom:6px;font-weight:700;color:#8fe3ff}' +
+    '#comm .ct{display:block;margin-bottom:10px;font-family:Rye,serif;font-weight:400;font-size:24px;letter-spacing:.5px;color:#8fe3ff;text-shadow:0 0 10px rgba(143,227,255,.45)}' +
     '#comm a{display:inline-block;margin:4px 5px;padding:5px 12px;border-radius:6px;font-weight:700;font-size:13px;' +
     'text-decoration:none;background:#161d27;color:#cfe3f5;border:1px solid #2a3442}' +
     '#comm a:hover,#comm a:focus-visible{border-color:#5b9dff;box-shadow:0 0 10px rgba(143,227,255,.35)}' +
