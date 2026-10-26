@@ -1,7 +1,7 @@
 // "Report a problem" – button in the support strip (#sup) opens a small box; reports go to report.php
 // and are saved privately on the server (never shown on the site).
 (function () {
-  var REP = /[?&]beta=1/.test(location.search); // TEST on ?beta=1 (26 Oct 2026). true = live for everyone.
+  var REP = true; // LIVE 26 Oct 2026 (tested on ?beta=1)
   if (!REP) return;
   var CSS =
     '#repl{text-align:center;margin:0 auto 10px;padding:12px 16px;color:#9aa8bb;font-size:14px;border-top:1px solid #2a3442;max-width:640px}' +

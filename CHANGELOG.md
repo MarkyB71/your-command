@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 411 – 26 Oct 2026 – New "🐞 Report a problem" button on its own line under the support strip. Players describe a bug (page filled in for them, Discord name and wallet optional); reports are saved privately on the server and posted as issues in a private GitHub repo. Limits: 5 per visitor per hour, 30 a day in total.
+
 ## Version 403 – 26 Oct 2026 – Asteroid planner: Then send has a full tank / propellant as it is now choice, and keeps half the tank when the build rock can't make propellant; raw materials your other rocks hold or mine (e.g. Taenite for iron) are flown in, and the table and Fewest flights now agree; building tiles line up. Header: title shrinks to fit narrow windows (banner label hides when there's no room); Updated/wallet and Download stay together on one row.
 
 ## Version 396 – 26 Oct 2026 – Building Contents: long product names wrap so the amounts stay inside the card.
