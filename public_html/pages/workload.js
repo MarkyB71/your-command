@@ -580,13 +580,19 @@
 .st-base{display:flex;justify-content:center;gap:5px;height:22px;align-items:center;margin:0 -6px;background:linear-gradient(180deg,#1f2a38,#0d131b);clip-path:polygon(0 0,100% 0,94% 100%,6% 100%)}
 .st-base i{width:12px;height:5px;border-radius:2px;background:var(--dc);opacity:.35}
 .st-base i:nth-child(2){opacity:.8;box-shadow:0 0 6px var(--dc)}
-.brs-chair{align-self:end;display:flex;justify-content:center}
+.brs-chair{all:unset;box-sizing:border-box;cursor:pointer;align-self:end;display:flex;flex-direction:column;align-items:center;gap:2px;transition:filter .2s}
+.brs-chair:hover,.brs-chair:focus-visible,.brs-chair.on{filter:drop-shadow(0 0 12px rgba(143,227,255,.55))}
+.brs-cl{font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8fe3ff;opacity:.75;text-align:center}
+.brs-chair.on .brs-cl{opacity:1;text-shadow:0 0 8px #8fe3ff}
+.brs-log{position:relative;height:clamp(320px,52vh,600px);overflow:auto;padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:13px;scrollbar-color:#2c3a4c transparent}
+.brs-log h2{font-size:16px!important;color:#8fe3ff;letter-spacing:.04em}
+.brs-log .note{font-size:12px}
 .brs-chair svg{width:100%;max-width:140px;height:auto;filter:drop-shadow(0 0 10px rgba(143,227,255,.18))}
 .brs-floor{position:relative;z-index:0;height:26px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,rgba(91,195,228,.18),transparent 70%)}
 @keyframes brLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes brBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
 .brs-bg .bl{animation:brBlink 4s infinite}
-@media (max-width:760px){.brs-deck{grid-template-columns:1fr 1fr;perspective:none}.brs-chair{display:none}.st,.st:hover{transform:none}.brs-vs{width:94%}}
+@media (max-width:760px){.brs-deck{grid-template-columns:1fr 1fr;perspective:none}.brs-chair{grid-column:1/-1;order:5;flex-direction:row;justify-content:center;gap:10px;padding:6px 0}.brs-chair svg{max-width:54px}.brs-log{clip-path:none}.st,.st:hover{transform:none}.brs-vs{width:94%}}
 @media (prefers-reduced-motion:reduce){.st-led,.brs-bg .bl{animation:none}.st{transition:none}}
 `;
   const BR_BG =
@@ -671,7 +677,7 @@
     br.innerHTML =
       BR_BG +
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
-      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<div class="brs-chair" title="The captain\'s chair">' + CHAIR + '</div>' +
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen">' + CHAIR + '<span class="brs-cl">Today\'s workload</span></button>' +
       station(DECKS[2]) + station(DECKS[3]) + '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const vs = br.querySelector('.brs-vs');
@@ -681,6 +687,28 @@
       if (lab) lab.textContent = 'The Adalia system right now · your rocks in blue · drag to turn';
       vs.appendChild(vs.querySelector('.brs-plate'));
     }
+    // The captain's chair swaps the viewscreen between the system map and today's workload
+    const chair = br.querySelector('.brs-chair'),
+      plate = vs.querySelector('.brs-plate');
+    chair.addEventListener('click', () => {
+      const map = vs.querySelector(':scope > div:not(.brs-plate):not(.brs-log)');
+      let log = vs.querySelector('.brs-log');
+      if (log) {
+        log.remove();
+        if (map) map.style.display = '';
+        plate.textContent = 'VIEWSCREEN';
+        chair.classList.remove('on');
+        return;
+      }
+      log = document.createElement('div');
+      log.className = 'brs-log';
+      vs.insertBefore(log, plate);
+      if (map) map.style.display = 'none';
+      drawAlerts(log);
+      animTiles(log);
+      plate.textContent = "TODAY'S WORKLOAD";
+      chair.classList.add('on');
+    });
     br.querySelectorAll('.st').forEach((b) =>
       b.addEventListener('click', () => {
         if (window.YICgoDeck) return window.YICgoDeck(b.dataset.deck);
