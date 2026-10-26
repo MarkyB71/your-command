@@ -181,6 +181,7 @@
               '</div></details>'
             : one(x, 0),
         crew: [...x.crew].join(', '),
+        cnt: x.n.length,
       }));
     }
     APP.leaseInfo().forEach((x) => {
@@ -311,6 +312,9 @@
       ],
       ['prop', 'Ships low on propellant', 'Ships with less than a quarter of a tank.'],
     ];
+    // Idle buildings: count buildings (not groups) + asteroids (beta first)
+    const IDC = /[?&]beta=1/.test(location.search),
+      cnt = (k) => (IDC ? S[k].reduce((n, x) => n + (x.cnt || 1), 0) : S[k].length);
     const COL = { 2: '#ff7a7a', 1: '#fab219', 0: '#5fc3e4' },
       dot = (l) =>
         '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' +
@@ -333,7 +337,7 @@
     let h =
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px">' +
       SEC.map(([k, t]) => {
-        const n = S[k].length,
+        const n = cnt(k),
           hi = S[k].some((x) => x.lvl === 2);
         return (
           '<a href="#al-' +
@@ -368,7 +372,15 @@
         '">' +
         t +
         ' <span class="a" style="font-size:14px;font-weight:400">(' +
-        L.length +
+        (IDC && k === 'idle'
+          ? cnt(k) +
+            ' on ' +
+            new Set(L.map((x) => x.a)).size +
+            ' asteroid' +
+            (new Set(L.map((x) => x.a)).size > 1 ? 's' : '')
+          : IDC
+            ? cnt(k)
+            : L.length) +
         ')</span></h2><div class="note" style="padding:0 0 8px">' +
         d +
         '</div><div class="wrap"><table><thead><tr><th>' +
