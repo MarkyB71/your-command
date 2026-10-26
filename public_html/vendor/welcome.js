@@ -4,7 +4,7 @@
 // Sits at the top of the page in a dark box; closes by itself at the end, or with ✕ / Esc / a click outside.
 (function () {
   var BETA = /[?&]beta=1/.test(location.search);
-  var WEL = BETA; // test on ?beta=1 first (plays every time there); set true to go live (once per visit)
+  var WEL = false; // OFF (26 Oct 2026) – Mark will look again another day. Set to BETA to test on ?beta=1, true to go live.
   if (!WEL) return;
   var KEY = 'yic-welcome-seen';
   if (!BETA) { try { if (sessionStorage.getItem(KEY)) return; } catch (e) {} }
