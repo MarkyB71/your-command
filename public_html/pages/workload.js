@@ -183,6 +183,43 @@
         crew: [...x.crew].join(', '),
         cnt: x.n.length,
       }));
+      // Beta: one row per asteroid, click to open types, then buildings
+      if (/[?&]beta=1/.test(location.search)) {
+        const A = {};
+        Object.values(g).forEach((x) => (A[x.a] = A[x.a] || []).push(x));
+        S.idle = Object.entries(A).map(([a, L]) => {
+          L.sort((x, y) => y.n.length - x.n.length);
+          const n = L.reduce((k, x) => k + x.n.length, 0),
+            pl = (x) => x.n.length + ' ' + APP.esc(x.type) + (x.n.length > 1 ? 's' : ''),
+            crew = new Set();
+          L.forEach((x) => x.crew.forEach((c) => crew.add(c)));
+          return {
+            lvl: 1,
+            t: -n,
+            a,
+            type: '',
+            what: n + ' building' + (n > 1 ? 's' : '') + ' with nothing running',
+            name: a,
+            html:
+              '<details><summary style="cursor:pointer;white-space:normal">' +
+              L.map(pl).join(' · ') +
+              '</summary><div style="padding:6px 0 0 14px">' +
+              L.map(
+                (x) =>
+                  '<details style="margin:4px 0"><summary style="cursor:pointer">' +
+                  APP.bthumb(x.type, 32, 24) +
+                  ' ' +
+                  pl(x) +
+                  '</summary><div class="a" style="white-space:normal;max-width:420px;padding-left:18px">' +
+                  x.n.map((_, i) => '<div>' + one(x, i) + '</div>').join('') +
+                  '</div></details>',
+              ).join('') +
+              '</div></details>',
+            crew: [...crew].join(', '),
+            cnt: n,
+          };
+        });
+      }
     }
     APP.leaseInfo().forEach((x) => {
       if (x.st === 'ok') return;
@@ -302,7 +339,9 @@
       [
         'idle',
         'Idle buildings',
-        'Production buildings with nothing running, grouped by asteroid. Click a group to see the buildings.',
+        /[?&]beta=1/.test(location.search)
+          ? 'Production buildings with nothing running, one row per asteroid. Click a row to see the types, then click a type to see the buildings.'
+          : 'Production buildings with nothing running, grouped by asteroid. Click a group to see the buildings.',
       ],
       ['store', 'Storage nearly full', 'Warehouses and tank farms 75% full or more.'],
       [
