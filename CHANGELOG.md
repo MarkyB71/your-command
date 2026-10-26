@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 416 – 26 Oct 2026 – "Try other Community Tools" at the bottom of every page: links to Adalia Academy, Adalia Exchange, Elerium tools and the Influence Tools extension (open in a new tab).
+
 ## Version 412 – 26 Oct 2026 – Core Samples: small samples (under 2 t) hidden by default with a tick box to show them, and the choice is remembered. Crew planner: bonuses listed biggest first, with a gap before the ones that don't help.
 
 ## Version 411 – 26 Oct 2026 – New "🐞 Report a problem" button on its own line under the support strip. Players describe a bug (page filled in for them, Discord name and wallet optional); reports are saved privately on the server and posted as issues in a private GitHub repo. Limits: 5 per visitor per hour, 30 a day in total.
