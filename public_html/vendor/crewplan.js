@@ -33,9 +33,8 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const BETA2=true; /* bonuses green when positive, red when negative – live since v9 */
 const pc0=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
-const pc=v=>{const t=pc0(v),p=Math.round((v-1)*100);return(!BETA2||p===0)?t:'<span style="color:'+(p>0?'#3fd68a':'#ff6b6b')+';font-weight:600">'+t+'</span>'};
+const pc=v=>{const t=pc0(v),p=Math.round((v-1)*100);return(p===0)?t:'<span style="color:'+(p>0?'#3fd68a':'#ff6b6b')+';font-weight:600">'+t+'</span>'};
 const S={plan:null,orig:null,sel:null,job:'',q:'',best:false};
 const POOL='pool';
 const store=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
@@ -80,9 +79,8 @@ export function drawCrewPlan(m){
     const jobs=S.job?CBJ.filter(j=>String(j[0])===S.job):CBJ;
     const rows=jobs.map(([a,n])=>{const v=mult(i,now,a),o=mult(i,was,a);return{n,v,o}}).filter(r=>S.job||Math.abs(r.v-1)>0.0001||Math.abs(r.o-1)>0.0001);
     if(!rows.length)return'<div class="cp-none">No bonuses – standard on every job.</div>';
-    const B3=true; /* LIVE 26 Oct 2026 (was ?beta=1): biggest bonus first, gap between positive and the rest */
-    if(B3)rows.sort((a,b)=>b.v-a.v);
-    return'<div class="cp-bon">'+rows.map((r,k)=>{const gap=B3&&k>0&&rows[k-1].v>1.0001&&r.v<=1.0001?'<div style="height:12px"></div>':'';const d=r.v-r.o,cl=d>0.0001?'up':d<-0.0001?'dn':'';
+    rows.sort((a,b)=>b.v-a.v);
+    return'<div class="cp-bon">'+rows.map((r,k)=>{const gap=(k>0)&&rows[k-1].v>1.0001&&r.v<=1.0001?'<div style="height:12px"></div>':'';const d=r.v-r.o,cl=d>0.0001?'up':d<-0.0001?'dn':'';
       return gap+'<div class="r"><span>'+esc(r.n)+'</span><span class="'+cl+'">'+pc(r.v)+(Math.abs(d)>0.0001?' <span class="was">(was '+pc(r.o)+')</span>':'')+'</span></div>'}).join('')+'</div>'}
 
   function draw(){

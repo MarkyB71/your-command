@@ -9,28 +9,16 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 window.YICREC={MK,FBT}; /* recipes for other pages (Travel: can a rock make its own propellant?) */
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
-const BETA=true; /* LIVE for everyone (was ?beta=1 only) */
-const FB=true; /* make on site instead of flying in + new layout – LIVE (was ?beta=1 only) */
-const MB=true; /* 'Make it here?' column in the materials table – LIVE (was ?beta=1 only) */
-const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
-const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
+const HW=h=>{;h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
-const OST=true; /* LIVE (was ?beta=1 only) */ /* TEST: raw materials your other asteroids hold or can mine count as cheap (fly them in) – e.g. Taenite for iron instead of the long Olivine route; table and flights share one answer */
-const TAL=true; /* LIVE (was ?beta=1 only) */ /* TEST: building tiles line up – badge on one line, number box at the bottom */
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
-const FTK=true; /* LIVE (was ?beta=1 only) */ /* TEST: Then send – full tank / as it is now, and keep half the propellant when the build rock can't make its own */
 /* can this asteroid make product prod (same rule as the Travel page) */
 function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};if((c.scanStatus||0)>=4&&c.abundances&&Y.astAbund)return(Y.astAbund(c.abundances)[prod]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+prod))}
   if(seen[prod])return false;seen=Object.assign({},seen,{[prod]:1});
   const has=t=>(D.allB||[]).some(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===ast.id);
   return(MK[prod]||[]).some(([,pt,inp,,out])=>has(pt)&&Object.keys(inp).every(k=>(out&&out[k])||canMk(Y,D,ast,k,seen)))}
-const IFL=true; /* LIVE (was ?beta=1 only): First send also offers ships already in flight, leaving once they land */
-const SWP=true; /* LIVE (was ?beta=1 only): Fewest flights in the right column, Fly in below (swapped) */
-const CB=true; /* with 2+ building types, wait for a Calculate button instead of redrawing on every click – LIVE (was ?beta=1 only) */
-const CANB=true; /* LIVE (was ?beta=1 only): badge on each building tile – can it be built here now / made here / needs flying in */
-const MU=true; /* plan several buildings at once (a count for each) – LIVE (was ?beta=1 only) */
-let run=0;const memo={};
+let run=0;
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return Math.round(n).toLocaleString()+' kg'};
@@ -63,19 +51,14 @@ export function drawBuildPlan(m){
   let [bName,inp]=BLDS[S.bld],N=Math.max(1,Math.min(999,Math.round(S.n)||1)),bLab=N>1?N+' '+(/y$/.test(bName)?bName.slice(0,-1)+'ies':bName+'s'):bName;
   /* build order: what you usually need first */
   const BORD=[2,1,10,3,5,7,9,6,4,8],bKeys=Object.keys(BLDS).sort((x,y)=>{const i=BORD.indexOf(+x),j=BORD.indexOf(+y);return(i<0?99:i)-(j<0?99:j)});
-  if(MU){const sel=bKeys.filter(k=>(S.cnt[k]||0)>0);inp={};sel.forEach(k=>{const c=S.cnt[k];for(const id in BLDS[k][1])inp[id]=(inp[id]||0)+BLDS[k][1][id]*c});N=1;
+  {const sel=bKeys.filter(k=>(S.cnt[k]||0)>0);inp={};sel.forEach(k=>{const c=S.cnt[k];for(const id in BLDS[k][1])inp[id]=(inp[id]||0)+BLDS[k][1][id]*c});N=1;
     bName=sel.length===1?BLDS[sel[0]][0]:'buildings';bLab=sel.map(k=>plur(S.cnt[k],BLDS[k][0])).join(', ')||'nothing yet'}
-  const pickHTML=MU?'<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="bimg.php?t='+k+'" alt="" data-hide><span>'+esc(BLDS[k][0])+'</span>'+(CANB?'<!--bpb'+k+'-->':'')+'<input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+(CB?'<button id="bpCalc" type="button">Calculate</button>':'')+'<button id="bpClr" type="button">Clear all</button></div>':'';
+  const pickHTML='<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="bimg.php?t='+k+'" alt="" data-hide><span>'+esc(BLDS[k][0])+'</span>'+('<!--bpb'+k+'-->')+'<input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+'<button id="bpCalc" type="button">Calculate</button>'+'<button id="bpClr" type="button">Clear all</button></div>';
   const rows=Object.keys(inp).map(id=>{const need=inp[id]*N,have=stk[id]||0,short=Math.max(0,need-have);
     const others=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>({a,have:Y.tot[a.i][id]}));
     return{id,need,have,short,others}}).sort((x,y)=>(y.short>0)-(x.short>0)||nm(x.id).localeCompare(nm(y.id)));
   /* None of your asteroids has it: look one step back in the chain, at what makes it, on the asteroid you're building on */
-  const nextLevel0=r=>{const L=(MK[r.id]||[]).map(([pn,pt,inp,out])=>{const its=Object.keys(inp).map(k=>{const q=inp[k]*r.short/out,hv=stk[k]||0;return{k,q,hv,c:hv>=q?'ok':hv>0?'part':'none'}});
-      return{pn,pt,its,n:its.filter(x=>x.c==='ok').length}}).sort((a,b)=>(b.n===b.its.length)-(a.n===a.its.length)||b.n/b.its.length-a.n/a.its.length);
-    if(!L.length)return'';
-    const one=x=>'<div style="margin-top:6px"><b>'+esc(x.pn)+'</b> <span class="a">('+esc(PTYPE[x.pt]||'')+')</span> '+(x.n===x.its.length?'<span class="ok">✓ you have all of these here</span>':'<span class="a">'+x.n+' of '+x.its.length+' here</span>')+'<br>'+
-      x.its.map(i=>'<span class="'+i.c+'">'+(i.c==='ok'?'✓':i.c==='part'?'◐':'✗')+'</span> '+amt(i.k,i.q)+' '+esc(nm(i.k))+(i.c==='part'?' <span class="a">(have '+amt(i.k,i.hv)+')</span>':'')).join('<br>')+'</div>';
-    return'<div style="margin-top:6px;font-size:13px">To make it on '+esc(here.name)+':'+L.slice(0,3).map(one).join('')+(L.length>3?'<details style="margin-top:4px"><summary class="a" style="cursor:pointer">'+(L.length-3)+' more ways to make it</summary>'+L.slice(3).map(one).join('')+'</details>':'')+'</div>'};
+  
   /* Full chain: make the missing materials on this asteroid as far as possible, down to raw resources */
   const own=(D.owned||[]).find(a=>a.id===S.ast),cel=own&&own.Celestial||{},spec=(Y.SPEC||{})[cel.celestialType],
     scanned=(cel.scanStatus||0)>=4&&cel.abundances,ab=scanned&&Y.astAbund?Y.astAbund(cel.abundances):null;
@@ -105,10 +88,10 @@ export function drawBuildPlan(m){
   return{USED,pool,fly,mine,fac,made}};
   const myFac=(t,aid=S.ast)=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===aid).length;
   /* TEST: materials your other asteroids hold but that can be made fully here (own stock + mining, facilities you already have) are made here instead of flown in */
-  const AWAY={};if(OST){A.forEach(a=>{if(a.id===S.ast||a.i===null)return;const t=Y.tot[a.i]||{};for(let k=1;k<=22;k++)if((t[k]||0)>=1000)AWAY[k]=1});
+  const AWAY={};{A.forEach(a=>{if(a.id===S.ast||a.i===null)return;const t=Y.tot[a.i]||{};for(let k=1;k<=22;k++)if((t[k]||0)>=1000)AWAY[k]=1});
     (D.owned||[]).forEach(a=>{if(a.id===S.ast)return;const c=a.Celestial||{},ab2=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?Y.astAbund(c.abundances):null,sp=(Y.SPEC||{})[c.celestialType];for(let k=1;k<=22;k++)if(ab2?(ab2[k]||0)>0:sp&&sp[1].includes(k))AWAY[k]=1})}
-  const UC1={},AW=OST?AWAY:null;
-  const ucOK=OST?UC1:{},vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
+  const UC1={},AW=AWAY;
+  const ucOK=UC1,vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
   const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK,AW);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
   /* TEST (CANB): what each building needs for ONE of it on this asteroid */
   const ucB={},canBadge=k=>{const need=BLDS[k][1],sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
@@ -117,13 +100,13 @@ export function drawBuildPlan(m){
     if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(nm).join(', '))+'">✈ Fly some in</em>';
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
     return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
-  const chainRows=rows.filter(r=>r.short&&(!r.others.length||(FB&&makeOK(r))));
-  const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),OST?UC1:{},AW),{USED,pool,fly,mine,fac,made}=EX;
+  const chainRows=rows.filter(r=>r.short&&(!r.others.length||makeOK(r)));
+  const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),UC1,AW),{USED,pool,fly,mine,fac,made}=EX;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
   shortRows.filter(r=>r.others.length&&!chainRows.includes(r)).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
   /* Make it here? – can a missing material be made on this asteroid from its own stock + mining (TEST) */
-  const ucMH=OST?UC1:{};
+  const ucMH=UC1;
   const makeHere=r=>{if(!r.short)return'';const E=expand(stk,canMine,[[r.id,r.short]],ucMH,AW),R=E.USED[r.id];
     if(!R)return'<span class="none">✗ No</span> <span class="a">– no way to make it here</span>';
     const fl=Object.keys(E.fly).filter(k=>isCnt(k)?E.fly[k]>=0.5:kgOf(k,E.fly[k])>=0.5).sort((x,y)=>kgOf(y,E.fly[y])-kgOf(x,E.fly[x]));
@@ -155,8 +138,8 @@ export function drawBuildPlan(m){
     const more=fls.length+srcs.length+(mn.length?1:0);
     return{best,more,detail:'<div class="bp-src">'+flH+st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join('')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+'</div>'}};
   const flyList=o=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>{const n=near(k,o[k]);
-    const w=FB?'<span class="bp-w">'+amt(k,o[k])+'</span><b class="bp-nm">'+esc(nm(k))+'</b> ':amt(k,o[k])+' <b>'+esc(nm(k))+'</b> – ';
-    return n.more?'<details class="bp-it"'+(FB?' open':'')+'><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
+    const w='<span class="bp-w">'+amt(k,o[k])+'</span><b class="bp-nm">'+esc(nm(k))+'</b> ';
+    return n.more?'<details class="bp-it"'+' open'+'><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
   const lst=(o,f)=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>'<div style="margin-top:6px">'+amt(k,o[k])+' <b>'+esc(nm(k))+'</b>'+(f?f(k):'')+'</div>').join('');
   /* Fewest flights: which of your asteroids could supply each fly-in item – from stock, by mining, or by making it there – then the fewest asteroids that cover the most */
   const planCalc=()=>{
@@ -176,73 +159,68 @@ export function drawBuildPlan(m){
     const howTxt=(c,it)=>{const h=c.can[it.k];if(h.how==='stock')return'<span class="ok">in stock</span>';if(h.how==='mine')return'<span class="bp-mn">mine it there</span>';
       return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span>'};
     const posN=pick.filter(c=>!ready(c.id).length).length;
-    return'<div class="bp-plan">'+(TB?'<div id="bpFirst"></div>':'')+'<div class="bp-ps"'+(TB?' style="display:none"':'')+'>'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
+    return'<div class="bp-plan">'+'<div id="bpFirst"></div>'+'<div class="bp-ps"'+' style="display:none"'+'>'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
       pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);
         return'<details class="bp-it" open><summary><b>'+esc(c.name)+'</b> – '+c.take.length+' item'+(c.take.length>1?'s':'')+', '+tkg(kg)+' · '+trips(kg)+' LT trip'+(trips(kg)>1?'s':'')+(rd.length?' <span class="bp-shb">· 🚀 '+esc(rd[0].name)+' ready</span>':' <span class="a bp-pos" data-to="'+c.id+'" data-kg="'+kg+'">· no ship there – finding your nearest…</span>')+'</summary><div class="bp-src">'+
           c.take.map(it=>'<div>'+amt(it.k,it.q)+' <b>'+esc(nm(it.k))+'</b> – '+howTxt(c,it)+'</div>').join('')+'</div></details>'}).join('')+
       (left.length?'<div class="none" style="margin-top:6px">Not available from any of your asteroids: '+left.map(it=>esc(nm(it.k))).join(', ')+'</div>':'')+
-      (TB&&pick.length?'<div id="bpThen">'+pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);return'<div class="bp-first bp-then" data-from="'+c.id+'" data-kg="'+kg+'" data-ship="'+(rd[0]?rd[0].id:'')+'">📦 Then send it from <b>'+esc(c.name)+'</b> to <b class="bp-dst">'+esc(here.name)+'</b> <span class="bp-ft">(working out…)</span></div>'}).join('')+'</div>':'')+
+      (pick.length?'<div id="bpThen">'+pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);return'<div class="bp-first bp-then" data-from="'+c.id+'" data-kg="'+kg+'" data-ship="'+(rd[0]?rd[0].id:'')+'">📦 Then send it from <b>'+esc(c.name)+'</b> to <b class="bp-dst">'+esc(here.name)+'</b> <span class="bp-ft">(working out…)</span></div>'}).join('')+'</div>':'')+
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
   const planHTML=Object.keys(fly).length?'<div id="bpPlan" class="bp-plan"><span class="a">Working it out…</span></div>':'';
   const facList=Object.keys(fac).map(t=>{const n=myFac(t);return'<div class="'+(n?'ok':'none')+'">'+(n?'✓ ':'✗ ')+esc(PTYPE[t])+(n?' – you have '+n:' – none on '+esc(here.name))+'</div>'}).join('')||'<span class="a">None needed</span>';
   /* TEST: facilities you don't have here that would let you make a fly-in item on site instead (e.g. Bioreactor for Soil) */
-  const could={};if(FB)Object.keys(fly).forEach(k=>{if(+k<=22||!vis(fly,k))return;const E=expand(stk,canMine,[[k,fly[k]]],ucOK);
+  const could={};Object.keys(fly).forEach(k=>{if(+k<=22||!vis(fly,k))return;const E=expand(stk,canMine,[[k,fly[k]]],ucOK);
     if(!E.USED[k]||Object.keys(E.fly).some(f=>vis(E.fly,f)))return;Object.keys(E.fac).filter(t=>!myFac(t)).forEach(t=>{(could[t]=could[t]||[]).push(nm(k))})});
   const facAll=facList+(Object.keys(could).length?'<div class="a" style="margin-top:6px">To make more here instead of flying it in:</div>'+Object.keys(could).map(t=>'<div class="part">✗ '+esc(PTYPE[t])+' – none on '+esc(here.name)+' <span class="a">· would let you make '+could[t].map(esc).join(', ')+' here</span></div>').join(''):'');
   const flyInner=Object.keys(fly).length?'<span class="none">Not on '+esc(here.name)+' and can\'t be mined or made there</span>'+flyList(fly):'<span class="ok">✓ Nothing – it can all be mined or made here</span>';
   const flyBox='<div class="bp-plan">'+flyInner+'</div>';
   const chainHTML=!shortRows.length?'':'<h2 style="margin-top:4px">What you need for it on '+esc(here.name)+'</h2>'+
-    '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' ('+(FB?'can\'t be had elsewhere, or can be made here with what you have':'none of your asteroids has '+(chainRows.length>1?'them':'it'))+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
-    (SWP?'<div style="display:flex;flex-wrap:wrap;gap:16px"><div style="flex:1 1 320px;min-width:0">'+'<h2 style="margin-top:14px">🏭 Facilities you\'ll use</h2><div class="bp-plan">'+facAll+'</div>'+'</div><div style="flex:1 1 320px;min-width:0">'+'<h2 style="margin-top:14px">⛏ Mine here</h2><div class="bp-plan">'+(Object.keys(mine).length?lst(mine):'<span class="a">Nothing to mine here</span>')+'</div>'+'</div></div>':(FB&&planHTML?'<h2 style="margin-top:10px">🚀 Fewest flights</h2>'+planHTML:''))+
-    (FB?'':'<div class="wrap"><table><thead><tr><th>✈ Fly in</th><th>⛏ Mine here</th><th>🏭 Facilities you\'ll use</th></tr></thead><tbody><tr style="vertical-align:top">'+
-    (FB?'':'<td>'+flyInner+'</td>')+
-    (FB?'':'<td>'+(Object.keys(mine).length?lst(mine):'<span class="a">–</span>')+'</td>')+
-    '<td>'+facList+'</td></tr></tbody></table></div>')+
+    '<div class="note" style="padding:0 0 8px">Uses your stock on '+esc(here.name)+' first. Materials your other asteroids hold are listed to fly in as they are. '+(chainRows.length?'For '+chainRows.map(r=>esc(nm(r.id))).join(', ')+' ('+'can\'t be had elsewhere, or can be made here with what you have'+') the chain is followed down to raw resources, picking the recipe that needs the least flown in.':'')+(own?(scanned?'':' This asteroid isn\'t resource-scanned yet, so "can mine" means its type can hold the resource.'):' This asteroid isn\'t yours, so its resources are unknown – all raws are listed as fly in.')+'</div>'+
+    ('<div style="display:flex;flex-wrap:wrap;gap:16px"><div style="flex:1 1 320px;min-width:0">'+'<h2 style="margin-top:14px">🏭 Facilities you\'ll use</h2><div class="bp-plan">'+facAll+'</div>'+'</div><div style="flex:1 1 320px;min-width:0">'+'<h2 style="margin-top:14px">⛏ Mine here</h2><div class="bp-plan">'+(Object.keys(mine).length?lst(mine):'<span class="a">Nothing to mine here</span>')+'</div>'+'</div></div>')+
+    ''+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
-  let h='<style>'+CSS+(TAL?TALCSS:'')+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+(MU?'':' <input id="bpN" type="number" min="1" max="999" value="'+N+'" title="How many to build" style="width:64px;font-size:15px;padding:5px 6px"> × <select id="bpB">'+
-    Object.keys(BLDS).sort((x,y)=>BLDS[x][0].localeCompare(BLDS[y][0])).map(k=>'<option value="'+k+'"'+(+k===S.bld?' selected':'')+'>'+esc(BLDS[k][0])+'</option>').join('')+'</select>')+'</div>'+(CANB?pickHTML.replace(/<!--bpb(\d+)-->/g,(_,k)=>canBadge(k)):pickHTML)+(CB?'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>':'')+(MU&&!Object.keys(inp).length?'<div class="note" style="padding:6px 0">Set how many of each building you want to plan – everything is added up in one go.</div></div>':
+  let h='<style>'+CSS+TALCSS+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+''+'</div>'+pickHTML.replace(/<!--bpb(\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">Set how many of each building you want to plan – everything is added up in one go.</div></div>':
     
-    '<div class="bp-hd">'+(MU?'':'<img src="bimg.php?t='+S.bld+'" alt="" data-hide>')+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
+    '<div class="bp-hd">'+''+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
     (done===rows.length?'<span class="ok">✓ you have everything on this asteroid</span>':'<span class="'+(done?'part':'none')+'">'+done+' of '+rows.length+' materials covered here</span>')+'</div></div>'+
-    '<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">Materials for '+esc(bLab)+'</h2><div class="wrap"><table><thead><tr><th>Material</th><th class="num">Needed</th><th class="num">On '+esc(here.name)+'</th><th class="num">Still needed</th>'+(MB?'<th>Make it here?</th>':'')+'</tr></thead><tbody>'+
+    '<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">Materials for '+esc(bLab)+'</h2><div class="wrap"><table><thead><tr><th>Material</th><th class="num">Needed</th><th class="num">On '+esc(here.name)+'</th><th class="num">Still needed</th>'+'<th>Make it here?</th>'+'</tr></thead><tbody>'+
     rows.map(r=>'<tr><td><img src="rimg.php?p='+r.id+'" alt="" data-hide>'+esc(nm(r.id))+'</td><td class="num">'+amt(r.id,r.need)+'</td>'+
       '<td class="num"><span class="'+(r.have>=r.need?'ok':r.have>0?'part':'none')+'">'+(r.have>0?amt(r.id,r.have):'None')+'</span></td>'+
-      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+(MB?'<td class="bp-mh">'+makeHere(r)+'</td>':'')+'</tr>').join('')+'</tbody></table></div>'+(FB&&shortRows.length?(SWP?'':'<h2 style="margin-top:14px">⛏ Mine here</h2><div class="bp-plan">'+(Object.keys(mine).length?lst(mine):'<span class="a">Nothing to mine here</span>')+'</div><h2 style="margin-top:14px">🏭 Facilities you\'ll use</h2><div class="bp-plan">'+facAll+'</div>'):'')+'</div>'+(FB?(shortRows.length?(SWP?(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''):'<div class="bp-r"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'):''):(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''))+'</div>'+
-    (SWP&&shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:'')+chainHTML+'</div>');
+      '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+('<td class="bp-mh">'+makeHere(r)+'</td>')+'</tr>').join('')+'</tbody></table></div>'+(shortRows.length?'':'')+'</div>'+(shortRows.length?(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''):'')+'</div>'+
+    (shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:'')+chainHTML+'</div>');
   m.innerHTML=h;
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
   /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
   const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')],th=[...m.querySelectorAll('.bp-then')];if(!sp.length&&!th.length)return;
-    const cand=kg=>(D.ships||[]).filter(sh=>(IFL||!sh.fl)&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
-    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>(IFL||!sh.fl)&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
+    const cand=kg=>(D.ships||[]).filter(sh=>true&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
+    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>true&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
     Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
       const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
       /* "Then send it": loaded flight from the source asteroid to the build asteroid with the chosen ship */
       /* crew engine bonus (exhaust velocity): crew aboard the ship, else the crew that controls it – TEST only */
       const crewOf=sh=>{const cs=D.crewsRaw||[];return cs.find(c=>{const l=(c.Location&&c.Location.location)||{};return l.label===6&&l.id===sh.id&&((c.Crew&&c.Crew.roster)||[]).length})||cs.find(c=>c.id===sh.crewId)};
-      const bon=sh=>{if(!TB||!T.exhaustBonus)return 1;const cr=crewOf(sh),mates=((cr&&cr.Crew&&cr.Crew.roster)||[]).map(id=>(D.crewmates||{})[id]).filter(Boolean);try{return mates.length?T.exhaustBonus(mates)||1:1}catch(e){return 1}};
-      const bonTxt=sh=>{const b=bon(sh),cr=crewOf(sh);return TB?' · crew engine bonus <b>×'+b.toFixed(2)+'</b>'+(cr&&cr.Name&&cr.Name.name?' ('+esc(cr.Name.name)+')':''):''};
+      const bon=sh=>{if(!T.exhaustBonus)return 1;const cr=crewOf(sh),mates=((cr&&cr.Crew&&cr.Crew.roster)||[]).map(id=>(D.crewmates||{})[id]).filter(Boolean);try{return mates.length?T.exhaustBonus(mates)||1:1}catch(e){return 1}};
+      const bonTxt=sh=>{const b=bon(sh),cr=crewOf(sh);return ' · crew engine bonus <b>×'+b.toFixed(2)+'</b>'+(cr&&cr.Name&&cr.Name.name?' ('+esc(cr.Name.name)+')':'')};
       const thenOne=async ln=>{const ft=ln.querySelector('.bp-ft'),sh=(D.ships||[]).find(z=>String(z.id)===ln.dataset.ship),a=O[ln.dataset.from],b=O[S.ast];
         if(!sh){ft.textContent='(no ship chosen yet)';return}if(!a||!b){ft.textContent='(distance unknown)';return}
         const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
-        const SH0=(T.SHIPS||{})[sh.st],full=FTK&&S.fuel==='full'&&SH0,P=full?SH0[2]/1000:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{},half=FTK&&!canMk(Y,D,dAst,'170',{});
-        try{f=await T.fastest(a.o,b.o,now,half?T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load+P/2,P/2):T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,P),TB?2000:365)}catch(e){}
+        const SH0=(T.SHIPS||{})[sh.st],full=(S.fuel==='full')&&SH0,P=full?SH0[2]/1000:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{},half=!canMk(Y,D,dAst,'170',{});
+        try{f=await T.fastest(a.o,b.o,now,half?T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load+P/2,P/2):T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,P),2000)}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
-        if(!FTK)ft.textContent='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', propellant as it is now)';
-        else{ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option><option value="now"'+(full?'':' selected')+'>propellant as it is now</option></select>'+(half?', <b>½ fuel</b>':'')+')';
+        {ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option><option value="now"'+(full?'':' selected')+'>propellant as it is now</option></select>'+(half?', <b>½ fuel</b>':'')+')';
           ft.querySelector('.bp-fuel').onchange=e=>{S.fuel=e.target.value;m.querySelectorAll('.bp-then').forEach(x=>{if(x.dataset.ship)thenOne(x)})}}
         /* more detail: propellant this trip uses, or what it would take */
         let dl=ln.querySelector('.bp-tdet');if(!dl){dl=document.createElement('div');dl.className='bp-tdet';ln.appendChild(dl)}
         const SH=(T.SHIPS||{})[sh.st];if(!SH){dl.textContent='';return}
-        const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=FTK?P:sh.prop*1000,t=x=>tkg(x);
-        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(FTK&&full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
+        const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=P,t=x=>tkg(x);
+        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
         dl.innerHTML='<span class="a">working out what it would take…</span>';
         let best=null;for(let h=6;h<=2000;h+=h<200?6:24){let dv;try{dv=await T.deltaV(a.o,b.o,now,h)}catch(e){continue}if(!best||dv<best.dv)best={h,dv}}
         if(me!==run||!ln.isConnected)return;
         if(!best){dl.textContent='';return}
-        const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,tank),TB?2000:365)}catch(e){}
+        const need=dry*(Math.exp(best.dv/ve)-1);let ff=null;try{ff=await T.fastest(a.o,b.o,now,T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,tank),2000)}catch(e){}
         const maxLoad=Math.max(0,has/(Math.exp(best.dv/ve)-1)-SH[1]/1000);
         dl.innerHTML='⛽ It has <b>'+t(has)+'</b> propellant. The cheapest route right now needs about <b>'+t(need)+'</b> ('+HW(best.h)+' flight).'+
           (need<=tank?' With a full tank ('+t(tank)+') '+(ff?'it takes <b>'+HW(ff.tof)+'</b>.':'it can make the slow route.'):' That\'s more than a full tank ('+t(tank)+') – too far right now with this load.')+
@@ -254,29 +232,27 @@ export function drawBuildPlan(m){
         if(!L.length){x.innerHTML='· <span class="none">no ship of yours with propellant to send</span>';continue}
         const anOf=sh=>(A.find(a=>a.id===sh.dId)||{}).name||sh.ast||('Asteroid #'+sh.dId),toN=(A.find(a=>a.id===+x.dataset.to)||{}).name||'';
         const show=async k=>{const it=L[k],b=it.sh;let f=null;
-          try{f=await T.fastest(O[b.dId].o,to.o,t0(b),T.maxDeltaV(b.st,b.sv||1,bon(b),0,b.prop*1000),TB?2000:365)}catch(e){}
+          try{f=await T.fastest(O[b.dId].o,to.o,t0(b),T.maxDeltaV(b.st,b.sv||1,bon(b),0,b.prop*1000),2000)}catch(e){}
           if(me!==run||!x.isConnected)return;
-          x.className='bp-first';const top=TB&&m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
+          x.className='bp-first';const top=m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
           const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+(o.sh.fl?'✈ landing on '+esc(anOf(o.sh))+(o.w>0?' in '+HW(o.w):''):esc(anOf(o.sh)))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
           x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(b.fl&&it.w>0?'in flight – leaves when it lands in '+HW(it.w)+', then ':'')+(f?HW(f.tof)+', empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
-          if(TB)thenFor(x.dataset.to,b.id);
+          thenFor(x.dataset.to,b.id);
           const sel=x.querySelector('.bp-shsel');if(sel)sel.onchange=e=>{x.querySelector('.bp-ft').textContent='(working out…)';show(+e.target.value)}};
         await show(0)}
       for(const ln of th)if(ln.dataset.ship)await thenOne(ln);else if(!m.querySelector('.bp-pos[data-to="'+ln.dataset.from+'"]'))ln.querySelector('.bp-ft').textContent='(no ship found)';
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
-  if(!MU){m.querySelector('#bpB').onchange=e=>{S.bld=+e.target.value;drawBuildPlan(m)};
-  m.querySelector('#bpN').onchange=e=>{S.n=+e.target.value||1;drawBuildPlan(m)}}
-  else{const calc=m.querySelector('#bpCalc'),nSel=()=>Object.keys(S.cnt).filter(k=>S.cnt[k]>0).length;
+  {const calc=m.querySelector('#bpCalc'),nSel=()=>Object.keys(S.cnt).filter(k=>S.cnt[k]>0).length;
     m.querySelectorAll('.bp-pick input').forEach(x=>{const set=e=>{const v=Math.max(0,Math.min(999,Math.round(+e.target.value)||0));if(S.cnt[e.target.dataset.b]===v||(!v&&!S.cnt[e.target.dataset.b]))return;S.cnt[e.target.dataset.b]=v;
         e.target.closest('.bp-pk').classList.toggle('on',v>0);
-        if(!CB||nSel()<=1){drawBuildPlan(m);return}
+        if(nSel()<=1){drawBuildPlan(m);return}
         calc.classList.add('due');calc.textContent='Calculate ▸';const w=m.querySelector('#bpStale');if(w)w.style.display=''};
       x.onchange=set});
     if(calc){calc.onclick=()=>drawBuildPlan(m)}
     const cl=m.querySelector('#bpClr');if(cl)cl.onclick=()=>{S.cnt={};drawBuildPlan(m)}}
   /* TEST (CANB): "Make it here" badge opens The SkippyChain on that building in a NEW TAB, using this asteroid's stock */
-  if(CANB)m.querySelectorAll('.bp-go').forEach(g=>{const go=e=>{e.preventDefault();e.stopPropagation();
+  m.querySelectorAll('.bp-go').forEach(g=>{const go=e=>{e.preventDefault();e.stopPropagation();
       const q=new URLSearchParams(location.search);q.set('pcp',String(1000+(+g.dataset.go)));q.set('pca',here.name);
       window.open(location.pathname+'?'+q.toString()+'#vH','_blank')};
     g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go(e)}});
@@ -284,7 +260,7 @@ export function drawBuildPlan(m){
 }
 
 /* Adds "Asteroid planner" to the Planners menu, after Travel */
-if(BETA){
+{
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
     if(!vr||!main||!window.YIC||document.getElementById('vU'))return;

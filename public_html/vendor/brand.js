@@ -1,9 +1,6 @@
 // Site logo + header style (our own artwork – not the Influence logo).
 // LIVE for everyone (tested on ?beta=1 first, 19 Oct 2026).
 (function(){
-  const SRB=true; // search on the menu row, live (was beta=1)
-  const INF=true; // Updated/wallet on the menu row + search in the banner, live (was beta=1)
-  const MVB=true; // new top layout, live (was beta=1)
   const CSS=
     '#brand-logo,#brand-logo2{flex:none;width:76px;height:76px;overflow:visible;filter:drop-shadow(0 0 6px rgba(95,195,228,.45))}'+
     'header h1.brand{display:flex;flex-wrap:wrap;text-align:center;align-items:center;gap:18px;justify-content:center;margin:2px 0 10px;font-family:Jura,sans-serif;font-weight:500;'+
@@ -18,7 +15,6 @@
     '@media (max-width:600px){header h1.brand{font-size:24px;gap:10px}#brand-logo,#brand-logo2{width:50px;height:50px}}';
   const GRP={S:'Fleet',C:'Fleet',P:'Logistics',V:'Logistics',J:'Logistics',A:'Asteroids',X:'Asteroids',F:'Asteroids',
     B:'Buildings',T:'Buildings',L:'Buildings',K:'Trading',Y:'Trading',M:'Trading',R:'Planners',Q:'Planners'};
-  const TT=true; // was beta=1
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   // returns [before, highlighted word(s), after]
   function title(){
@@ -30,7 +26,7 @@
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
     // New titles (beta): "Your <Page>", no group word, no doubles
-    if(TT){const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Asteroid Planner'};if(NM[k])return ['Your',NM[k],''];}
+    {const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Asteroid Planner'};if(NM[k])return ['Your',NM[k],''];}
     // Trading and Planners read better without the group word
     if(k==='R')return ['Your','Travel Planner',''];
     if(GRP[k]==='Trading'||GRP[k]==='Planners')return ['Your',name,''];
@@ -67,7 +63,7 @@
     }
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
-    if(!MVB&&h1&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
+    if(false&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
     // Title font: Rye (western whiskey-label style)
     if(h1){const t0=h1.querySelector('.brand-t');if(t0&&t0.style.fontFamily.indexOf('Rye')<0)t0.style.fontFamily='Rye,Jura,serif'}
     // Title follows the page: landing = Quartermaster Skippy's Command Deck, others = Your <Group> <Page>
@@ -79,16 +75,16 @@
         d.title=T.filter(Boolean).join(' ');}
     }
     // TEST (MVB): banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
-    if(MVB&&hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
+    if(hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
       if(main&&hb){hb.dataset.mv='1';main.before(hb)}
       if(main&&tr){tr.dataset.mv='1';main.before(tr)}
       const hb2=d.querySelector('.bar[data-mv="1"]'),tr2=d.querySelector('.toprow[data-mv="1"]');
-      if(INF&&hb2&&tr2){const hb=hb2,info=tr2.firstElementChild;if(info&&!info.querySelector('h1')&&!info.dataset.inf&&info.textContent.indexOf('Updated')>=0){info.dataset.inf='1';const cv=hb.querySelector('#csv');cv?cv.before(info):hb.append(info)}}
-      if(INF&&tr2){const g=d.getElementById('gq'),box=g&&g.closest('.toprow > div');if(box&&!box.dataset.srch){box.dataset.srch='1';hd.append(box)}
-        {const sb=d.querySelector('[data-srch="1"]');if(SRB&&sb&&hb2&&sb.parentElement!==hb2){sb.dataset.srch='2';const inf=hb2.querySelector('[data-inf="1"]'),cv=hb2.querySelector('#csv');inf?inf.before(sb):cv?cv.before(sb):hb2.append(sb)}}
+      if(hb2&&tr2){const hb=hb2,info=tr2.firstElementChild;if(info&&!info.querySelector('h1')&&!info.dataset.inf&&info.textContent.indexOf('Updated')>=0){info.dataset.inf='1';const cv=hb.querySelector('#csv');cv?cv.before(info):hb.append(info)}}
+      if(tr2){const g=d.getElementById('gq'),box=g&&g.closest('.toprow > div');if(box&&!box.dataset.srch){box.dataset.srch='1';hd.append(box)}
+        {const sb=d.querySelector('[data-srch="1"]');if(sb&&hb2&&sb.parentElement!==hb2){sb.dataset.srch='2';const inf=hb2.querySelector('[data-inf="1"]'),cv=hb2.querySelector('#csv');inf?inf.before(sb):cv?cv.before(sb):hb2.append(sb)}}
         if(!tr2.children.length&&tr2.style.display!=='none')tr2.style.display='none'}
-      if(INF&&!d.getElementById('srch-css')){const st=d.createElement('style');st.id='srch-css';st.textContent=(SRB?'.bar [data-srch="2"]{margin:0 0 0 auto!important;padding:0 4px}.bar [data-srch="2"] input{min-width:0!important;width:200px!important;padding:5px 9px!important;font-size:12px!important}.bar [data-srch="2"]+[data-inf="1"]{margin-left:0!important}':'')+'header [data-srch="1"]{position:absolute!important;top:58px;right:14px;z-index:5!important;margin:0!important}@media (max-width:700px){header [data-srch="1"]{position:static!important;padding:6px 16px}}';d.head.appendChild(st)}
-      if(INF&&!d.getElementById('inf-css')){const st=d.createElement('style');st.id='inf-css';st.textContent='.bar [data-inf="1"]{font-size:11px;line-height:1.35;color:#8b9ab0;margin-left:auto;text-align:right;padding:0 10px}.bar [data-inf="1"] *{font-size:11px!important;margin:0!important}.bar [data-inf="1"]+#csv{margin-left:0!important}';d.head.appendChild(st)}
+      if(!d.getElementById('srch-css')){const st=d.createElement('style');st.id='srch-css';st.textContent='.bar [data-srch="2"]{margin:0 0 0 auto!important;padding:0 4px}.bar [data-srch="2"] input{min-width:0!important;width:200px!important;padding:5px 9px!important;font-size:12px!important}.bar [data-srch="2"]+[data-inf="1"]{margin-left:0!important}'+'header [data-srch="1"]{position:absolute!important;top:58px;right:14px;z-index:5!important;margin:0!important}@media (max-width:700px){header [data-srch="1"]{position:static!important;padding:6px 16px}}';d.head.appendChild(st)}
+      if(!d.getElementById('inf-css')){const st=d.createElement('style');st.id='inf-css';st.textContent='.bar [data-inf="1"]{font-size:11px;line-height:1.35;color:#8b9ab0;margin-left:auto;text-align:right;padding:0 10px}.bar [data-inf="1"] *{font-size:11px!important;margin:0!important}.bar [data-inf="1"]+#csv{margin-left:0!important}';d.head.appendChild(st)}
       if(h1&&h1.parentElement!==hd){const bd=d.getElementById('pgband');if(bd&&bd.parentElement===hd)bd.after(h1);else hd.prepend(h1)}
       if(hd.style.top!=='0px'||hd.style.position!=='sticky'){hd.style.setProperty('top','0px','important');hd.style.setProperty('position','sticky','important')}
       if(!d.getElementById('mvb-css')){const st=d.createElement('style');st.id='mvb-css';st.textContent=
@@ -113,7 +109,6 @@
   }
   setInterval(tick,300);tick();
   // TEST (?beta=1): title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
-  const FIT=true; // LIVE (was beta=1)
   function fit(){
     const h=document.querySelector('h1.brand'),t=h&&h.querySelector('.brand-t'),b=document.querySelector('#pgband');if(!t)return;
     const W=document.documentElement.clientWidth;
@@ -132,5 +127,5 @@
     if(!document.getElementById('ic-css')){const st=document.createElement('style');st.id='ic-css';st.textContent='.bar .yic-ic{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}.bar .yic-ic>[data-inf="1"]{margin-left:0}.bar [data-srch="2"]{margin-left:0!important}';document.head.appendChild(st)}
     const inf=bar.querySelector(':scope > [data-inf="1"]'),cv=bar.querySelector(':scope > #csv');if(!inf||!cv||bar.querySelector('.yic-ic'))return;
     const w=document.createElement('div');w.className='yic-ic';inf.before(w);w.append(inf,cv)}
-  if(FIT){setInterval(()=>{fit();ic()},500);addEventListener('resize',fit);fit();ic()}
+  {setInterval(()=>{fit();ic()},500);addEventListener('resize',fit);fit();ic()}
 })();

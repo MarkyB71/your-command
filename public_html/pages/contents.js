@@ -4,7 +4,6 @@
    Shared data and helpers come from window.YIC (set up in app.js). */
 (function () {
   'use strict';
-  const WRP = true; // amounts kept inside the card (was beta=1)
 
   function drawContents(m) {
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, pc = Y.pc, fmt = Y.pfmt, ricon = Y.ricon, bthumb = Y.bthumb, fmtT = Y.fmtT;
@@ -29,10 +28,7 @@
           '<h3 style="margin:0">' + esc(b.name) + (window.GL ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + '</h3></div>' +
           '<div class="t">' + esc(b.type) + (b.crew ? ' · ' + esc(b.crew) : '') + '</div>' +
           fullBar(b.fill, fmtT) +
-          (WRP
-            // Long names wrap so the amounts stay inside the card
-            ? '<table>' + shown.map(p => '<tr><td style="white-space:normal;overflow-wrap:anywhere">' + ricon(p, 22) + esc(pn(p)) + '</td><td class="num" style="white-space:nowrap;vertical-align:top">' + fmt(p, b.items[p]) + '</td></tr>').join('')
-            : '<table>' + shown.map(p => '<tr><td>' + ricon(p, 22) + esc(pn(p)) + '</td><td class="num">' + fmt(p, b.items[p]) + '</td></tr>').join('')) +
+          ('<table>' + shown.map(p => '<tr><td style="white-space:normal;overflow-wrap:anywhere">' + ricon(p, 22) + esc(pn(p)) + '</td><td class="num" style="white-space:nowrap;vertical-align:top">' + fmt(p, b.items[p]) + '</td></tr>').join('')) +
           '</table></div>';
       }).join('');
 

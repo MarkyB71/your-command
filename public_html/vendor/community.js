@@ -1,8 +1,6 @@
 // "Community tools" line just above the "Enjoying the Command Deck?" strip.
 // Links to other players' sites and tools; each opens in a new tab.
 (function () {
-  var COM = true; // live 26 Oct 2026 (was beta=1)
-  if (!COM) return;
   var LINKS = [
     ['🎓', 'Adalia Academy', 'https://adalia.academy', 'Guides and news for Influence players'],
     ['💱', 'Adalia Exchange', 'https://adalia.exchange', 'Community marketplace'],

@@ -7,8 +7,7 @@
   // window.YIC is only set once app.js has loaded your data, so look it up each time
   const APP = new Proxy({}, { get: (_, k) => window.YIC[k], set: (_, k, v) => ((window.YIC[k] = v), true) });
   // Hide tiny samples (beta test, 26 Oct 2026): under 2 t hidden by default; the choice is remembered in this browser
-  const SMB = true, // LIVE 26 Oct 2026 (was ?beta=1)
-    SMALL_KG = 2000,
+  const SMALL_KG = 2000,
     SKEY = 'yic-samp-show-small';
   let SHOWSM = false;
   try {
@@ -69,7 +68,7 @@
       if (an && a !== an) return;
       if (cl && APP.pc(p) !== cl) return;
       if (q && !(APP.pn(p).toLowerCase().includes(q) || a.toLowerCase().includes(q))) return;
-      if (SMB && !SHOWSM && APP.kg(p, kg) < SMALL_KG) {
+      if ((!SHOWSM) && APP.kg(p, kg) < SMALL_KG) {
         hid++;
         return;
       }
@@ -96,13 +95,11 @@
       ' (refreshes every 5 minutes)' +
       (an ? ' · showing <b>' + APP.esc(an) + '</b> only' : '') +
       '</div>' +
-      (SMB
-        ? '<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;font-size:15px;color:#c8d3e0;cursor:pointer"><input type="checkbox" id="smHide"' +
+      ('<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;font-size:15px;color:#c8d3e0;cursor:pointer"><input type="checkbox" id="smHide"' +
           (SHOWSM ? '' : ' checked') +
           '> Hide small samples (under 2 t)' +
           (!SHOWSM && hid ? ' <span class="a">– ' + hid.toLocaleString() + ' hidden</span>' : '') +
-          '</label>'
-        : '');
+          '</label>');
     const wire = () => {
       const c = m.querySelector('#smHide');
       if (c)

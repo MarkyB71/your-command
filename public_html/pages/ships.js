@@ -11,7 +11,7 @@
     f: { colour: '#5b9dff', label: 'In flight' }
   };
   // Live 19 Oct 2026: from (purple) → destination (soft gold, glow)
-  const BETA = true;
+  
   const FROM = '#b388ff', TO = '#e0b04a';   // from = soft purple, destination = soft gold
   function routeHTML(r, esc) {
     const m = /^on route from (.*) to (.*)$/.exec(r || '');
@@ -21,12 +21,9 @@
       '<b style="color:' + TO + ';font-size:1.15em;text-shadow:0 0 8px rgba(224,176,74,.45)">' + esc(m[2]) + '</b>';
   }
   // Crew on board each ship (tested on ?beta=1, live 23 Oct 2026) each ship
-  const CRB = true;   // live 23 Oct 2026
   // Game colours (influence-client theme.js): Pilot purple, Engineer red, Miner orange, Merchant yellow, Scientist blue
-  const GCOL = true;
-  const CLASS_COL = GCOL
-    ? { 1: '#884fff', 2: '#e0282e', 3: '#ff8c1a', 4: '#ffd94f', 5: '#4f90ff' }
-    : { 1: '#5b9dff', 2: '#ffab3d', 3: '#3fd68a', 4: '#f5c542', 5: '#b388ff' };
+  
+  const CLASS_COL = { 1: '#884fff', 2: '#e0282e', 3: '#ff8c1a', 4: '#ffd94f', 5: '#4f90ff' };
   function crewAboard(D, esc) {
     const by = {}, cms = D.crewmates || {}, CMC = window.YIC.CMC || {};
     (D.crewsRaw || []).forEach(c => {
@@ -82,7 +79,7 @@
       .filter(x => okAst(x) && okText(x.name, x.place, x.ast, x.type, '#' + x.id, x.id))
       .sort((a, b) => (a.ast || '~').localeCompare(b.ast || '~') || a.name.localeCompare(b.name));
 
-    const aboard = CRB ? crewAboard(D, esc) : null;
+    const aboard = crewAboard(D, esc);
     let h = '<div class="note" style="padding:0 0 10px">' + ships.length + ' ships' +
       (astName ? ' at or heading to <b>' + esc(astName) + '</b>' : '') + '</div>';
 
@@ -110,9 +107,7 @@
 
     const whereCell = '<td class="cls" style="white-space:normal;color:' + st.colour + '">' +
       '<span class="shst" style="border-color:' + st.colour + ';color:' + st.colour + '">' + st.label + '</span> ' +
-      (BETA
-        ? (x.fl ? routeHTML(x.route, esc) : esc(x.place))
-        : (x.fl ? '<b>' + esc(x.route) + '</b>' : esc(x.place))) + '</td>';
+      (x.fl ? routeHTML(x.route, esc) : esc(x.place)) + '</td>';
 
     const arrivesCell = '<td class="cls">' + (x.arrT
       ? esc(new Date(x.arrT * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) +

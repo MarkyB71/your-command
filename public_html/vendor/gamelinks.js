@@ -4,12 +4,11 @@
 // extension to move the player's open game tab there, without a reload.
 // While testing, links also need ?beta=1 in the address.
 (function () {
-  var TEST = true; // live for everyone since 24 Oct 2026 (links still need the extension)
   var GAME = 'https://game.influenceth.io';
   var OK = /^\/(building|lot|ship|asteroids|crew|crewmate)\/\d+$/;
 
   function on() {
-    return TEST && !!document.documentElement.dataset.yicGameExt;
+    return !!document.documentElement.dataset.yicGameExt;
   }
 
   // GL('/building/123', 'Open this building in the game') → small link HTML, or ''.
@@ -51,7 +50,6 @@
     '#cdxp .x{position:absolute;top:8px;right:12px;background:none;border:0;color:#9aa8bb;font-size:20px;cursor:pointer}' +
     '#cdxp .dl{display:inline-block;margin:6px 0;padding:8px 14px;border-radius:8px;background:#1f6feb;color:#fff;font-weight:700;text-decoration:none}' +
     '#cdxp .ok{color:#4cd04c;font-weight:700}#cdxp .s{color:#9aa8bb;font-size:13px}';
-  var STORE = true; // Chrome Web Store install – live 25 Oct 2026 (was beta=1)
   var STORE_URL = 'https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd';
   function panelStore(have) {
     return '<button class="x" type="button" title="Close">✕</button>' +
@@ -68,7 +66,7 @@
   }
   function panel() {
     var have = !!document.documentElement.dataset.yicGameExt;
-    if (STORE) return panelStore(have);
+    return panelStore(have);
     return '<button class="x" type="button" title="Close">✕</button>' +
       '<h3>Skippy\'s Command Deck extension</h3>' +
       (have ? '<div class="ok">✓ Installed – the "in game ↗" links are switched on.</div>' : '') +
@@ -84,7 +82,6 @@
       '<p class="s">To update later: download again, replace the folder, then click the ↻ reload arrow on the extension.</p>';
   }
   function installTick() {
-    if (!TEST) return;
     if (!document.getElementById('cdx-css') && document.head) {
       var st = document.createElement('style'); st.id = 'cdx-css'; st.textContent = BCSS; document.head.appendChild(st);
     }

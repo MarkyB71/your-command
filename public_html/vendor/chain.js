@@ -75,24 +75,24 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}
 .pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px;position:relative}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}
 .pc-sw a[data-m=from]{color:#ffd24a;border-color:#6b5a1c}.pc-sw a[data-m=from]:hover{background:#2a2410}`;
-const BETA2=true,CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
+const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
-const SWT=true;
-const ONE=true; /* ONE = show the process on single-recipe boxes (test) */
-const FAC=true,FBT={1:3,2:5,3:4,4:6,5:6},FBN={3:'Refinery',4:'Bioreactor',5:'Factory',6:'Shipyard'}
+
+ /* ONE = show the process on single-recipe boxes (test) */
+const FBT={1:3,2:5,3:4,4:6,5:6},FBN={3:'Refinery',4:'Bioreactor',5:'Factory',6:'Shipyard'}
 const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 Built on a construction site</div>';const nm=FBN[bt]+(t===5?' (dry dock)':'');
   if(ai===null)return '<div class="pc-fac">🏭 Needs a '+nm+'</div>';
   const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},an=a.name||'',D=Y.D||{};let ok=0,bld=0,pl=0;
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt)return;const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3);const n=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');if(n!==an)return;if(B.status===3)ok++;else if(B.status===2)bld++;else if(B.status===1)pl++});
   if(ok)return '<div class="pc-fac ok">✓ '+nm+' – you have '+ok+'</div>';
   return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
-const SW=id=>SWT?'<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>':'';
-const TKG=true,tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
-const isB=id=>BETA2&&id<1000&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);if(TKG)return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
-const S={mode:'from',prod:170,amt:BETA2?1e6:100,unit:BETA2?'kt':'kg',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
+const SW=id=>('<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>');
+const tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
+const isB=id=>(id<1000)&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
+const S={mode:'from',prod:170,amt:1e6,unit:'kt',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
-const BK=true,HS=[],BKV=true; /* BK = Back button (live) */
-const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},closed:new Set(S.closed),opened:new Set(S.opened),all:S.all,foc:S.foc||null,y:scrollY});const snap=()=>{if(!BK)return;HS.push(cap());if(HS.length>50)HS.shift();FS.length=0};
+const HS=[]; /* BK = Back button (live) */
+const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},closed:new Set(S.closed),opened:new Set(S.opened),all:S.all,foc:S.foc||null,y:scrollY});const snap=()=>{;HS.push(cap());if(HS.length>50)HS.shift();FS.length=0};
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
@@ -112,7 +112,7 @@ export function drawChain(m){
   const spots=id=>{const out=[];(Y&&Y.asts||[]).forEach((a,i)=>{if(ai!==null&&i!==ai)return;(a.buildings||[]).forEach(b=>{const v=b.items&&b.items[id];if(v)out.push([a.name,b.name+(b.lot?' · lot '+b.lot:''),v])})});return out.sort((x,y)=>y[2]-x[2])};
   const hv=(id,qty)=>{const h=have(id);if(h===null)return'';const c=h>=qty?'ok':h>0?'part':'';
     const txt=(h>=qty?'✓ You have '+fu(id,h):h>0?'You have '+fu(id,h)+' · short '+fu(id,qty-h):'None in stock')+where;
-    if(!h)return'<div class="pc-have'+(ONE?' none':'')+'">'+txt+'</div>';
+    if(!h)return'<div class="pc-have'+' none'+'">'+txt+'</div>';
     const s=spots(id),list=s.slice(0,8).map(x=>'<b>'+fu(id,x[2])+'</b> '+esc(x[1])+(ai===null?' <span style="color:#8b9ab0">('+esc(x[0])+')</span>':'')).join('<br>')+(s.length>8?'<br>…and '+(s.length-8)+' more':'');
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
   const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+SW(id)+(S.use!=null?'':hv(id,qty));
@@ -137,34 +137,34 @@ export function drawChain(m){
       br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
-    else if(ONE){const d=el('div','pc-proc','<span>'+esc(p.name)+'</span>');d.title=p.name+' · '+TYPE[p.type];c.appendChild(d);setTimeout(()=>{const sp=d.firstChild;if(!d.isConnected||!sp)return;const o=sp.scrollWidth-d.clientWidth+12;if(o>4){d.style.setProperty('--dx',-o+'px');d.style.setProperty('--t',Math.max(5,3+o/15)+'s');d.classList.add('mv')}},60)}
-    if(FAC)c.insertAdjacentHTML('beforeend',facHTML(p.type,ai));
+    else {const d=el('div','pc-proc','<span>'+esc(p.name)+'</span>');d.title=p.name+' · '+TYPE[p.type];c.appendChild(d);setTimeout(()=>{const sp=d.firstChild;if(!d.isConnected||!sp)return;const o=sp.scrollWidth-d.clientWidth+12;if(o>4){d.style.setProperty('--dx',-o+'px');d.style.setProperty('--t',Math.max(5,3+o/15)+'s');d.classList.add('mv')}},60)}
+    c.insertAdjacentHTML('beforeend',facHTML(p.type,ai));
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fu(k,v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
-    const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',(DN?(op?'hide inputs ▴':'show '+n+' input'+(n>1?'s':'')+' ▾'):TEST?(op?'hide inputs ▸':'◂ show '+n+' input'+(n>1?'s':'')):(op?'◂ hide inputs':'show '+n+' input'+(n>1?'s':'')+' ▸')));
+    const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',op?'hide inputs ▴':'show '+n+' input'+(n>1?'s':'')+' ▾');
     t.addEventListener('click',()=>{anc(key,t);S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
-    if(DN&&key!==(S.foc||'r')){const f=el('span','pc-foc','⌖ Focus on this');f.title='Show only this part of the chain';f.addEventListener('click',()=>{tipHide();snap();S.foc=key;S.anchor=null;draw();const b=M0.querySelector('.pc-trail');if(b)b.scrollIntoView({block:'center'})});c.appendChild(f)}
+    if(key!==(S.foc||'r')){const f=el('span','pc-foc','⌖ Focus on this');f.title='Show only this part of the chain';f.addEventListener('click',()=>{tipHide();snap();S.foc=key;S.anchor=null;draw();const b=M0.querySelector('.pc-trail');if(b)b.scrollIntoView({block:'center'})});c.appendChild(f)}
     br.dataset.k=key;br.appendChild(c);
     if(op){const k=el('div','pc-kids');for(const [i,v] of Object.entries(p.inp))k.appendChild(node(+i,v*runs,path.concat(id),key+'/'+i));br.appendChild(k)}
     return br}
   const M0=m;
-  if(SWT){M0.__pcUse=(id,md)=>{tipHide();snap();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.foc=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
+  {M0.__pcUse=(id,md)=>{tipHide();snap();S.mode=md;S.prod=id;if(id>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.focus=null;S.foc=null;S.anchor=null;draw();const r=M0.querySelector('[data-k="u"]>.pc-n,[data-k="r"]>.pc-n');if(r)r.scrollIntoView({block:'center',inline:'nearest'})};
     if(!M0.dataset.pcuse){M0.dataset.pcuse=1;M0.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.pc-sw a[data-fid]');if(!t||!M0.__pcUse||document.getElementById('vH')?.className!=='on')return;e.preventDefault();e.stopPropagation();M0.__pcUse(+t.dataset.fid,t.dataset.m)})}}
-  const stick=bar=>{if(!TEST)return;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
+  const stick=bar=>{;bar.classList.add('stick');const h=document.querySelector('header'),p=h&&getComputedStyle(h).position;
     bar.style.top=(h&&(p==='sticky'||p==='fixed')?h.offsetHeight:0)+'px'};
   if(!window.__pcTipW){window.__pcTipW=1;addEventListener('scroll',()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'},true);
     document.addEventListener('mouseover',e=>{const t=document.getElementById('pc-tip');if(t&&t.style.display!=='none'&&!e.target.closest('.pc-n'))t.style.display='none'})}
   if(!window.__pcStick){window.__pcStick=1;addEventListener('resize',()=>{const b=document.querySelector('.pc-bar.stick');if(b)stick(b)})}
-  const TEST=true;
-  const DN=true,RT=TEST&&!DN; /* DN = top-down tree (test) */
-  const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(TEST?Object.keys(users):[]).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
-    (TEST?[['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]]:[['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000],['Products',x=>x<1000]]).forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
+  
+  const RT=false; /* DN = top-down tree (test) */
+  const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(Object.keys(users)).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
+    [['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
-  const backBtn=()=>{if(!BK)return document.createTextNode('');const b=el('button',BKV?'pc-back big':'pc-back','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
-    const go=h=>{tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))};b.addEventListener('click',()=>{if(!HS.length)return;if(BKV)FS.push(cap());go(HS.pop())});if(!BKV)return b;const f=el('button','pc-back big','Forward ▸');f.title=FS.length?'Go forward again to what you were looking at':'Nothing to go forward to';if(!FS.length)f.disabled=true;f.addEventListener('click',()=>{if(!FS.length)return;HS.push(cap());go(FS.pop())});const w=el('span','pc-nav');w.appendChild(b);w.appendChild(f);return w};
-  const navTop=inner=>{if(!BKV)return;const r=inner.firstElementChild;if(!r)return;const d=el('div','pc-navtop');d.appendChild(backBtn());r.prepend(d)};
-  const modeSw=()=>{if(!TEST)return document.createTextNode('');const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
+  const backBtn=()=>{;const b=el('button','pc-back big','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
+    const go=h=>{tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))};b.addEventListener('click',()=>{if(!HS.length)return;FS.push(cap());go(HS.pop())});;const f=el('button','pc-back big','Forward ▸');f.title=FS.length?'Go forward again to what you were looking at':'Nothing to go forward to';if(!FS.length)f.disabled=true;f.addEventListener('click',()=>{if(!FS.length)return;HS.push(cap());go(FS.pop())});const w=el('span','pc-nav');w.appendChild(b);w.appendChild(f);return w};
+  const navTop=inner=>{;const r=inner.firstElementChild;if(!r)return;const d=el('div','pc-navtop');d.appendChild(backBtn());r.prepend(d)};
+  const modeSw=()=>{;const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){snap();S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
   const tipHide=()=>{const t=document.getElementById('pc-tip');if(t)t.style.display='none'};
@@ -177,7 +177,7 @@ export function drawChain(m){
         const k=el('div',sm.className.replace('click',''),sm.textContent.replace(/\s*▾$/,''));x.replaceWith(k);if(wh)t+='<span>Where it is:</span><span class="pc-where">'+wh.innerHTML+'</span>'}
       else if(x.matches('.pc-t,.pc-also')){t+='<span class="'+x.className+'">'+x.innerHTML+'</span>';x.remove()}});
     const q=c.querySelector('.pc-q');if(q&&!/^Need/.test(q.textContent))q.textContent='Need '+q.textContent;
-    if(FAC){const hl=[...c.children].find(x=>x.matches('.pc-have'));if(hl)c.appendChild(hl)}
+    {const hl=[...c.children].find(x=>x.matches('.pc-have'));if(hl)c.appendChild(hl)}
     c.classList.add('sm');tipOn(c,t)};
   function unode(id,path,key,d,via){
     const br=el('div','pc-br'),outs=[];
@@ -196,21 +196,21 @@ export function drawChain(m){
     if(!outs.length)t+='<span class="pc-t">'+(id>=1000?'Final build':'Not used in any further recipe')+'</span>';
     tipOn(c,t);
     if(!outs.length){br.appendChild(c);return br}
-    const op=S.closed.has(key)?false:S.opened.has(key)?true:d<(SWT?1:2);
-    const tg=el('span','pc-tog',DN?(op?'hide uses ▴':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▾'):op?'◂ hide uses':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▸');
+    const op=S.closed.has(key)?false:S.opened.has(key)?true:d<1;
+    const tg=el('span','pc-tog',op?'hide uses ▴':'show '+outs.length+' use'+(outs.length>1?'s':'')+' ▾');
     tg.addEventListener('click',()=>{tipHide();anc(key,tg);if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(tg);
     br.dataset.k=key;    br.appendChild(c);
     if(op){const k=el('div','pc-kids');outs.sort((a,b)=>N[a[0]].localeCompare(N[b[0]])).forEach(([o,p])=>k.appendChild(unode(o,path.concat(id),key+'/'+p.i+':'+o,d+1,p)));br.appendChild(k)}
     return br}
   function drawUse(){
-    m.appendChild(el('div','note',(DN?'Pick a product. Everything it is used in opens out below it. One stage opens to start with;':'Pick a product. Everything it is used in branches out to the right. Two stages open to start with;')+' click "show uses" to go further. Hover over a card to see the recipe, the other inputs it needs, and your stock.'));
+    m.appendChild(el('div','note','Pick a product. Everything it is used in opens out below it. One stage opens to start with;'+' click "show uses" to go further. Hover over a card to see the recipe, the other inputs it needs, and your stock.'));
     const bar=el('div','pc-bar'),ps=el('select'),b2=el('button',null,'Close all');
     fillPs(ps);
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
-    (BKV?[modeSw(),l1,b2]:[backBtn(),modeSw(),l1,b2]).forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap'+(DN?' dn':'')),inner=DN?el('div','pc-in'):w;inner.appendChild(unode(S.prod,[],'u',0,null));if(DN)w.appendChild(inner);navTop(inner);m.appendChild(w)}
+    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
+    const w=el('div','pc-wrap'+' dn'),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);navTop(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
@@ -219,32 +219,32 @@ export function drawChain(m){
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
     if(S.mode==='use'){drawUse();return}
-    m.appendChild(el('div','note','Pick a product. Its inputs '+(DN?'open out below it':'branch out to the '+(TEST?'left':'right'))+', back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
+    m.appendChild(el('div','note','Pick a product. Its inputs '+'open out below it'+', back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     fillPs(ps);
-    const bulk=BETA2&&S.prod<1000&&!CNT.has(S.prod),uf=bulk?UF[S.unit]:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
+    const bulk=(S.prod<1000)&&!CNT.has(S.prod),uf=bulk?UF[S.unit]:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw()});
     am.addEventListener('change',()=>{S.amt=bulk?Math.max(1,(+am.value||0)*uf):Math.max(1,Math.round(+am.value||1));draw()});
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
-    const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(BETA2&&S.prod<1000)l2.appendChild(document.createTextNode(' each'));
-    (BKV?[modeSw(),l1,l2,b1,b2]:[backBtn(),modeSw(),l1,l2,b1,b2]).forEach(x=>bar.appendChild(x));
+    const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(S.prod<1000)l2.appendChild(document.createTextNode(' each'));
+    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap'+(RT?' rtl':DN?' dn':''));const inner=(RT||DN)?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(RT||DN)w.appendChild(inner);
-    if(DN&&S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
-    if(DN&&S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
+    const w=el('div','pc-wrap'+(RT?' rtl':' dn'));const inner=(RT||true)?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(RT||true)w.appendChild(inner);
+    if(S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
+    if(S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
         const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();snap();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
-      if(BK){const up=el('button','pc-up','▲ Up one level');up.title='Show the box above this one';up.addEventListener('click',()=>{snap();S.foc=ks.length>2?ks.slice(0,-1).join('/'):null;S.anchor=null;draw()});tr.appendChild(up)}
-      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}if(DN)navTop(inner);m.appendChild(w);
+      {const up=el('button','pc-up','▲ Up one level');up.title='Show the box above this one';up.addEventListener('click',()=>{snap();S.foc=ks.length>2?ks.slice(0,-1).join('/'):null;S.anchor=null;draw()});tr.appendChild(up)}
+      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}navTop(inner);m.appendChild(w);
     if(RT)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
     if(RT&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
       if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
     if(RT)w.addEventListener('scroll',()=>{S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft});
-    if(TEST)w.querySelectorAll('.pc-n').forEach(compact);
+    w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')}).join('<br>'):'Open more branches to see them')));
   }

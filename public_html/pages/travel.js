@@ -13,9 +13,6 @@
   const TYPE_NAME = { 2: 'Light Transport', 3: 'Heavy Transport', 4: 'Shuttle' };
 
   // Launch windows chart (test: ?beta=1 only)
-  const WIN = true; // LIVE (was ?beta=1 only)
-  const CRW = true; // LIVE: only asteroids with a crew (was ?beta=1 only)
-  const HLT = true; // LIVE: outline the chosen trip in the table (was ?beta=1 only)
   // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
   // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
   function canMake(Y, D, ast, prod, seen) {
@@ -69,7 +66,7 @@
     if (asts.length < 2) { m.innerHTML = '<div class="note">You need at least two asteroids for a travel table.</div>'; return; }
     // Test (?beta=1): only asteroids with a crew on them (a button shows them all)
     let hidden = 0;
-    if (CRW) {
+    {
       const crewed = new Set((D.crewsRaw || []).filter(c => ((c.Crew && c.Crew.roster) || []).length)
         .map(c => ((((c.Location || {}).locations) || []).find(x => x.label === 3) || {}).id).filter(Boolean));
       const few = asts.filter(a => crewed.has(a.id));
@@ -88,15 +85,15 @@
     const sel = (id, cur, list) => '<select id="' + id + '">' + list.map(([v, t]) =>
       '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select>';
 
-    let h = (WIN ? WIN_CSS : '') + '<div class="bar" style="margin:0 0 10px">' +
+    let h = WIN_CSS + '<div class="bar" style="margin:0 0 10px">' +
       'Ship ' + sel('trS', S.ship, opts) +
       ' Propellant ' + sel('trP', S.prop, [['full', 'Full tank'], ['now', 'What it has now']]) +
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
-      (CRW && (hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + '</div>';
+      ((hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + '</div>';
 
-    const ref = WIN ? refuelMap(Y, D, asts) : null;
-    if (WIN) {
+    const ref = refuelMap(Y, D, asts);
+    {
       const yes = asts.filter(a => ref[a.id]).map(a => esc(a.name)), no = asts.filter(a => !ref[a.id]).map(a => esc(a.name));
       h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (yes.join(', ') || 'none') +
         (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.join(', ') + ' – flying there, the ship only uses half its propellant so it can get back.' : '') + '</div>';
@@ -109,7 +106,7 @@
       '<div class="note" style="padding:10px 0 0">Quickest trip leaving at the chosen time, worked out the same way as the game\'s route planner ' +
       '(1 game day = 1 real hour). The fastest in each row is highlighted. Small grey figure = distance between the two asteroids right now. ' +
       'Food, emergency mode and waiting for a better launch window are not included.</div>';
-    if (WIN) h += '<div class="lw" id="trW"></div>';
+    h += '<div class="lw" id="trW"></div>';
     m.innerHTML = h;
 
     // Changing an option redraws the page
@@ -150,10 +147,10 @@
       const maxDv = T.maxDeltaV(st, variant, bonus, ck, pk);
       // Going somewhere you can't refuel: burn only half, carry the other half as extra weight
       const halfDv = T.maxDeltaV(st, variant, bonus, ck + pk / 2, pk / 2);
-      const reach = b => (!WIN || ref[b.id]) ? maxDv : halfDv;
+      const reach = b => ref[b.id] ? maxDv : halfDv;
       const dep = (Date.now() / 1000 - 1609459200) / 3600 + S.leave;   // orbit time in hours
       info.innerHTML = label + ' · ' + Y.fmtT(pk / 1000) + ' propellant · ' + (ck ? Y.fmtT(ck / 1000) + ' cargo' : 'no cargo') +
-        ' · up to ' + (maxDv / 1000).toFixed(1) + ' km/s' + (WIN ? ' (' + (halfDv / 1000).toFixed(1) + ' km/s to places you can\'t refuel)' : '');
+        ' · up to ' + (maxDv / 1000).toFixed(1) + ' km/s' + (' (' + (halfDv / 1000).toFixed(1) + ' km/s to places you can\'t refuel)');
 
       // Fill each cell, then highlight the fastest in each row
       const best = {};
@@ -170,7 +167,7 @@
         await new Promise(r => setTimeout(r, 0));
       }
       Object.values(best).forEach(x => { x.td.style.background = 'rgba(95,195,228,.15)'; });
-      if (WIN) drawWindows(m, T, asts, reach, me, esc);
+      drawWindows(m, T, asts, reach, me, esc);
     }).catch(e => { info.innerHTML = 'Could not load the travel maths (' + esc((e && e.message) || e) + ').'; });
   }
 
@@ -194,7 +191,7 @@
 
     function show() {
       const mine = ++wrun;
-      if (HLT) m.querySelectorAll('#trT td[data-f]').forEach(td => {
+      m.querySelectorAll('#trT td[data-f]').forEach(td => {
         const k = td.dataset.f + '_' + td.dataset.t, back = W.sel && W.sel.split('_').reverse().join('_');
         const on = !W.all && W.sel && (k === W.sel || k === back);
         td.style.outline = on ? (k === W.sel ? '2px solid #8fe3ff' : '2px dashed #5fc3e4') : '';

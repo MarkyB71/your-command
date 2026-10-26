@@ -6,7 +6,6 @@
   'use strict';
 
   // Game links on building rows (live)
-  const PGL = true;
 
   function drawProducts(m) {
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, pc = Y.pc, fmt = Y.pfmt, ricon = Y.ricon, asts = Y.asts;
@@ -30,7 +29,7 @@
       if (isOpen) {
         let d = '';
         cols.forEach(i => asts[i].buildings.forEach(b => {
-          if (b.items[x.p]) d += '<div class="b"><span>' + esc(b.name) + (PGL && window.GL && b.id ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + ' <span class="a">· ' + esc(asts[i].name) +
+          if (b.items[x.p]) d += '<div class="b"><span>' + esc(b.name) + (window.GL && b.id ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + ' <span class="a">· ' + esc(asts[i].name) +
             '</span></span><span>' + fmt(x.p, b.items[x.p]) + '</span></div>';
         }));
         h += '<tr class="det"><td colspan="' + (3 + (multi ? cols.length : 0)) + '">' + d + '</td></tr>';

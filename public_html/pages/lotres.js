@@ -179,7 +179,7 @@
           : 'No asteroid bonus for ' + APP.esc(APP.pn(String(APP.lfRes))) + ' on ' + APP.esc(nm(A))) +
         '</div>';
     }
-    const BETA = true;
+    
     // Game links: shared helper (vendor/gamelinks.js) – beta + extension only.
     const gl = (p, t) => (window.GL ? window.GL(p, t) : '');
     const mine = {};
@@ -206,10 +206,10 @@
         const e = (b.Extractors || []).find((x) => x.status === 1);
         s = e ? 'extracting ' + APP.pn(String(e.outputProduct)) : 'idle';
       }
-      const col = BCOL ? BCAT[B.buildingType] || '' : '';
+      const col = BCAT[B.buildingType] || '';
       const pxs = px && !HIDEX;
       return (
-        (BCOL ? APP.bthumb(ty, 40, 30) : '') +
+        APP.bthumb(ty, 40, 30) +
         '<b' +
         (col ? ' style="color:' + col + '"' : '') +
         '>' +
@@ -220,7 +220,7 @@
         '</span>' +
         gl('/building/' + b.id, 'Open this building in the game') +
         (pxs
-          ? ' <span title="The 2-day site reservation has run out. The game makes any materials sent here public." style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;' + (BCOL ? 'background:transparent;border:1px solid #4a5568;color:#9aa8bb' : 'background:rgba(255,90,90,.15);border:1px solid #ff6b6b;color:#ff7a7a') + ';font-size:12px;font-weight:600;white-space:nowrap">Planning expired – site is public</span>'
+          ? ' <span title="The 2-day site reservation has run out. The game makes any materials sent here public." style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;' + 'background:transparent;border:1px solid #4a5568;color:#9aa8bb' + ';font-size:12px;font-weight:600;white-space:nowrap">Planning expired – site is public</span>'
           : pl && !px
             ? ' <span style="display:inline-block;margin:2px 0;padding:1px 8px;border-radius:9px;background:rgba(250,178,25,.15);border:1px solid #fab219;color:#fab219;font-size:12px;font-weight:600;white-space:nowrap">Planning approved – reserved for ' +
               (B.plannedAt ? APP.tLeft(B.plannedAt + 172800, Date.now() / 1000) : '2 days') +
@@ -241,8 +241,7 @@
       ['ext', 'Your extractors (' + ex.length + ')'],
     ];
     if (!MODES.some((x) => x[0] === APP.lfMode)) APP.lfMode = 'free';
-    if (BETA)
-      h +=
+    h +=
         '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 14px"><span style="font-size:17px;font-weight:800;color:#8fe3ff;text-shadow:0 0 8px rgba(110,198,230,.85),0 0 18px rgba(110,198,230,.45);letter-spacing:.2px">Show your lots:</span>' +
         MODES.map(
           ([k, t]) =>
@@ -259,8 +258,7 @@
             t +
             '</button>',
         ).join('') +
-        (SRTB
-          ? '<label style="margin-left:12px;font-size:15px;color:#c8d3e0;display:inline-flex;align-items:center;gap:6px">Order by <select id="lfSort" style="font-size:15px;padding:4px 6px">' +
+        ('<label style="margin-left:12px;font-size:15px;color:#c8d3e0;display:inline-flex;align-items:center;gap:6px">Order by <select id="lfSort" style="font-size:15px;padding:4px 6px">' +
             [
               ['rich', 'Richest first'],
               ['lot', 'Lot number'],
@@ -270,16 +268,13 @@
             ]
               .map(([k, t]) => '<option value="' + k + '"' + (k === LSORT ? ' selected' : '') + '>' + t + '</option>')
               .join('') +
-            '</select></label>'
-          : '') +
-        (HXB
-          ? '<label style="margin-left:12px;font-size:15px;color:#c8d3e0;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="lfHX"' +
+            '</select></label>') +
+        ('<label style="margin-left:12px;font-size:15px;color:#c8d3e0;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="lfHX"' +
             (HIDEX ? ' checked' : '') +
-            ' style="width:18px;height:18px">Hide "Planning expired"</label>'
-          : '') +
+            ' style="width:18px;height:18px">Hide "Planning expired"</label>') +
         '</div>';
     let L2 = APP.lfMode === 'all' ? all : APP.lfMode === 'ext' ? ex : free;
-    if (SRTB && LSORT !== 'rich') {
+    if (LSORT !== 'rich') {
       const fb = (l) => (mine[l] ? mine[l][0] : null),
         nm = (b) => (b.Name && b.Name.name) || (APP.BT[(b.Building || {}).buildingType] || 'Building') + ' #' + b.id,
         st = (l) => {
@@ -304,7 +299,7 @@
       L2 = L2.slice().sort((x, y) => cmp(K.get(x), K.get(y)));
     }
     const
-      lim = APP.lfMode === 'ext' || ALLL ? L2.length : 30;
+      lim = APP.lfMode === 'ext' || true ? L2.length : 30;
     if (!L2.length)
       h +=
         '<div class="note">' +
@@ -317,7 +312,7 @@
         '<div class="wrap"><table><thead><tr><th class="num">#</th><th>Lot</th><th>' +
         APP.esc(APP.pn(String(APP.lfRes))) +
         ' here</th>' +
-        (BETA ? '<th>On this lot</th>' : '') +
+        '<th>On this lot</th>' +
         '</tr></thead><tbody>' +
         L2.slice(0, lim)
           .map(
@@ -331,7 +326,7 @@
               bar(v[l]) +
               (v[l] * 100).toFixed(1) +
               '%</td>' +
-              (BETA ? '<td style="white-space:normal">' + on(l) + '</td>' : '') +
+              ('<td style="white-space:normal">' + on(l) + '</td>') +
               '</tr>',
           )
           .join('') +
@@ -365,13 +360,13 @@
     );
   }
 
-  var HXB = true; // Hide 'Planning expired' tick box (test)
+   // Hide 'Planning expired' tick box (test)
   var HIDEX = false;
-  var SRTB = HXB, LSORT = 'rich'; // Order by dropdown (test)
-  var BCOL = true; // building picture + game colour (test)
+  var LSORT = 'rich'; // Order by dropdown (test)
+   // building picture + game colour (test)
   // Game lot-map colours by building category (influence-client SearchFilters.js)
   var BCAT = { 1: '#ff8c00', 10: '#ff8c00', 2: '#ff4a3d', 3: '#e0458a', 4: '#2ecc1a', 5: '#c99a6e', 6: '#7a7aff', 7: '#19d9ff', 8: '#57ff65', 9: '#ffff00' };
-  var ALLL = true; // show every lot (test)
+   // show every lot (test)
   window.PAGES = window.PAGES || {};
   window.PAGES.F = function (m) {
     drawLotRes(m);

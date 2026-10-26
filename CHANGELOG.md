@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 417 – 26 Oct 2026 – Code tidy (nothing players see should change): removed the old page code left in app.js since Version 200 (176 KB → 97 KB), folded about 60 old always-on test switches into plain code, moved the Academy test designs out of the live site folder.
+
 ## Version 416 – 26 Oct 2026 – "Try other Community Tools" at the bottom of every page: links to Adalia Academy, Adalia Exchange, Elerium tools and the Influence Tools extension (open in a new tab).
 
 ## Version 412 – 26 Oct 2026 – Core Samples: small samples (under 2 t) hidden by default with a tick box to show them, and the choice is remembered. Crew planner: bonuses listed biggest first, with a gap before the ones that don't help.

@@ -161,8 +161,7 @@
         if (x.crew) g[k].crew.add(x.crew);
       });
       // Each idle building gets its own "in game" link (beta first)
-      const ILK = true; // was beta=1
-      const one = (x, i) => APP.esc(x.n[i]) + (ILK && x.gp[i] && window.GL ? window.GL(x.gp[i], 'Open in the game') : '');
+      const one = (x, i) => APP.esc(x.n[i]) + (x.gp[i] && window.GL ? window.GL(x.gp[i], 'Open in the game') : '');
       S.idle = Object.values(g).map((x) => ({
         lvl: 1,
         t: -x.n.length,
@@ -178,7 +177,7 @@
               ' ' +
               APP.esc(x.type) +
               's</summary><div class="a" style="white-space:normal;max-width:420px">' +
-              (ILK ? x.n.map((_, i) => '<div>' + one(x, i) + '</div>').join('') : x.n.map(APP.esc).join(', ')) +
+              x.n.map((_, i) => '<div>' + one(x, i) + '</div>').join('') +
               '</div></details>'
             : one(x, 0),
         crew: [...x.crew].join(', '),
@@ -203,8 +202,8 @@
         gp: '/lot/' + x.id,
       });
     });
-    const BETA = true;
-    if (BETA) {
+    
+    {
       if (!APP.DLV && !APP.dlvLoad)
         APP.dlvLoad = fetch('deliveries.php?wallet=' + encodeURIComponent(APP.D.wallet || ''), {
           cache: 'no-store',
@@ -286,15 +285,13 @@
         'Materials at risk',
         'Planned building sites whose 2-day reservation has run out, with materials still on them. The game makes materials on an expired site public. Start construction or move them out.',
       ],
-      ...(BETA
-        ? [
+      ...[
             [
               'accept',
               'Waiting to accept',
               'Deliveries sent to you. Accept them in the game so the goods go into storage.',
             ],
-          ]
-        : []),
+          ],
       [
         'lease',
         'Leases with less than 30 days',
