@@ -7,6 +7,66 @@
   // window.YIC is only set once app.js has loaded your data, so look it up each time
   const APP = new Proxy({}, { get: (_, k) => window.YIC[k], set: (_, k, v) => ((window.YIC[k] = v), true) });
 
+
+  // Who can supply who (test on ?beta=1, 26 Oct 2026): grid of raw resources × your rocks – which rocks can MINE each one
+  const SUPB = /[?&]beta=1/.test(location.search);
+  let supAll = false;
+  try { supAll = localStorage.getItem('yic-sup-all') === '1'; } catch (e) {}
+  function supplyHTML() {
+    const rocks = (APP.D.owned || [])
+      .map((a) => {
+        const c = a.Celestial || {},
+          sp = APP.SPEC[c.celestialType] || ['?', []],
+          scanned = (c.scanStatus || 0) >= 4 && c.abundances,
+          ab = scanned ? APP.astAbund(c.abundances) : null,
+          can = {};
+        for (let r = 1; r <= 22; r++) {
+          if (ab) {
+            if (ab[r] > 0) can[r] = ab[r];
+          } else if (sp[1].includes(r)) can[r] = -1; // type can hold it, not scanned yet
+        }
+        return { nm: (a.Name && a.Name.name) || 'Asteroid #' + a.id, can, scanned: !!ab };
+      })
+      .sort((x, y) => x.nm.localeCompare(y.nm));
+    if (rocks.length < 2) return '';
+    const res = [];
+    for (let r = 1; r <= 22; r++) {
+      const has = rocks.filter((k) => k.can[r] !== undefined);
+      if (!has.length) continue;
+      const gap = has.length < rocks.length;
+      if (!supAll && !gap) continue;
+      res.push({ r, has, gap });
+    }
+    res.sort((x, y) => APP.pn(x.r).localeCompare(APP.pn(y.r)));
+    const cell = (k, x) => {
+      const v = k.can[x.r];
+      if (v === undefined) {
+        const from = x.has.map((h) => h.nm).join(', ');
+        return '<td class="sup-no" title="' + APP.esc(k.nm + " can't mine " + APP.pn(x.r) + ' – fly it in from ' + from) + '">✗ needs</td>';
+      }
+      return '<td class="sup-ok" data-sort="' + (v < 0 ? 0 : v) + '" title="' + APP.esc(k.nm + ' can mine ' + APP.pn(x.r)) + '">' + (v < 0 ? '✓' : (v * 100).toFixed(1) + '%') + '</td>';
+    };
+    return (
+      '<style>.sup td.sup-ok{color:#4cd04c;font-weight:600;text-align:center}.sup td.sup-no{color:#ff6b6b;text-align:center;background:rgba(255,107,107,.08)}.sup th.rk{text-align:center;white-space:normal;min-width:70px}.sup-sw{margin:0 0 8px;display:flex;gap:8px;align-items:center;font-size:14px}</style>' +
+      '<h2 style="margin-top:18px">Who can supply who</h2><div class="note" style="padding:0 0 8px">Which of your rocks can <b>mine</b> each raw resource. <span style="color:#4cd04c">Green</span> = can mine it here (abundance from the resource scan; ✓ = not scanned yet, but the rock type can hold it). <span style="color:#ff6b6b">✗ needs</span> = can\'t mine it here – the green rocks in that row can supply it. Hover a cell for details.</div>' +
+      '<label class="sup-sw"><input type="checkbox" id="supAll"' + (supAll ? ' checked' : '') + '> Show every resource (not just ones some rocks are missing)</label>' +
+      (res.length
+        ? '<div class="wrap"><table class="sup"><thead><tr><th>Resource</th>' + rocks.map((k) => '<th class="rk">' + APP.esc(k.nm) + '</th>').join('') + '<th class="num">Rocks that can mine it</th></tr></thead><tbody>' +
+          res.map((x) => '<tr><td>' + APP.ricon(x.r, 20) + APP.esc(APP.pn(x.r)) + '</td>' + rocks.map((k) => cell(k, x)).join('') + '<td class="num">' + x.has.length + ' of ' + rocks.length + '</td></tr>').join('') +
+          '</tbody></table></div>'
+        : '<div class="note">Every one of your rocks can mine every resource any of them can.</div>')
+    );
+  }
+  function wireSupply(m) {
+    const b = m.querySelector('#supAll');
+    if (b)
+      b.onchange = () => {
+        supAll = b.checked;
+        try { localStorage.setItem('yic-sup-all', supAll ? '1' : '0'); } catch (e) {}
+        APP.draw();
+      };
+  }
+
   function drawAsteroids(m) {
     const ai = APP.$('#ast').value,
       an = ai === '' ? null : APP.asts[+ai].name,
@@ -180,8 +240,10 @@
       h +
       '</div>' +
       (APP.BONB ? APP.bestAstHTML() : '') +
+      (SUPB ? supplyHTML() : '') +
       '<div class="note" style="padding:12px 0 0">Abundance is the asteroid-wide figure from its resource scan; the amount at each lot varies. Lots in use counts every building or construction site on the asteroid, whoever owns it.<br>3D models: in the game, open your asteroid\'s management page and press <b>Download 3D Model</b>, then use <b>Add 3D model</b> here. Models are kept only in this browser.</div>';
     APP.wire3d(m);
+    if (SUPB) wireSupply(m);
   }
 
   function beltMap(m) {
