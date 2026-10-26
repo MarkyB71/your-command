@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 422 – 26 Oct 2026 – Today's Workload: Idle buildings and Storage nearly full now show one row per asteroid (click to open); counts are buildings, e.g. "Idle buildings (126 on 6 asteroids)".
+
 ## Version 417 – 26 Oct 2026 – Code tidy (nothing players see should change): removed the old page code left in app.js since Version 200 (176 KB → 97 KB), folded about 60 old always-on test switches into plain code, moved the Academy test designs out of the live site folder.
 
 ## Version 416 – 26 Oct 2026 – "Try other Community Tools" at the bottom of every page: links to Adalia Academy, Adalia Exchange, Elerium tools and the Influence Tools extension (open in a new tab).

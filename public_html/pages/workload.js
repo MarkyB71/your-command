@@ -183,8 +183,8 @@
         crew: [...x.crew].join(', '),
         cnt: x.n.length,
       }));
-      // Beta: one row per asteroid, click to open types, then buildings
-      if (/[?&]beta=1/.test(location.search)) {
+      // One row per asteroid, click to open types, then buildings
+      {
         const A = {};
         Object.values(g).forEach((x) => (A[x.a] = A[x.a] || []).push(x));
         S.idle = Object.entries(A).map(([a, L]) => {
@@ -221,8 +221,8 @@
         });
       }
     }
-    // Beta: storage nearly full – one row per asteroid, click to see the buildings
-    if (/[?&]beta=1/.test(location.search) && S.store.length) {
+    // Storage nearly full – one row per asteroid, click to see the buildings
+    if (S.store.length) {
       const A = {};
       S.store.forEach((x) => (A[x.a] = A[x.a] || []).push(x));
       S.store = Object.entries(A).map(([a, L]) => {
@@ -382,9 +382,7 @@
       [
         'idle',
         'Idle buildings',
-        /[?&]beta=1/.test(location.search)
-          ? 'Production buildings with nothing running, one row per asteroid. Click a row to see the types, then click a type to see the buildings.'
-          : 'Production buildings with nothing running, grouped by asteroid. Click a group to see the buildings.',
+        'Production buildings with nothing running, one row per asteroid. Click a row to see the types, then click a type to see the buildings.',
       ],
       ['store', 'Storage nearly full', 'Warehouses and tank farms 75% full or more.'],
       [
@@ -395,8 +393,7 @@
       ['prop', 'Ships low on propellant', 'Ships with less than a quarter of a tank.'],
     ];
     // Idle buildings: count buildings (not groups) + asteroids (beta first)
-    const IDC = /[?&]beta=1/.test(location.search),
-      cnt = (k) => (IDC ? S[k].reduce((n, x) => n + (x.cnt || 1), 0) : S[k].length);
+    const cnt = (k) => S[k].reduce((n, x) => n + (x.cnt || 1), 0);
     const COL = { 2: '#ff7a7a', 1: '#fab219', 0: '#5fc3e4' },
       dot = (l) =>
         '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' +
@@ -454,15 +451,13 @@
         '">' +
         t +
         ' <span class="a" style="font-size:14px;font-weight:400">(' +
-        (IDC && k === 'idle'
+        (k === 'idle'
           ? cnt(k) +
             ' on ' +
             new Set(L.map((x) => x.a)).size +
             ' asteroid' +
             (new Set(L.map((x) => x.a)).size > 1 ? 's' : '')
-          : IDC
-            ? cnt(k)
-            : L.length) +
+          : cnt(k)) +
         ')</span></h2><div class="note" style="padding:0 0 8px">' +
         d +
         '</div><div class="wrap"><table><thead><tr><th>' +
