@@ -6,6 +6,14 @@
   'use strict';
   // window.YIC is only set once app.js has loaded your data, so look it up each time
   const APP = new Proxy({}, { get: (_, k) => window.YIC[k], set: (_, k, v) => ((window.YIC[k] = v), true) });
+  // Hide tiny samples (beta test, 26 Oct 2026): under 2 t hidden by default; the choice is remembered in this browser
+  const SMB = /[?&]beta=1/.test(location.search),
+    SMALL_KG = 2000,
+    SKEY = 'yic-samp-show-small';
+  let SHOWSM = false;
+  try {
+    SHOWSM = localStorage.getItem(SKEY) === '1';
+  } catch (e) {}
 
   function drawSamples(m) {
     if (!APP.SAMP || APP.SAMP.err) {
@@ -55,11 +63,16 @@
     });
     const lotN = (id) => Math.floor(id / 4294967296);
     const g = {};
+    let hid = 0;
     (APP.SAMP.rows || []).forEach(([id, r, kg, lot, a, sale]) => {
       const p = String(r);
       if (an && a !== an) return;
       if (cl && APP.pc(p) !== cl) return;
       if (q && !(APP.pn(p).toLowerCase().includes(q) || a.toLowerCase().includes(q))) return;
+      if (SMB && !SHOWSM && APP.kg(p, kg) < SMALL_KG) {
+        hid++;
+        return;
+      }
       const k = a + '|' + p,
         x = (g[k] = g[k] || { a, p, n: 0, kg: 0, max: 0, lots: {} });
       x.n++;
@@ -82,10 +95,29 @@
       ) +
       ' (refreshes every 5 minutes)' +
       (an ? ' · showing <b>' + APP.esc(an) + '</b> only' : '') +
-      '</div>';
+      '</div>' +
+      (SMB
+        ? '<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;font-size:15px;color:#c8d3e0;cursor:pointer"><input type="checkbox" id="smHide"' +
+          (SHOWSM ? '' : ' checked') +
+          '> Hide small samples (under 2 t)' +
+          (!SHOWSM && hid ? ' <span class="a">– ' + hid.toLocaleString() + ' hidden</span>' : '') +
+          '</label>'
+        : '');
+    const wire = () => {
+      const c = m.querySelector('#smHide');
+      if (c)
+        c.addEventListener('change', () => {
+          SHOWSM = !c.checked;
+          try {
+            localStorage.setItem(SKEY, SHOWSM ? '1' : '0');
+          } catch (e) {}
+          APP.draw();
+        });
+    };
     if (!list.length) {
       m.innerHTML =
         h + '<div class="note">' + (all ? 'Nothing matches.' : 'You have no untouched samples.') + '</div>';
+      wire();
       return;
     }
     h +=
@@ -153,6 +185,7 @@
     m.innerHTML =
       h +
       '</tbody></table></div><div class="note" style="padding:10px 0 0">Click a resource to see its lots, biggest sample first. Used and part-used samples are left out.</div>';
+    wire();
     m.querySelectorAll('tr.prow').forEach((tr) =>
       tr.addEventListener('click', () => {
         APP.sampOpen = APP.sampOpen === tr.dataset.k ? null : tr.dataset.k;
