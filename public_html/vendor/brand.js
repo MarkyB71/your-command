@@ -124,7 +124,7 @@
     const edge=(lab)=>{let c=16;if(lab&&b){b.querySelectorAll('.pg,.pn').forEach(e=>{const r=e.getBoundingClientRect();if(r.width)c=Math.max(c,r.right+14)})}
       if(wb){const r=wb.getBoundingClientRect(),hr=h.getBoundingClientRect();if(r.bottom>hr.top+4)c=Math.max(c,W-r.left+8)}return c};
     const size=lab=>Math.min(40,Math.floor((W-2*edge(lab)-logos-gap)/per));
-    let n=size(true),hide=false;if(n<26){hide=true;b&&b.classList.add('yic-nolab');n=Math.max(18,size(false))}else b&&b.classList.remove('yic-nolab');
+    let n=size(true),hide=false;if(n<26){hide=true;b&&b.classList.add('yic-nolab');n=Math.max(18,Math.min(25,size(false)))}else b&&b.classList.remove('yic-nolab');
     if(h.style.fontSize!==n+'px')h.style.setProperty('font-size',n+'px','important');
     if(!document.getElementById('fit-css')){const st=document.createElement('style');st.id='fit-css';st.textContent='#pgband.yic-nolab .pg,#pgband.yic-nolab .pn{visibility:hidden}h1.brand .brand-t{white-space:nowrap}';document.head.appendChild(st)}}
   if(FIT){setInterval(fit,500);addEventListener('resize',fit);fit()}
