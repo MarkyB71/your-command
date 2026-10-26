@@ -221,6 +221,49 @@
         });
       }
     }
+    // Beta: storage nearly full – one row per asteroid, click to see the buildings
+    if (/[?&]beta=1/.test(location.search) && S.store.length) {
+      const A = {};
+      S.store.forEach((x) => (A[x.a] = A[x.a] || []).push(x));
+      S.store = Object.entries(A).map(([a, L]) => {
+        L.sort((x, y) => y.t - x.t);
+        const n = L.length,
+          red = L.filter((x) => x.lvl === 2).length,
+          crew = new Set(L.map((x) => x.crew).filter(Boolean));
+        return {
+          lvl: red ? 2 : 1,
+          t: -n,
+          a,
+          type: '',
+          what:
+            n +
+            ' storage building' +
+            (n > 1 ? 's' : '') +
+            ' 75% full or more' +
+            (red ? ' (' + red + ' over 90%)' : ''),
+          name: a,
+          html:
+            '<details><summary style="cursor:pointer">' +
+            n +
+            ' building' +
+            (n > 1 ? 's' : '') +
+            '</summary><div style="padding:6px 0 0 14px">' +
+            L.map(
+              (x) =>
+                '<div style="margin:4px 0">' +
+                (x.pic ? APP.bthumb(x.pic, 32, 24) + ' ' : '') +
+                APP.esc(x.name || '') +
+                (x.gp && window.GL ? window.GL(x.gp, 'Open in the game') : '') +
+                ' <span class="a">· ' +
+                APP.esc(x.what) +
+                '</span></div>',
+            ).join('') +
+            '</div></details>',
+          crew: [...crew].join(', '),
+          cnt: n,
+        };
+      });
+    }
     APP.leaseInfo().forEach((x) => {
       if (x.st === 'ok') return;
       add('lease', {
