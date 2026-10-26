@@ -1,4 +1,4 @@
-/* Tables – one look for every table on the site (TEST: ?beta=1 only, 26 Oct 2026)
+/* Tables – one look for every table on the site (LIVE 26 Oct 2026, tested on ?beta=1)
    - Headings stay in view under the menu while you scroll down a long table.
    - Soft stripes on alternate rows.
    - Pointer + arrows only on headings you can actually click to sort.
@@ -7,9 +7,6 @@
    Pages are not changed: this file works on the tables after each page draws. */
 (function () {
   'use strict';
-  var TBL = /[?&]beta=1/.test(location.search);
-  if (!TBL) return;
-
   var CSS =
     '#main th{cursor:default;position:relative;z-index:3}' +
     '#main th.yic-s{cursor:pointer}' +
