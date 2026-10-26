@@ -16,10 +16,10 @@ const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
-const OST=/[?&]beta=1/.test(location.search); /* TEST: raw materials your other asteroids hold or can mine count as cheap (fly them in) – e.g. Taenite for iron instead of the long Olivine route; table and flights share one answer */
-const TAL=/[?&]beta=1/.test(location.search); /* TEST: building tiles line up – badge on one line, number box at the bottom */
+const OST=true; /* LIVE (was ?beta=1 only) */ /* TEST: raw materials your other asteroids hold or can mine count as cheap (fly them in) – e.g. Taenite for iron instead of the long Olivine route; table and flights share one answer */
+const TAL=true; /* LIVE (was ?beta=1 only) */ /* TEST: building tiles line up – badge on one line, number box at the bottom */
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
-const FTK=/[?&]beta=1/.test(location.search); /* TEST: Then send – full tank / as it is now, and keep half the propellant when the build rock can't make its own */
+const FTK=true; /* LIVE (was ?beta=1 only) */ /* TEST: Then send – full tank / as it is now, and keep half the propellant when the build rock can't make its own */
 /* can this asteroid make product prod (same rule as the Travel page) */
 function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};if((c.scanStatus||0)>=4&&c.abundances&&Y.astAbund)return(Y.astAbund(c.abundances)[prod]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+prod))}
   if(seen[prod])return false;seen=Object.assign({},seen,{[prod]:1});

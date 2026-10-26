@@ -113,7 +113,7 @@
   }
   setInterval(tick,300);tick();
   // TEST (?beta=1): title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
-  const FIT=/[?&]beta=1/.test(location.search);
+  const FIT=true; // LIVE (was beta=1)
   function fit(){
     const h=document.querySelector('h1.brand'),t=h&&h.querySelector('.brand-t'),b=document.querySelector('#pgband');if(!t)return;
     const W=document.documentElement.clientWidth;
