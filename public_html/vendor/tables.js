@@ -15,7 +15,17 @@
     '#main th.yic-asc::after{content:" \\25B2";opacity:1;color:#6ec6e6}' +
     '#main th.yic-desc::after{content:" \\25BC";opacity:1;color:#6ec6e6}' +
     '#main tr.yic-z>td{background-image:linear-gradient(rgba(255,255,255,.045),rgba(255,255,255,.045))}' +
-    '#main table.yic-stuck thead th{box-shadow:0 2px 0 rgba(110,198,230,.55)}';
+    '#main table.yic-stuck thead th{box-shadow:0 2px 0 rgba(110,198,230,.55)}' +
+    '.yic-flt{display:flex;align-items:center;gap:10px;margin:0 0 8px}' +
+    '.yic-flt input{min-width:0!important;width:260px!important;flex:0 1 260px!important;max-width:100%;padding:6px 10px;font-size:15px;border-radius:8px;border:1px solid #3a4658;background:#0f141c;color:var(--text)}' +
+    '.yic-flt input:focus{outline:none;border-color:#6ec6e6;box-shadow:0 0 8px rgba(110,198,230,.5)}' +
+    '.yic-flt span{color:var(--muted);font-size:13px}' +
+    '.yic-flt button{padding:4px 10px;font-size:13px}';
+
+  // Filter box above long tables (TEST: ?beta=1 only, 26 Oct 2026)
+  var FLT = /[?&]beta=1/.test(location.search);
+  var FMIN = 8;                 // only tables with at least this many rows get a box
+  var ftext = {};               // what was typed, per page + table, kept across redraws
 
   function addCss() {
     if (document.getElementById('yic-tbl-css')) return;
@@ -91,9 +101,51 @@
     var z = false;
     rowsOf(t).forEach(function (tr) {
       if (tr.cells.length === 1 && tr.cells[0].colSpan > 1) { tr.classList.remove('yic-z'); return; }  // opened detail rows
+      if (tr.style.display === 'none') return;
       tr.classList.toggle('yic-z', z);
       z = !z;
     });
+  }
+
+  // Data rows (opened detail rows ride along with the row above them)
+  function isDetail(tr) { return tr.cells.length === 1 && tr.cells[0].colSpan > 1; }
+  function applyFilter(t, q, info) {
+    var words = q.toLowerCase().split(/\s+/).filter(Boolean), shown = 0, total = 0, last = true;
+    rowsOf(t).forEach(function (tr) {
+      if (isDetail(tr)) { tr.style.display = last ? '' : 'none'; return; }
+      total++;
+      var txt = (tr.textContent || '').toLowerCase();
+      last = words.every(function (w) { return txt.indexOf(w) >= 0; });
+      tr.style.display = last ? '' : 'none';
+      if (last) shown++;
+    });
+    if (info) info.textContent = words.length ? shown + ' of ' + total + ' rows' : '';
+    stripes(t);
+    stick();
+  }
+  function filterBox(t, key) {
+    var n = rowsOf(t).filter(function (tr) { return !isDetail(tr); }).length;
+    var before = t.closest('.wrap') || t;
+    var box = before.previousElementSibling;
+    if (n < FMIN) { if (box && box.classList.contains('yic-flt')) box.remove(); return; }
+    if (!box || !box.classList.contains('yic-flt') || box.dataset.key !== key) {
+      box = document.createElement('div');
+      box.className = 'yic-flt';
+      box.dataset.key = key;
+      box.innerHTML = '<input type="search" placeholder="Filter this table…" aria-label="Filter this table"><button type="button" hidden>Clear</button><span></span>';
+      before.parentNode.insertBefore(box, before);
+      var inp = box.querySelector('input'), clr = box.querySelector('button');
+      inp.value = ftext[key] || '';
+      var tbl = function () { var x = box.nextElementSibling; return x && (x.tagName === 'TABLE' ? x : x.querySelector('table')); };
+      inp.addEventListener('input', function () {
+        ftext[key] = inp.value;
+        clr.hidden = !inp.value;
+        if (tbl()) applyFilter(tbl(), inp.value, box.querySelector('span'));
+      });
+      clr.addEventListener('click', function () { inp.value = ''; ftext[key] = ''; clr.hidden = true; if (tbl()) applyFilter(tbl(), '', box.querySelector('span')); inp.focus(); });
+      clr.hidden = !inp.value;
+    }
+    applyFilter(t, ftext[key] || '', box.querySelector('span'));
   }
 
   function setup() {
@@ -139,6 +191,7 @@
         mark(hs, s);
       }
       stripes(t);
+      if (FLT) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
     });
     busy = false;
     stick();
