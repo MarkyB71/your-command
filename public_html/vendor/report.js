@@ -49,13 +49,11 @@
     box.innerHTML =
       '<button class="x" type="button" aria-label="Close">✕</button>' +
       '<h3>🐞 Report a problem</h3>' +
-      '<p class="sub">Something wrong, or not sure how a page works? Tell Skippy here.</p>' +
-      '<label for="repk">What is it?</label>' +
-      '<select id="repk"><option value="bug">Something is wrong</option><option value="confusing">Not sure how it works</option></select>' +
+      '<p class="sub">Something not working right? Let Skippy know here.</p>' +
       '<label for="repg">Page</label><input id="repg" type="text" maxlength="80">' +
       '<label for="rept">What happened?</label>' +
       '<textarea id="rept" maxlength="2000" placeholder="What did you do, what did you expect, and what did you see?"></textarea>' +
-      '<label for="repw">Your name on Discord (optional – so Skippy can reply)</label><input id="repw" type="text" maxlength="80">' +
+      '<label for="repw">Your name on Discord (optional)</label><input id="repw" type="text" maxlength="80">' +
       '<div class="row"><input id="repa" type="checkbox" checked><label for="repa" style="margin:0;font-weight:400">Include my wallet address (helps us see what you see)</label></div>' +
       '<div class="msg" aria-live="polite"></div>' +
       '<div class="btns"><button type="button" class="cn">Cancel</button><button type="button" class="go">Send report</button></div>';
@@ -87,7 +85,7 @@
     var who = box.querySelector('#repw').value.trim();
     try { localStorage.setItem('yic-report-who', who); } catch (e) {}
     var body = {
-      kind: box.querySelector('#repk').value, page: box.querySelector('#repg').value.trim(), text: text, who: who,
+      kind: 'bug', page: box.querySelector('#repg').value.trim(), text: text, who: who,
       wallet: box.querySelector('#repa').checked ? wallet() : '', ver: version()
     };
     g.disabled = true; m.className = 'msg'; m.textContent = 'Sending…';
@@ -112,7 +110,7 @@
     if (l && l.previousElementSibling === s) return;
     if (!l) {
       l = document.createElement('div'); l.id = 'repl';
-      l.innerHTML = 'Found a problem, or not sure how something works? ';
+      l.innerHTML = 'Found something not working? ';
       var a = document.createElement('a');
       a.className = 'rep'; a.href = '#'; a.setAttribute('role', 'button'); a.textContent = '🐞 Report a problem';
       a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(); });

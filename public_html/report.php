@@ -22,7 +22,7 @@ function clean($s, $max) {
 }
 $text = clean($in['text'] ?? '', 2000);
 if (mb_strlen($text) < 5) out(400, ['error' => 'Please say a little about what happened.']);
-$kinds = ['bug' => 'Something is wrong', 'confusing' => 'Not sure how it works'];
+$kinds = ['bug' => 'Something is wrong'];
 $kind = $kinds[$in['kind'] ?? ''] ?? 'Something is wrong';
 $page = clean($in['page'] ?? '', 80);
 $who = clean($in['who'] ?? '', 80);
