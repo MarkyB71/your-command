@@ -679,7 +679,7 @@
     br.innerHTML =
       BR_BG +
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
-      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted autoplay loop playsinline aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       station(DECKS[2]) + station(DECKS[3]) + '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const vs = br.querySelector('.brs-vs');
