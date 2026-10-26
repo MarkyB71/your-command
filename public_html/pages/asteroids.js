@@ -24,7 +24,7 @@
             if (ab[r] > 0) can[r] = ab[r];
           } else if (sp[1].includes(r)) can[r] = -1; // type can hold it, not scanned yet
         }
-        return { nm: (a.Name && a.Name.name) || 'Asteroid #' + a.id, can, scanned: !!ab };
+        return { id: a.id, nm: (a.Name && a.Name.name) || 'Asteroid #' + a.id, can, scanned: !!ab };
       })
       .sort((x, y) => x.nm.localeCompare(y.nm));
     if (rocks.length < 2) return '';
@@ -41,13 +41,13 @@
       const v = k.can[x.r];
       if (v === undefined) {
         const from = x.has.map((h) => h.nm).join(', ');
-        return '<td class="sup-no" title="' + APP.esc(k.nm + " can't mine " + APP.pn(x.r) + ' – fly it in from ' + from) + '">✗ needs</td>';
+        return '<td class="sup-no" title="' + APP.esc(k.nm + " can't mine " + APP.pn(x.r) + ' – fly it in from ' + from) + '"' + (SFT ? ' data-to="' + k.id + '" data-from="' + x.has.map((h) => h.id).join(',') + '"' : '') + '>✗ needs' + (SFT ? '<br><span class="sup-ft">…</span>' : '') + '</td>';
       }
       return '<td class="sup-ok" data-sort="' + (v < 0 ? 0 : v) + '" title="' + APP.esc(k.nm + ' can mine ' + APP.pn(x.r)) + '">' + (v < 0 ? '✓' : (v * 100).toFixed(1) + '%') + '</td>';
     };
     return (
-      '<style>.sup td.sup-ok{color:#4cd04c;font-weight:600;text-align:center}.sup td.sup-no{color:#ff6b6b;text-align:center;background:rgba(255,107,107,.08)}.sup th.rk{text-align:center;white-space:normal;min-width:70px}.sup-sw{margin:0 0 8px;display:flex;gap:8px;align-items:center;font-size:14px}</style>' +
-      '<div class="note" style="padding:0 0 8px">Which of your rocks can <b>mine</b> each raw resource. <span style="color:#4cd04c">Green</span> = can mine it here (abundance from the resource scan; ✓ = not scanned yet, but the rock type can hold it). <span style="color:#ff6b6b">✗ needs</span> = can\'t mine it here – the green rocks in that row can supply it. Hover a cell for details.</div>' +
+      '<style>.sup td.sup-ok{color:#4cd04c;font-weight:600;text-align:center}.sup td.sup-no{color:#ff6b6b;text-align:center;background:rgba(255,107,107,.08)}.sup th.rk{text-align:center;white-space:normal;min-width:70px}.sup td .sup-ft{display:block;font-size:12px;color:#c8d3e0;white-space:nowrap}.sup-sw{margin:0 0 8px;display:flex;gap:8px;align-items:center;font-size:14px}</style>' +
+      '<div class="note" style="padding:0 0 8px">Which of your rocks can <b>mine</b> each raw resource. <span style="color:#4cd04c">Green</span> = can mine it here (abundance from the resource scan; ✓ = not scanned yet, but the rock type can hold it). <span style="color:#ff6b6b">✗ needs</span> = can\'t mine it here – the green rocks in that row can supply it. Hover a cell for details.' + (SFT ? ' Under each ✗: the quickest rock to fly it from, leaving now (standard Light Transport, full tank, 2,000 t cargo).' : '') + '</div>' +
       '<label class="sup-sw"><input type="checkbox" id="supAll"' + (supAll ? ' checked' : '') + '> Show every resource (not just ones some rocks are missing)</label>' +
       (res.length
         ? '<div class="wrap"><table class="sup"><thead><tr><th>Resource</th>' + rocks.map((k) => '<th class="rk">' + APP.esc(k.nm) + '</th>').join('') + '<th class="num">Rocks that can mine it</th></tr></thead><tbody>' +
@@ -56,7 +56,55 @@
         : '<div class="note">Every one of your rocks can mine every resource any of them can.</div>')
     );
   }
+  // Flight times on the red cells (test on ?beta=1): nearest rock that can supply it, fastest trip leaving now,
+  // standard Light Transport, full tank, full 2,000 t cargo (same as Trade finder)
+  const SFT = /[?&]beta=1/.test(location.search);
+  const ftMemo = {};
+  let ftRun = 0;
+  function supplyTimes(m) {
+    const tds = [...m.querySelectorAll('td[data-to]')];
+    if (!tds.length) return;
+    const ids = [...new Set(tds.flatMap((td) => [td.dataset.to, ...td.dataset.from.split(',')]))];
+    const me = ++ftRun,
+      names = {};
+    (APP.D.owned || []).forEach((a) => (names[a.id] = (a.Name && a.Name.name) || 'Asteroid #' + a.id));
+    Promise.all([fetch('orbits.php?ids=' + ids.join(',')).then((r) => r.json()), import('../vendor/travel.js?v=' + APP.VER)])
+      .then(async ([j, T]) => {
+        const O = j.orbits || {},
+          ship = T.SHIPS[2],
+          dv = T.maxDeltaV(2, 1, 1, 2e6, ship[2] / 1000),
+          now = (Date.now() / 1000 - 1609459200) / 3600,
+          hr = Math.floor(now);
+        const trip = async (f, t) => {
+          const k = f + '>' + t + '>' + hr;
+          if (!(k in ftMemo)) {
+            const a = O[f], b = O[t];
+            const r = a && b ? await T.fastest(a.o, b.o, now, dv) : null;
+            ftMemo[k] = r ? r.tof : 0;
+            await new Promise((z) => setTimeout(z, 0));
+          }
+          return ftMemo[k];
+        };
+        for (const td of tds) {
+          if (me !== ftRun || !td.isConnected) return;
+          let best = null;
+          for (const f of td.dataset.from.split(',')) {
+            const h = await trip(f, td.dataset.to);
+            if (h && (!best || h < best.h)) best = { f, h };
+          }
+          const sp = td.querySelector('.sup-ft');
+          if (!sp) continue;
+          if (best) {
+            sp.textContent = names[best.f] + ' ' + (best.h >= 48 ? (best.h / 24).toFixed(1) + ' d' : best.h + ' h');
+            td.dataset.sort = best.h;
+            td.title += '\nQuickest now: from ' + names[best.f] + ', ' + best.h + ' h (Light Transport, full tank, 2,000 t cargo)';
+          } else sp.textContent = 'out of range';
+        }
+      })
+      .catch(() => tds.forEach((td) => { const sp = td.querySelector('.sup-ft'); if (sp) sp.textContent = '?'; }));
+  }
   function wireSupply(m) {
+    if (SFT) supplyTimes(m);
     const b = m.querySelector('#supAll');
     if (b)
       b.onchange = () => {
