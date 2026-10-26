@@ -727,8 +727,10 @@
   function skippyIntro(br) {
     if (window.YICskIntro) return;
     window.YICskIntro = 1;
+    // TESTING: plays on every page load. Set SK_ONCE = true before going live (once per visit)
+    const SK_ONCE = false;
     try {
-      if (sessionStorage.getItem('yic-sk-intro')) return;
+      if (SK_ONCE && sessionStorage.getItem('yic-sk-intro')) return;
       sessionStorage.setItem('yic-sk-intro', '1');
     } catch (e) {}
     if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
