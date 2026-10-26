@@ -76,4 +76,33 @@ $txt = "==== " . $id . "  (" . date('D j M Y H:i', $now) . " UTC)\n" .
 if (@file_put_contents($dir . '/reports.txt', $txt, FILE_APPEND | LOCK_EX) === false)
   out(500, ['error' => 'Sorry, the report could not be saved. Please tell Skippy on Discord.']);
 
+// Also post it as an issue in the PRIVATE GitHub repo (if config.php has GH_TOKEN + GH_REPO).
+// The report is already saved above, so a GitHub hiccup never loses it.
+@include __DIR__ . '/config.php';
+if (defined('GH_TOKEN') && defined('GH_REPO') && GH_TOKEN && GH_REPO && function_exists('curl_init')) {
+  $noPing = function ($t) { return str_replace('@', "@\u{200B}", $t); };   // no accidental @mentions
+  $title = ($page ? $page . ': ' : '') . mb_substr(preg_replace('/\s+/u', ' ', $text), 0, 70);
+  $body = "**Page:** " . ($page ?: '-') . "  \n" .
+    "**From:** " . ($who ? $noPing($who) : '(no name given)') . "  \n" .
+    "**Wallet:** " . ($wallet ?: '(not shared)') . "  \n" .
+    "**Version:** " . ($ver ?: '-') . "  \n" .
+    "**Browser:** " . $ua . "  \n" .
+    "**Report id:** " . $id . "\n\n" .
+    "~~~~text\n" . str_replace('~~~~', '~ ~ ~ ~', $text) . "\n~~~~";
+  $ch = curl_init('https://api.github.com/repos/' . GH_REPO . '/issues');
+  curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => json_encode(['title' => $noPing($title), 'body' => $body]),
+    CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . GH_TOKEN, 'Accept: application/vnd.github+json',
+      'X-GitHub-Api-Version: 2022-11-28', 'User-Agent: your-command-report', 'Content-Type: application/json'],
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 10,
+  ]);
+  $res = curl_exec($ch);
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+  if ($code !== 201)
+    @file_put_contents($dir . '/github-errors.txt', date('c') . " $id HTTP $code " . substr((string)$res, 0, 300) . "\n", FILE_APPEND | LOCK_EX);
+}
+
 out(200, ['ok' => true, 'id' => $id]);
