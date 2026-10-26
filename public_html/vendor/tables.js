@@ -60,7 +60,7 @@
 
   // Value of one cell: {n: number} or {s: text}; null = empty (always last)
   function val(td) {
-    if (td.hasAttribute('data-sort')) { var d = td.getAttribute('data-sort'); return isNaN(d) ? { s: d } : { n: +d }; }
+    if (td.hasAttribute('data-sort')) { var d = td.getAttribute('data-sort'); if (d === '') return null; return isNaN(d) ? { s: d } : { n: +d }; }
     var t = (td.innerText || '').replace(/\s+/g, ' ').trim();
     if (!t || /^[–—-]$/.test(t) || /^none\b/i.test(t)) return null;
     if (/^ready to collect/i.test(t) || /^any moment/i.test(t)) return { n: 0 };
@@ -191,7 +191,7 @@
         mark(hs, s);
       }
       stripes(t);
-      if (FLT) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
+      if (FLT && t.tHead) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
     });
     busy = false;
     stick();

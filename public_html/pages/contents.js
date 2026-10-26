@@ -5,13 +5,24 @@
 (function () {
   'use strict';
 
+  // Cards or one table – TEST on ?beta=1 (26 Oct 2026). Default cards; the choice is remembered.
+  const TV = /[?&]beta=1/.test(location.search);
+  const LS = 'yic-contents-view';
+  function mode() { if (!TV) return 'cards'; try { return localStorage.getItem(LS) === 'table' ? 'table' : 'cards'; } catch (e) { return 'cards'; } }
+  function setMode(v) { try { localStorage.setItem(LS, v); } catch (e) {} }
+  const TV_CSS = '<style>.ct-sw{display:inline-flex;gap:0;margin:0 0 12px;border:1px solid #3a4658;border-radius:8px;overflow:hidden}' +
+    '.ct-sw button{border:0;border-radius:0;padding:7px 16px;font-size:15px;background:transparent;color:#c8d3e0;cursor:pointer}' +
+    '.ct-sw button.on{background:#6ec6e6;color:#06121c;font-weight:700}' +
+    '.ct-full{display:inline-block;min-width:44px;font-weight:600}</style>';
+
   function drawContents(m) {
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, pc = Y.pc, fmt = Y.pfmt, ricon = Y.ricon, bthumb = Y.bthumb, fmtT = Y.fmtT;
     const q = (document.querySelector('#q') || { value: '' }).value.trim().toLowerCase();
     const ai = document.querySelector('#ast').value;
     const typeFilter = (document.querySelector('#cls') || { value: '' }).value;
 
-    let h = '';
+    const tableView = mode() === 'table';
+    let h = '', rows = '';
     Y.asts.forEach((a, i) => {
       if (ai !== '' && +ai !== i) return;
 
@@ -24,6 +35,21 @@
           .sort((x, y) => pn(x).localeCompare(pn(y)));
         if (!shown.length) return '';
 
+        if (tableView) {
+          const f = b.fill ? Math.round(b.fill.f * 100) : null;
+          const fc = f === null ? '' : f >= 90 ? '#ff6b6b' : f >= 75 ? '#fab219' : '#6ec6e6';
+          shown.forEach(p => {
+            rows += '<tr><td>' + esc(a.name) + '</td>' +
+              '<td>' + esc(b.name) + (window.GL ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + '</td>' +
+              '<td>' + esc(b.type) + '</td>' +
+              '<td>' + ricon(p, 22) + esc(pn(p)) + '</td>' +
+              '<td class="cls">' + esc(pc(p)) + '</td>' +
+              '<td class="num">' + fmt(p, b.items[p]) + '</td>' +
+              '<td class="num" data-sort="' + (f === null ? '' : f) + '">' + (f === null ? '–' : '<span class="ct-full" style="color:' + fc + '">' + f + '%</span>') + '</td></tr>';
+          });
+          return '';
+        }
+
         return '<div class="card"><div style="display:flex;align-items:center;margin-bottom:4px">' + bthumb(b.type, 64, 48) +
           '<h3 style="margin:0">' + esc(b.name) + (window.GL ? window.GL('/building/' + b.id, 'Open this building in the game') : '') + '</h3></div>' +
           '<div class="t">' + esc(b.type) + (b.crew ? ' · ' + esc(b.crew) : '') + '</div>' +
@@ -35,7 +61,12 @@
       if (cards) h += '<h2>' + esc(a.name) + '</h2><div class="grid">' + cards + '</div>';
     });
 
-    m.innerHTML = h || '<div class="note">Nothing matches.</div>';
+    const sw = TV ? TV_CSS + '<div class="ct-sw" role="group" aria-label="Show as"><button type="button" data-cv="cards"' + (tableView ? '' : ' class="on"') + '>▦ Cards</button><button type="button" data-cv="table"' + (tableView ? ' class="on"' : '') + '>☰ Table</button></div>' : '';
+    if (tableView) {
+      h = rows ? '<div class="wrap"><table><thead><tr><th>Asteroid</th><th>Building</th><th>Type</th><th>Product</th><th>Kind</th><th class="num">Amount</th><th class="num">How full</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '';
+    }
+    m.innerHTML = sw + (h || '<div class="note">Nothing matches.</div>');
+    m.querySelectorAll('[data-cv]').forEach(btn => btn.addEventListener('click', () => { setMode(btn.dataset.cv); Y.draw(); }));
   }
 
   // "How full" bar: amber from 75 %, red from 90 %
