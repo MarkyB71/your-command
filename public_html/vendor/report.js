@@ -49,7 +49,7 @@
       '<h3>🐞 Report a problem</h3>' +
       '<p class="sub">Something wrong, or not sure how a page works? Tell Skippy here.</p>' +
       '<label for="repk">What is it?</label>' +
-      '<select id="repk"><option value="bug">Something is wrong</option><option value="confusing">Not sure how it works</option><option value="idea">An idea</option></select>' +
+      '<select id="repk"><option value="bug">Something is wrong</option><option value="confusing">Not sure how it works</option></select>' +
       '<label for="repg">Page</label><input id="repg" type="text" maxlength="80">' +
       '<label for="rept">What happened?</label>' +
       '<textarea id="rept" maxlength="2000" placeholder="What did you do, what did you expect, and what did you see?"></textarea>' +
