@@ -12,7 +12,7 @@
     'SkippyChain':['#ffd24a','🔗',['H']],
     'Fleet':     ['#5b9dff','🚀',['S','C']],
     'Logistics': ['#3fd68a','📦',['P','V','J']],
-    'Asteroids': ['#ffab3d','☄️',['A','X','F']],
+    'Asteroids': ['#ffab3d','☄️',['A','X','F','E']],
     'Buildings': ['#b388ff','🏭',['B','T','L']],
     'Trading':   ['#f5c542','💰',['K','Y','M']],
     'Planners':  ['#ff6fae','🧭',['R','Q','U']],
