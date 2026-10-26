@@ -4,7 +4,9 @@
   var REP = /[?&]beta=1/.test(location.search); // TEST on ?beta=1 (26 Oct 2026). true = live for everyone.
   if (!REP) return;
   var CSS =
-    '#sup .rep{background:#161d27;color:#8fe3ff;border:1px solid #5b9dff}' +
+    '#repl{text-align:center;margin:0 auto 10px;padding:12px 16px;color:#9aa8bb;font-size:14px;border-top:1px solid #2a3442;max-width:640px}' +
+    '#repl .rep{display:inline-block;margin:4px 5px;padding:5px 12px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;background:#161d27;color:#8fe3ff;border:1px solid #5b9dff}' +
+    '#repl .rep:hover,#repl .rep:focus-visible{box-shadow:0 0 10px rgba(143,227,255,.35)}' +
     '#repb{position:fixed!important;inset:0;z-index:100000!important;background:rgba(0,0,0,.6);display:none}' +
     '#repp{position:fixed!important;z-index:100001!important;left:50%;top:50%;transform:translate(-50%,-50%);' +
     'width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;' +
@@ -105,10 +107,17 @@
       var st = document.createElement('style'); st.id = 'rep-css'; st.textContent = CSS; document.head.appendChild(st);
     }
     var s = document.getElementById('sup');
-    if (!s || s.querySelector('.rep')) return;
-    var a = document.createElement('a');
-    a.className = 'rep'; a.href = '#'; a.setAttribute('role', 'button'); a.textContent = '🐞 Report a problem';
-    a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(); });
-    s.appendChild(a);
+    if (!s) return;
+    var l = document.getElementById('repl');
+    if (l && l.previousElementSibling === s) return;
+    if (!l) {
+      l = document.createElement('div'); l.id = 'repl';
+      l.innerHTML = 'Found a problem, or not sure how something works? ';
+      var a = document.createElement('a');
+      a.className = 'rep'; a.href = '#'; a.setAttribute('role', 'button'); a.textContent = '🐞 Report a problem';
+      a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(); });
+      l.appendChild(a);
+    }
+    s.parentNode.insertBefore(l, s.nextSibling);
   }, 700);
 })();
