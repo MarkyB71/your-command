@@ -16,6 +16,7 @@ const TB=true; /* LIVE (was ?beta=1 only):
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{if(!TB)return h+' h';h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
+const OST=/[?&]beta=1/.test(location.search); /* TEST: raw materials your other asteroids hold or can mine count as cheap (fly them in) – e.g. Taenite for iron instead of the long Olivine route; table and flights share one answer */
 const FTK=/[?&]beta=1/.test(location.search); /* TEST: Then send – full tank / as it is now, and keep half the propellant when the build rock can't make its own */
 /* can this asteroid make product prod (same rule as the Travel page) */
 function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};if((c.scanStatus||0)>=4&&c.abundances&&Y.astAbund)return(Y.astAbund(c.abundances)[prod]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+prod))}
@@ -78,10 +79,11 @@ export function drawBuildPlan(m){
     scanned=(cel.scanStatus||0)>=4&&cel.abundances,ab=scanned&&Y.astAbund?Y.astAbund(cel.abundances):null;
   const canMine=r=>ab?(ab[r]||0)>0:spec?spec[1].includes(+r):false;
   /* Expand items down the chain on one asteroid: its stock first, then make (recipe needing least flown in), raws mined if it can */
-  const expand=(stk0,canMine,items,ucost={})=>{
+  const expand=(stk0,canMine,items,ucost={},away0=null)=>{
   const busy={};let hit=false,calls=0;
+  const awayOK=id=>away0&&+id<=22&&!canMine(id)&&!!away0[id];
   const cost=(id,dep)=>{ /* fly-in kg per unit, if made here the cheapest way; results that ran into a loop aren't remembered */
-    if(id in ucost)return ucost[id];if(+id<=22)return ucost[id]=canMine(id)?kgOf(id,1)*1e-4:kgOf(id,1);
+    if(id in ucost)return ucost[id];if(awayOK(id))return ucost[id]=kgOf(id,1)*1e-5;if(+id<=22)return ucost[id]=canMine(id)?kgOf(id,1)*1e-4:kgOf(id,1);
     if(busy[id]){hit=true;return kgOf(id,1)*1e3}
     if(dep>14||!MK[id]||++calls>200000)return kgOf(id,1)*1e3;
     const outer=hit;hit=false;busy[id]=1;
@@ -101,8 +103,11 @@ export function drawBuildPlan(m){
   return{USED,pool,fly,mine,fac,made}};
   const myFac=(t,aid=S.ast)=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===aid).length;
   /* TEST: materials your other asteroids hold but that can be made fully here (own stock + mining, facilities you already have) are made here instead of flown in */
-  const ucOK={},vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
-  const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
+  const AWAY={};if(OST){A.forEach(a=>{if(a.id===S.ast||a.i===null)return;const t=Y.tot[a.i]||{};for(let k=1;k<=22;k++)if((t[k]||0)>=1000)AWAY[k]=1});
+    (D.owned||[]).forEach(a=>{if(a.id===S.ast)return;const c=a.Celestial||{},ab2=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?Y.astAbund(c.abundances):null,sp=(Y.SPEC||{})[c.celestialType];for(let k=1;k<=22;k++)if(ab2?(ab2[k]||0)>0:sp&&sp[1].includes(k))AWAY[k]=1})}
+  const UC1={},AW=OST?AWAY:null;
+  const ucOK=OST?UC1:{},vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
+  const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK,AW);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
   /* TEST (CANB): what each building needs for ONE of it on this asteroid */
   const ucB={},canBadge=k=>{const need=BLDS[k][1],sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
     if(!sh.length){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
@@ -111,13 +116,13 @@ export function drawBuildPlan(m){
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
     return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
   const chainRows=rows.filter(r=>r.short&&(!r.others.length||(FB&&makeOK(r))));
-  const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short])),{USED,pool,fly,mine,fac,made}=EX;
+  const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),OST?UC1:{},AW),{USED,pool,fly,mine,fac,made}=EX;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
   shortRows.filter(r=>r.others.length&&!chainRows.includes(r)).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
   /* Make it here? – can a missing material be made on this asteroid from its own stock + mining (TEST) */
-  const ucMH={};
-  const makeHere=r=>{if(!r.short)return'';const E=expand(stk,canMine,[[r.id,r.short]],ucMH),R=E.USED[r.id];
+  const ucMH=OST?UC1:{};
+  const makeHere=r=>{if(!r.short)return'';const E=expand(stk,canMine,[[r.id,r.short]],ucMH,AW),R=E.USED[r.id];
     if(!R)return'<span class="none">✗ No</span> <span class="a">– no way to make it here</span>';
     const fl=Object.keys(E.fly).filter(k=>isCnt(k)?E.fly[k]>=0.5:kgOf(k,E.fly[k])>=0.5).sort((x,y)=>kgOf(y,E.fly[y])-kgOf(x,E.fly[x]));
     const fc=Object.keys(E.fac).map(t=>'<span class="'+(myFac(t)?'ok':'none')+'">'+(myFac(t)?'✓ ':'✗ ')+esc(PTYPE[t])+'</span>').join(', ');
