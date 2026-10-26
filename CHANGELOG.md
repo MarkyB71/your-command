@@ -4,7 +4,7 @@ Newest first. Version = the number in the site footer (it rises by one with ever
 
 ## Version 422 – 26 Oct 2026 – Today's Workload: Idle buildings and Storage nearly full now show one row per asteroid (click to open); counts are buildings, e.g. "Idle buildings (126 on 6 asteroids)".
 
-## Version 419 – 26 Oct 2026 – Every table: headings stay in view under the menu, soft row stripes, sort arrows only where you can sort, and click-to-sort on simple tables (Ships, Leases, Status and more).
+## Version 423 – 26 Oct 2026 – Every table: headings stay in view under the menu, soft row stripes, sort arrows only where you can sort, and click-to-sort on simple tables (Ships, Leases, Status and more).
 
 ## Version 417 – 26 Oct 2026 – Code tidy (nothing players see should change): removed the old page code left in app.js since Version 200 (176 KB → 97 KB), folded about 60 old always-on test switches into plain code, moved the Academy test designs out of the live site folder.
 
