@@ -723,12 +723,66 @@
     );
   }
 
+  // First visit this session: Skippy talks big on the viewscreen, then shrinks into the chair (Mark, 26 Oct)
+  function skippyIntro(br) {
+    if (window.YICskIntro) return;
+    window.YICskIntro = 1;
+    try {
+      if (sessionStorage.getItem('yic-sk-intro')) return;
+      sessionStorage.setItem('yic-sk-intro', '1');
+    } catch (e) {}
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    setTimeout(() => {
+      const vs = br.querySelector('.brs-vs'),
+        sk = br.querySelector('.brs-sk');
+      if (!vs || !sk || !br.isConnected) return;
+      const r = vs.getBoundingClientRect();
+      if (r.width < 50 || r.bottom < 0 || r.top > innerHeight) return;
+      const h = Math.min(Math.max(r.height - 30, 220), innerHeight * 0.7),
+        w = (h * 668) / 818,
+        L = r.left + (r.width - w) / 2,
+        T = Math.max(r.top + 15, 10);
+      const v = document.createElement('video');
+      v.src = 'media/skippy-intro.mp4';
+      v.playsInline = true;
+      v.title = 'Click to skip';
+      v.style.cssText = 'position:fixed!important;z-index:9999!important;left:' + L + 'px;top:' + T + 'px;width:' + w + 'px;height:' + h + 'px;object-fit:cover;border-radius:12px;box-shadow:0 0 30px rgba(143,227,255,.45);transform-origin:0 0;opacity:0;transform:scale(.92);transition:transform .9s ease-in-out,opacity .5s,border-radius .9s;cursor:pointer';
+      document.body.appendChild(v);
+      sk.style.opacity = '0';
+      let done = false;
+      const shrink = () => {
+        if (done) return;
+        done = true;
+        const c = sk.getBoundingClientRect();
+        v.style.borderRadius = '40px';
+        v.style.transform = 'translate(' + (c.left - L) + 'px,' + (c.top - T) + 'px) scale(' + c.width / w + ',' + c.height / h + ')';
+        setTimeout(() => {
+          sk.style.opacity = '';
+          v.remove();
+        }, 950);
+      };
+      v.addEventListener('ended', shrink);
+      v.addEventListener('click', shrink);
+      setTimeout(shrink, 8000);
+      requestAnimationFrame(() => {
+        v.style.opacity = '1';
+        v.style.transform = 'none';
+      });
+      v.play().catch(() => {
+        // Browser blocked sound – play silently instead
+        v.muted = true;
+        v.play().catch(shrink);
+      });
+    }, 600);
+  }
+
   window.PAGES = window.PAGES || {};
   window.PAGES.N = function (m) {
     if (BRG) {
       // Bridge only – the workload lists will move into the decks later (Mark, 26 Oct)
       m.innerHTML = '';
       drawBridge(m);
+      skippyIntro(m.querySelector('.brs') || m);
       return;
     }
     drawAlerts(m);
