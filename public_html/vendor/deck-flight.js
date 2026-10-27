@@ -6,33 +6,33 @@
 (function () {
   'use strict';
   if (!window.YICDECKS) return;
-  const COL = '#5b9dff',
+  const COL = '#9a6bff',
     AU = 1.495978707e11,
     EPOCH = 1609459200;
   const CSS = `
-body.dk-flight #main{border:1px solid rgba(91,157,255,.35);border-top:3px solid ${COL};border-radius:0 0 14px 14px;background:linear-gradient(180deg,rgba(91,157,255,.07),rgba(5,7,10,0) 220px),repeating-linear-gradient(90deg,rgba(91,157,255,.035) 0 1px,transparent 1px 48px),repeating-linear-gradient(0deg,rgba(91,157,255,.035) 0 1px,transparent 1px 48px),#070b11;box-shadow:inset 0 0 40px -18px ${COL},0 0 26px -14px ${COL};margin:0 16px 20px!important}
-body.dk-flight #main h2{color:#9cc3ff}
-body.dk-flight #main th{color:#9cc3ff}
-#deckhero[data-deck="flight"]{margin:14px 16px 0;padding:9px 9px 0;background:linear-gradient(180deg,#1d2a3c,#0d141e);clip-path:polygon(4% 0,96% 0,100% 18%,100% 100%,0 100%,0 18%);position:relative}
-.fh-win{position:relative;clip-path:polygon(4% 0,96% 0,100% 18%,100% 100%,0 100%,0 18%);background:radial-gradient(ellipse at 50% 50%,#0b1524,#03060a 72%)}
+body.dk-flight #main{border:1px solid rgba(154,107,255,.35);border-top:3px solid ${COL};border-radius:0 0 14px 14px;background:linear-gradient(180deg,rgba(154,107,255,.07),rgba(5,7,10,0) 220px),repeating-linear-gradient(90deg,rgba(154,107,255,.035) 0 1px,transparent 1px 48px),repeating-linear-gradient(0deg,rgba(154,107,255,.035) 0 1px,transparent 1px 48px),#0b0711;box-shadow:inset 0 0 40px -18px ${COL},0 0 26px -14px ${COL};margin:0 16px 20px!important}
+body.dk-flight #main h2{color:#c4adff}
+body.dk-flight #main th{color:#c4adff}
+#deckhero[data-deck="flight"]{margin:14px 16px 0;padding:9px 9px 0;background:linear-gradient(180deg,#251d3c,#120d1e);clip-path:polygon(4% 0,96% 0,100% 18%,100% 100%,0 100%,0 18%);position:relative}
+.fh-win{position:relative;clip-path:polygon(4% 0,96% 0,100% 18%,100% 100%,0 100%,0 18%);background:radial-gradient(ellipse at 50% 50%,#140b24,#03060a 72%)}
 .fh-win canvas{display:block;width:100%;height:clamp(220px,28vw,330px)}
 .fh-glass{position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 72%,rgba(255,255,255,.03))}
-.fh-plate{position:absolute;left:50%;top:0;transform:translateX(-50%);padding:3px 24px 4px;background:#0d141e;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#9cc3ff;text-shadow:0 0 8px rgba(91,157,255,.8);z-index:2}
-.fh-read{position:absolute;left:5%;top:30px;font:600 11px/1.6 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#9cc3ff;text-transform:uppercase;pointer-events:none}
+.fh-plate{position:absolute;left:50%;top:0;transform:translateX(-50%);padding:3px 24px 4px;background:#120d1e;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#c4adff;text-shadow:0 0 8px rgba(154,107,255,.8);z-index:2}
+.fh-read{position:absolute;left:5%;top:30px;font:600 11px/1.6 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#c4adff;text-transform:uppercase;pointer-events:none}
 .fh-read b{color:#e6ebf2;font-size:15px}
 .fh-key{position:absolute;right:5%;top:30px;font:11px/1.6 system-ui,sans-serif;color:#8b9ab0;text-align:right;pointer-events:none}
 .fh-key i{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:-1px}
 .fh-load{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;color:#8b9ab0}
-.fh-ship{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;gap:4%;padding:30px 6% 14px;background:radial-gradient(ellipse at 40% 50%,rgba(91,157,255,.18),rgba(91,157,255,0) 60%),rgba(3,6,10,.95);cursor:pointer;animation:fhIn .35s ease-out}
+.fh-ship{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;gap:4%;padding:30px 6% 14px;background:radial-gradient(ellipse at 40% 50%,rgba(154,107,255,.18),rgba(154,107,255,0) 60%),rgba(3,6,10,.95);cursor:pointer;animation:fhIn .35s ease-out}
 .fh-ship .fh-pic{flex:0 0 auto;width:min(52%,520px);height:92%;background:#000 no-repeat 50% 42%/170% auto;mix-blend-mode:screen;-webkit-mask:radial-gradient(ellipse 50% 50% at 50% 50%,#000 55%,transparent 100%);mask:radial-gradient(ellipse 50% 50% at 50% 50%,#000 55%,transparent 100%)}
 .fh-ship .fh-si{max-width:38%;font:13px/1.5 system-ui,sans-serif;color:#c4cdd9}
 .fh-ship .fh-si b{display:block;font-size:20px;color:#e6ebf2;text-shadow:0 0 10px ${COL};margin-bottom:2px}
-.fh-ship .fh-si i{display:block;font-style:normal;color:#9cc3ff;letter-spacing:.14em;text-transform:uppercase;font-size:11px;margin-bottom:8px}
-.fh-ship .fh-x{position:absolute;right:6%;top:30px;font:700 12px system-ui;color:#9cc3ff;letter-spacing:.1em}
+.fh-ship .fh-si i{display:block;font-style:normal;color:#c4adff;letter-spacing:.14em;text-transform:uppercase;font-size:11px;margin-bottom:8px}
+.fh-ship .fh-x{position:absolute;right:6%;top:30px;font:700 12px system-ui;color:#c4adff;letter-spacing:.1em}
 @keyframes fhIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.fh-ship{animation:none}}
 @media (max-width:700px){.fh-ship{flex-direction:column;padding:26px 12px 10px}.fh-ship .fh-pic{width:90%;height:55%}.fh-ship .fh-si{max-width:100%;text-align:center}}
-.fh-lip{height:12px;margin:0 -9px;background:linear-gradient(180deg,#1d2a3c,#0a1018);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
+.fh-lip{height:12px;margin:0 -9px;background:linear-gradient(180deg,#251d3c,#100a18);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
 @media (max-width:700px){.fh-key{display:none}#deckhero[data-deck="flight"],.fh-win{clip-path:none}}
 `;
 
@@ -194,7 +194,7 @@ body.dk-flight #main th{color:#9cc3ff}
           ctx.arc(c[0], c[1], sr, 0, 6.283);
           ctx.fill();
           // range rings, like a nav plot
-          ctx.strokeStyle = 'rgba(91,157,255,.08)';
+          ctx.strokeStyle = 'rgba(154,107,255,.08)';
           ctx.lineWidth = 1;
           [0.33, 0.66, 1].forEach((k) => {
             ctx.beginPath();
@@ -218,7 +218,7 @@ body.dk-flight #main th{color:#9cc3ff}
               P = qb(A, C, B, t.f),
               P2 = qb(A, C, B, Math.min(1, t.f + 0.02));
             ctx.setLineDash([5, 6]);
-            ctx.strokeStyle = 'rgba(91,157,255,.55)';
+            ctx.strokeStyle = 'rgba(154,107,255,.55)';
             ctx.lineWidth = 1.4;
             ctx.beginPath();
             ctx.moveTo(A[0], A[1]);
@@ -226,7 +226,7 @@ body.dk-flight #main th{color:#9cc3ff}
             ctx.stroke();
             ctx.setLineDash([]);
             // travelled part
-            ctx.strokeStyle = 'rgba(156,195,255,.85)';
+            ctx.strokeStyle = 'rgba(196,173,255,.85)';
             ctx.lineWidth = 2;
             ctx.beginPath();
             for (let k = 0; k <= 30; k++) {
@@ -235,7 +235,7 @@ body.dk-flight #main th{color:#9cc3ff}
             }
             ctx.stroke();
             // landing marker
-            ctx.strokeStyle = 'rgba(91,157,255,.7)';
+            ctx.strokeStyle = 'rgba(154,107,255,.7)';
             ctx.beginPath();
             ctx.arc(B[0], B[1], 7, 0, 6.283);
             ctx.stroke();
@@ -247,7 +247,7 @@ body.dk-flight #main th{color:#9cc3ff}
             ctx.shadowColor = COL;
             ctx.shadowBlur = 8 + glow * 10;
             ctx.rotate(ang);
-            ctx.fillStyle = '#cfe0ff';
+            ctx.fillStyle = '#e0d4ff';
             ctx.beginPath();
             ctx.moveTo(8, 0);
             ctx.lineTo(-6, -5);
@@ -260,7 +260,7 @@ body.dk-flight #main th{color:#9cc3ff}
             ctx.fillStyle = '#e6ebf2';
             ctx.font = '600 12px system-ui,sans-serif';
             ctx.fillText(t.s.name, P[0] + 10, P[1] - 8);
-            ctx.fillStyle = '#9cc3ff';
+            ctx.fillStyle = '#c4adff';
             ctx.font = '11px system-ui,sans-serif';
             ctx.fillText('→ ' + nm(t.s.dId) + ' · lands in ' + left(t.left), P[0] + 10, P[1] + 6);
           });
@@ -287,7 +287,7 @@ body.dk-flight #main th{color:#9cc3ff}
                 ctx.closePath();
                 ctx.fill();
               }
-              ctx.fillStyle = '#9cc3ff';
+              ctx.fillStyle = '#c4adff';
               ctx.font = '10px system-ui,sans-serif';
               ctx.fillText(r.n + ' docked', q[0] + 7, q[1] - 6);
             }

@@ -12,9 +12,9 @@
 
   const DECKS = [
     { id: 'bridge', name: 'The Bridge', ico: '◉', col: '#8fe3ff', pages: ['N'] },
-    { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#5b9dff', pages: ['S', 'R', 'V', 'J'] },
+    { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', pages: ['S', 'R', 'V', 'J'] },
     { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#3fd68a', pages: ['C', 'Q'] },
-    { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#36d6c3', pages: ['A', 'X', 'F', 'E'] },
+    { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', pages: ['A', 'X', 'F', 'E'] },
     { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', pages: ['H', 'P', 'U', 'B', 'T', 'L'] },
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M'] },
   ];
