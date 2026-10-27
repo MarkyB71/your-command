@@ -134,6 +134,12 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
         '<div class="en-hint">Click a dial to see those buildings</div>' +
         '<div class="en-row">' + prod + '<span class="en-sep"></span>' + store + '</div><div class="en-floor"></div>';
     }
+    // Opens on All rocks every time you come to Engineering (Mark, 27 Oct)
+    const box0 = document.getElementById('ast');
+    if (box0 && box0.value !== '') {
+      box0.value = '';
+      box0.dispatchEvent(new Event('change'));
+    }
     draw();
     el.addEventListener('change', (e) => {
       const p = e.target.closest('.en-pick'), box = document.getElementById('ast');
