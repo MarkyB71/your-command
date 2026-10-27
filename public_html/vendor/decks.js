@@ -94,7 +94,7 @@ body > header{display:none!important}
 .dkr-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .dkr-vs{position:relative;z-index:1;width:84%;margin:26px auto 0;padding:7px;background:linear-gradient(180deg,#2a3646,#121a24);clip-path:polygon(3% 0,97% 0,100% 8%,100% 100%,0 100%,0 8%);box-shadow:0 0 30px color-mix(in srgb,var(--dc) 25%,transparent)}
 #deckroom #deckhero{margin:0!important;border:0!important;border-radius:0!important;clip-path:polygon(3% 0,97% 0,100% 8%,100% 100%,0 100%,0 8%)!important;padding-bottom:12px!important}
-.dkr-deck{position:relative;z-index:1;display:grid;gap:10px;align-items:end;padding:22px 4% 0;perspective:1100px}
+.dkr-deck{position:relative;z-index:1;display:grid;gap:10px;align-items:end;padding:14px 4% 0;perspective:1100px}
 .dkr-st{all:unset;box-sizing:border-box;cursor:pointer;display:block;min-width:0;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
 .dkr-st:hover,.dkr-st:focus-visible{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}
 .dkr-scr{display:block;position:relative;padding:10px 12px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;border:2px solid #2a3646;border-top:3px solid var(--dc);box-shadow:0 0 16px -6px var(--dc),inset 0 0 22px -10px var(--dc)}
@@ -117,6 +117,16 @@ body > header{display:none!important}
 .dkr-floor{position:relative;height:24px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,color-mix(in srgb,var(--dc) 22%,transparent),transparent 70%)}
 .dkr-bg .bl{animation:dkrBlink 4s infinite}
 .dkr-bg .pu{animation:dkrLed 3s ease-in-out infinite}
+/* deck pieces sitting on the viewscreen (Mark, 27 Oct) */
+#deckroom :is(.cq-read,.sl-read,.en-read,.tb-read){left:4.5%!important}
+#deckroom :is(.sl-hint,.en-hint,.tb-mine){right:4.5%!important}
+#deckroom #deckhero[data-deck="flight"]{padding:0!important;background:none!important}
+#deckroom .fh-win{clip-path:none!important}
+#deckroom .sl-row{justify-content:safe center;padding-left:3%;padding-right:3%}
+#deckroom .cq-row{padding-left:3%;padding-right:3%}
+#deckroom .en-g:not(.en-raw){width:134px}
+#deckroom .en-g:not(.en-raw) svg{width:106px;height:76px}
+#deckroom .en-row{gap:10px}
 @keyframes dkrLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes dkrBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
 @media (max-width:760px){#deckroom{margin:10px 8px 0}.dkr-deck{grid-template-columns:1fr 1fr!important;perspective:none}.dkr-seat{display:none}.dkr-st,.dkr-st:hover{transform:none}.dkr-vs{width:94%}#deckroom #deckhero{clip-path:none!important}}
