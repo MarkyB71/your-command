@@ -26,6 +26,8 @@
 
   // ---- Page state ----
   const S = { tab: 'mine', type: 2, open: null, sort: 'name', dir: 1 };   // type 2 = for sale, 1 = wanted
+  // Trade Deck board (beta): open one product on Whole belt › For sale
+  window.YICmarketOpen = p => { S.tab = 'belt'; S.type = 2; S.open = String(p); };
 
   const num = v => (+v.toFixed(v < 1 ? 4 : v < 100 ? 2 : 0)).toLocaleString();
   const sway = v => (v >= 100 ? Math.round(v).toLocaleString() : (+v.toFixed(v < 1 ? 4 : 2)).toLocaleString()) + ' SWAY';
