@@ -24,6 +24,14 @@ body.dk-flight #main th{color:#9cc3ff}
 .fh-key i{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:-1px}
 .fh-load{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;color:#8b9ab0}
 .fh-lip{height:12px;margin:0 -9px;background:linear-gradient(180deg,#1d2a3c,#0a1018);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
+body.dk-flight .cob{min-width:0;padding:5px 7px;margin:1px 0 4px;border-radius:8px}
+body.dk-flight .cob-h{margin-bottom:4px;gap:8px;font-size:12px}
+body.dk-flight .cob-f{max-width:50px;height:4px}
+body.dk-flight .cob-r{gap:4px}
+body.dk-flight .cob-m{width:34px}
+body.dk-flight .cob-m img{width:30px;height:38px;border-radius:4px;border-width:1px}
+body.dk-flight .cob-n{font-size:9.5px;max-width:34px;margin-top:2px}
+body.dk-flight .cob-c{display:none}
 @media (max-width:700px){.fh-key{display:none}#deckhero[data-deck="flight"],.fh-win{clip-path:none}}
 `;
 
