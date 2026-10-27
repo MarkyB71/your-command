@@ -286,15 +286,14 @@ body > header{display:none!important}
       room.innerHTML =
         roomBg(d) + '<div class="dkr-vs"><button type="button" class="dkr-back" title="Back to the ' + (PIECE[d.id] || 'deck view').toLowerCase() + '">◂ ' + (PIECE[d.id] || 'Deck view') + '</button><span class="dkr-plate"></span></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
         pages.slice(0, nl).map((k, i) => st(k, i)).join('') +
-        (d.id === 'flight'
-          ? '<button type="button" class="dkr-seat dkr-home" title="Back to the Bridge">' + seat(d.id, d.col) + '<span class="dkr-sl">' + SEAT[d.id] + ' · to the Bridge</span></button>'
-          : '<div class="dkr-seat">' + seat(d.id, d.col) + '<span class="dkr-sl">' + (SEAT[d.id] || '') + '</span></div>') +
+        // the centre piece takes you back to the deck's starting view (Mark, 27 Oct)
+        '<button type="button" class="dkr-seat dkr-home" title="Back to the ' + d.name + ' start">' + seat(d.id, d.col) + '<span class="dkr-sl">' + (SEAT[d.id] || '') + '</span></button>' +
         pages.slice(nl).map((k, i) => st(k, i + nl)).join('') +
         // odd number of pages: a switched-off console keeps both sides even (Mark, 27 Oct)
         (pages.length % 2 ? '<div class="dkr-st dkr-off" aria-hidden="true" style="--ry:' + Math.max(-16, -nr * 7) + 'deg"><span class="dkr-scr"><span class="dkr-h">&nbsp;<i class="dkr-led"></i></span><span class="dkr-d">Standby</span><span class="dkr-go">&nbsp;</span></span><span class="dkr-base"><i></i><i></i><i></i><i></i></span></div>' : '') +
         '</div><div class="dkr-floor"></div>';
       room.addEventListener('click', (e) => {
-        if (e.target.closest('.dkr-home')) return window.YICgoDeck('bridge');
+        if (e.target.closest('.dkr-home')) return window.YICgoDeck(d.id);
         if (e.target.closest('.dkr-back')) {
           scr = false;
           return markRoom(room);
