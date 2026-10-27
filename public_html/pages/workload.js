@@ -655,6 +655,8 @@
       K: [ords, ords === 1 ? 'open listing' : 'open listings', 'Market · Trade finder · History', ''],
     };
   }
+  let brLog = false,
+    brTop = 0;
   function drawBridge(m) {
     if (!document.getElementById('br-css')) {
       const st = document.createElement('style');
@@ -692,25 +694,33 @@
     // The captain's chair swaps the viewscreen between the system map and today's workload
     const chair = br.querySelector('.brs-chair'),
       plate = vs.querySelector('.brs-plate');
-    chair.addEventListener('click', () => {
+    // remember the choice: the page redraws when deliveries finish loading (Mark: workload "loads then goes back")
+    const setLog = (on) => {
+      brLog = on;
       const map = vs.querySelector(':scope > div:not(.brs-plate):not(.brs-log)');
       let log = vs.querySelector('.brs-log');
-      if (log) {
+      if (!on) {
+        if (!log) return;
         log.remove();
         if (map) map.style.display = '';
         plate.textContent = 'VIEWSCREEN';
         chair.classList.remove('on');
         return;
       }
+      if (log) return;
       log = document.createElement('div');
       log.className = 'brs-log';
       vs.insertBefore(log, plate);
       if (map) map.style.display = 'none';
       drawAlerts(log);
       animTiles(log);
+      log.scrollTop = brTop;
+      log.addEventListener('scroll', () => (brTop = log.scrollTop), { passive: true });
       plate.textContent = "TODAY'S WORKLOAD";
       chair.classList.add('on');
-    });
+    };
+    chair.addEventListener('click', () => setLog(!brLog));
+    if (brLog) setLog(true);
     br.querySelectorAll('.st').forEach((b) =>
       b.addEventListener('click', () => {
         if (window.YICgoDeck) return window.YICgoDeck(b.dataset.deck);
