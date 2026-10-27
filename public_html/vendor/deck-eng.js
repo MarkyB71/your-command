@@ -33,8 +33,13 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
 .en-s{margin-top:4px;font:12px/1.35 system-ui,sans-serif;color:#b9a68f;text-align:center;min-height:32px}
 .en-s b{font-weight:600}
 .en-lamp{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:0;background:var(--l);box-shadow:0 0 6px var(--l)}
+.en-raws{gap:8px}
+.en-g.en-raw{cursor:default;width:96px;padding:6px 4px 8px;border-radius:10px}
+.en-g.en-raw svg{width:80px;height:50px}
+.en-rv{margin-top:1px;font:700 13px/1.2 system-ui,sans-serif}
+.en-rn{margin-top:2px;font:11px/1.25 system-ui,sans-serif;color:#b9a68f;text-align:center}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a2014 0 12px,#0e0b08 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
-@media (max-width:700px){.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
+@media (max-width:700px){.en-g.en-raw{width:84px}.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
 @media (prefers-reduced-motion:reduce){.en-arc,.en-g{transition:none}}
 `;
 
@@ -61,6 +66,15 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
       '<text class="en-of" x="60" y="78" text-anchor="middle">' + of + '</text></svg>';
   }
 
+  // Smaller dial with the raw material's icon in the middle
+  function dialRaw(v, col, p) {
+    const R = 30, L = Math.PI * R, off = L * (1 - v);
+    return '<svg viewBox="0 0 80 50" aria-hidden="true">' +
+      '<path d="M10 44 A30 30 0 0 1 70 44" fill="none" stroke="#2a2118" stroke-width="7" stroke-linecap="round"/>' +
+      '<path class="en-arc" d="M10 44 A30 30 0 0 1 70 44" fill="none" stroke="' + col + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + L.toFixed(1) + '" stroke-dashoffset="' + (v > 0 ? off.toFixed(1) : L.toFixed(1)) + '" style="filter:drop-shadow(0 0 3px ' + col + ')"/>' +
+      '<image href="rimg.php?p=' + p + '" x="25" y="17" width="30" height="30"' + (v > 0 ? '' : ' opacity=".35"') + '/></svg>';
+  }
+
   function hero(el) {
     addCss();
     const Y = window.YIC;
@@ -70,12 +84,40 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
       const l = ((b.Location && b.Location.locations) || []).find((x) => x.label === 3);
       return (b.meta && b.meta.asteroid && b.meta.asteroid.name) || (l ? 'Asteroid #' + l.id : '?');
     };
+    let mode = '';
     const running = (b) =>
       ['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1));
+
+    const pick = (ai) =>
+      '<select class="en-pick" aria-label="Which rock"><option value="">All rocks</option>' +
+      (Y.asts || []).map((a, i) => '<option value="' + i + '"' + (String(i) === ai ? ' selected' : '') + '>' + Y.esc(a.name) + '</option>').join('') +
+      '</select>';
+
+    // Products page: one dial per raw material (Mark, 27 Oct)
+    function drawRaws(ai) {
+      const tot = Y.tot || [], idx = ai === '' ? Object.keys(tot) : [ai];
+      const t = {};
+      for (let p = 1; p <= 22; p++) t[p] = idx.reduce((s, i) => s + Y.kg(p, (tot[i] && tot[i][p]) || 0), 0) / 1000;
+      const max = Math.max(1, ...Object.values(t)), have = Object.values(t).filter((v) => v > 0).length;
+      const raws = Object.keys(t).map((p) => {
+        const v = t[p] > 0 ? Math.log10(1 + t[p]) / Math.log10(1 + max) : 0;
+        return '<span class="en-g en-raw" title="' + Y.esc(Y.pn(p)) + ': ' + (t[p] > 0 ? Y.fmtT(t[p]) : 'none') + '">' +
+          dialRaw(v, t[p] > 0 ? COL : '#5a4328', p) +
+          '<span class="en-rv" style="color:' + (t[p] > 0 ? '#f2ede6' : '#6b5a46') + '">' + (t[p] > 0 ? Y.fmtT(t[p]) : 'none') + '</span>' +
+          '<span class="en-rn">' + Y.esc(Y.pn(p)) + '</span></span>';
+      }).join('');
+      el.innerHTML =
+        '<div class="en-plate">ENGINEERING</div>' +
+        '<div class="en-read">' + pick(ai) + ' <b>' + have + '</b> of <b>22</b> raw materials in stock</div>' +
+        '<div class="en-hint">Raw materials in your warehouses and tank farms</div>' +
+        '<div class="en-row en-raws">' + raws + '</div><div class="en-floor"></div>';
+    }
 
     function draw() {
       const box = document.getElementById('ast');
       const ai = box ? box.value : '';
+      mode = Y.view;
+      if (mode === 'P') return drawRaws(ai);
       const an = ai === '' || !Y.asts[+ai] ? null : Y.asts[+ai].name;
       const P = {}, S = {};
       PROD.forEach(([t]) => (P[t] = { op: 0, run: 0, done: 0, build: 0 }));
@@ -128,9 +170,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
       }).join('');
       el.innerHTML =
         '<div class="en-plate">ENGINEERING</div>' +
-        '<div class="en-read"><select class="en-pick" aria-label="Which rock"><option value="">All rocks</option>' +
-        (Y.asts || []).map((a, i) => '<option value="' + i + '"' + (String(i) === ai ? ' selected' : '') + '>' + Y.esc(a.name) + '</option>').join('') +
-        '</select> <b>' + run + '</b> working · <b style="color:#ff8a8a">' + idle + '</b> idle · of <b>' + tot + '</b></div>' +
+        '<div class="en-read">' + pick(ai) + ' <b>' + run + '</b> working · <b style="color:#ff8a8a">' + idle + '</b> idle · of <b>' + tot + '</b></div>' +
         '<div class="en-hint">Click a dial to see those buildings</div>' +
         '<div class="en-row">' + prod + '<span class="en-sep"></span>' + store + '</div><div class="en-floor"></div>';
     }
@@ -154,6 +194,10 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
     });
     const box = document.getElementById('ast');
     if (box) box.addEventListener('change', () => el.isConnected && draw());
+    const tm = setInterval(() => {
+      if (!el.isConnected) return clearInterval(tm);
+      if ((Y.view === 'P') !== (mode === 'P')) draw();
+    }, 400);
   }
 
   window.YICDECKHERO = window.YICDECKHERO || {};
