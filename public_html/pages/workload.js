@@ -552,10 +552,12 @@
   // ---- The Bridge (ship command look) – test on ?beta=1 first ----
   const BRG = /[?&]beta=1/.test(location.search);
   const DECKS = [
-    { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Helm', col: '#5b9dff', ry: 14 },
-    { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Personnel', col: '#3fd68a', ry: 9 },
-    { k: 'H', id: 'eng', alt: 'P', name: 'Engineering', role: 'Production', col: '#ffab3d', ry: -9 },
-    { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -14 },
+    // colours match the deck tabs / game crew classes (Mark, 27 Oct)
+    { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Helm', col: '#9a6bff', ry: 15 },
+    { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Personnel', col: '#3fd68a', ry: 11 },
+    { k: 'A', id: 'sci', name: 'Science Lab', role: 'Science', col: '#4f90ff', ry: 7 },
+    { k: 'H', id: 'eng', alt: 'P', name: 'Engineering', role: 'Production', col: '#e8645a', ry: -7 },
+    { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -11 },
   ];
   const BR_CSS = `
 .brs{position:relative;margin:0 0 22px;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
@@ -565,7 +567,7 @@
 .brs-vs canvas{height:clamp(200px,30vw,340px)!important}
 .brs-vs .a{left:50%!important;transform:translateX(-50%);top:auto!important;bottom:6px;white-space:nowrap;opacity:.7}
 .brs-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);padding:3px 22px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#8fe3ff;text-shadow:0 0 8px rgba(91,195,228,.7);pointer-events:none}
-.brs-deck{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr .75fr 1fr 1fr;gap:10px;align-items:end;padding:22px 4% 0;perspective:1100px}
+.brs-deck{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr .7fr 1fr 1fr 1fr;gap:10px;align-items:end;padding:22px 4% 0;perspective:1100px}
 .st{all:unset;box-sizing:border-box;cursor:pointer;display:block;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
 .st:hover,.st:focus-visible{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}
 .st-scr{display:block;position:relative;padding:10px 12px 10px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;border:2px solid #2a3646;border-top:3px solid var(--dc);box-shadow:0 0 16px -6px var(--dc),inset 0 0 22px -10px var(--dc)}
@@ -591,6 +593,9 @@
 .brs-sk{position:absolute;left:34.3%;top:14.7%;width:32.9%;height:37.3%;object-fit:cover;border-radius:6px 6px 2px 2px;box-shadow:0 0 10px rgba(143,227,255,.35)}
 .brs-chair svg{display:block;width:100%;max-width:170px;height:auto;filter:drop-shadow(0 0 10px rgba(143,227,255,.18))}
 .brs-floor{position:relative;z-index:0;height:26px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,rgba(91,195,228,.18),transparent 70%)}
+.st.off{cursor:default;pointer-events:none;filter:saturate(.3) brightness(.7)}
+.st.off .st-scr{box-shadow:none;border-top-color:#2a3646}
+.st.off .st-r{margin-top:22px}
 @keyframes brLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes brBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
 .brs-bg .bl{animation:brBlink 4s infinite}
@@ -609,8 +614,8 @@
     '<polygon points="1000,0 920,18 920,420 1000,620" fill="url(#brW2)"/>' +
     [30, 55].map((x) => '<line x1="' + x + '" y1="' + (x * 0.25) + '" x2="' + x + '" y2="' + (620 - x * 2.4) + '" stroke="#243041" stroke-width="2"/>').join('') +
     [945, 970].map((x) => '<line x1="' + x + '" y1="' + ((1000 - x) * 0.25) + '" x2="' + x + '" y2="' + (620 - (1000 - x) * 2.4) + '" stroke="#243041" stroke-width="2"/>').join('') +
-    '<rect x="38" y="120" width="10" height="160" rx="3" fill="#5b9dff" opacity=".22"/><rect x="952" y="120" width="10" height="160" rx="3" fill="#ffd24a" opacity=".22"/>' +
-    [150, 190, 230].map((y, i) => '<circle class="bl" cx="64" cy="' + y + '" r="3" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="bl" cx="936" cy="' + y + '" r="3" fill="#ffab3d" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
+    '<rect x="38" y="120" width="10" height="160" rx="3" fill="#9a6bff" opacity=".22"/><rect x="952" y="120" width="10" height="160" rx="3" fill="#ffd24a" opacity=".22"/>' +
+    [150, 190, 230].map((y, i) => '<circle class="bl" cx="64" cy="' + y + '" r="3" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="bl" cx="936" cy="' + y + '" r="3" fill="#e8645a" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
     '<path d="M80,420 Q500,470 920,420" stroke="#8fe3ff" stroke-opacity=".18" stroke-width="2" fill="none"/>' +
     '<path d="M0,620 Q500,520 1000,620" stroke="#8fe3ff" stroke-opacity=".12" stroke-width="2" fill="none"/></svg>';
   const CHAIR =
@@ -618,7 +623,7 @@
     '<path d="M38,10 Q70,0 102,10 L106,86 L34,86 Z" fill="url(#brC)" stroke="#3a4b60"/>' +
     '<path d="M48,22 Q70,15 92,22 L94,78 L46,78 Z" fill="#0c1118" stroke="#8fe3ff" stroke-opacity=".25"/>' +
     '<rect x="14" y="70" width="26" height="12" rx="5" fill="url(#brC)" stroke="#3a4b60"/><rect x="100" y="70" width="26" height="12" rx="5" fill="url(#brC)" stroke="#3a4b60"/>' +
-    '<rect x="20" y="73" width="8" height="4" rx="1" fill="#5b9dff" opacity=".8"/><rect x="112" y="73" width="8" height="4" rx="1" fill="#ffd24a" opacity=".8"/>' +
+    '<rect x="20" y="73" width="8" height="4" rx="1" fill="#9a6bff" opacity=".8"/><rect x="112" y="73" width="8" height="4" rx="1" fill="#ffd24a" opacity=".8"/>' +
     '<path d="M30,86 L110,86 L104,104 L36,104 Z" fill="#1b2430" stroke="#3a4b60"/>' +
     '<rect x="64" y="104" width="12" height="28" fill="#141c26"/><ellipse cx="70" cy="138" rx="40" ry="8" fill="#141c26" stroke="#3a4b60"/>' +
     '<ellipse cx="70" cy="138" rx="56" ry="11" fill="none" stroke="#8fe3ff" stroke-opacity=".2"/></svg>';
@@ -646,13 +651,15 @@
       });
       if (!busy) idle++;
     });
-    const ords = (D.orders || []).length;
+    const ords = (D.orders || []).length,
+      rocks = (D.owned || []).length;
     const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
     return {
       S: [fly, fly === 1 ? 'ship in flight' : 'ships in flight', pl(ships.length, 'ship') + ' in your fleet', lowP ? pl(lowP, 'ship') + ' low on propellant' : ''],
       C: [crews.length, crews.length === 1 ? 'crew on duty' : 'crews on duty', '', hungry ? hungry + ' hungry' : 'all crews fed'],
       H: [run, run === 1 ? 'job running' : 'jobs running', pl(idle, 'idle building'), ready ? ready + ' ready to collect' : ''],
       K: [ords, ords === 1 ? 'open listing' : 'open listings', 'Market · Trade finder · History', ''],
+      A: [rocks, rocks === 1 ? 'rock you run' : 'rocks you run', 'Asteroids · Core Samples · Lot resources', ''],
     };
   }
   let brLog = false,
@@ -681,8 +688,11 @@
     br.innerHTML =
       BR_BG +
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
-      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
-      station(DECKS[2]) + station(DECKS[3]) + '</div><div class="brs-floor"></div>';
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
+      station(DECKS[3]) + station(DECKS[4]) +
+      // switched-off console keeps both sides even (Mark, 27 Oct)
+      '<div class="st off" aria-hidden="true" style="--dc:#5d6b7e;--ry:-15deg"><span class="st-scr"><span class="st-h">&nbsp;<i class="st-led"></i></span><span class="st-r">Standby</span><span class="st-n">&nbsp;</span><span class="st-s"></span><span class="st-go">&nbsp;</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>' +
+      '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const vs = br.querySelector('.brs-vs');
     if (window.YICbeltMap) {
