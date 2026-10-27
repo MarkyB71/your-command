@@ -155,6 +155,16 @@
       p.style.width = '260px';
       p.style.boxShadow = '0 8px 24px rgba(0,0,0,.5)';
       document.body.appendChild(p);
+      // On the decks this one button also changes wallet (Mark, 27 Oct): type or paste a different address
+      var chg = document.getElementById('chg');
+      if (window.YICDECKS && chg) {
+        var o = document.createElement('button');
+        o.type = 'button';
+        o.textContent = 'Enter a different address…';
+        o.style.cssText = 'display:block;width:100%;margin:10px 0 0;background:none;color:#5fc3e4;border:1px dashed #2a3442;text-align:left';
+        o.onclick = function () { closeList(); chg.click(); };
+        p.appendChild(o);
+      }
     };
   }
 

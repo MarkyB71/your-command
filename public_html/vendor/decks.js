@@ -493,6 +493,8 @@ body > header{display:none!important}
     want.forEach((el) => {
       if (el && el.parentNode !== tray) tray.appendChild(el);
     });
+    const wc = document.getElementById('wc-top');
+    if (wc && wc.textContent === 'Connect wallet') wc.textContent = 'Connect / change wallet';
     // Download sits at the bottom of the page now (Mark, 27 Oct); the Updated / wallet line follows it there
     const csv = document.getElementById('csv'),
       at = document.getElementById('comm') || document.getElementById('sup');
@@ -509,10 +511,11 @@ body > header{display:none!important}
       [...tray.children].forEach((c) => c.matches('[data-inf="1"]') && dl.insertBefore(c, csv));
       // "Change wallet" did the same job as Connect wallet at the top – take it and its separator out
       const chg = document.getElementById('chg');
-      if (chg && dl.contains(chg)) {
+      if (chg && dl.contains(chg) && !chg.dataset.dk) {
         const t = chg.nextSibling;
         if (t && t.nodeType === 3 && /^\s*·\s*$/.test(t.textContent)) t.remove();
-        chg.remove();
+        chg.style.display = 'none'; // kept: Connect wallet's list uses it for "Enter a different address"
+        chg.dataset.dk = '1';
       }
     }
   }
