@@ -36,6 +36,19 @@ body > header{display:none!important}
 #deckbar .pg{all:unset;box-sizing:border-box;cursor:pointer;padding:6px 12px;font:600 13px/1.1 system-ui,sans-serif;color:#c4cdd9;border-radius:4px;border:1px solid transparent}
 #deckbar .pg:hover,#deckbar .pg:focus-visible{color:var(--dcur);border-color:var(--dcur);box-shadow:0 0 10px -2px var(--dcur)}
 #deckbar .pg.on{color:var(--dcur);background:rgba(255,255,255,.05);border-color:var(--dcur)}
+/* compact crewmate cards on every deck (Mark, 27 Oct) – Ships crew on board + Crews page */
+.cob{min-width:0;padding:5px 7px;margin:1px 0 4px;border-radius:8px}
+.cob-h{margin-bottom:4px;gap:8px;font-size:12px}
+.cob-f{max-width:50px;height:4px}
+.cob-r{gap:4px}
+.cob-m{width:34px}
+.cob-m img{width:30px;height:38px;border-radius:4px;border-width:1px}
+.cob-n{font-size:9.5px;max-width:34px;margin-top:2px}
+.cob-c{display:none}
+#main div[style*="width:150px"]:has(> img[data-face]){width:96px!important;padding:4px!important;gap:2px!important;font-size:11px;line-height:1.2}
+#main div[style*="width:150px"]:has(> img[data-face]) > img[data-face]{width:40px!important;height:52px!important;border-radius:4px!important}
+#main div[style*="width:150px"]:has(> img[data-face]) > .a{font-size:10px!important}
+#main div[style*="gap:10px"]:has(> div > img[data-face]){gap:6px!important}
 @media (max-width:700px){#deckbar{padding:6px 8px 0}#deckbar .dk{padding:8px 10px 7px;letter-spacing:.06em;font-size:11px}}
 @media (prefers-reduced-motion:reduce){#deckbar .dk{transition:none}}
 `;
