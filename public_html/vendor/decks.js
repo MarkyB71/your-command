@@ -136,6 +136,8 @@ body > header{display:none!important}
 .dkr-back{all:unset;box-sizing:border-box;position:absolute;z-index:3;left:4.5%;top:7px;display:none;cursor:pointer;padding:3px 12px 4px;border:1px solid var(--dc);border-radius:4px;background:#0c1118;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
 .dkr-back:hover,.dkr-back:focus-visible{background:var(--dc);color:#05070a;box-shadow:0 0 12px var(--dc)}
 .dkr-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);display:none;padding:3px 24px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.35em;text-transform:uppercase;color:var(--dc);text-shadow:0 0 8px var(--dc);white-space:nowrap;pointer-events:none}
+/* deck view: nothing under the room – pages open on the screen (Mark, 27 Oct; may come back for pages too big for the screen) */
+#deckroom:not(.scr) + #main{display:none!important}
 #deckroom.scr .dkr-back,#deckroom.scr .dkr-plate,#deckroom.scr .dkr-ast{display:block}
 .dkr-ast{all:unset;box-sizing:border-box;position:absolute;z-index:3;right:4.5%;top:7px;display:none;cursor:pointer;min-width:0!important;width:auto!important;max-width:220px;padding:3px 24px 4px 10px;border:1px solid var(--dc);border-radius:4px;background:#0c1118 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b9ab0'/%3E%3C/svg%3E") no-repeat right 8px center;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--dc)}
 .dkr-ast option{background:#0c1118;color:#e6ebf2;text-transform:none}
