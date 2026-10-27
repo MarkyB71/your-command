@@ -549,8 +549,7 @@
     requestAnimationFrame(step);
   }
 
-  // ---- The Bridge (ship command look) – test on ?beta=1 first ----
-  const BRG = /[?&]beta=1/.test(location.search);
+  // ---- The Bridge (ship command look) – LIVE for everyone 27 Oct 2026 ----
   const DECKS = [
     // colours match the deck tabs / game crew classes (Mark, 27 Oct)
     { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Helm', col: '#9a6bff', ry: 15 },
@@ -786,8 +785,8 @@
   function skippyIntro(br) {
     if (window.YICskIntro) return;
     window.YICskIntro = 1;
-    // TESTING: plays on every page load. Set SK_ONCE = true before going live (once per visit)
-    const SK_ONCE = false;
+    // once per visit (sessionStorage)
+    const SK_ONCE = true;
     try {
       if (SK_ONCE && sessionStorage.getItem('yic-sk-intro')) return;
       sessionStorage.setItem('yic-sk-intro', '1');
@@ -878,14 +877,9 @@
 
   window.PAGES = window.PAGES || {};
   window.PAGES.N = function (m) {
-    if (BRG) {
-      // Bridge only – the workload lists will move into the decks later (Mark, 26 Oct)
-      m.innerHTML = '';
-      drawBridge(m);
-      skippyIntro(m.querySelector('.brs') || m);
-      return;
-    }
-    drawAlerts(m);
-    animTiles(m);
+    // the Bridge; today's workload shows on its viewscreen from the captain's chair
+    m.innerHTML = '';
+    drawBridge(m);
+    skippyIntro(m.querySelector('.brs') || m);
   };
 })();

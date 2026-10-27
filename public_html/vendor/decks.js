@@ -1,14 +1,12 @@
 /* Ship decks – Skippy's Command Deck
-   Test on ?beta=1 first (Mark, 26 Oct 2026). The old header and menu row are hidden;
+   LIVE for everyone 27 Oct 2026 (tested on ?beta=1 first). The old header and menu row are hidden;
    a deck bar takes their place: The Bridge · Flight Deck · Crew Quarters · Engineering · Trade Deck.
    Under it, the pages of the deck you are on. It works by clicking the existing (hidden) page buttons,
    so every page and add-on keeps working as before. The deck bar lives inside the old sticky .bar,
    so sticky table headings and the SkippyChain bar still line up. */
 (function () {
   'use strict';
-  const DK = /[?&]beta=1/.test(location.search);
-  window.YICDECKS = DK;
-  if (!DK) return;
+  window.YICDECKS = true; // LIVE for everyone (Mark, 27 Oct 2026)
 
   const DECKS = [
     { id: 'bridge', name: 'The Bridge', ico: '◉', col: '#8fe3ff', pages: ['N'] },
@@ -95,7 +93,6 @@ body > header{display:none!important}
   // props and colour. The deck's own piece (window.YICDECKHERO[id](el)) goes on the viewscreen;
   // the consoles are the deck's pages. The bridge draws its own scene in pages/workload.js.
   window.YICDECKHERO = window.YICDECKHERO || {};
-  const ROOM = /[?&]beta=1/.test(location.search);
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
@@ -279,7 +276,6 @@ body > header{display:none!important}
       if (h) h.remove();
       return;
     }
-    if (ROOM) {
       const nx = room && room.nextElementSibling;
       const pk = d.pages.filter((k) => btn(k)).join('');
       if (room && room.dataset.deck === d.id && room.dataset.pk === pk && (nx === main || (nx && nx.id === 'dkr-slot')) && h && room.contains(h)) return markRoom(room);
@@ -336,18 +332,6 @@ body > header{display:none!important}
         h.remove();
       }
       return markRoom(room);
-    }
-    if (h && h.dataset.deck === d.id && h.nextElementSibling === main) return;
-    if (h) h.remove();
-    h = document.createElement('div');
-    h.id = 'deckhero';
-    h.dataset.deck = d.id;
-    main.parentNode.insertBefore(h, main);
-    try {
-      fn(h);
-    } catch (e) {
-      h.remove();
-    }
   }
   let lastPg = '';
   function markRoom(room) {
@@ -431,7 +415,7 @@ body > header{display:none!important}
       s.textContent = CSS;
       document.head.appendChild(s);
     }
-    if (ROOM && !document.getElementById('dkr-css')) {
+    if (!document.getElementById('dkr-css')) {
       const s = document.createElement('style');
       s.id = 'dkr-css';
       s.textContent = ROOM_CSS;
