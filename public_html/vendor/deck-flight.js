@@ -23,6 +23,15 @@ body.dk-flight #main th{color:#9cc3ff}
 .fh-key{position:absolute;right:5%;top:30px;font:11px/1.6 system-ui,sans-serif;color:#8b9ab0;text-align:right;pointer-events:none}
 .fh-key i{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:-1px}
 .fh-load{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;color:#8b9ab0}
+.fh-ship{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;gap:4%;padding:30px 6% 14px;background:radial-gradient(ellipse at 40% 50%,rgba(91,157,255,.18),rgba(91,157,255,0) 60%),rgba(3,6,10,.95);cursor:pointer;animation:fhIn .35s ease-out}
+.fh-ship img{max-height:92%;max-width:55%;object-fit:contain;mix-blend-mode:screen;filter:drop-shadow(0 0 18px rgba(91,157,255,.45))}
+.fh-ship .fh-si{max-width:38%;font:13px/1.5 system-ui,sans-serif;color:#c4cdd9}
+.fh-ship .fh-si b{display:block;font-size:20px;color:#e6ebf2;text-shadow:0 0 10px ${COL};margin-bottom:2px}
+.fh-ship .fh-si i{display:block;font-style:normal;color:#9cc3ff;letter-spacing:.14em;text-transform:uppercase;font-size:11px;margin-bottom:8px}
+.fh-ship .fh-x{position:absolute;right:6%;top:30px;font:700 12px system-ui;color:#9cc3ff;letter-spacing:.1em}
+@keyframes fhIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fh-ship{animation:none}}
+@media (max-width:700px){.fh-ship{flex-direction:column;padding:26px 12px 10px}.fh-ship img{max-width:80%;max-height:55%}.fh-ship .fh-si{max-width:100%;text-align:center}}
 .fh-lip{height:12px;margin:0 -9px;background:linear-gradient(180deg,#1d2a3c,#0a1018);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
 @media (max-width:700px){.fh-key{display:none}#deckhero[data-deck="flight"],.fh-win{clip-path:none}}
 `;
@@ -169,8 +178,10 @@ body.dk-flight #main th{color:#9cc3ff}
           (1 - t) * (1 - t) * A[0] + 2 * (1 - t) * t * C[0] + t * t * B[0],
           (1 - t) * (1 - t) * A[1] + 2 * (1 - t) * t * C[1] + t * t * B[1],
         ];
-        let ph = 0;
+        let ph = 0,
+          hits = [];
         const frame = () => {
+          hits = [];
           ctx.clearRect(0, 0, W, H);
           const c = [W / 2, H / 2],
             sr = Math.min(W, H) * 0.09,
@@ -245,6 +256,7 @@ body.dk-flight #main th{color:#9cc3ff}
             ctx.closePath();
             ctx.fill();
             ctx.restore();
+            hits.push([P[0], P[1], t.s]);
             ctx.fillStyle = '#e6ebf2';
             ctx.font = '600 12px system-ui,sans-serif';
             ctx.fillText(t.s.name, P[0] + 10, P[1] - 8);
@@ -262,6 +274,7 @@ body.dk-flight #main th{color:#9cc3ff}
             ctx.font = '11px system-ui,sans-serif';
             ctx.fillText(r.name, q[0] + 7, q[1] + 14);
             if (r.n) {
+              dock.filter((s) => s.dId === r.id).forEach((s) => hits.push([q[0] - 12, q[1] - 9, s]));
               // docked ships: small blue chevrons beside the rock
               for (let i = 0; i < Math.min(r.n, 5); i++) {
                 ctx.fillStyle = COL;
@@ -312,13 +325,76 @@ body.dk-flight #main th{color:#9cc3ff}
           tilt = Math.max(0.15, Math.min(1.45, drag.tilt + (e.clientY - drag.y) * 0.006));
           if (calm) frame();
         });
-        cv.addEventListener('pointerup', () => (drag = null));
+        cv.addEventListener('pointerup', (e) => {
+          const moved = drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4;
+          drag = null;
+          if (moved) return;
+          const b = cv.getBoundingClientRect(),
+            x = e.clientX - b.left,
+            y = e.clientY - b.top;
+          let best = null,
+            bd = 16;
+          hits.forEach((h) => {
+            const d = Math.hypot(h[0] - x, h[1] - y);
+            if (d < bd) {
+              bd = d;
+              best = h[2];
+            }
+          });
+          if (best) showShip(best);
+        });
       })
       .catch(() => {
         const l = el.querySelector('.fh-load');
         if (l) l.textContent = 'Could not plot the courses just now.';
       });
   }
+
+  // Show a ship's picture on the navigation screen (click a ship on the screen, or its picture in the Ships table)
+  function showShip(s) {
+    const win = document.querySelector('#deckhero[data-deck="flight"] .fh-win');
+    if (!win || !s) return;
+    const Y = window.YIC,
+      esc = (Y && Y.esc) || ((x) => String(x));
+    let o = win.querySelector('.fh-ship');
+    if (o) o.remove();
+    const crew = (Y && Y.D && Y.D.crewN && Y.D.crewN[s.crewId]) || '';
+    o = document.createElement('div');
+    o.className = 'fh-ship';
+    o.title = 'Click to go back to the navigation view';
+    o.innerHTML =
+      '<img src="shipimg.php?t=' + (+s.st || 0) + '&v=' + (+s.sv || 1) + '" alt="">' +
+      '<div class="fh-si"><i>' + esc(s.type || 'Ship') + '</i><b>' + esc(s.name || 'Ship') + '</b>' +
+      esc(s.fl ? s.place || s.route || 'In flight' : (s.place || (s.ast ? 'At ' + s.ast : ''))) +
+      (s.carry ? '<br>Carrying ' + esc(s.carry) : '') +
+      (s.prop != null ? '<br>Propellant ' + esc((Y && Y.fmtT ? Y.fmtT(s.prop) : s.prop + ' t')) : '') +
+      (crew ? '<br>Crew: ' + esc(crew) : '') +
+      '</div><span class="fh-x">✕ BACK</span>';
+    o.addEventListener('click', () => o.remove());
+    win.appendChild(o);
+    const h = document.getElementById('deckhero');
+    if (h && h.getBoundingClientRect().top < 0) h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!document.body.classList.contains('dk-flight')) return;
+      const a = e.target.closest && e.target.closest('#main a[href^="shipimg.php"]');
+      if (!a) return;
+      const tr = a.closest('tr'),
+        Y = window.YIC,
+        ships = (Y && Y.D && Y.D.ships) || [],
+        txt = tr ? tr.textContent : '';
+      // the row shows the ship's name and #id
+      const cells = tr ? [...tr.cells].map((c) => c.textContent.trim()) : [];
+      const s = ships.find((x) => cells.includes(String(x.id))) || ships.find((x) => x.name && txt.includes(x.name));
+      if (!s) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showShip(s);
+    },
+    true,
+  );
 
   window.YICDECKHERO = window.YICDECKHERO || {};
   window.YICDECKHERO.flight = hero;
