@@ -37,6 +37,8 @@ body > header{display:none!important}
 #dktools > *{margin:0!important}
 #dktools button{position:static!important;font-size:12px!important;padding:5px 10px!important;line-height:1.2!important;white-space:nowrap}
 #dktools #wc-top{order:9}
+#dktools #wc-top.dk-wal{background:#0b1a14!important;color:#3fd68a!important;border:1px solid #3fd68a!important;border-radius:8px!important;box-shadow:0 0 8px rgba(63,214,138,.25)!important;font-family:ui-monospace,Menlo,monospace!important;font-weight:600!important;letter-spacing:.02em}
+#dktools #wc-top.dk-wal:hover,#dktools #wc-top.dk-wal:focus-visible{background:#10261c!important;box-shadow:0 0 14px rgba(63,214,138,.5)!important}
 #dktools > div:not([data-srch]){display:none!important}
 #dkdl{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin:26px 16px 6px;text-align:center}
 #dkdl [data-inf="1"]{font-size:12px;color:#8b9ab0}
@@ -483,8 +485,17 @@ body > header{display:none!important}
       const all = document.querySelectorAll('[id="' + id + '"]');
       if (all.length > 1) [...all].slice(1).forEach((x) => x.remove());
     });
-    const wc = document.getElementById('wc-top');
-    if (wc && wc.textContent === 'Connect wallet') wc.textContent = 'Connect / change wallet';
+    // once a wallet is loaded the button shows its address, e.g. 0x12c8…96bf (Mark, 27 Oct)
+    const wc = document.getElementById('wc-top'),
+      wa = String((window.YIC && window.YIC.D && window.YIC.D.wallet) || '');
+    if (wc) {
+      const t = /^0x[0-9a-f]{6,}$/i.test(wa) ? wa.slice(0, 6) + '…' + wa.slice(-4) : 'Connect / change wallet';
+      if (wc.textContent !== t) {
+        wc.textContent = t;
+        wc.classList.toggle('dk-wal', t !== 'Connect / change wallet');
+        wc.title = t === 'Connect / change wallet' ? 'Connect a wallet or enter an address' : 'Wallet ' + wa + ' – click to change';
+      }
+    }
     // Download sits at the bottom of the page now (Mark, 27 Oct); the Updated / wallet line follows it there
     const csv = document.getElementById('csv'),
       at = document.getElementById('comm') || document.getElementById('sup');
