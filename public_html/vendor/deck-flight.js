@@ -352,6 +352,7 @@ body.dk-flight #main th{color:#c4adff}
 
   // Show a ship's picture on the navigation screen (click a ship on the screen, or its picture in the Ships table)
   function showShip(s) {
+    if (window.YICdeckScreen) window.YICdeckScreen('hero'); // ship details need the navigation window on the screen
     const win = document.querySelector('#deckhero[data-deck="flight"] .fh-win');
     if (!win || !s) return;
     const Y = window.YIC,

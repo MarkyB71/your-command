@@ -54,6 +54,7 @@ body > header{display:none!important}
 @media (prefers-reduced-motion:reduce){#deckbar .dk{transition:none}}
 `;
 
+  let scr = false; // true = the chosen page is on the viewscreen (Mark, 27 Oct)
   const btn = (k) => document.getElementById('v' + k);
   const label = (k) => {
     const b = btn(k);
@@ -72,6 +73,7 @@ body > header{display:none!important}
     }
   };
   window.YICgoDeck = (id) => {
+    scr = false;
     const d = DECKS.find((x) => x.id === id);
     if (d) go(d.pages.find((k) => btn(k)) || d.pages[0]);
   };
@@ -88,6 +90,7 @@ body > header{display:none!important}
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades',
   };
+  const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board' };
   const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter' };
   const ROOM_CSS = `
 #deckroom{position:relative;margin:14px 16px 0;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
@@ -130,9 +133,17 @@ body > header{display:none!important}
 #deckroom .en-g:not(.en-raw){width:134px}
 #deckroom .en-g:not(.en-raw) svg{width:106px;height:76px}
 #deckroom .en-row{gap:10px}
+.dkr-back{all:unset;box-sizing:border-box;position:absolute;z-index:3;left:4.5%;top:7px;display:none;cursor:pointer;padding:3px 12px 4px;border:1px solid var(--dc);border-radius:4px;background:#0c1118;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
+.dkr-back:hover,.dkr-back:focus-visible{background:var(--dc);color:#05070a;box-shadow:0 0 12px var(--dc)}
+.dkr-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);display:none;padding:3px 24px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.35em;text-transform:uppercase;color:var(--dc);text-shadow:0 0 8px var(--dc);white-space:nowrap;pointer-events:none}
+#deckroom.scr .dkr-back,#deckroom.scr .dkr-plate{display:block}
+.dkr-pg{position:relative;height:clamp(340px,54vh,720px);overflow:auto;padding:36px 18px 16px;clip-path:polygon(3% 0,97% 0,100% 5%,100% 100%,0 100%,0 5%);background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);scrollbar-color:#2c3a4c transparent}
+#deckroom .dkr-pg > #main{margin:0!important;padding:0!important;max-width:none!important;background:none!important;border:0!important;box-shadow:none!important}
+#deckroom .dkr-pg th{transform:none!important}
+#deckroom .dkr-pg .pc-bar.stick{top:0!important}
 @keyframes dkrLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes dkrBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
-@media (max-width:760px){#deckroom{margin:10px 8px 0}.dkr-deck{grid-template-columns:1fr 1fr!important;perspective:none}.dkr-seat{display:none}.dkr-st,.dkr-st:hover{transform:none}.dkr-vs{width:94%}#deckroom #deckhero{clip-path:none!important}}
+@media (max-width:760px){#deckroom{margin:10px 8px 0}.dkr-deck{grid-template-columns:1fr 1fr!important;perspective:none}.dkr-seat{display:none}.dkr-st,.dkr-st:hover{transform:none}.dkr-vs{width:94%}#deckroom #deckhero{clip-path:none!important}.dkr-pg{clip-path:none;height:70vh;padding:40px 8px 12px}}
 @media (prefers-reduced-motion:reduce){.dkr-bg .bl,.dkr-bg .pu,.dkr-st.on .dkr-led{animation:none}.dkr-st{transition:none}}
 `;
   // wall props, drawn on the left wall and mirrored onto the right
@@ -244,12 +255,16 @@ body > header{display:none!important}
     let room = document.getElementById('deckroom'),
       h = document.getElementById('deckhero');
     if (!fn || !main) {
+      scr = false;
+      mainBack();
       if (room) room.remove();
       if (h) h.remove();
       return;
     }
     if (ROOM) {
-      if (room && room.dataset.deck === d.id && room.nextElementSibling === main && h && room.contains(h)) return markRoom(room);
+      const nx = room && room.nextElementSibling;
+      if (room && room.dataset.deck === d.id && (nx === main || (nx && nx.id === 'dkr-slot')) && h && room.contains(h)) return markRoom(room);
+      mainBack();
       if (room) room.remove();
       if (h) h.remove();
       const pages = d.pages.filter((k) => btn(k)),
@@ -269,7 +284,7 @@ body > header{display:none!important}
       room.dataset.deck = d.id;
       room.style.setProperty('--dc', d.col);
       room.innerHTML =
-        roomBg(d) + '<div class="dkr-vs"></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
+        roomBg(d) + '<div class="dkr-vs"><button type="button" class="dkr-back" title="Back to the ' + (PIECE[d.id] || 'deck view').toLowerCase() + '">◂ ' + (PIECE[d.id] || 'Deck view') + '</button><span class="dkr-plate"></span></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
         pages.slice(0, nl).map((k, i) => st(k, i)).join('') +
         (d.id === 'flight'
           ? '<button type="button" class="dkr-seat dkr-home" title="Back to the Bridge">' + seat(d.id, d.col) + '<span class="dkr-sl">' + SEAT[d.id] + ' · to the Bridge</span></button>'
@@ -280,8 +295,16 @@ body > header{display:none!important}
         '</div><div class="dkr-floor"></div>';
       room.addEventListener('click', (e) => {
         if (e.target.closest('.dkr-home')) return window.YICgoDeck('bridge');
+        if (e.target.closest('.dkr-back')) {
+          scr = false;
+          return markRoom(room);
+        }
         const t = e.target.closest('.dkr-st');
-        if (t) go(t.dataset.pg);
+        if (t) {
+          scr = true;
+          go(t.dataset.pg);
+          markRoom(room);
+        }
       });
       main.parentNode.insertBefore(room, main);
       h = document.createElement('div');
@@ -307,10 +330,55 @@ body > header{display:none!important}
       h.remove();
     }
   }
+  let lastPg = '';
   function markRoom(room) {
     const cur = current();
     room.querySelectorAll('.dkr-st').forEach((s) => s.classList.toggle('on', s.dataset.pg === cur));
+    const main = document.getElementById('main'),
+      vs = room.querySelector('.dkr-vs'),
+      h = document.getElementById('deckhero');
+    if (!main || !vs) return;
+    if (scr) {
+      let slot = document.getElementById('dkr-slot');
+      if (!slot) {
+        slot = document.createElement('div');
+        slot.id = 'dkr-slot';
+        main.parentNode.insertBefore(slot, main);
+      }
+      let pg = vs.querySelector('.dkr-pg');
+      if (!pg) {
+        pg = document.createElement('div');
+        pg.className = 'dkr-pg';
+        vs.appendChild(pg);
+      }
+      if (main.parentNode !== pg) pg.appendChild(main);
+      if (h) h.style.display = 'none';
+      room.classList.add('scr');
+      const pl = vs.querySelector('.dkr-plate');
+      if (pl) pl.textContent = label(cur);
+      if (cur !== lastPg) pg.scrollTop = 0;
+      lastPg = cur;
+    } else {
+      mainBack();
+      if (h) h.style.display = '';
+      room.classList.remove('scr');
+      lastPg = '';
+    }
   }
+  function mainBack() {
+    const slot = document.getElementById('dkr-slot'),
+      main = document.getElementById('main');
+    if (slot && main) slot.parentNode.insertBefore(main, slot);
+    if (slot) slot.remove();
+    const pg = document.querySelector('#deckroom .dkr-pg');
+    if (pg) pg.remove();
+  }
+  // a deck piece can ask for its own view back on the screen (e.g. Flight Deck ship details)
+  window.YICdeckScreen = (mode) => {
+    scr = mode === 'page';
+    const room = document.getElementById('deckroom');
+    if (room) markRoom(room);
+  };
 
   let sig = '';
   function tick() {
@@ -336,7 +404,10 @@ body > header{display:none!important}
         const t = e.target.closest('[data-deck],[data-pg]');
         if (!t) return;
         if (t.dataset.deck) window.YICgoDeck(t.dataset.deck);
-        else go(t.dataset.pg);
+        else {
+          scr = true;
+          go(t.dataset.pg);
+        }
       });
     }
     if (db.parentNode !== bar) bar.prepend(db);
