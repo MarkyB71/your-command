@@ -497,8 +497,8 @@ body > header{display:none!important}
         wc.title = t === 'Connect / change wallet' ? 'Connect a wallet or enter an address' : 'Wallet ' + wa + ' – click to change';
       }
     }
-    // Refresh button beside the wallet button (Mark, 27 Oct) – TEST on ?beta=1
-    if (/[?&]beta=1/.test(location.search) && !document.getElementById('dkrf')) {
+    // Refresh button beside the wallet button (Mark, 27 Oct)
+    if (!document.getElementById('dkrf')) {
       const rb = document.createElement('button');
       rb.id = 'dkrf';
       rb.type = 'button';

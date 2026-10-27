@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 489 – 27 Oct 2026 – ⟳ Refresh button beside the wallet button under the deck tabs: fetches the latest game data without reloading the page.
+
 ## Version 487 – 27 Oct 2026 – SkippyChain: sideways scroll bar now stays at the bottom of the screen, so big chains (e.g. Habitat) can be scrolled left/right without going to the bottom first.
 
 ## Version 485 – 27 Oct 2026 – Wallet button under the deck tabs shows the connected address (e.g. 0x12c8…96bf); click it to connect or change wallet.
