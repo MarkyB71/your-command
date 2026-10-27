@@ -98,6 +98,9 @@ body > header{display:none!important}
 .dkr-st{all:unset;box-sizing:border-box;cursor:pointer;display:block;min-width:0;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
 .dkr-st:hover,.dkr-st:focus-visible{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}
 .dkr-scr{display:block;position:relative;padding:10px 12px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;border:2px solid #2a3646;border-top:3px solid var(--dc);box-shadow:0 0 16px -6px var(--dc),inset 0 0 22px -10px var(--dc)}
+.dkr-off{cursor:default;pointer-events:none;filter:saturate(.3) brightness(.7)}
+.dkr-off .dkr-scr{box-shadow:none;border-top-color:#2a3646}
+.dkr-off .dkr-d{color:#4a5768;font-family:ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;font-size:10px}
 .dkr-st.on .dkr-scr{border-color:var(--dc);box-shadow:0 0 22px -4px var(--dc),inset 0 0 30px -8px var(--dc)}
 .dkr-h{display:flex;align-items:center;gap:6px;font:700 12px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
 .dkr-led{margin-left:auto;flex:none;width:7px;height:7px;border-radius:50%;background:var(--dc);opacity:.35}
@@ -238,7 +241,8 @@ body > header{display:none!important}
       if (h) h.remove();
       const pages = d.pages.filter((k) => btn(k)),
         nl = Math.ceil(pages.length / 2),
-        cols = pages.map((k, i) => i).slice(0, nl).map(() => '1fr').concat(['.75fr'], pages.slice(nl).map(() => '1fr'));
+        nr = pages.length - nl + (pages.length % 2),
+        cols = pages.slice(0, nl).map(() => '1fr').concat(['.75fr'], Array.from({ length: nr }, () => '1fr'));
       const st = (k, i) => {
         const off = i < nl ? nl - i : -(i - nl + 1),
           ry = Math.max(-16, Math.min(16, off * 7));
@@ -255,7 +259,10 @@ body > header{display:none!important}
         roomBg(d) + '<div class="dkr-vs"></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
         pages.slice(0, nl).map((k, i) => st(k, i)).join('') +
         '<div class="dkr-seat">' + seat(d.id, d.col) + '<span class="dkr-sl">' + (SEAT[d.id] || '') + '</span></div>' +
-        pages.slice(nl).map((k, i) => st(k, i + nl)).join('') + '</div><div class="dkr-floor"></div>';
+        pages.slice(nl).map((k, i) => st(k, i + nl)).join('') +
+        // odd number of pages: a switched-off console keeps both sides even (Mark, 27 Oct)
+        (pages.length % 2 ? '<div class="dkr-st dkr-off" aria-hidden="true" style="--ry:' + Math.max(-16, -nr * 7) + 'deg"><span class="dkr-scr"><span class="dkr-h">&nbsp;<i class="dkr-led"></i></span><span class="dkr-d">Standby</span><span class="dkr-go">&nbsp;</span></span><span class="dkr-base"><i></i><i></i><i></i><i></i></span></div>' : '') +
+        '</div><div class="dkr-floor"></div>';
       room.addEventListener('click', (e) => {
         const t = e.target.closest('.dkr-st');
         if (t) go(t.dataset.pg);
