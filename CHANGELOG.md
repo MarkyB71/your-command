@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 484 – 27 Oct 2026 – Skippy's Command Deck goes live: the site is now a ship. The Bridge (landing page) and five deck rooms – Flight Deck, Crew Quarters, Science Lab, Engineering, Trade Deck – each with its own look in the game's crew-class colours. Click a console to open that page on the viewscreen; the centre piece takes you back to the deck's start. Search, Play Influence, Command Deck and Connect / change wallet sit under the deck tabs; Download is at the bottom. Phone layout tidied. Skippy's door intro plays once per visit.
+
 ## Version 466 – 27 Oct 2026 – Community Tools: added 📊 Influence Tracker (influence-tracker-six.vercel.app).
 
 ## Version 435 – 26 Oct 2026 – Supply chain: under each "✗ needs", the quickest rock to fly it from and the flight time leaving now (Light Transport, full tank, 2,000 t cargo).
