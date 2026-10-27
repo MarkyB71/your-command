@@ -478,6 +478,7 @@ body > header{display:none!important}
         ? have.map((k) => '<button type="button" class="pg' + (k === cur ? ' on' : '') + '" data-pg="' + k + '">' + label(k).replace(/[<>&]/g, '') + '</button>').join('')
         : '') +
       '</div>';
+    tools(db);
   }
   // Search, Connect wallet, Play, Command Deck extension and Download live at the right of the
   // page row (the old header and menu row are hidden on the decks) – Mark, 27 Oct
@@ -492,6 +493,11 @@ body > header{display:none!important}
     const want = [document.querySelector('[data-srch="2"]'), document.getElementById('play'), document.getElementById('cdx'), document.getElementById('wc-top')];
     want.forEach((el) => {
       if (el && el.parentNode !== tray) tray.appendChild(el);
+    });
+    // never two of the same button (one could be made while the row was being redrawn)
+    ['play', 'cdx', 'wc-top'].forEach((id) => {
+      const all = document.querySelectorAll('[id="' + id + '"]');
+      if (all.length > 1) [...all].slice(1).forEach((x) => x.remove());
     });
     const wc = document.getElementById('wc-top');
     if (wc && wc.textContent === 'Connect wallet') wc.textContent = 'Connect / change wallet';
