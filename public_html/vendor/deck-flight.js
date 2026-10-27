@@ -64,7 +64,7 @@ body.dk-flight #main th{color:#9cc3ff}
       '<div class="fh-win"><canvas></canvas><div class="fh-glass"></div>' +
       '<div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div>' +
       '<div class="fh-key"><i style="background:' + COL + ';clip-path:polygon(0 50%,100% 0,70% 50%,100% 100%)"></i>ship in flight<br>' +
-      '<i style="border-top:1px dashed ' + COL + ';height:0"></i>course<br><i style="background:#c4cdd9;border-radius:50%"></i>your rock</div>' +
+      '<i style="border-top:1px dashed ' + COL + ';height:0"></i>course<br><i style="background:#c4cdd9;border-radius:50%"></i>your rock<br><span style="opacity:.7">drag to turn</span></div>' +
       '<div class="fh-load">Plotting courses…</div></div><div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
     const cv = el.querySelector('canvas'),
       ctx = cv.getContext('2d');
@@ -92,10 +92,17 @@ body.dk-flight #main th{color:#9cc3ff}
           rocks = [],
           trips = [];
         const dpr = Math.min(devicePixelRatio || 1, 2);
-        const tilt = 0.55;
+        // turns slowly like the bridge viewscreen; drag to turn and tilt
+        let tilt = 0.55,
+          az = 0,
+          drag = null;
         const proj = (p) => {
-          const s = (Math.min(W * 0.92, H * 1.9) * 0.5) / R;
-          return [W / 2 + p[0] * s, H / 2 + (p[1] * Math.cos(tilt) - p[2] * Math.sin(tilt)) * s * 0.92];
+          const s = (Math.min(W * 0.92, H * 1.9) * 0.5) / R,
+            ca = Math.cos(az),
+            sa = Math.sin(az),
+            x = p[0] * ca - p[1] * sa,
+            y = p[0] * sa + p[1] * ca;
+          return [W / 2 + x * s, H / 2 + (y * Math.cos(tilt) - p[2] * Math.sin(tilt)) * s * 0.92];
         };
         const plan = () => {
           const now = Date.now() / 1000;
@@ -284,6 +291,7 @@ body.dk-flight #main th{color:#9cc3ff}
         const loop = () => {
           if (!cv.isConnected) return;
           ph += 0.05;
+          if (!drag) az += 0.0012;
           if (Date.now() - last > 60000) {
             last = Date.now();
             plan();
@@ -292,6 +300,19 @@ body.dk-flight #main th{color:#9cc3ff}
           requestAnimationFrame(loop);
         };
         if (!calm) requestAnimationFrame(loop);
+        cv.style.touchAction = 'none';
+        cv.style.cursor = 'grab';
+        cv.addEventListener('pointerdown', (e) => {
+          drag = { x: e.clientX, y: e.clientY, az, tilt };
+          cv.setPointerCapture(e.pointerId);
+        });
+        cv.addEventListener('pointermove', (e) => {
+          if (!drag) return;
+          az = drag.az + (e.clientX - drag.x) * 0.008;
+          tilt = Math.max(0.15, Math.min(1.45, drag.tilt + (e.clientY - drag.y) * 0.006));
+          if (calm) frame();
+        });
+        cv.addEventListener('pointerup', () => (drag = null));
       })
       .catch(() => {
         const l = el.querySelector('.fh-load');
