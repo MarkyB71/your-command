@@ -690,10 +690,8 @@
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
       '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       station(DECKS[3]) + station(DECKS[4]) +
-      // switched-off console keeps both sides even (Mark, 27 Oct); on beta it is the Weapons console, kept for when conflict starts (not linked yet)
-      (/[?&]beta=1/.test(location.search)
-        ? '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>'
-        : '<div class="st off" aria-hidden="true" style="--dc:#5d6b7e;--ry:-15deg"><span class="st-scr"><span class="st-h">&nbsp;<i class="st-led"></i></span><span class="st-r">Standby</span><span class="st-n">&nbsp;</span><span class="st-s"></span><span class="st-go">&nbsp;</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>') +
+      // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
+      '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>' +
       '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const vs = br.querySelector('.brs-vs');

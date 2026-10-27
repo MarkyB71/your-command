@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 495 – 27 Oct 2026 – The Bridge: the Standby console is now an orange Weapons console (Armoury station), kept ready for when conflict starts in the game – not linked yet.
+
 ## Version 491 – 27 Oct 2026 – Trade Deck: new My trading console – Orders (are you cheapest / top bid?), Watch (pin products, see best prices) and Calculator (what an amount sells for or costs right now, fees included).
 
 ## Version 489 – 27 Oct 2026 – ⟳ Refresh button beside the wallet button under the deck tabs: fetches the latest game data without reloading the page.
