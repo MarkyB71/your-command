@@ -37,6 +37,7 @@ body > header{display:none!important}
 #dktools > *{margin:0!important}
 #dktools button{position:static!important;font-size:12px!important;padding:5px 10px!important;line-height:1.2!important;white-space:nowrap}
 #dktools #wc-top{order:9}
+#dktools #dkrf{order:10;background:#121a26;color:#8fe3ff;border:1px solid #2a3648;border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}#dktools #dkrf:hover,#dktools #dkrf:focus-visible{border-color:#8fe3ff}
 #dktools #wc-top.dk-wal{background:#0b1a14!important;color:#3fd68a!important;border:1px solid #3fd68a!important;border-radius:8px!important;box-shadow:0 0 8px rgba(63,214,138,.25)!important;font-family:ui-monospace,Menlo,monospace!important;font-weight:600!important;letter-spacing:.02em}
 #dktools #wc-top.dk-wal:hover,#dktools #wc-top.dk-wal:focus-visible{background:#10261c!important;box-shadow:0 0 14px rgba(63,214,138,.5)!important}
 #dktools > div:not([data-srch]){display:none!important}
@@ -495,6 +496,20 @@ body > header{display:none!important}
         wc.classList.toggle('dk-wal', t !== 'Connect / change wallet');
         wc.title = t === 'Connect / change wallet' ? 'Connect a wallet or enter an address' : 'Wallet ' + wa + ' – click to change';
       }
+    }
+    // Refresh button beside the wallet button (Mark, 27 Oct) – TEST on ?beta=1
+    if (/[?&]beta=1/.test(location.search) && !document.getElementById('dkrf')) {
+      const rb = document.createElement('button');
+      rb.id = 'dkrf';
+      rb.type = 'button';
+      rb.textContent = '⟳ Refresh';
+      rb.title = 'Fetch the latest data from the game';
+      rb.onclick = () => {
+        const rf = document.getElementById('rf');
+        if (rf) rf.click();
+        else location.reload();
+      };
+      tray.appendChild(rb);
     }
     // Download sits at the bottom of the page now (Mark, 27 Oct); the Updated / wallet line follows it there
     const csv = document.getElementById('csv'),
