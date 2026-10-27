@@ -475,6 +475,6 @@
   };
   window.PAGES.A = function (m) {
     drawAsteroids(m);
-    beltMap(m);
+    if (!window.YICDECKS) beltMap(m); // decks (beta): the Science Lab rack replaces the system map
   };
 })();
