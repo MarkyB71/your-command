@@ -1,4 +1,4 @@
-/* My trading – Your Influence Command (Mark, 27 Oct 2026) – TEST on ?beta=1
+/* My trading – Your Influence Command (Mark, 27 Oct 2026) – LIVE for everyone 27 Oct 2026 (tested on ?beta=1 first)
    The spare console on the Trade Deck. Three tabs in one page:
      Orders     – your open buy/sell listings, and whether someone is cheaper / bidding higher
      Watch      – products you pin (plus anything you have an order for), best prices on the belt
@@ -7,7 +7,6 @@
    Uses window.BELTDATA (pages/market.js) and window.YIC (app.js). Classic script. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1/.test(location.search)) return;
 
   const CSS = `.mt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
 .mt-tabs button{font-size:14px;padding:7px 16px;border-radius:8px;border:1px solid #2a3648;background:#121a26;color:#c4cdd9;cursor:pointer}
