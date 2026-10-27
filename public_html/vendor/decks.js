@@ -62,6 +62,32 @@ body > header{display:none!important}
     if (d) go(d.pages.find((k) => btn(k)) || d.pages[0]);
   };
 
+  // Each deck can add its own scene above the page (window.YICDECKHERO[id](el)) and its own
+  // console look (body class dk-<id>). The bridge draws its own scene in pages/workload.js.
+  window.YICDECKHERO = window.YICDECKHERO || {};
+  function deckLook(d) {
+    const b = document.body;
+    DECKS.forEach((x) => b.classList.toggle('dk-' + x.id, x === d));
+    const main = document.getElementById('main');
+    let h = document.getElementById('deckhero');
+    const fn = d.id !== 'bridge' && window.YICDECKHERO[d.id];
+    if (!fn || !main) {
+      if (h) h.remove();
+      return;
+    }
+    if (h && h.dataset.deck === d.id && h.nextElementSibling === main) return;
+    if (h) h.remove();
+    h = document.createElement('div');
+    h.id = 'deckhero';
+    h.dataset.deck = d.id;
+    main.parentNode.insertBefore(h, main);
+    try {
+      fn(h);
+    } catch (e) {
+      h.remove();
+    }
+  }
+
   let sig = '';
   function tick() {
     if (!document.getElementById('dk-css')) {
@@ -85,8 +111,9 @@ body > header{display:none!important}
     }
     if (db.parentNode !== bar) bar.prepend(db);
     const cur = current(),
-      d = deckOf(cur),
-      have = d.pages.filter((k) => btn(k)),
+      d = deckOf(cur);
+    deckLook(d);
+    const have = d.pages.filter((k) => btn(k)),
       s = cur + '|' + have.join('') + '|' + have.map(label).join(',');
     if (s === sig && db.firstChild) return;
     sig = s;
