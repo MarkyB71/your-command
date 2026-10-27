@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 466 – 27 Oct 2026 – Community Tools: added 📊 Influence Tracker (influence-tracker-six.vercel.app).
+
 ## Version 435 – 26 Oct 2026 – Supply chain: under each "✗ needs", the quickest rock to fly it from and the flight time leaving now (Light Transport, full tank, 2,000 t cargo).
 
 ## Version 433 – 26 Oct 2026 – Core Samples: arranged by rock (each rock its own heading), with a switch to By resource; your choice is remembered.

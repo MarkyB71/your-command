@@ -5,7 +5,8 @@
     ['🎓', 'Adalia Academy', 'https://adalia.academy', 'Guides and news for Influence players'],
     ['💱', 'Adalia Exchange', 'https://adalia.exchange', 'Community marketplace'],
     ['⛏', 'Elerium tools', 'https://influence.elerium.dev/', 'What each asteroid type can mine, plus planning tools'],
-    ['🧩', 'Influence Tools', 'https://chromewebstore.google.com/detail/influence-tools/kopdkjlnbfiegpdjiebogkakjfppfglj', 'Chrome extension by Elerium: shopping list and market prices inside the game']
+    ['🧩', 'Influence Tools', 'https://chromewebstore.google.com/detail/influence-tools/kopdkjlnbfiegpdjiebogkakjfppfglj', 'Chrome extension by Elerium: shopping list and market prices inside the game'],
+    ['📊', 'Influence Tracker', 'https://influence-tracker-six.vercel.app', 'Community tracker for Influence players']
   ];
   var CSS = '#comm{text-align:center;margin:28px auto 0;padding:12px 16px 4px;color:#9aa8bb;font-size:14px}' +
     '#comm .ct{display:block;margin-bottom:10px;font-family:Rye,serif;font-weight:400;font-size:30px;letter-spacing:.5px;color:#ffd24a;text-shadow:0 0 12px rgba(255,210,74,.45)}' +
