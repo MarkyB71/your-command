@@ -24,14 +24,14 @@ body.dk-flight #main th{color:#9cc3ff}
 .fh-key i{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:-1px}
 .fh-load{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;color:#8b9ab0}
 .fh-ship{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;gap:4%;padding:30px 6% 14px;background:radial-gradient(ellipse at 40% 50%,rgba(91,157,255,.18),rgba(91,157,255,0) 60%),rgba(3,6,10,.95);cursor:pointer;animation:fhIn .35s ease-out}
-.fh-ship img{max-height:92%;max-width:55%;object-fit:contain;mix-blend-mode:screen;filter:drop-shadow(0 0 18px rgba(91,157,255,.45))}
+.fh-ship .fh-pic{flex:0 0 auto;width:min(52%,520px);height:92%;background:#000 no-repeat 50% 42%/170% auto;mix-blend-mode:screen;-webkit-mask:radial-gradient(ellipse 50% 50% at 50% 50%,#000 55%,transparent 100%);mask:radial-gradient(ellipse 50% 50% at 50% 50%,#000 55%,transparent 100%)}
 .fh-ship .fh-si{max-width:38%;font:13px/1.5 system-ui,sans-serif;color:#c4cdd9}
 .fh-ship .fh-si b{display:block;font-size:20px;color:#e6ebf2;text-shadow:0 0 10px ${COL};margin-bottom:2px}
 .fh-ship .fh-si i{display:block;font-style:normal;color:#9cc3ff;letter-spacing:.14em;text-transform:uppercase;font-size:11px;margin-bottom:8px}
 .fh-ship .fh-x{position:absolute;right:6%;top:30px;font:700 12px system-ui;color:#9cc3ff;letter-spacing:.1em}
 @keyframes fhIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.fh-ship{animation:none}}
-@media (max-width:700px){.fh-ship{flex-direction:column;padding:26px 12px 10px}.fh-ship img{max-width:80%;max-height:55%}.fh-ship .fh-si{max-width:100%;text-align:center}}
+@media (max-width:700px){.fh-ship{flex-direction:column;padding:26px 12px 10px}.fh-ship .fh-pic{width:90%;height:55%}.fh-ship .fh-si{max-width:100%;text-align:center}}
 .fh-lip{height:12px;margin:0 -9px;background:linear-gradient(180deg,#1d2a3c,#0a1018);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
 @media (max-width:700px){.fh-key{display:none}#deckhero[data-deck="flight"],.fh-win{clip-path:none}}
 `;
@@ -363,7 +363,7 @@ body.dk-flight #main th{color:#9cc3ff}
     o.className = 'fh-ship';
     o.title = 'Click to go back to the navigation view';
     o.innerHTML =
-      '<img src="shipimg.php?g=1&t=' + (+s.st || 0) + '" alt="">' +
+      '<span class="fh-pic" style="background-image:url(shipimg.php?t=' + (+s.st || 0) + '&v=' + (+s.sv || 1) + ')"></span>' +
       '<div class="fh-si"><i>' + esc(s.type || 'Ship') + '</i><b>' + esc(s.name || 'Ship') + '</b>' +
       esc(s.fl ? s.place || s.route || 'In flight' : (s.place || (s.ast ? 'At ' + s.ast : ''))) +
       (s.carry ? '<br>Carrying ' + esc(s.carry) : '') +
