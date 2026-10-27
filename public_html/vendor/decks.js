@@ -34,6 +34,14 @@ body > header{display:none!important}
 #deckbar .dk.on .dl{background:#05070a;box-shadow:none}
 #deckbar .dk-sub{display:flex;gap:4px;flex-wrap:wrap;padding:6px 0 8px;border-top:2px solid var(--dcur,#8fe3ff);box-shadow:0 -1px 10px -2px var(--dcur,#8fe3ff)}
 #deckbar .dk-sub:empty{padding:0 0 6px}
+#deckbar .dk-sub{align-items:center}
+#dktools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;padding-left:10px}
+#dktools > *{margin:0!important}
+#dktools button{position:static!important;font-size:12px!important;padding:5px 10px!important;line-height:1.2!important;white-space:nowrap}
+#dktools #wc-top{order:9}
+#dktools [data-srch="2"]{padding:0!important}
+#dktools [data-srch="2"] input{width:170px!important;min-width:0!important;padding:5px 9px!important;font-size:12px!important}
+@media (max-width:700px){#dktools{margin-left:0;padding:6px 0 0;width:100%}#dktools [data-srch="2"]{flex:1 1 100%}#dktools [data-srch="2"] input{width:100%!important}}
 #deckbar .pg{all:unset;box-sizing:border-box;cursor:pointer;padding:6px 12px;font:600 13px/1.1 system-ui,sans-serif;color:#c4cdd9;border-radius:4px;border:1px solid transparent}
 #deckbar .pg:hover,#deckbar .pg:focus-visible{color:var(--dcur);border-color:var(--dcur);box-shadow:0 0 10px -2px var(--dcur)}
 #deckbar .pg.on{color:var(--dcur);background:rgba(255,255,255,.05);border-color:var(--dcur)}
@@ -359,7 +367,8 @@ body > header{display:none!important}
       if (h) h.style.display = 'none';
       room.classList.add('scr');
       const pl = vs.querySelector('.dkr-plate');
-      if (pl) pl.textContent = label(cur);
+      const q = document.getElementById('gq');
+      if (pl) pl.textContent = q && q.value.trim() ? 'Search results' : label(cur);
       syncAst(vs);
       if (cur !== lastPg) pg.scrollTop = 0;
       lastPg = cur;
@@ -440,7 +449,11 @@ body > header{display:none!important}
     if (db.parentNode !== bar) bar.prepend(db);
     const cur = current(),
       d = deckOf(cur);
+    // search results go on the viewscreen
+    const q = document.getElementById('gq');
+    if (q && q.value.trim()) scr = true;
     deckLook(d);
+    tools(db);
     const have = d.pages.filter((k) => btn(k)),
       s = cur + '|' + have.join('') + '|' + have.map(label).join(',');
     if (s === sig && db.firstChild) return;
@@ -458,6 +471,21 @@ body > header{display:none!important}
         ? have.map((k) => '<button type="button" class="pg' + (k === cur ? ' on' : '') + '" data-pg="' + k + '">' + label(k).replace(/[<>&]/g, '') + '</button>').join('')
         : '') +
       '</div>';
+  }
+  // Search, Connect wallet, Play, Command Deck extension and Download live at the right of the
+  // page row (the old header and menu row are hidden on the decks) – Mark, 27 Oct
+  let tray = null;
+  function tools(db) {
+    if (!tray) {
+      tray = document.createElement('div');
+      tray.id = 'dktools';
+    }
+    const sub = db.querySelector('.dk-sub');
+    if (sub && tray.parentNode !== sub) sub.appendChild(tray);
+    const want = [document.querySelector('[data-srch="2"]'), document.getElementById('play'), document.getElementById('cdx'), document.getElementById('csv'), document.getElementById('wc-top')];
+    want.forEach((el) => {
+      if (el && el.parentNode !== tray) tray.appendChild(el);
+    });
   }
   setInterval(tick, 400);
   document.addEventListener('click', () => setTimeout(tick, 50), true);
