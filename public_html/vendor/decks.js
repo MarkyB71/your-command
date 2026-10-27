@@ -39,6 +39,9 @@ body > header{display:none!important}
 #dktools > *{margin:0!important}
 #dktools button{position:static!important;font-size:12px!important;padding:5px 10px!important;line-height:1.2!important;white-space:nowrap}
 #dktools #wc-top{order:9}
+#dktools > div:not([data-srch]){display:none!important}
+#dkdl{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin:26px 16px 6px;text-align:center}
+#dkdl [data-inf="1"]{font-size:12px;color:#8b9ab0}
 #dktools [data-srch="2"]{padding:0!important}
 #dktools [data-srch="2"] input{width:170px!important;min-width:0!important;padding:5px 9px!important;font-size:12px!important}
 /* phones (Mark asked for a phone check, 27 Oct): menu not sticky so it doesn't eat the screen, deck tabs on one swipe row, screen full width */
@@ -278,7 +281,8 @@ body > header{display:none!important}
     }
     if (ROOM) {
       const nx = room && room.nextElementSibling;
-      if (room && room.dataset.deck === d.id && (nx === main || (nx && nx.id === 'dkr-slot')) && h && room.contains(h)) return markRoom(room);
+      const pk = d.pages.filter((k) => btn(k)).join('');
+      if (room && room.dataset.deck === d.id && room.dataset.pk === pk && (nx === main || (nx && nx.id === 'dkr-slot')) && h && room.contains(h)) return markRoom(room);
       mainBack();
       if (room) room.remove();
       if (h) h.remove();
@@ -297,6 +301,7 @@ body > header{display:none!important}
       room = document.createElement('div');
       room.id = 'deckroom';
       room.dataset.deck = d.id;
+      room.dataset.pk = pk;
       room.style.setProperty('--dc', d.col);
       room.innerHTML =
         roomBg(d) + '<div class="dkr-vs"><button type="button" class="dkr-back" title="Back to the ' + (PIECE[d.id] || 'deck view').toLowerCase() + '">◂ ' + (PIECE[d.id] || 'Deck view') + '</button><span class="dkr-plate"></span><select class="dkr-ast" title="Which rock this page shows"></select></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
@@ -484,10 +489,32 @@ body > header{display:none!important}
     }
     const sub = db.querySelector('.dk-sub');
     if (sub && tray.parentNode !== sub) sub.appendChild(tray);
-    const want = [document.querySelector('[data-srch="2"]'), document.getElementById('play'), document.getElementById('cdx'), document.getElementById('csv'), document.getElementById('wc-top')];
+    const want = [document.querySelector('[data-srch="2"]'), document.getElementById('play'), document.getElementById('cdx'), document.getElementById('wc-top')];
     want.forEach((el) => {
       if (el && el.parentNode !== tray) tray.appendChild(el);
     });
+    // Download sits at the bottom of the page now (Mark, 27 Oct); the Updated / wallet line follows it there
+    const csv = document.getElementById('csv'),
+      at = document.getElementById('comm') || document.getElementById('sup');
+    if (csv && at) {
+      let dl = document.getElementById('dkdl');
+      if (!dl) {
+        dl = document.createElement('div');
+        dl.id = 'dkdl';
+      }
+      if (dl.nextElementSibling !== at) at.parentNode.insertBefore(dl, at);
+      if (csv.parentNode !== dl) dl.appendChild(csv);
+      const inf = document.querySelector('[data-inf="1"]');
+      if (inf && inf.parentNode !== dl) dl.insertBefore(inf, csv);
+      [...tray.children].forEach((c) => c.matches('[data-inf="1"]') && dl.insertBefore(c, csv));
+      // "Change wallet" did the same job as Connect wallet at the top – take it and its separator out
+      const chg = document.getElementById('chg');
+      if (chg && dl.contains(chg)) {
+        const t = chg.nextSibling;
+        if (t && t.nodeType === 3 && /^\s*·\s*$/.test(t.textContent)) t.remove();
+        chg.remove();
+      }
+    }
   }
   setInterval(tick, 400);
   document.addEventListener('click', () => setTimeout(tick, 50), true);
