@@ -11,6 +11,7 @@ const makers={};P.forEach(p=>{for(const k in p.out)(makers[k]=makers[k]||[]).pus
 const users={};P.forEach(p=>{if(/Unbundling/.test(p.name))return;for(const k in p.inp)(users[k]=users[k]||[]).push(p)});
 const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 14px}
 .pc-wrap{overflow:auto;padding:6px 0 18px}
+.pc-hs{position:sticky;bottom:0;z-index:5;overflow-x:auto;overflow-y:hidden;height:18px;background:#0b111bcc;border-top:1px solid #2a3648;scrollbar-color:#8fe3ff #121a26;scrollbar-width:auto}.pc-hs-in{height:1px}.pc-hs::-webkit-scrollbar{height:14px}.pc-hs::-webkit-scrollbar-thumb{background:#4f90ff;border-radius:7px}.pc-hs::-webkit-scrollbar-track{background:#121a26}
 .pc-br{display:flex;align-items:center}
 .pc-kids{display:flex;flex-direction:column;padding-left:34px;position:relative}
 .pc-kids::before{content:'';position:absolute;left:0;top:50%;width:17px;border-top:2px solid #2a3648}
@@ -91,6 +92,7 @@ const tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=
 const isB=id=>(id<1000)&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
 const S={mode:'from',prod:170,amt:1e6,unit:'kt',choice:{},closed:new Set(),opened:new Set(),all:false,use:null}; /* use = asteroid index whose stock is used, or null */
 const fmt=n=>n>=100?Math.round(n).toLocaleString():(+n.toPrecision(3)).toLocaleString();
+const HSB=/[?&]beta=1/.test(location.search); /* sideways scroll bar pinned to screen bottom (test) */
 const HS=[]; /* BK = Back button (live) */
 const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},closed:new Set(S.closed),opened:new Set(S.opened),all:S.all,foc:S.foc||null,y:scrollY});const snap=()=>{;HS.push(cap());if(HS.length>50)HS.shift();FS.length=0};
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
@@ -214,7 +216,16 @@ export function drawChain(m){
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
-    if(S.anchor){const a=S.anchor;S.anchor=null;const c=M0.querySelector('[data-k="'+window.CSS.escape(a.k)+'"]>.pc-n');if(c){const r=c.getBoundingClientRect();scrollBy(0,r.top-a.top);const cw=c.closest('.pc-wrap.dn');if(cw)cw.scrollLeft+=r.left-a.left}}}
+    if(S.anchor){const a=S.anchor;S.anchor=null;const c=M0.querySelector('[data-k="'+window.CSS.escape(a.k)+'"]>.pc-n');if(c){const r=c.getBoundingClientRect();scrollBy(0,r.top-a.top);const cw=c.closest('.pc-wrap.dn');if(cw)cw.scrollLeft+=r.left-a.left}}
+    if(HSB)hsBar()}
+  // Sideways scroll bar kept at the bottom of the screen (HSB)
+  function hsBar(){const w=M0.querySelector('.pc-wrap.dn');if(!w)return;let b=w.nextElementSibling;
+    if(!b||!b.classList.contains('pc-hs')){b=el('div','pc-hs');b.appendChild(el('div','pc-hs-in'));w.after(b);
+      let lock=0;b.addEventListener('scroll',()=>{if(lock){lock=0;return}lock=1;w.scrollLeft=b.scrollLeft});
+      w.addEventListener('scroll',()=>{if(lock){lock=0;return}lock=1;b.scrollLeft=w.scrollLeft});
+      const fit=()=>{b.firstChild.style.width=w.scrollWidth+'px';b.style.display=w.scrollWidth>w.clientWidth+2?'':'none';b.scrollLeft=w.scrollLeft};
+      b._fit=fit;try{new ResizeObserver(fit).observe(w.firstChild||w);new ResizeObserver(fit).observe(w)}catch(e){}}
+    b._fit()}
   function draw0(){m=M0;tipHide();
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
