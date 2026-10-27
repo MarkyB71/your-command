@@ -13,8 +13,9 @@
   const DECKS = [
     { id: 'bridge', name: 'The Bridge', ico: '◉', col: '#8fe3ff', pages: ['N'] },
     { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#5b9dff', pages: ['S', 'R', 'V', 'J'] },
-    { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#3fd68a', pages: ['C', 'Q', 'A', 'X', 'F', 'B', 'T', 'L'] },
-    { id: 'eng', name: 'Engineering', ico: '🏭', col: '#ffab3d', pages: ['H', 'P', 'U', 'E'] },
+    { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#3fd68a', pages: ['C', 'Q'] },
+    { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#36d6c3', pages: ['A', 'X', 'F', 'E'] },
+    { id: 'eng', name: 'Engineering', ico: '🏭', col: '#ffab3d', pages: ['H', 'P', 'U', 'B', 'T', 'L'] },
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M'] },
   ];
   window.YICDECKLIST = DECKS;
