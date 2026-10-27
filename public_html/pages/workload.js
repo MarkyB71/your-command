@@ -593,7 +593,7 @@
 .brs-chair svg{display:block;width:100%;max-width:170px;height:auto;filter:drop-shadow(0 0 10px rgba(143,227,255,.18))}
 .brs-floor{position:relative;z-index:0;height:26px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,rgba(91,195,228,.18),transparent 70%)}
 .st.off{cursor:default;pointer-events:none;filter:saturate(.3) brightness(.7)}
-.st.wpn{cursor:default}.st.wpn .st-scr{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.25)),repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 2px,transparent 2px 5px),#151b22}.st.wpn:hover{transform:rotateY(var(--ry)) rotateX(18deg);filter:none}.st.wpn .st-led{animation:none;opacity:.5}.st.wpn .st-go{opacity:.7}
+.st.wpn{cursor:default}.st.wpn:hover{transform:rotateY(var(--ry)) rotateX(18deg);filter:none}.st.wpn .st-led{animation:none;opacity:.5}.st.wpn .st-go{opacity:.7}
 .st.off .st-scr{box-shadow:none;border-top-color:#2a3646}
 .st.off .st-r{margin-top:22px}
 @keyframes brLed{0%,100%{opacity:1}50%{opacity:.35}}
@@ -692,7 +692,7 @@
       station(DECKS[3]) + station(DECKS[4]) +
       // switched-off console keeps both sides even (Mark, 27 Oct); on beta it is the Weapons console, kept for when conflict starts (not linked yet)
       (/[?&]beta=1/.test(location.search)
-        ? '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#a9b6c4;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>'
+        ? '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>'
         : '<div class="st off" aria-hidden="true" style="--dc:#5d6b7e;--ry:-15deg"><span class="st-scr"><span class="st-h">&nbsp;<i class="st-led"></i></span><span class="st-r">Standby</span><span class="st-n">&nbsp;</span><span class="st-s"></span><span class="st-go">&nbsp;</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>') +
       '</div><div class="brs-floor"></div>';
     m.prepend(br);
