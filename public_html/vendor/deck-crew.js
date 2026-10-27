@@ -93,7 +93,15 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
     const find = () => {
       if (!el.isConnected) return;
       const card = [...document.querySelectorAll('#main .crewcard')].find((c) => (c.textContent || '').includes('#' + id));
-      if (!card) return n++ < 20 && setTimeout(find, 150);
+      if (!card) {
+        // the crew may be hidden by the rock filter – show all rocks and look again
+        const box = document.getElementById('ast');
+        if (n === 4 && box && box.value) {
+          box.value = '';
+          box.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return n++ < 25 && setTimeout(find, 150);
+      }
       let one = el.querySelector('.cq-one');
       if (!one) {
         one = document.createElement('div');

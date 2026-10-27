@@ -136,8 +136,11 @@ body > header{display:none!important}
 .dkr-back{all:unset;box-sizing:border-box;position:absolute;z-index:3;left:4.5%;top:7px;display:none;cursor:pointer;padding:3px 12px 4px;border:1px solid var(--dc);border-radius:4px;background:#0c1118;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
 .dkr-back:hover,.dkr-back:focus-visible{background:var(--dc);color:#05070a;box-shadow:0 0 12px var(--dc)}
 .dkr-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);display:none;padding:3px 24px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.35em;text-transform:uppercase;color:var(--dc);text-shadow:0 0 8px var(--dc);white-space:nowrap;pointer-events:none}
-#deckroom.scr .dkr-back,#deckroom.scr .dkr-plate{display:block}
-.dkr-pg{position:relative;height:clamp(340px,54vh,720px);overflow:auto;padding:36px 18px 16px;clip-path:polygon(3% 0,97% 0,100% 5%,100% 100%,0 100%,0 5%);background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);scrollbar-color:#2c3a4c transparent}
+#deckroom.scr .dkr-back,#deckroom.scr .dkr-plate,#deckroom.scr .dkr-ast{display:block}
+.dkr-ast{all:unset;box-sizing:border-box;position:absolute;z-index:3;right:4.5%;top:7px;display:none;cursor:pointer;min-width:0!important;width:auto!important;max-width:220px;padding:3px 24px 4px 10px;border:1px solid var(--dc);border-radius:4px;background:#0c1118 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b9ab0'/%3E%3C/svg%3E") no-repeat right 8px center;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--dc)}
+.dkr-ast option{background:#0c1118;color:#e6ebf2;text-transform:none}
+#deckroom.scr .dkr-vs{width:93%}
+.dkr-pg{position:relative;height:clamp(380px,66vh,860px);overflow:auto;padding:36px 18px 16px;clip-path:polygon(3% 0,97% 0,100% 5%,100% 100%,0 100%,0 5%);background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);scrollbar-color:#2c3a4c transparent}
 #deckroom .dkr-pg > #main{margin:0!important;padding:0!important;max-width:none!important;background:none!important;border:0!important;box-shadow:none!important}
 #deckroom .dkr-pg th{transform:none!important}
 #deckroom .dkr-pg .pc-bar.stick{top:0!important}
@@ -284,7 +287,7 @@ body > header{display:none!important}
       room.dataset.deck = d.id;
       room.style.setProperty('--dc', d.col);
       room.innerHTML =
-        roomBg(d) + '<div class="dkr-vs"><button type="button" class="dkr-back" title="Back to the ' + (PIECE[d.id] || 'deck view').toLowerCase() + '">◂ ' + (PIECE[d.id] || 'Deck view') + '</button><span class="dkr-plate"></span></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
+        roomBg(d) + '<div class="dkr-vs"><button type="button" class="dkr-back" title="Back to the ' + (PIECE[d.id] || 'deck view').toLowerCase() + '">◂ ' + (PIECE[d.id] || 'Deck view') + '</button><span class="dkr-plate"></span><select class="dkr-ast" title="Which rock this page shows"></select></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
         pages.slice(0, nl).map((k, i) => st(k, i)).join('') +
         // the centre piece takes you back to the deck's starting view (Mark, 27 Oct)
         '<button type="button" class="dkr-seat dkr-home" title="Back to the ' + d.name + ' start">' + seat(d.id, d.col) + '<span class="dkr-sl">' + (SEAT[d.id] || '') + '</span></button>' +
@@ -355,6 +358,7 @@ body > header{display:none!important}
       room.classList.add('scr');
       const pl = vs.querySelector('.dkr-plate');
       if (pl) pl.textContent = label(cur);
+      syncAst(vs);
       if (cur !== lastPg) pg.scrollTop = 0;
       lastPg = cur;
     } else {
@@ -362,6 +366,28 @@ body > header{display:none!important}
       if (h) h.style.display = '';
       room.classList.remove('scr');
       lastPg = '';
+    }
+  }
+  // the menu's asteroid box is hidden on the decks, so the screen gets its own (Mark, 27 Oct)
+  function syncAst(vs) {
+    const box = document.getElementById('ast'),
+      sel = vs.querySelector('.dkr-ast');
+    if (!sel) return;
+    if (!box || box.tagName !== 'SELECT') return (sel.style.display = 'none');
+    const opts = [...box.options].map((o) => o.value + '\u0001' + o.text).join('\u0002');
+    if (sel.dataset.o !== opts) {
+      sel.dataset.o = opts;
+      sel.innerHTML = [...box.options].map((o) => '<option value="' + o.value.replace(/"/g, '&quot;') + '">' + (o.value === '' ? 'All rocks' : o.text).replace(/[<>&]/g, '') + '</option>').join('');
+    }
+    if (sel.value !== box.value) sel.value = box.value;
+    if (!sel.dataset.w) {
+      sel.dataset.w = '1';
+      sel.addEventListener('change', () => {
+        const b = document.getElementById('ast');
+        if (!b) return;
+        b.value = sel.value;
+        b.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     }
   }
   function mainBack() {
