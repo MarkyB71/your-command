@@ -113,7 +113,7 @@ body > header{display:none!important}
 .dkr-st.on .dkr-base i:nth-child(2){opacity:.9;box-shadow:0 0 6px var(--dc)}
 .dkr-seat{align-self:end;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
 .dkr-seat svg{display:block;width:100%;max-width:150px;height:auto;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--dc) 30%,transparent))}
-.dkr-home{all:unset;box-sizing:border-box;cursor:pointer;pointer-events:auto;transition:filter .2s}
+.dkr-home{all:unset;box-sizing:border-box;align-self:end;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;pointer-events:auto;transition:filter .2s}
 .dkr-home:hover,.dkr-home:focus-visible{filter:drop-shadow(0 0 12px var(--dc))}
 .dkr-home:hover .dkr-sl,.dkr-home:focus-visible .dkr-sl{opacity:1;text-shadow:0 0 8px var(--dc)}
 .dkr-sl{font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--dc);opacity:.75;text-align:center}
