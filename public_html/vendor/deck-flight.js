@@ -363,7 +363,7 @@ body.dk-flight #main th{color:#9cc3ff}
     o.className = 'fh-ship';
     o.title = 'Click to go back to the navigation view';
     o.innerHTML =
-      '<img src="shipimg.php?t=' + (+s.st || 0) + '&v=' + (+s.sv || 1) + '" alt="">' +
+      '<img src="shipimg.php?g=1&t=' + (+s.st || 0) + '" alt="">' +
       '<div class="fh-si"><i>' + esc(s.type || 'Ship') + '</i><b>' + esc(s.name || 'Ship') + '</b>' +
       esc(s.fl ? s.place || s.route || 'In flight' : (s.place || (s.ast ? 'At ' + s.ast : ''))) +
       (s.carry ? '<br>Carrying ' + esc(s.carry) : '') +
