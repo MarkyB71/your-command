@@ -113,6 +113,9 @@ body > header{display:none!important}
 .dkr-st.on .dkr-base i:nth-child(2){opacity:.9;box-shadow:0 0 6px var(--dc)}
 .dkr-seat{align-self:end;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
 .dkr-seat svg{display:block;width:100%;max-width:150px;height:auto;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--dc) 30%,transparent))}
+.dkr-home{all:unset;box-sizing:border-box;cursor:pointer;pointer-events:auto;transition:filter .2s}
+.dkr-home:hover,.dkr-home:focus-visible{filter:drop-shadow(0 0 12px var(--dc))}
+.dkr-home:hover .dkr-sl,.dkr-home:focus-visible .dkr-sl{opacity:1;text-shadow:0 0 8px var(--dc)}
 .dkr-sl{font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--dc);opacity:.75;text-align:center}
 .dkr-floor{position:relative;height:24px;margin-top:-2px;background:radial-gradient(ellipse at 50% 0,color-mix(in srgb,var(--dc) 22%,transparent),transparent 70%)}
 .dkr-bg .bl{animation:dkrBlink 4s infinite}
@@ -268,12 +271,15 @@ body > header{display:none!important}
       room.innerHTML =
         roomBg(d) + '<div class="dkr-vs"></div><div class="dkr-deck" style="grid-template-columns:' + cols.join(' ') + '">' +
         pages.slice(0, nl).map((k, i) => st(k, i)).join('') +
-        '<div class="dkr-seat">' + seat(d.id, d.col) + '<span class="dkr-sl">' + (SEAT[d.id] || '') + '</span></div>' +
+        (d.id === 'flight'
+          ? '<button type="button" class="dkr-seat dkr-home" title="Back to the Bridge">' + seat(d.id, d.col) + '<span class="dkr-sl">' + SEAT[d.id] + ' · to the Bridge</span></button>'
+          : '<div class="dkr-seat">' + seat(d.id, d.col) + '<span class="dkr-sl">' + (SEAT[d.id] || '') + '</span></div>') +
         pages.slice(nl).map((k, i) => st(k, i + nl)).join('') +
         // odd number of pages: a switched-off console keeps both sides even (Mark, 27 Oct)
         (pages.length % 2 ? '<div class="dkr-st dkr-off" aria-hidden="true" style="--ry:' + Math.max(-16, -nr * 7) + 'deg"><span class="dkr-scr"><span class="dkr-h">&nbsp;<i class="dkr-led"></i></span><span class="dkr-d">Standby</span><span class="dkr-go">&nbsp;</span></span><span class="dkr-base"><i></i><i></i><i></i><i></i></span></div>' : '') +
         '</div><div class="dkr-floor"></div>';
       room.addEventListener('click', (e) => {
+        if (e.target.closest('.dkr-home')) return window.YICgoDeck('bridge');
         const t = e.target.closest('.dkr-st');
         if (t) go(t.dataset.pg);
       });
