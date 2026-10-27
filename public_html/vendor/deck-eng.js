@@ -15,8 +15,11 @@ body.dk-eng #main{border:1px solid rgba(255,171,61,.3);border-top:3px solid ${CO
 body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
 #deckhero[data-deck="eng"]{margin:14px 16px 0;position:relative;padding:32px 14px 0;background:linear-gradient(180deg,#221a12,#0e0b08);border:1px solid #3a2c1c;border-bottom:0;border-radius:10px 10px 0 0}
 .en-plate{position:absolute;left:50%;top:0;transform:translateX(-50%);padding:3px 24px 4px;background:#0e0b08;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#ffd29a;text-shadow:0 0 8px rgba(255,171,61,.8);white-space:nowrap}
-.en-read{position:absolute;left:16px;top:7px;font:600 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#ffd29a;text-transform:uppercase}
+.en-read{position:absolute;left:16px;top:4px;font:600 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#ffd29a;text-transform:uppercase}
 .en-read b{color:#e6ebf2}
+.en-pick{all:unset;box-sizing:border-box;cursor:pointer;min-width:0!important;width:auto!important;margin-right:8px;padding:3px 22px 3px 8px;border:1px solid #5a4328;border-radius:4px;background:#0e0b08 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ffab3d'/%3E%3C/svg%3E") no-repeat right 7px center;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#ffd29a;text-transform:uppercase}
+.en-pick:hover,.en-pick:focus-visible{border-color:#ffab3d;box-shadow:0 0 8px -2px #ffab3d}
+.en-pick option{background:#0e0b08;color:#e6ebf2;text-transform:none}
 .en-hint{position:absolute;right:16px;top:7px;font:11px system-ui,sans-serif;color:#9c8a74}
 .en-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:4px 0 12px}
 .en-sep{width:2px;align-self:stretch;margin:6px 4px;background:linear-gradient(180deg,transparent,#5a4328,transparent)}
@@ -31,7 +34,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
 .en-s b{font-weight:600}
 .en-lamp{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:0;background:var(--l);box-shadow:0 0 6px var(--l)}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a2014 0 12px,#0e0b08 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
-@media (max-width:700px){.en-hint,.en-read,.en-sep{display:none}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
+@media (max-width:700px){.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
 @media (prefers-reduced-motion:reduce){.en-arc,.en-g{transition:none}}
 `;
 
@@ -125,11 +128,19 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffd29a}
       }).join('');
       el.innerHTML =
         '<div class="en-plate">ENGINEERING</div>' +
-        '<div class="en-read">' + (an ? Y.esc(an) + ' · ' : '') + '<b>' + run + '</b> working · <b style="color:#ff8a8a">' + idle + '</b> idle · of <b>' + tot + '</b></div>' +
+        '<div class="en-read"><select class="en-pick" aria-label="Which rock"><option value="">All rocks</option>' +
+        (Y.asts || []).map((a, i) => '<option value="' + i + '"' + (String(i) === ai ? ' selected' : '') + '>' + Y.esc(a.name) + '</option>').join('') +
+        '</select> <b>' + run + '</b> working · <b style="color:#ff8a8a">' + idle + '</b> idle · of <b>' + tot + '</b></div>' +
         '<div class="en-hint">Click a dial to see those buildings</div>' +
         '<div class="en-row">' + prod + '<span class="en-sep"></span>' + store + '</div><div class="en-floor"></div>';
     }
     draw();
+    el.addEventListener('change', (e) => {
+      const p = e.target.closest('.en-pick'), box = document.getElementById('ast');
+      if (!p || !box) return;
+      box.value = p.value;
+      box.dispatchEvent(new Event('change'));
+    });
     el.addEventListener('click', (e) => {
       const t = e.target.closest('[data-go]');
       const b = t && document.getElementById('v' + t.dataset.go);
