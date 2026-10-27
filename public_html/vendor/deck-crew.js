@@ -34,6 +34,13 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 .cq-hd{width:24px;height:5px;border-radius:3px;background:#3a4a43}
 .cq-bench{height:14px;margin:0 -14px;background:linear-gradient(180deg,#1f2c26,#0b110e);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
 .cq-none{padding:20px;text-align:center;color:#8fa79a;font-size:13px}
+.cq-showone .cq-row,.cq-showone .cq-read{display:none!important}
+.cq-one{position:relative;padding:4px 3% 10px;max-height:clamp(260px,46vh,560px);overflow:auto;scrollbar-color:#24382d transparent}
+.cq-back{all:unset;box-sizing:border-box;cursor:pointer;display:inline-block;margin:0 0 8px;padding:3px 12px 4px;border:1px solid #3fd68a;border-radius:4px;background:#0b110e;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#3fd68a}
+.cq-back:hover,.cq-back:focus-visible{background:#3fd68a;color:#05070a;box-shadow:0 0 12px #3fd68a}
+.cq-card .crewcard{margin:0!important;box-shadow:0 0 18px -6px #3fd68a}
+/* Crew Quarters: no crews list under the lockers (Mark, 27 Oct) */
+#deckroom[data-deck="crew"]:not(.scr) + #main{display:none!important}
 @media (max-width:700px){.cq-lk{flex-basis:138px}.cq-read{display:none}}
 @media (prefers-reduced-motion:reduce){.cq-lk{transition:none}.cq-lk:hover{transform:none}.cq-led.hot{animation:none}}
 `;
@@ -78,18 +85,25 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
       '</button>';
   }
 
-  // Open the Crews page and scroll to that crew's card
-  function openCrew(id) {
+  // Show that crew's card on the viewscreen in place of the lockers (Mark, 27 Oct)
+  function openCrew(id, el) {
     const b = document.getElementById('vC');
     if (b && !b.classList.contains('on')) b.click();
     let n = 0;
     const find = () => {
-      const card = [...document.querySelectorAll('#main .crewcard')].find((el) => (el.textContent || '').includes('#' + id));
-      if (card) {
-        card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-        card.style.boxShadow = '0 0 0 2px ' + COL + ',0 0 18px ' + COL;
-        setTimeout(() => (card.style.boxShadow = ''), 2200);
-      } else if (n++ < 20) setTimeout(find, 150);
+      if (!el.isConnected) return;
+      const card = [...document.querySelectorAll('#main .crewcard')].find((c) => (c.textContent || '').includes('#' + id));
+      if (!card) return n++ < 20 && setTimeout(find, 150);
+      let one = el.querySelector('.cq-one');
+      if (!one) {
+        one = document.createElement('div');
+        one.className = 'cq-one';
+        el.appendChild(one);
+      }
+      one.innerHTML = '<button type="button" class="cq-back">◂ All lockers</button><div class="cq-card"></div>';
+      one.lastChild.appendChild(card.cloneNode(true));
+      el.classList.add('cq-showone');
+      if (window.YIC && window.YIC.fillFacesIn) window.YIC.fillFacesIn(one);
     };
     find();
   }
@@ -114,8 +128,14 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
       (crews.length ? '<div class="cq-row">' + crews.map((c) => locker(c, raw[c.id], Y)).join('') + '</div>' : '<div class="cq-none">No crews yet</div>') +
       '<div class="cq-bench"></div>';
     el.addEventListener('click', (e) => {
+      if (e.target.closest('.cq-back')) {
+        el.classList.remove('cq-showone');
+        const one = el.querySelector('.cq-one');
+        if (one) one.remove();
+        return;
+      }
       const t = e.target.closest('[data-crew]');
-      if (t) openCrew(t.dataset.crew);
+      if (t) openCrew(t.dataset.crew, el);
     });
     if (Y.fillFacesIn) Y.fillFacesIn(el);
   }
