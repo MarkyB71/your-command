@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 504 – 28 Oct 2026 – Trade Deck: new 'Where to buy' console – nearest places selling a product, flight times there and back, propellant burned and its cost in SWAY, goods and total (one way if the rock sells propellant, else round trip on ½ tank)
+
 ## Version 502 – 28 Oct 2026 – Market history: 'Only my trades' tick box lined up with its label
 
 ## Version 498 – 28 Oct 2026 – Fix: the money strip and the "Report a problem" line at the bottom kept swapping places every 0.7 s, so that area flickered. They now stay put.
