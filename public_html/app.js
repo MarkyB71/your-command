@@ -49,6 +49,31 @@ const tot=asts.map(a=>{const t={};a.buildings.forEach(b=>{for(const p in b.items
 const allP=[...new Set(tot.flatMap(t=>Object.keys(t)))];
 const pooled={};tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
 window.YIC={asts,tot,pooled,get esc(){return esc},get fmtT(){return fmtT},get tLeft(){return tLeft},get crewTraits(){return crewTraits},get fillFacesIn(){return fillFacesIn},get draw(){return draw},get pc(){return pc},get ricon(){return ricon},get rows(){return rows},get prodOpen(){return open},get sortKey(){return sortKey},set sortKey(v){sortKey=v},get sortDir(){return sortDir},set sortDir(v){sortDir=v},get fq(){return fq},get BT(){return BT},get bthumb(){return bthumb},get PROCN(){return PROCN},get leaseInfo(){return leaseInfo},get isAt(){return isAt},get $(){return $},get ABC(){return ABC},get BONB(){return true},get SCAP(){return SCAP},get SPEC(){return SPEC},get RAR(){return RAR},get astAbund(){return astAbund},get astBonuses(){return astBonuses},get bestAstHTML(){return bestAstHTML},get lotsLoad(){return lotsLoad},get LOTS(){return LOTS},get resBonus(){return resBonus},get wire3d(){return wire3d},get fmt(){return fmt},get ABM(){return ABM},set ABM(v){ABM=v},get BELTO(){return BELTO},set BELTO(v){BELTO=v},get SAMP(){return SAMP},set SAMP(v){SAMP=v},get beltOLoad(){return beltOLoad},set beltOLoad(v){beltOLoad=v},get lfAst(){return lfAst},set lfAst(v){lfAst=v},get lfMode(){return lfMode},set lfMode(v){lfMode=v},get lfRes(){return lfRes},set lfRes(v){lfRes=v},get sampLoad(){return sampLoad},set sampLoad(v){sampLoad=v},get sampOpen(){return sampOpen},set sampOpen(v){sampOpen=v},get view(){return view},get PR(){return PR},get kg(){return kg},get VER(){return VER},get viewNow(){return view},get DLV(){return DLV},set DLV(v){DLV=v},get dlvLoad(){return dlvLoad},set dlvLoad(v){dlvLoad=v},get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
+
+/* Background refresh (TEST ?beta=1): swap in new game data without rebuilding the page */
+window.YICquiet=function(N,fetched){
+ const sb=$('#sub'),info=()=>{if(sb)sb.textContent='Updated '+D.when+' · '+asts.reduce((n,a)=>n+a.buildings.length,0)+' storage buildings · '+asts.length+' asteroids · '+D.crews+' crews'};
+ if(!N){if(fetched)D.when=new Date(fetched*1000).toLocaleString();info();return}
+ const sel=$('#ast'),selName=sel&&sel.value!==''&&asts[+sel.value]?asts[+sel.value].name:'',oldNames=asts.map(a=>a.name).join('|');
+ Object.assign(PR,N.products);N.products=PR;
+ asts.length=0;N.asteroids.forEach(a=>asts.push(a));N.asteroids=asts;
+ Object.keys(D).forEach(k=>{if(!(k in N))delete D[k]});Object.assign(D,N);
+ tot.length=0;asts.forEach(a=>{const t={};a.buildings.forEach(b=>{for(const p in b.items)t[p]=(t[p]||0)+b.items[p]});tot.push(t)});
+ allP.length=0;new Set(tot.flatMap(t=>Object.keys(t))).forEach(p=>allP.push(p));
+ Object.keys(pooled).forEach(k=>delete pooled[k]);tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
+ if(sel&&asts.map(a=>a.name).join('|')!==oldNames){sel.innerHTML='<option value="">All asteroids</option>'+asts.map((a,i)=>'<option value="'+i+'">'+esc(a.name)+'</option>').join('');const i=asts.findIndex(a=>a.name===selName);sel.value=i<0?'':String(i)}
+ info();
+};
+window.YICredraw=function(){
+ if(view==='M'||view==='R')return; /* add-on pages + Travel (long background sums) pick up the new data next time they open */
+ const m=$('#main');if(!m)return;
+ const pg=m.closest('.dkr-pg'),sy=window.scrollY,st=pg?pg.scrollTop:0;
+ const det=[...m.querySelectorAll('details')].map(d=>d.open),wl=[...m.querySelectorAll('.wrap')].map(w=>[w.scrollLeft,w.scrollTop]);
+ m.style.minHeight=m.offsetHeight+'px';
+ draw();
+ const back=()=>{m.querySelectorAll('details').forEach((d,i)=>{if(i<det.length)d.open=det[i]});m.querySelectorAll('.wrap').forEach((w,i)=>{if(wl[i]){w.scrollLeft=wl[i][0];w.scrollTop=wl[i][1]}});if(pg)pg.scrollTop=st;window.scrollTo(0,sy)};
+ back();requestAnimationFrame(()=>{back();m.style.minHeight=''});
+};
 function rows(){
  const q=$('#q').value.trim().toLowerCase(),ai=$('#ast').value,cl=$('#cls').value;
  const cols=ai===''?asts.map((a,i)=>i):[+ai];
@@ -285,6 +310,7 @@ const CSS='<style>body{margin:0;background:#0b0e13;color:#e6ebf2;font:15px/1.5 -
  '.err{color:#ff7a7a;min-height:1.5em;margin-top:8px}.foot{color:#5b6677;font-size:12px;margin-top:40px}</style>';
 const FOOT='<div class="foot">A community tool from Adalia Academy. Not an official Influence site. It only reads public game data.</div>';
 function askWallet(msg){
+ bgW='';
  say(CSS+'<div class="box"><h1>Your <span>Influence</span> Command</h1><p>See everything in your warehouses and tank farms across all your crews and asteroids.</p>'+
  '<label for="w">Your Starknet wallet address</label><input id="w" placeholder="0x…" autocomplete="off" spellcheck="false">'+
  '<p style="font-size:13px;margin-top:6px">Find it in your wallet (Argent or Braavos) using "Copy address". Your browser will remember it.</p>'+
@@ -294,21 +320,10 @@ function askWallet(msg){
   setSaved(v);history.replaceState(null,'','?wallet='+encodeURIComponent(v));load(v)};
  document.getElementById('go').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
 }
-async function load(wallet){
- say(CSS+'<style>@keyframes ldGlow{0%,100%{opacity:.85}50%{opacity:1}}.ld-star{animation:ldGlow 2.4s ease-in-out infinite}.ld-ship{mix-blend-mode:screen}@media (prefers-reduced-motion: reduce){.ld-star{animation:none}}</style>'+
- '<div class="box" style="text-align:center"><svg viewBox="-125 -70 250 140" width="340" height="190" style="display:block;margin:8vh auto 10px;overflow:visible" aria-hidden="true"><defs>'+
- '<radialGradient id="ldS"><stop offset="0" stop-color="#fffaf0"/><stop offset=".3" stop-color="#ffe2b0" stop-opacity=".8"/><stop offset="1" stop-color="#ffd09a" stop-opacity="0"/></radialGradient>'+
- '<radialGradient id="ldF"><stop offset=".55" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ldM" maskContentUnits="userSpaceOnUse"><circle r="19" fill="url(#ldF)"/></mask></defs>'+
- '<ellipse rx="62" ry="26" fill="none" stroke="rgba(95,195,228,.15)" stroke-width="1.2"/><path id="ldP" d="M100,0 A100,42 0 1,1 -100,0 A100,42 0 1,1 100,0" fill="none" stroke="rgba(95,195,228,.35)" stroke-width="1.6"/>'+
- '<g class="ld-star"><circle r="30" fill="url(#ldS)"/><circle r="7" fill="#fffaf0"/></g>'+
- '<g><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#ldP"/></animateMotion><g mask="url(#ldM)"><image class="ld-ship" href="shipimg.php?t=2&amp;v=2&amp;s=1" x="-34" y="-43" width="72" height="96"/></g></g></svg>'+
- '<p>Loading your command for '+esc(short(wallet))+'…</p></div>');
- let j;
- try{const r=await fetch('api.php?wallet='+encodeURIComponent(wallet),{cache:'no-store'});j=await r.json();if(!r.ok||j.error)throw new Error(j.error||('Server error '+r.status))}
- catch(e){askWallet('Could not load stock: '+e.message);return}
+function buildD(j){
  const crews=j.crews||[],PRIM={10:1,19:1};
  const blds=(j.allBuildings||[]).filter(b=>b.Building&&b.Building.status===3&&(b.Building.buildingType===1||b.Building.buildingType===10)&&(b.Inventories||[]).some(i=>PRIM[i.inventoryType]&&(i.contents||[]).some(c=>c.amount>0)));
- if(!crews.length){askWallet('No crews found for that wallet.');return}
+ if(!crews.length)return null;
  const astOf=b=>{const l=(b.Location&&b.Location.locations)||[];const a=l.find(x=>x.label===3);return a?a.id:0};
  const groups={},astName={};
  for(const b of blds){const a=astOf(b);astName[a]=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||('Asteroid #'+a);(groups[a]=groups[a]||[]).push(b)}
@@ -336,7 +351,40 @@ async function load(wallet){
    else if(loc.label===5)place=(me.building&&me.building.name)||'Building';else if(loc.label===4)place='Lot #'+Math.floor(loc.id/4294967296);else if(loc.label===3)place='In orbit';
    const ys=Math.max(0,now-(cr.lastFed||0))*24/31536000,food=cr.lastFed?Math.min(Math.max(0,1-ys,0.75-0.5*ys),1):null;
    return{id:c.id,stn:loc.label===5?loc.id:0,name:(c.Name&&c.Name.name)||('Crew #'+c.id),mates:(cr.roster||[]).length,roster:(cr.roster||[]),mn:Object.fromEntries((me.crewmates||[]).map(x=>[x.id,x.name||''])),ast,place,food,busy:cr.readyAt&&cr.readyAt>now?dt(cr.readyAt):''}})}
+ return D;
+}
+/* Background refresh (TEST ?beta=1): every 60 s, only while the tab is visible; redraws only if the data changed and the player isn't typing */
+var BGR=/[?&]beta=1/.test(location.search);
+let bgW='',bgSig='',bgLast=0,bgBusy=false,bgDirty=false;
+const bgSigOf=j=>{const c=Object.assign({},j);delete c.fetched;return JSON.stringify(c)};
+const bgSafe=()=>{if(document.hidden)return false;const a=document.activeElement;if(a&&a.matches&&a.matches('input,textarea,select,[contenteditable],[contenteditable] *'))return false;const g=window.getSelection&&window.getSelection();return !(g&&String(g).length)};
+const bgApply=()=>{if(bgDirty&&window.YICredraw&&bgSafe()){bgDirty=false;try{window.YICredraw()}catch(e){}}};
+async function bgTick(force){
+ if(!BGR||!bgW||bgBusy||document.hidden||!window.YICquiet)return;
+ if(!force&&Date.now()-bgLast<60000)return;
+ bgBusy=true;bgLast=Date.now();const w=bgW;
+ try{const r=await fetch('api.php?wallet='+encodeURIComponent(w),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j.error||w!==bgW)return;
+  const s=bgSigOf(j);if(s===bgSig){window.YICquiet(null,j.fetched);return}
+  const N=buildD(j);if(!N)return;bgSig=s;window.YICquiet(N);bgDirty=true;bgApply();
+ }catch(e){}finally{bgBusy=false}
+}
+if(BGR){setInterval(()=>{bgTick();bgApply()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)bgTick()})}
+async function load(wallet){
+ bgW='';bgDirty=false;
+ say(CSS+'<style>@keyframes ldGlow{0%,100%{opacity:.85}50%{opacity:1}}.ld-star{animation:ldGlow 2.4s ease-in-out infinite}.ld-ship{mix-blend-mode:screen}@media (prefers-reduced-motion: reduce){.ld-star{animation:none}}</style>'+
+ '<div class="box" style="text-align:center"><svg viewBox="-125 -70 250 140" width="340" height="190" style="display:block;margin:8vh auto 10px;overflow:visible" aria-hidden="true"><defs>'+
+ '<radialGradient id="ldS"><stop offset="0" stop-color="#fffaf0"/><stop offset=".3" stop-color="#ffe2b0" stop-opacity=".8"/><stop offset="1" stop-color="#ffd09a" stop-opacity="0"/></radialGradient>'+
+ '<radialGradient id="ldF"><stop offset=".55" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ldM" maskContentUnits="userSpaceOnUse"><circle r="19" fill="url(#ldF)"/></mask></defs>'+
+ '<ellipse rx="62" ry="26" fill="none" stroke="rgba(95,195,228,.15)" stroke-width="1.2"/><path id="ldP" d="M100,0 A100,42 0 1,1 -100,0 A100,42 0 1,1 100,0" fill="none" stroke="rgba(95,195,228,.35)" stroke-width="1.6"/>'+
+ '<g class="ld-star"><circle r="30" fill="url(#ldS)"/><circle r="7" fill="#fffaf0"/></g>'+
+ '<g><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#ldP"/></animateMotion><g mask="url(#ldM)"><image class="ld-ship" href="shipimg.php?t=2&amp;v=2&amp;s=1" x="-34" y="-43" width="72" height="96"/></g></g></svg>'+
+ '<p>Loading your command for '+esc(short(wallet))+'…</p></div>');
+ let j;
+ try{const r=await fetch('api.php?wallet='+encodeURIComponent(wallet),{cache:'no-store'});j=await r.json();if(!r.ok||j.error)throw new Error(j.error||('Server error '+r.status))}
+ catch(e){askWallet('Could not load stock: '+e.message);return}
+ const D=buildD(j);if(!D){askWallet('No crews found for that wallet.');return}
  renderReport(document,D);
+ bgW=wallet;bgSig=bgSigOf(j);bgLast=Date.now();
  siteHeader();
  const sub=document.getElementById('sub');
  if(sub){const w=document.createElement('div');w.className='sub';w.style.marginTop='2px';
