@@ -1,44 +1,47 @@
 // Skippy's Command Deck – runs on game.influenceth.io only.
-// Adds one small crowned-S button under the game's right-hand side bar. Clicking it
-// switches to your Command Deck tab (or opens it). It reads nothing from the game
-// except where the side bar ends on screen, and sends nothing anywhere.
+// Adds a crowned-S button to the bottom of the game's right-hand side bar (or, if the
+// side bar isn't showing, a small floating one). Clicking it switches to your Command
+// Deck tab (or opens it). It reads nothing from the game and sends nothing anywhere.
 (() => {
-  if (window.top !== window || document.getElementById('yic-deck-host')) return;
-  const host = document.createElement('div');
-  host.id = 'yic-deck-host';
-  host.style.cssText = 'position:fixed;right:15px;bottom:120px;z-index:2147483647;';
-  const root = host.attachShadow({ mode: 'closed' });
+  if (window.top !== window || document.getElementById('yic-s')) return;
   const icon = chrome.runtime.getURL('icons/icon48.png');
+  const go = e => { e.preventDefault(); e.stopPropagation(); chrome.runtime.sendMessage({ type: 'yic-deck' }); };
+  const TIP = "Skippy's Command Deck";
+
+  // Side bar button – borrows the game's own button look and tooltip.
+  const s = document.createElement('div');
+  s.id = 'yic-s';
+  s.setAttribute('data-tooltip-id', 'hudMenuTooltip');
+  s.setAttribute('data-tooltip-place', 'left');
+  s.setAttribute('data-tooltip-content', TIP);
+  s.setAttribute('role', 'button');
+  s.innerHTML = `<img src="${icon}" alt="${TIP}" style="width:28px;height:28px;display:block;pointer-events:none">`;
+  s.addEventListener('click', go);
+
+  // Floating fallback when there is no side bar.
+  const host = document.createElement('div');
+  host.style.cssText = 'position:fixed;right:15px;bottom:120px;z-index:2147483647;display:none';
+  const root = host.attachShadow({ mode: 'closed' });
   root.innerHTML = `<style>
     button{width:40px;height:40px;padding:5px;border-radius:6px;border:1px solid rgba(79,179,255,.45);
-      background:rgba(8,14,24,.85);cursor:pointer;box-shadow:0 0 6px rgba(79,179,255,.35);
-      transition:box-shadow .2s,border-color .2s}
-    button:hover,button:focus-visible{border-color:#4fb3ff;box-shadow:0 0 14px rgba(79,179,255,.9);outline:none}
+      background:rgba(8,14,24,.85);cursor:pointer;box-shadow:0 0 6px rgba(79,179,255,.35)}
+    button:hover{border-color:#4fb3ff;box-shadow:0 0 14px rgba(79,179,255,.9)}
     img{width:28px;height:28px;display:block;margin:auto}
-  </style><button type="button" title="Back to Skippy's Command Deck"><img src="${icon}" alt="Command Deck"></button>`;
-  root.querySelector('button').addEventListener('click', () => chrome.runtime.sendMessage({ type: 'yic-deck' }));
-  (document.body || document.documentElement).appendChild(host);
+  </style><button type="button" title="${TIP}"><img src="${icon}" alt=""></button>`;
+  root.querySelector('button').addEventListener('click', go);
 
-  // Find the bottom of the side bar: scan up the icon column from near the bottom
-  // until we hit something that isn't the 3D scene, then sit just below it.
-  const BG = /^(CANVAS|BODY|HTML)$/;
-  function place() {
-    const x = window.innerWidth - 35;
-    for (let y = window.innerHeight - 95; y > window.innerHeight * 0.4; y -= 4) {
-      const hit = document.elementsFromPoint(x, y).find(el => el !== host);
-      if (hit && !BG.test(hit.tagName)) {
-        host.style.bottom = '';
-        host.style.top = Math.round(y + 10) + 'px';
-        return;
-      }
-    }
-    host.style.top = ''; host.style.bottom = '120px';
+  function dock() {
+    if (!host.isConnected) (document.body || document.documentElement).appendChild(host);
+    const btns = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')].filter(b => b !== s);
+    if (!btns.length) { if (s.isConnected) s.remove(); host.style.display = ''; return; }
+    host.style.display = 'none';
+    // Most common class = the game's normal (not selected) side bar button.
+    const n = {}; btns.forEach(b => { n[b.className] = (n[b.className] || 0) + 1; });
+    const cls = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
+    if (s.className !== cls) s.className = cls;
+    const last = btns[btns.length - 1];
+    if (s.previousElementSibling !== last) last.after(s);
   }
-  place();
-  setInterval(() => {
-    place();
-    root.querySelector('button').title = "Back to Skippy's Command Deck" + (document.documentElement.dataset.yicLotColours ? '\n[lot colours: ' + document.documentElement.dataset.yicLotColours + ']' : '');
-  }, 1500);
-  window.addEventListener('resize', place);
+  dock();
+  setInterval(dock, 1000);
 })();
-
