@@ -1,4 +1,4 @@
-/* Where to buy – Your Influence Command (Mark, 28 Oct 2026) – TEST on ?beta=1
+/* Where to buy – Your Influence Command (Mark, 28 Oct 2026) – LIVE for everyone 28 Oct 2026 (tested on ?beta=1 first)
    Trade Deck console. Pick a product, how much, which rock you fly from and which ship:
    lists every asteroid selling it, nearest first, with flight times there and back,
    propellant burned and what it costs in SWAY, the goods price (market fee included)
@@ -9,9 +9,6 @@
    Uses window.BELTDATA (pages/market.js), window.YIC (app.js), orbits.php and vendor/travel.js. */
 (function () {
   'use strict';
-  const BETA = /[?&]beta=1/.test(location.search);
-  if (!BETA) return;
-
   const PROP = 170; // Hydrogen Propellant
   const CSS = `.wb-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
 .wb-row label{color:#8b9ab0;font-size:13px;display:flex;gap:6px;align-items:center}
