@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 498 – 28 Oct 2026 – Fix: the money strip and the "Report a problem" line at the bottom kept swapping places every 0.7 s, so that area flickered. They now stay put.
+
 ## Version 495 – 27 Oct 2026 – The Bridge: the Standby console is now an orange Weapons console (Armoury station), kept ready for when conflict starts in the game – not linked yet.
 
 ## Version 491 – 27 Oct 2026 – Trade Deck: new My trading console – Orders (are you cheapest / top bid?), Watch (pin products, see best prices) and Calculator (what an amount sells for or costs right now, fees included).
