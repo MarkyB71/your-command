@@ -9,6 +9,10 @@ const OK = /^\/(building|lot|ship|asteroids|crew|crewmate)\/\d{1,20}$/;
 let last = 0;
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
+  // "Command Deck" button on the game page: jump back to the site.
+  if (msg && msg.type === 'yic-deck' && sender.tab && sender.origin === GAME) {
+    goDeck().then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
+  }
   if (!msg || msg.type !== 'yic-open' || typeof msg.path !== 'string' || !OK.test(msg.path)) {
     reply({ ok: false, error: 'bad request' }); return;
   }
@@ -43,10 +47,11 @@ async function openInGame(path) {
 }
 
 // Toolbar icon: jump back to the Command Deck tab (or open it if none).
-chrome.action.onClicked.addListener(async () => {
+chrome.action.onClicked.addListener(goDeck);
+async function goDeck() {
   const tabs = await chrome.tabs.query({ url: SITE + '/*' });
   if (!tabs.length) { await chrome.tabs.create({ url: SITE + '/' }); return; }
   const t = tabs.find(x => x.active) || tabs[0];
   await chrome.tabs.update(t.id, { active: true });
   await chrome.windows.update(t.windowId, { focused: true });
-});
+}
