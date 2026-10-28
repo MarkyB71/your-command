@@ -46,6 +46,8 @@ The zip on the site should match this SHA-256 (version 0.4.5):
 
 On a Mac: `shasum -a 256 skippys-command-deck.zip` · Windows: `certutil -hashfile skippys-command-deck.zip SHA256`
 
+What changed in each version: see [CHANGES.md](CHANGES.md).
+
 Or skip the zip entirely: download this `extension` folder from GitHub and use **Load unpacked** on it.
 
 ## Install (Chrome, Brave or Edge on a computer)
@@ -61,7 +63,7 @@ Or skip the zip entirely: download this `extension` folder from GitHub and use *
 From the repo root:
 
     rm -rf /tmp/scd && mkdir -p /tmp/scd && cp -r extension /tmp/scd/skippys-command-deck
-    rm /tmp/scd/skippys-command-deck/README.md
+    rm /tmp/scd/skippys-command-deck/README.md /tmp/scd/skippys-command-deck/CHANGES.md
     (cd /tmp/scd && zip -qrX skippys-command-deck.zip skippys-command-deck)
     mv /tmp/scd/skippys-command-deck.zip public_html/downloads/
     sha256sum public_html/downloads/skippys-command-deck.zip   # update the checksum above
