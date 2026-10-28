@@ -16,6 +16,12 @@
     { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', pages: ['H', 'P', 'U', 'G', 'B', 'T', 'L'] },
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W', 'O'] },
   ];
+  // The Daily Grind – the everyday workload, one deck for routine checks (Mark, 28 Oct 2026). TEST on ?beta=1.
+  const GRD = /[?&]beta=1/.test(location.search);
+  if (GRD) {
+    DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'G');
+    DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
+  }
   window.YICDECKLIST = DECKS;
 
   const CSS = `
@@ -103,8 +109,8 @@ body > header{display:none!important}
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel',
   };
-  const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board' };
-  const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter' };
+  const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
+  const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
   const ROOM_CSS = `
 #deckroom{position:relative;margin:14px 16px 0;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
 .dkr-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -211,6 +217,14 @@ body > header{display:none!important}
         R(x, y, 30, 40, 'fill="#211b0c" stroke="#4a3f1e" stroke-width="2"');
         P('M' + x + ',' + y + ' l30,40 M' + (x + 30) + ',' + y + ' l-30,40', 'stroke="#4a3f1e" stroke-width="1.5"');
       });
+    } else if (id === 'grind') {
+      [[44, 120, 20], [30, 220, 13], [52, 300, 16]].forEach(([x, y, r], i) => {
+        E(x, y, r, r, 'fill="none" stroke="#21403c" stroke-width="7" stroke-dasharray="4 3"');
+        E(x, y, r * 0.45, r * 0.45, 'fill="#0c1716" stroke="#2b5550" stroke-width="2"');
+        if (i === 1) E(x, y, 2.5, 2.5, 'fill="' + c + '" class="bl"');
+      });
+      R(12, 380, 64, 40, 'fill="#0c1716" stroke="#21403c" stroke-width="2"');
+      [390, 400, 410].forEach((y, i) => R(18, y, 20 + i * 12, 3, 'fill="' + c + '" opacity=".5"' + (i === 2 ? ' class="pu"' : '')));
     }
     const draw = (m) =>
       L.map((o) => {
@@ -259,6 +273,10 @@ body > header{display:none!important}
       b = '<ellipse cx="70" cy="132" rx="44" ry="10" fill="#141c26" stroke="#3a4b60"/><rect x="40" y="20" width="60" height="112" fill="url(#dkrC)" stroke="#3a4b60"/><ellipse cx="70" cy="20" rx="30" ry="7" fill="#2c3a4c" stroke="#3a4b60"/>' +
         '<rect x="56" y="30" width="28" height="96" rx="6" fill="#0c1118" stroke="' + c + '" stroke-opacity=".6"/><rect x="60" y="34" width="20" height="88" rx="4" fill="' + c + '" opacity=".45" class="pu"/>' +
         [50, 74, 98].map((y) => '<rect x="38" y="' + y + '" width="64" height="4" fill="#3a4b60"/>').join('');
+    else if (id === 'grind')
+      b = '<rect x="12" y="84" width="116" height="10" rx="2" fill="url(#dkrC)" stroke="#3a4b60"/><rect x="20" y="94" width="8" height="40" fill="#141c26"/><rect x="112" y="94" width="8" height="40" fill="#141c26"/>' +
+        '<circle cx="54" cy="56" r="20" fill="none" stroke="#3a4b60" stroke-width="8" stroke-dasharray="5 4"/><circle cx="54" cy="56" r="8" fill="#2c3a4c" stroke="' + c + '"/>' +
+        '<circle cx="90" cy="68" r="12" fill="none" stroke="' + c + '" stroke-opacity=".7" stroke-width="6" stroke-dasharray="4 3"/><circle cx="90" cy="68" r="4" fill="' + c + '" class="pu"/>';
     else if (id === 'trade')
       b = '<path d="M10,84 L130,84 L124,132 L16,132 Z" fill="url(#dkrC)" stroke="#3a4b60"/><rect x="6" y="78" width="128" height="8" rx="2" fill="#2c3a4c" stroke="#3a4b60"/><rect x="24" y="100" width="92" height="3" fill="' + c + '" opacity=".4"/>' +
         [[30, 4], [46, 6], [92, 5]].map(([x, n]) => Array.from({ length: n }, (_, i) => '<ellipse cx="' + (x + 6) + '" cy="' + (74 - i * 5) + '" rx="9" ry="3" fill="' + c + '" stroke="#8a6d1c" stroke-width=".8"/>').join('')).join('') +
