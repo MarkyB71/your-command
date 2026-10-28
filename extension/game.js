@@ -38,3 +38,40 @@
   setInterval(place, 1500);
   window.addEventListener('resize', place);
 })();
+
+// Lot colours: the game forgets "highlight building categories" on every load.
+// Once per page load, when the Filter Lots button appears, quietly open Filter Lots,
+// switch on the paint (highlight) icon for Building Categories, then close it again.
+// Only touches that one setting – never anything else in the game.
+(() => {
+  if (window.top !== window) return;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const filterBtn = () => document.querySelector('[data-tooltip-content="Filter Lots"]');
+  function catPaint() {
+    const title = [...document.querySelectorAll('span')].find(s => s.textContent.trim() === 'Building Categories');
+    if (!title) return null;
+    return [...document.querySelectorAll('[data-tooltip-content$="able highlighting"]')]
+      .find(b => title.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) || null;
+  }
+  let busy = false, done = false;
+  async function tryIt() {
+    if (busy || done) return;
+    const btn = filterBtn();
+    if (!btn) return; // not looking at an asteroid yet
+    busy = true;
+    try {
+      let p = catPaint();
+      const wasOpen = !!p;
+      if (!p) {
+        btn.click();
+        for (let i = 0; i < 30 && !(p = catPaint()); i++) await wait(100);
+      }
+      if (p) {
+        if (p.getAttribute('data-tooltip-content') === 'Enable highlighting') p.click();
+        done = true;
+      }
+      if (!wasOpen) { await wait(250); const b = filterBtn(); if (b) b.click(); }
+    } finally { busy = false; }
+  }
+  const t = setInterval(() => { if (done) clearInterval(t); else tryIt(); }, 1500);
+})();

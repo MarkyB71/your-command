@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Skippy's Command Deck",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Opens buildings, lots and ships from Skippy's Command Deck straight in your open Influence game tab — no reload.",
   "permissions": [
     "scripting"
