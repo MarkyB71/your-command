@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 515 – 28 Oct 2026 – Browser extension 0.4.5 (sent to the Chrome Web Store): crowned-S button in the game's side bar back to the Command Deck; switches the game's lot colours (Building Categories highlight) on at every load; download zip + README updated
+
 ## Version 506 – 28 Oct 2026 – Where to buy: Quickest / Economy choice (Economy = the trip up to 365 h that burns the least propellant)
 
 ## Version 504 – 28 Oct 2026 – Trade Deck: new 'Where to buy' console – nearest places selling a product, flight times there and back, propellant burned and its cost in SWAY, goods and total (one way if the rock sells propellant, else round trip on ½ tank)
