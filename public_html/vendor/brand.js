@@ -26,7 +26,7 @@
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
     // New titles (beta): "Your <Page>", no group word, no doubles
-    {const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',E:'Supply Chain',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Asteroid Planner',O:'Where to Buy'};if(NM[k])return ['Your',NM[k],''];}
+    {const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',E:'Supply Chain',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Asteroid Planner',O:'Where to Buy',G:'Fuel Check'};if(NM[k])return ['Your',NM[k],''];}
     // Trading and Planners read better without the group word
     if(k==='R')return ['Your','Travel Planner',''];
     if(GRP[k]==='Trading'||GRP[k]==='Planners')return ['Your',name,''];

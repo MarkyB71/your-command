@@ -15,7 +15,7 @@
     'Asteroids': ['#ffab3d','☄️',['A','X','F','E']],
     'Buildings': ['#b388ff','🏭',['B','T','L']],
     'Trading':   ['#f5c542','💰',['K','Y','M']],
-    'Planners':  ['#ff6fae','🧭',['R','Q','U']],
+    'Planners':  ['#ff6fae','🧭',['R','Q','U','G']],
     'Search':    ['#9aa8bb','🔍',['Z']]
   };
   var BY={};Object.keys(GROUPS).forEach(function(g){GROUPS[g][2].forEach(function(k){BY[k]=g})});
