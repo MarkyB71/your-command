@@ -37,54 +37,8 @@
   place();
   setInterval(() => {
     place();
-    root.querySelector('button').title = "Back to Skippy's Command Deck" + (window.__yicDiag ? '\n[lot colours: ' + window.__yicDiag + ']' : '');
+    root.querySelector('button').title = "Back to Skippy's Command Deck" + (document.documentElement.dataset.yicLotColours ? '\n[lot colours: ' + document.documentElement.dataset.yicLotColours + ']' : '');
   }, 1500);
   window.addEventListener('resize', place);
 })();
 
-// Lot colours: the game forgets "highlight building categories" on every load.
-// Once per page load, when the Filter Lots button appears, quietly open Filter Lots,
-// switch on the paint (highlight) icon for Building Categories, then close it again.
-// Only touches that one setting – never anything else in the game.
-(() => {
-  if (window.top !== window) return;
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  const filterBtn = () => document.querySelector('[data-tooltip-content="Filter Lots"]');
-  function catPaint() {
-    const title = [...document.querySelectorAll('span')].find(s => s.textContent.trim() === 'Building Categories');
-    if (!title) return null;
-    return [...document.querySelectorAll('[data-tooltip-content$="able highlighting"]')]
-      .find(b => title.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) || null;
-  }
-  let busy = false, done = false, tries = 0;
-  async function tryIt() {
-    if (busy || done) return;
-    const btn = filterBtn();
-    if (!btn) { // not looking at an asteroid yet
-      window.__yicDiag = 'waiting – no Filter Lots button (side bar labels: ' +
-        [...document.querySelectorAll('[data-tooltip-content]')].map(e => e.getAttribute('data-tooltip-content')).join(', ') + ')';
-      return;
-    }
-    if (++tries > 3) { done = true; return; } // give up quietly after 3 goes
-    busy = true;
-    try {
-      let p = catPaint();
-      const wasOpen = !!p;
-      if (!p) {
-        btn.click();
-        for (let i = 0; i < 30 && !(p = catPaint()); i++) await wait(100);
-      }
-      if (p) {
-        const st = p.getAttribute('data-tooltip-content');
-        if (st === 'Enable highlighting') p.click();
-        window.__yicDiag = st === 'Enable highlighting' ? 'clicked the paint icon' : 'already on';
-        done = true;
-      } else {
-        window.__yicDiag = 'opened Filter Lots but no Building Categories paint icon found (spans: ' +
-          [...document.querySelectorAll('span')].filter(x => /categor/i.test(x.textContent) && x.textContent.length < 40).map(x => x.textContent).join(', ') + ')';
-      }
-      if (!wasOpen) { await wait(250); const b = filterBtn(); if (b) b.click(); }
-    } finally { busy = false; }
-  }
-  const t = setInterval(() => { if (done) clearInterval(t); else tryIt(); }, 1500);
-})();

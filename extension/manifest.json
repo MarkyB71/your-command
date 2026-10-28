@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Skippy's Command Deck",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Opens buildings, lots and ships from Skippy's Command Deck straight in your open Influence game tab — no reload.",
   "permissions": [
     "scripting"
@@ -31,6 +31,16 @@
         "game.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://game.influenceth.io/*"
+      ],
+      "js": [
+        "lotcolours.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
     }
   ],
   "action": {
