@@ -16,7 +16,10 @@
   const CSS = `.wb-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
 .wb-row label{color:#8b9ab0;font-size:13px;display:flex;gap:6px;align-items:center}
 .wb-row select,.wb-row input[type=number]{font-size:15px;padding:6px 10px;min-width:0!important}
-.wb-row input[type=number]{width:120px!important}
+.wb-row input[type=number]{width:110px!important}
+.wb-one{flex-wrap:nowrap;overflow-x:auto;gap:8px}
+.wb-one select{max-width:230px}
+.wb-one #wb-a{width:80px!important}
 .wb-row input[type=checkbox]{width:18px;height:18px}
 .wb-box{background:#121a26;border:1px solid #2a3648;border-radius:10px;padding:12px 14px;margin:0 0 12px}
 .wb-box h3{margin:0 0 8px;font-size:14px;color:#ffd24a;font-weight:600}
@@ -24,7 +27,7 @@
 .wb-ok{color:#3fd68a}.wb-bad{color:#ff8a6b}.wb-dim{color:#8b9ab0;font-size:12px}
 .wb-best td{background:rgba(255,210,74,.08)}`;
 
-  const S = { p: '', amt: '', from: '', ship: '', prop: 'full', leave: 0, maxH: '', maxC: '', enough: false, fuelOnly: false };
+  const S = { p: '', amt: '', unit: 't', from: '', ship: '', prop: 'full', leave: 0, maxH: '', maxC: '', enough: false, fuelOnly: false };
   let run = 0;
   const memo = {};
   const ORB = {};
@@ -66,18 +69,20 @@
     }
     const bulk = S.p && !Y.isAt(S.p);
     if (S.amt === '') S.amt = bulk ? '100' : '10';
+    if (!bulk) S.unit = 't';
 
     const opt = (v, t, sel) => '<option value="' + v + '"' + (String(sel) === String(v) ? ' selected' : '') + '>' + esc(t) + '</option>';
     let h = '<div class="wb-note">Find the nearest place selling what you need – flight times, propellant burned and its cost in SWAY, and the total.</div>';
-    h += '<div class="wb-box"><h3>What do you need?</h3><div class="wb-row">' +
-      '<select id="wb-p">' + prods.map((p) => opt(p, pn(p), S.p)).join('') + '</select>' +
-      '<label>Amount <input id="wb-a" type="number" min="0" step="any" inputmode="decimal" value="' + esc(S.amt) + '"> ' + (bulk ? 'tonnes' : 'items') + '</label>' +
-      '<label>Flying from <select id="wb-f">' + rocks.map((r) => opt(r.id, r.name, S.from)).join('') + '</select></label></div>';
-    h += '<div class="wb-row"><label>Ship <select id="wb-s">' +
-      ships.map((s) => opt('s' + s.id, s.name + ' (' + s.type + ')', S.ship)).join('') +
+    h += '<div class="wb-box"><h3>What do you need?</h3><div class="wb-row wb-one">' +
+      '<select id="wb-p" title="Product">' + prods.map((p) => opt(p, pn(p), S.p)).join('') + '</select>' +
+      '<input id="wb-a" type="number" min="0" step="any" inputmode="decimal" title="Amount" value="' + esc(S.amt) + '">' +
+      (bulk ? '<select id="wb-u" title="Weight">' + opt('kg', 'kg', S.unit) + opt('t', 't', S.unit) + opt('kt', 'kt', S.unit) + '</select>' : '<span class="a">items</span>') +
+      '<label>from <select id="wb-f">' + rocks.map((r) => opt(r.id, r.name, S.from)).join('') + '</select></label>' +
+      '<label>in <select id="wb-s">' +
+      ships.map((s) => opt('s' + s.id, s.name, S.ship)).join('') +
       opt('t2', 'Standard Light Transport', S.ship) + opt('t3', 'Standard Heavy Transport', S.ship) + opt('t4', 'Standard Shuttle', S.ship) + '</select></label>' +
-      '<label>Propellant <select id="wb-pr">' + opt('full', 'Full tank', S.prop) + opt('now', 'As it is now', S.prop) + '</select></label>' +
-      '<label>Leave <select id="wb-l">' + [[0, 'Now'], [6, 'In 6 h'], [12, 'In 12 h'], [24, 'In 1 day'], [48, 'In 2 days']].map(([v, t]) => opt(v, t, S.leave)).join('') + '</select></label></div></div>';
+      '<select id="wb-pr" title="Propellant">' + opt('full', 'Full tank', S.prop) + opt('now', 'Tank as it is now', S.prop) + '</select>' +
+      '<select id="wb-l" title="When you leave">' + [[0, 'Leave now'], [6, 'In 6 h'], [12, 'In 12 h'], [24, 'In 1 day'], [48, 'In 2 days']].map(([v, t]) => opt(v, t, S.leave)).join('') + '</select></div></div>';
     h += '<div class="wb-box"><h3>Fine tune</h3><div class="wb-row">' +
       '<label>Max trip <input id="wb-mh" type="number" min="0" step="1" placeholder="any" value="' + esc(S.maxH) + '"> hours</label>' +
       '<label>Max total cost <input id="wb-mc" type="number" min="0" step="any" placeholder="any" value="' + esc(S.maxC) + '"> SWAY</label>' +
@@ -91,7 +96,7 @@
 
   function wire(m) {
     const set = (id, k, f) => { const e = m.querySelector('#' + id); if (e) e.addEventListener('change', () => { S[k] = f ? f(e) : e.value; if (k === 'p') S.amt = ''; if (k === 'ship') S.from = ''; page(m); }); };
-    set('wb-p', 'p'); set('wb-f', 'from'); set('wb-s', 'ship'); set('wb-pr', 'prop'); set('wb-l', 'leave', (e) => +e.value);
+    set('wb-p', 'p'); set('wb-u', 'unit'); set('wb-f', 'from'); set('wb-s', 'ship'); set('wb-pr', 'prop'); set('wb-l', 'leave', (e) => +e.value);
     set('wb-en', 'enough', (e) => e.checked); set('wb-fo', 'fuelOnly', (e) => e.checked);
     // typing: wait a moment, then redo the results only (the boxes keep focus)
     [['wb-a', 'amt'], ['wb-mh', 'maxH'], ['wb-mc', 'maxC']].forEach(([id, k]) => {
@@ -114,7 +119,7 @@
     const want = parseFloat(S.amt);
     if (!p) { out.innerHTML = '<div class="note">Nothing is for sale on the belt right now.</div>'; return; }
     if (!(want > 0)) { out.innerHTML = '<div class="note">Enter how much you need.</div>'; return; }
-    const units = bulk ? want * 1e6 / uM(p) : want;
+    const units = bulk ? want * ({ kg: 1e3, t: 1e6, kt: 1e9 })[S.unit || 't'] / uM(p) : want;
 
     // propellant price per kg: cheapest on the belt, and cheapest on each asteroid
     const pkg = (o) => o[3] * (1 + fee(o[4])) / 1e6 * 1000 / uM(PROP);
