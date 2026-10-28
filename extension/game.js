@@ -1,47 +1,78 @@
-// Skippy's Command Deck – runs on game.influenceth.io only.
-// Adds a crowned-S button to the bottom of the game's right-hand side bar (or, if the
-// side bar isn't showing, a small floating one). Clicking it switches to your Command
-// Deck tab (or opens it). It reads nothing from the game and sends nothing anywhere.
+// Skippy's Command Deck – runs on game.influenceth.io only (isolated from the game's code).
+// - Reads your choices from the extension's options and passes them to lotcolours.js.
+// - Command Deck button: a crowned S at the bottom of the game's right-hand side bar.
+// - Hide used deposits: unticks "Show Used Deposits" once each time the core sample picker opens.
+// It reads nothing from the game beyond what it needs to place the button / find that tick box,
+// and sends nothing anywhere.
 (() => {
   if (window.top !== window || document.getElementById('yic-s')) return;
-  const icon = chrome.runtime.getURL('icons/icon48.png');
-  const go = e => { e.preventDefault(); e.stopPropagation(); chrome.runtime.sendMessage({ type: 'yic-deck' }); };
-  const TIP = "Skippy's Command Deck";
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true };
 
-  // Side bar button – borrows the game's own button look and tooltip.
-  const s = document.createElement('div');
-  s.id = 'yic-s';
-  s.setAttribute('data-tooltip-id', 'hudMenuTooltip');
-  s.setAttribute('data-tooltip-place', 'left');
-  s.setAttribute('data-tooltip-content', TIP);
-  s.setAttribute('role', 'button');
-  s.innerHTML = `<img src="${icon}" alt="${TIP}" style="width:28px;height:28px;display:block;pointer-events:none">`;
-  s.addEventListener('click', go);
+  chrome.storage.sync.get(DEFAULTS, opts => {
+    // Hand the choices to the page-side script (lotcolours.js) through a page attribute.
+    document.documentElement.dataset.yicOpts = JSON.stringify(opts);
+    if (opts.sideButton) sideButton();
+    if (opts.hideUsedDeposits) hideUsed();
+  });
 
-  // Floating fallback when there is no side bar.
-  const host = document.createElement('div');
-  host.style.cssText = 'position:fixed;right:15px;bottom:120px;z-index:2147483647;display:none';
-  const root = host.attachShadow({ mode: 'closed' });
-  root.innerHTML = `<style>
-    button{width:40px;height:40px;padding:5px;border-radius:6px;border:1px solid rgba(79,179,255,.45);
-      background:rgba(8,14,24,.85);cursor:pointer;box-shadow:0 0 6px rgba(79,179,255,.35)}
-    button:hover{border-color:#4fb3ff;box-shadow:0 0 14px rgba(79,179,255,.9)}
-    img{width:28px;height:28px;display:block;margin:auto}
-  </style><button type="button" title="${TIP}"><img src="${icon}" alt=""></button>`;
-  root.querySelector('button').addEventListener('click', go);
+  function sideButton() {
+    const icon = chrome.runtime.getURL('icons/icon48.png');
+    const go = e => { e.preventDefault(); e.stopPropagation(); chrome.runtime.sendMessage({ type: 'yic-deck' }); };
+    const TIP = "Skippy's Command Deck";
 
-  function dock() {
-    if (!host.isConnected) (document.body || document.documentElement).appendChild(host);
-    const btns = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')].filter(b => b !== s);
-    if (!btns.length) { if (s.isConnected) s.remove(); host.style.display = ''; return; }
-    host.style.display = 'none';
-    // Most common class = the game's normal (not selected) side bar button.
-    const n = {}; btns.forEach(b => { n[b.className] = (n[b.className] || 0) + 1; });
-    const cls = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
-    if (s.className !== cls) s.className = cls;
-    const last = btns[btns.length - 1];
-    if (s.previousElementSibling !== last) last.after(s);
+    // Side bar button – borrows the game's own button look and tooltip.
+    const s = document.createElement('div');
+    s.id = 'yic-s';
+    s.setAttribute('data-tooltip-id', 'hudMenuTooltip');
+    s.setAttribute('data-tooltip-place', 'left');
+    s.setAttribute('data-tooltip-content', TIP);
+    s.setAttribute('role', 'button');
+    s.innerHTML = `<img src="${icon}" alt="${TIP}" style="width:28px;height:28px;display:block;pointer-events:none">`;
+    s.addEventListener('click', go);
+
+    // Floating fallback when there is no side bar.
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;right:15px;bottom:120px;z-index:2147483647;display:none';
+    const root = host.attachShadow({ mode: 'closed' });
+    root.innerHTML = `<style>
+      button{width:40px;height:40px;padding:5px;border-radius:6px;border:1px solid rgba(79,179,255,.45);
+        background:rgba(8,14,24,.85);cursor:pointer;box-shadow:0 0 6px rgba(79,179,255,.35)}
+      button:hover{border-color:#4fb3ff;box-shadow:0 0 14px rgba(79,179,255,.9)}
+      img{width:28px;height:28px;display:block;margin:auto}
+    </style><button type="button" title="${TIP}"><img src="${icon}" alt=""></button>`;
+    root.querySelector('button').addEventListener('click', go);
+
+    function dock() {
+      if (!host.isConnected) (document.body || document.documentElement).appendChild(host);
+      const btns = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')].filter(b => b !== s);
+      if (!btns.length) { if (s.isConnected) s.remove(); host.style.display = ''; return; }
+      host.style.display = 'none';
+      // Most common class = the game's normal (not selected) side bar button.
+      const n = {}; btns.forEach(b => { n[b.className] = (n[b.className] || 0) + 1; });
+      const cls = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
+      if (s.className !== cls) s.className = cls;
+      const last = btns[btns.length - 1];
+      if (s.previousElementSibling !== last) last.after(s);
+    }
+    dock();
+    setInterval(dock, 1000);
   }
-  dock();
-  setInterval(dock, 1000);
+
+  function hideUsed() {
+    // The picker always opens with "Show Used Deposits" ticked. Each time a new picker
+    // appears, click that tick box once – the same as you doing it. Never touches it again,
+    // so you can tick it back on yourself.
+    const seen = new WeakSet();
+    const X = "//*[text()[normalize-space()='Show Used Deposits']]";
+    function check() {
+      const r = document.evaluate(X, document.body, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+      for (let i = 0; i < r.snapshotLength; i++) {
+        const el = r.snapshotItem(i);
+        if (seen.has(el)) continue;
+        seen.add(el);
+        el.click();
+      }
+    }
+    setInterval(check, 400);
+  }
 })();

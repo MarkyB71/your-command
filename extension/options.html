@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skippy's Command Deck – options</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#070b12;color:#d7e6f5;font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:640px;margin:0 auto;padding:28px 18px}
+  h1{display:flex;align-items:center;gap:12px;font-size:22px;margin:0 0 4px;color:#8fe3ff;text-shadow:0 0 10px rgba(79,179,255,.5)}
+  h1 img{width:40px;height:40px}
+  .sub{color:#8b9ab0;margin:0 0 22px}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#4fb3ff;margin:22px 0 8px}
+  label{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;margin:0 0 10px;border:1px solid #1e2a3a;
+    border-radius:10px;background:#0c1320;cursor:pointer}
+  label:hover{border-color:#4fb3ff;box-shadow:0 0 10px rgba(79,179,255,.25)}
+  input{width:20px;height:20px;margin:2px 0 0;accent-color:#4fb3ff;flex:none}
+  b{display:block;color:#fff}
+  span.d{color:#9fb0c4;font-size:14px}
+  .foot{color:#8b9ab0;font-size:13px;margin-top:18px}
+  #saved{color:#3fd68a;font-weight:600;margin-left:8px}
+</style></head>
+<body><main>
+  <h1><img src="icons/icon48.png" alt="">Skippy's Command Deck</h1>
+  <p class="sub">Choose which game tweaks you want. Each one only changes how the game looks or what it shows you – none of them play the game for you.<span id="saved"></span></p>
+  <div id="opts">
+    <h2>In the game</h2>
+    <label><input type="checkbox" name="lotColours"><span><b>Keep lot colours on</b>
+      <span class="d">Switches on Filter Lots › Building Categories colours each time the game loads, so you don't have to click the paint icon.</span></span></label>
+    <label><input type="checkbox" name="hideUsedDeposits"><span><b>Hide used deposits</b>
+      <span class="d">When you choose a core sample to extract from, "Show Used Deposits" starts unticked, so only untouched samples show. You can still tick it.</span></span></label>
+    <label><input type="checkbox" name="sideButton"><span><b>Command Deck button in the game</b>
+      <span class="d">Adds the crowned S to the bottom of the game's right-hand side bar. Click it to jump back to your Command Deck.</span></span></label>
+  </div>
+  <p class="foot">Changes apply when you reload the game tab. Your choices are saved in your browser only.</p>
+</main><script src="options.js"></script></body></html>

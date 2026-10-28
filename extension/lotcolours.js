@@ -2,7 +2,7 @@
 // The game forgets "highlight building categories" every time it loads. Once per load,
 // this finds the game's own settings store and switches that one highlight back on –
 // exactly what clicking the paint icon in Filter Lots › Building Categories does.
-// Works whatever you have selected. Touches nothing else and sends nothing anywhere.
+// Works whatever you have selected. Can be switched off in the extension's options. Touches nothing else and sends nothing anywhere.
 (() => {
   if (window.top !== window) return;
   const COLOURS = { // the game's own Building Categories colours
@@ -39,6 +39,10 @@
   const t = setInterval(() => {
     if (++tries > 120) { clearInterval(t); note('gave up – game store not found'); return; }
     try {
+      // Wait for game.js to pass on your options; stop if this tweak is switched off.
+      const raw = document.documentElement.dataset.yicOpts;
+      if (!raw) return;
+      if (JSON.parse(raw).lotColours === false) { clearInterval(t); note('switched off in options'); return; }
       const s = [...stores()];
       if (!s.length) return;
       if (!s.some(x => x.assetSearch?.lotsMapped?.highlight?.field === 'category')) {
