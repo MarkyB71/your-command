@@ -35,7 +35,10 @@
     host.style.top = ''; host.style.bottom = '120px';
   }
   place();
-  setInterval(place, 1500);
+  setInterval(() => {
+    place();
+    root.querySelector('button').title = "Back to Skippy's Command Deck" + (window.__yicDiag ? '\n[lot colours: ' + window.__yicDiag + ']' : '');
+  }, 1500);
   window.addEventListener('resize', place);
 })();
 
@@ -53,11 +56,16 @@
     return [...document.querySelectorAll('[data-tooltip-content$="able highlighting"]')]
       .find(b => title.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) || null;
   }
-  let busy = false, done = false;
+  let busy = false, done = false, tries = 0;
   async function tryIt() {
     if (busy || done) return;
     const btn = filterBtn();
-    if (!btn) return; // not looking at an asteroid yet
+    if (!btn) { // not looking at an asteroid yet
+      window.__yicDiag = 'waiting – no Filter Lots button (side bar labels: ' +
+        [...document.querySelectorAll('[data-tooltip-content]')].map(e => e.getAttribute('data-tooltip-content')).join(', ') + ')';
+      return;
+    }
+    if (++tries > 3) { done = true; return; } // give up quietly after 3 goes
     busy = true;
     try {
       let p = catPaint();
@@ -67,8 +75,13 @@
         for (let i = 0; i < 30 && !(p = catPaint()); i++) await wait(100);
       }
       if (p) {
-        if (p.getAttribute('data-tooltip-content') === 'Enable highlighting') p.click();
+        const st = p.getAttribute('data-tooltip-content');
+        if (st === 'Enable highlighting') p.click();
+        window.__yicDiag = st === 'Enable highlighting' ? 'clicked the paint icon' : 'already on';
         done = true;
+      } else {
+        window.__yicDiag = 'opened Filter Lots but no Building Categories paint icon found (spans: ' +
+          [...document.querySelectorAll('span')].filter(x => /categor/i.test(x.textContent) && x.textContent.length < 40).map(x => x.textContent).join(', ') + ')';
       }
       if (!wasOpen) { await wait(250); const b = filterBtn(); if (b) b.click(); }
     } finally { busy = false; }
