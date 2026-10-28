@@ -57,7 +57,7 @@ export function drawMarketHistory(m){
     ps.innerHTML='<option value="">All products</option>'+prods.map(p=>'<option value="'+p+'"'+(String(p)===S.prod?' selected':'')+'>'+esc(pName(p))+'</option>').join('');
     const mks=[...new Set(T.map(r=>r[5]))].map(id=>[id,(MK[id]&&MK[id].name)||('Marketplace #'+id)]).sort((a,b)=>a[1].localeCompare(b[1]));
     ms.innerHTML='<option value="">All marketplaces</option>'+mks.map(([id,n])=>'<option value="'+id+'"'+(String(id)===S.mk?' selected':'')+'>'+esc(n)+'</option>').join('');
-    me.innerHTML='<input type="checkbox"'+(S.mine?' checked':'')+' style="width:16px;height:16px;vertical-align:-2px;margin-right:6px">Only my trades';me.style.cursor='pointer';
+    me.innerHTML='<input type="checkbox"'+(S.mine?' checked':'')+' style="width:18px!important;height:18px!important;min-width:0!important;margin:0!important;padding:0!important;flex:none!important">Only my trades';me.style.cssText+=';cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap';
     q.placeholder='Search';q.value=S.q;
     ps.addEventListener('change',()=>{S.prod=ps.value;S.show=200;draw()});ms.addEventListener('change',()=>{S.mk=ms.value;S.show=200;draw()});
     me.querySelector('input').addEventListener('change',e=>{S.mine=e.target.checked;S.show=200;draw()});
