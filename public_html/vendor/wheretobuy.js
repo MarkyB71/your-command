@@ -83,11 +83,6 @@
       opt('t2', 'Standard Light Transport', S.ship) + opt('t3', 'Standard Heavy Transport', S.ship) + opt('t4', 'Standard Shuttle', S.ship) + '</select></label>' +
       '<select id="wb-pr" title="Propellant">' + opt('full', 'Full tank', S.prop) + opt('now', 'Tank as it is now', S.prop) + '</select>' +
       '<select id="wb-l" title="When you leave">' + [[0, 'Leave now'], [6, 'In 6 h'], [12, 'In 12 h'], [24, 'In 1 day'], [48, 'In 2 days']].map(([v, t]) => opt(v, t, S.leave)).join('') + '</select></div></div>';
-    h += '<div class="wb-box"><h3>Fine tune</h3><div class="wb-row">' +
-      '<label>Max trip <input id="wb-mh" type="number" min="0" step="1" placeholder="any" value="' + esc(S.maxH) + '"> hours</label>' +
-      '<label>Max total cost <input id="wb-mc" type="number" min="0" step="any" placeholder="any" value="' + esc(S.maxC) + '"> SWAY</label>' +
-      '<label><input id="wb-en" type="checkbox"' + (S.enough ? ' checked' : '') + '> Only places with enough</label>' +
-      '<label><input id="wb-fo" type="checkbox"' + (S.fuelOnly ? ' checked' : '') + '> Only places selling propellant</label></div></div>';
     h += '<div id="wb-out"></div>';
     m.innerHTML = h;
     wire(m);
