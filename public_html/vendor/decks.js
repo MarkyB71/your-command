@@ -48,7 +48,7 @@ body > header{display:none!important}
 #dktools #wc-top.dk-wal:hover,#dktools #wc-top.dk-wal:focus-visible{background:#10261c!important;box-shadow:0 0 14px rgba(63,214,138,.5)!important}
 #dktools > div:not([data-srch]){display:none!important}
 #dkdl{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin:26px 16px 6px;text-align:center}
-#dkdl [data-inf="1"]{font-size:12px;color:#8b9ab0}
+#dkdl [data-inf="1"]{display:none!important}
 #dktools [data-srch="2"]{padding:0!important}
 #dktools [data-srch="2"] input{width:170px!important;min-width:0!important;padding:5px 9px!important;font-size:12px!important}
 /* phones (Mark asked for a phone check, 27 Oct): menu not sticky so it doesn't eat the screen, deck tabs on one swipe row, screen full width */
