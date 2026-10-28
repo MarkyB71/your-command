@@ -21,6 +21,8 @@
     if (!f) return;
     var s = document.getElementById('sup');
     if (s && s.nextElementSibling === f) return;
+    /* the Report-a-problem line (#repl) sits between this strip and the footer – leave it, or the two keep swapping places */
+    if (s && s.nextElementSibling && s.nextElementSibling.id === 'repl' && s.nextElementSibling.nextElementSibling === f) return;
     if (!s) {
       s = document.createElement('div'); s.id = 'sup';
       s.innerHTML = 'Enjoying the Command Deck? ' +
