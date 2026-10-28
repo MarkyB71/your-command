@@ -14,7 +14,7 @@
     { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#3fd68a', pages: ['C', 'Q'] },
     { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', pages: ['A', 'X', 'F', 'E'] },
     { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', pages: ['H', 'P', 'U', 'B', 'T', 'L'] },
-    { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W'] },
+    { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W', 'O'] },
   ];
   window.YICDECKLIST = DECKS;
 
@@ -101,7 +101,7 @@ body > header{display:none!important}
     C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
     E: 'Who can mine what', H: 'How things are made', P: 'Stock by product', U: 'What to build where',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
-    Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator',
+    Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel',
   };
   const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board' };
   const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter' };
