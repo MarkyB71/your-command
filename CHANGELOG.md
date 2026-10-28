@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 506 – 28 Oct 2026 – Where to buy: Quickest / Economy choice (Economy = the trip up to 365 h that burns the least propellant)
+
 ## Version 504 – 28 Oct 2026 – Trade Deck: new 'Where to buy' console – nearest places selling a product, flight times there and back, propellant burned and its cost in SWAY, goods and total (one way if the rock sells propellant, else round trip on ½ tank)
 
 ## Version 502 – 28 Oct 2026 – Market history: 'Only my trades' tick box lined up with its label
