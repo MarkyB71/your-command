@@ -24,7 +24,7 @@
 .wb-ok{color:#3fd68a}.wb-bad{color:#ff8a6b}.wb-dim{color:#8b9ab0;font-size:12px}
 .wb-best td{background:rgba(255,210,74,.08)}`;
 
-  const S = { p: '', amt: '', unit: 't', from: '', ship: '', prop: 'full', leave: 0, maxH: '', maxC: '', enough: false, fuelOnly: false };
+  const S = { p: '', amt: '', unit: 't', from: '', ship: '', prop: 'full', leave: 0, speed: 'fast', maxH: '', maxC: '', enough: false, fuelOnly: false };
   let run = 0;
   const memo = {};
   const ORB = {};
@@ -79,6 +79,7 @@
       ships.map((s) => opt('s' + s.id, s.name, S.ship)).join('') +
       opt('t2', 'Standard Light Transport', S.ship) + opt('t3', 'Standard Heavy Transport', S.ship) + opt('t4', 'Standard Shuttle', S.ship) + '</select></label>' +
       '<select id="wb-pr" title="Propellant">' + opt('full', 'Full tank', S.prop) + opt('now', 'Tank as it is now', S.prop) + '</select>' +
+      '<select id="wb-sp" title="Quickest trip, or a slower one that burns much less propellant">' + opt('fast', 'Quickest', S.speed) + opt('eco', 'Economy', S.speed) + '</select>' +
       '<select id="wb-l" title="When you leave">' + [[0, 'Leave now'], [6, 'In 6 h'], [12, 'In 12 h'], [24, 'In 1 day'], [48, 'In 2 days']].map(([v, t]) => opt(v, t, S.leave)).join('') + '</select></div></div>';
     h += '<div id="wb-out"></div>';
     m.innerHTML = h;
@@ -88,7 +89,7 @@
 
   function wire(m) {
     const set = (id, k, f) => { const e = m.querySelector('#' + id); if (e) e.addEventListener('change', () => { S[k] = f ? f(e) : e.value; if (k === 'p') S.amt = ''; if (k === 'ship') S.from = ''; page(m); }); };
-    set('wb-p', 'p'); set('wb-u', 'unit'); set('wb-f', 'from'); set('wb-s', 'ship'); set('wb-pr', 'prop'); set('wb-l', 'leave', (e) => +e.value);
+    set('wb-p', 'p'); set('wb-u', 'unit'); set('wb-f', 'from'); set('wb-s', 'ship'); set('wb-pr', 'prop'); set('wb-l', 'leave', (e) => +e.value); set('wb-sp', 'speed');
     set('wb-en', 'enough', (e) => e.checked); set('wb-fo', 'fuelOnly', (e) => e.checked);
     // typing: wait a moment, then redo the results only (the boxes keep focus)
     [['wb-a', 'amt'], ['wb-mh', 'maxH'], ['wb-mc', 'maxC']].forEach(([id, k]) => {
@@ -161,11 +162,25 @@
     const burn = (dv, wet) => wet * (1 - Math.exp(-dv / ve));
     const dep = (Date.now() / 1000 - 1609459200) / 3600 + S.leave;
     const depH = Math.floor(dep);
+    // Economy: the trip length (up to 365 h) that burns the least propellant
+    const STEPS = [];
+    for (let x = 1; x <= 48; x++) STEPS.push(x);
+    for (let x = 51; x <= 120; x += 3) STEPS.push(x);
+    for (let x = 126; x <= 365; x += 6) STEPS.push(x);
+    const eco = async (oa, ob, t, maxDv) => {
+      let best = null;
+      for (const tof of STEPS) {
+        let dv;
+        try { dv = await T.deltaV(oa, ob, t, tof); } catch (e) { continue; }
+        if (dv <= maxDv && (!best || dv < best.dv)) best = { tof, dv };
+      }
+      return best;
+    };
     const fast = async (a, b, t, maxDv) => {
-      const k = a + '>' + b + '>' + Math.floor(t) + '>' + Math.round(maxDv);
+      const k = S.speed + '>' + a + '>' + b + '>' + Math.floor(t) + '>' + Math.round(maxDv);
       if (!(k in memo)) {
         if (!ORB[a] || !ORB[b]) return null;
-        memo[k] = await T.fastest(ORB[a].o, ORB[b].o, Math.floor(t), maxDv);
+        memo[k] = S.speed === 'eco' ? await eco(ORB[a].o, ORB[b].o, Math.floor(t), maxDv) : await T.fastest(ORB[a].o, ORB[b].o, Math.floor(t), maxDv);
         await new Promise((r) => setTimeout(r, 0));
       }
       return memo[k];
@@ -226,7 +241,7 @@
     list.sort((a, b) => (ok(b) - ok(a)) || ((a.h * a.trips) - (b.h * b.trips)) || (a.total - b.total));
 
     const price = (raw) => bulk ? num(raw / 1e6 * 1000 / uM(p)) + ' <span class="a">/kg</span>' : num(raw / 1e6) + ' <span class="a">each</span>';
-    let h = '<div class="wb-note">' + esc(pn(p)) + ' from ' + esc(fromName) + ' with ' + esc(label) + (bonus > 1 ? ' (engine bonus ×' + bonus.toFixed(2) + ')' : '') +
+    let h = '<div class="wb-note">' + esc(pn(p)) + ' from ' + esc(fromName) + ' with ' + esc(label) + (S.speed === 'eco' ? ' · economy trips' : ' · quickest trips') + (bonus > 1 ? ' (engine bonus ×' + bonus.toFixed(2) + ')' : '') +
       ' · ' + Y.fmtT(P / 1000) + ' propellant · ' + list.length + ' of ' + rows.length + ' places shown' +
       (hidden.far ? ' · ' + hidden.far + ' too far' : '') + (hidden.dear ? ' · ' + hidden.dear + ' over budget' : '') +
       (beltFuel === null ? ' · <span class="wb-bad">no propellant for sale on the belt, so fuel cost is unknown</span>' : ' · cheapest propellant on the belt ' + num(beltFuel) + ' SWAY/kg') + '</div>';
@@ -255,7 +270,7 @@
       'market fee included; your own listings are skipped. Propellant = burned there and back' +
       ' (for more than one trip, all trips). Fuel cost: one way – what you burned getting there, bought on that asteroid, ' +
       'plus the way home at the cheapest belt price; round trip – everything at the cheapest belt price. ' +
-      'Same maths as the game\'s route planner. Food and waiting for a better launch window are not included.</div>';
+      'Quickest = the shortest trip this ship can make; Economy = the trip (up to 365 h) that burns the least propellant. Same maths as the game\'s route planner. Food and waiting for a better launch window are not included.</div>';
     out.innerHTML = h;
   }
 
