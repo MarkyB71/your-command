@@ -1,0 +1,24 @@
+# Runs the extension checks (tools/check-extension.mjs) by itself whenever the
+# extension, its download zip or the checks change. A red ✗ on GitHub = something to look at
+# before sending a new version to the Chrome Web Store.
+name: Extension checks
+on:
+  push:
+    paths:
+      - 'extension/**'
+      - 'public_html/downloads/skippys-command-deck.zip'
+      - 'tools/check-extension.mjs'
+      - '.github/workflows/extension-checks.yml'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.48.2
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/check-extension.mjs

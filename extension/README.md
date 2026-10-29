@@ -67,3 +67,6 @@ From the repo root:
     (cd /tmp/scd && zip -qrX skippys-command-deck.zip skippys-command-deck)
     mv /tmp/scd/skippys-command-deck.zip public_html/downloads/
     sha256sum public_html/downloads/skippys-command-deck.zip   # update the checksum above
+
+## Checks before every release
+`node tools/check-extension.mjs` (from the repo root) checks the files (manifest, permissions, no remote code, CHANGES.md, download zip) and then loads the extension in a real Chromium against stand-in copies of the site and the game: in-game links, refusing bad links, the S button, hide used deposits, and the options page. GitHub runs it by itself whenever `extension/` or the zip changes (Actions tab › Extension checks).
