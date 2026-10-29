@@ -17,11 +17,9 @@
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W', 'O'] },
   ];
   // The Daily Grind – the everyday workload, one deck for routine checks (Mark, 28 Oct 2026). LIVE 29 Oct.
-  // TEST (?beta=1, 29 Oct 2026): Daily Grind and Fuel check (page G) removed for now (Mark) – code kept to bring back later.
+  // REMOVED for now (Mark, 29 Oct 2026, LIVE): The Daily Grind deck and Fuel check (page G). Code kept in
+  // deck-grind.js / fuelcheck.js – to bring back, push { id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] }.
   DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'G');
-  if (!/[?&]beta=1/.test(location.search)) {
-    DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
-  }
   // The SkippyChain moves to the Bridge – it covers the whole game, not just Engineering (Mark, 29 Oct). 
   {
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'H');
