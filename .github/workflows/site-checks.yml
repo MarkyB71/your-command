@@ -1,0 +1,26 @@
+# Clicks every deck and page of the site in a real browser on every change to public_html,
+# BEFORE it is deployed in cPanel. Green ✓ = safe to deploy; red ✗ = look first.
+# The new code is served on GitHub's machine; game data is read from the live site (read only).
+name: Site checks
+on:
+  push:
+    paths:
+      - 'public_html/**'
+      - 'tools/check-site.mjs'
+      - '.github/workflows/site-checks.yml'
+  workflow_dispatch:
+concurrency:
+  group: site-checks
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.63.0
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/check-site.mjs
