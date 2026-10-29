@@ -173,13 +173,18 @@ try {
   const fast = [await ask('/lot/1'), await ask('/lot/2')];
   check(fast[1] && fast[1].ok === false, 'two links within 0.7 s: the second is held back', 'rate limit not working: ' + JSON.stringify(fast));
 
-  // Game page: S button docks after the last side bar button, with the usual button class
-  if (gtab) {
+  // Game page: S button docks after the last side bar button, with the usual button class.
+  // A fresh game tab, so nothing from the link tests above can get in the way.
+  const game = await ctx.newPage();
+  await game.goto(GAME + '/');
+  const what = () => game.evaluate(() => location.href + ' · ' + document.body.innerHTML.replace(/\s+/g, ' ').slice(0, 160)).catch(e => e.message);
+  if (game) {
+    const gtab = game;
     const dock = await gtab.waitForFunction(() => {
       const s = document.getElementById('yic-s'); const bar = document.getElementById('bar');
       return s && s.parentElement === bar && bar.lastElementChild === s && s.className === 'hudBtn' && s.querySelector('img').naturalWidth > 0;
     }, null, { timeout: 5000 }).then(() => true).catch(() => false);
-    check(dock, 'S button sits at the bottom of the game side bar, game look, icon loads', 'S button not docked properly');
+    check(dock, 'S button sits at the bottom of the game side bar, game look, icon loads', 'S button not docked properly: ' + await what());
     const unticked = await gtab.waitForFunction(() => document.getElementById('usedTxt').dataset.on === '0', null, { timeout: 3000 }).then(() => true).catch(() => false);
     check(unticked, '"Show Used Deposits" unticked once', '"Show Used Deposits" was not unticked');
     await gtab.click('#usedTxt'); await new Promise(r => setTimeout(r, 1000));
