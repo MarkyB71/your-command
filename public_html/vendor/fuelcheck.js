@@ -41,21 +41,23 @@
   // Can this rock make prod? Raws must be mineable here; every made step needs a working facility here.
   function canMake(Y, D, ast, prod, seen) {
     const R = window.YICREC; if (!R) return false;
-    if (+prod <= 22) {
-      const c = ast.Celestial || {};
-      if ((c.scanStatus || 0) >= 4 && c.abundances && Y.astAbund) return (Y.astAbund(c.abundances)[prod] || 0) > 0;
-      const sp = (Y.SPEC || {})[c.celestialType]; return !!(sp && sp[1].includes(+prod));
-    }
+    // raws: mined here, or else made from other things (e.g. Hydrogen from Water or Methane – Mark, 29 Oct)
+    if (+prod <= 22 && mineable(Y, ast, prod)) return true;
     if (seen[prod]) return false; seen = Object.assign({}, seen, { [prod]: 1 });
     return (R.MK[prod] || []).some(([, pt, inp, , out]) => hasFac(D, ast.id, R.FBT[pt]) &&
       Object.keys(inp).every((k) => (out && out[k]) || canMake(Y, D, ast, k, seen)));
+  }
+  function mineable(Y, ast, prod) {
+    const c = ast.Celestial || {};
+    if ((c.scanStatus || 0) >= 4 && c.abundances && Y.astAbund) return (Y.astAbund(c.abundances)[prod] || 0) > 0;
+    const sp = (Y.SPEC || {})[c.celestialType]; return !!(sp && sp[1].includes(+prod));
   }
   function hasFac(D, astId, type) {
     return (D.allB || []).some((b) => b.Building && b.Building.buildingType === type && b.Building.status === 3 && astOf(b) === astId);
   }
   // The raw materials the fuel needs on this rock (first recipe at each step that works here).
   function raws(Y, D, ast, prod, seen, out) {
-    if (+prod <= 22) { out.add(String(prod)); return; }
+    if (+prod <= 22 && mineable(Y, ast, prod)) { out.add(String(prod)); return; }
     if (seen[prod]) return; seen = Object.assign({}, seen, { [prod]: 1 });
     const R = window.YICREC;
     const r = (R.MK[prod] || []).find(([, pt, inp, , o]) => hasFac(D, ast.id, R.FBT[pt]) &&
