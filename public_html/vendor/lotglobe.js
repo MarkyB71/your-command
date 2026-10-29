@@ -1,4 +1,4 @@
-/* Resource globe – Your Influence Command (Mark, 29 Oct 2026) – TEST on ?beta=1
+/* Resource map (was Resource globe) – Your Influence Command (Mark, 29 Oct 2026) – TEST on ?beta=1
    Science Lab console. Once you've scanned a rock in the game, every lot has a level for every
    resource. This shows the rock as a spinning globe with each lot glowing by how rich it is in the
    resource you pick. Drag to turn it, hover a lot for its number and level, click a top lot to
@@ -400,7 +400,7 @@
     if (!after || !main || document.getElementById('vI')) return;
     const b = document.createElement('button');
     b.id = 'vI';
-    b.textContent = 'Resource globe';
+    b.textContent = 'Resource map';
     after.after(b);
     b.addEventListener('click', () => {
       document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
