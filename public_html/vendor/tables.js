@@ -23,7 +23,6 @@
     '.yic-flt button{padding:4px 10px;font-size:13px}';
 
   // Filter box above long tables (TEST: ?beta=1 only, 26 Oct 2026)
-  var FLT = /[?&]beta=1/.test(location.search);
   var FMIN = 8;                 // only tables with at least this many rows get a box
   var ftext = {};               // what was typed, per page + table, kept across redraws
 
@@ -191,7 +190,7 @@
         mark(hs, s);
       }
       stripes(t);
-      if (FLT && t.tHead) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
+      if (t.tHead) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
     });
     busy = false;
     stick();

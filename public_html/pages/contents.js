@@ -6,9 +6,8 @@
   'use strict';
 
   // Cards or one table – TEST on ?beta=1 (26 Oct 2026). Default cards; the choice is remembered.
-  const TV = /[?&]beta=1/.test(location.search);
   const LS = 'yic-contents-view';
-  function mode() { if (!TV) return 'cards'; try { return localStorage.getItem(LS) === 'table' ? 'table' : 'cards'; } catch (e) { return 'cards'; } }
+  function mode() { try { return localStorage.getItem(LS) === 'table' ? 'table' : 'cards'; } catch (e) { return 'cards'; } }
   function setMode(v) { try { localStorage.setItem(LS, v); } catch (e) {} }
   const TV_CSS = '<style>.ct-sw{display:inline-flex;gap:0;margin:0 0 12px;border:1px solid #3a4658;border-radius:8px;overflow:hidden}' +
     '.ct-sw button{border:0;border-radius:0;padding:7px 16px;font-size:15px;background:transparent;color:#c8d3e0;cursor:pointer}' +
@@ -61,7 +60,7 @@
       if (cards) h += '<h2>' + esc(a.name) + '</h2><div class="grid">' + cards + '</div>';
     });
 
-    const sw = TV ? TV_CSS + '<div class="ct-sw" role="group" aria-label="Show as"><button type="button" data-cv="cards"' + (tableView ? '' : ' class="on"') + '>▦ Cards</button><button type="button" data-cv="table"' + (tableView ? ' class="on"' : '') + '>☰ Table</button></div>' : '';
+    const sw = TV_CSS + '<div class="ct-sw" role="group" aria-label="Show as"><button type="button" data-cv="cards"' + (tableView ? '' : ' class="on"') + '>▦ Cards</button><button type="button" data-cv="table"' + (tableView ? ' class="on"' : '') + '>☰ Table</button></div>';
     if (tableView) {
       h = rows ? '<div class="wrap"><table><thead><tr><th>Asteroid</th><th>Building</th><th>Type</th><th>Product</th><th>Kind</th><th class="num">Amount</th><th class="num">How full</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '';
     }

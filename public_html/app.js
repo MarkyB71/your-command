@@ -353,13 +353,12 @@ function buildD(j){
  return D;
 }
 /* Background refresh (TEST ?beta=1): every 60 s, only while the tab is visible; redraws only if the data changed and the player isn't typing */
-var BGR=/[?&]beta=1/.test(location.search);
 let bgW='',bgSig='',bgLast=0,bgBusy=false,bgDirty=false;
 const bgSigOf=j=>{const c=Object.assign({},j);delete c.fetched;return JSON.stringify(c)};
 const bgSafe=()=>{if(document.hidden)return false;const a=document.activeElement;if(a&&a.matches&&a.matches('input,textarea,select,[contenteditable],[contenteditable] *'))return false;const g=window.getSelection&&window.getSelection();return !(g&&String(g).length)};
 const bgApply=()=>{if(bgDirty&&window.YICredraw&&bgSafe()){bgDirty=false;try{window.YICredraw()}catch(e){}}};
 async function bgTick(force){
- if(!BGR||!bgW||bgBusy||document.hidden||!window.YICquiet)return;
+ if(!bgW||bgBusy||document.hidden||!window.YICquiet)return;
  if(!force&&Date.now()-bgLast<60000)return;
  bgBusy=true;bgLast=Date.now();const w=bgW;
  try{const r=await fetch('api.php?wallet='+encodeURIComponent(w),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j.error||w!==bgW)return;
@@ -367,7 +366,7 @@ async function bgTick(force){
   const N=buildD(j);if(!N)return;bgSig=s;window.YICquiet(N);bgDirty=true;bgApply();
  }catch(e){}finally{bgBusy=false}
 }
-if(BGR){setInterval(()=>{bgTick();bgApply()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)bgTick()})}
+{setInterval(()=>{bgTick();bgApply()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)bgTick()})}
 async function load(wallet){
  bgW='';bgDirty=false;
  say(CSS+'<style>@keyframes ldGlow{0%,100%{opacity:.85}50%{opacity:1}}.ld-star{animation:ldGlow 2.4s ease-in-out infinite}.ld-ship{mix-blend-mode:screen}@media (prefers-reduced-motion: reduce){.ld-star{animation:none}}</style>'+
