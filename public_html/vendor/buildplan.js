@@ -49,6 +49,11 @@ export function drawBuildPlan(m){
   const Y=window.YIC;if(!Y)return;
   const D=Y.D||{},PX=D.products||{},A=asteroids(),me=++run;
   if(!A.length){m.innerHTML='<div class="note">No asteroids found for this wallet.</div>';return}
+  /* beta (Mark, 29 Oct): pick a rock first – nothing is planned until one is chosen (a rock in the top box counts) */
+  if(PPB&&!S.picked){const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;if(v&&A.find(a=>a.id===v)){S.ast=v;S.picked=true}}
+  if(PPB&&!S.picked){const PM0=S.mode==='prod';
+    m.innerHTML='<style>'+CSS+'#bpw .bp-need{flex-direction:column;align-items:flex-start;gap:10px;padding:18px 4px}#bpw .bp-need select{font-size:17px;padding:8px 12px;border:2px solid #ffd24a;box-shadow:0 0 16px -2px #ffd24a;border-radius:8px;min-width:0!important}#bpw .bp-need b{font-size:18px;color:#ffd24a}</style><div id="bpw"><div class="bp-bar bp-need"><b>👉 First, pick the rock you want to '+(PM0?'make things on':'build on')+'</b><select id="bpA"><option value="">– Pick a rock –</option>'+A.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')+'</select><span class="a">Everything below is worked out for that rock: its stock, what it can mine and the buildings on it.</span></div></div>';
+    m.querySelector('#bpA').onchange=e=>{if(!e.target.value)return;S.ast=+e.target.value;S.picked=true;drawBuildPlan(m)};return}
   if(S.ast===null||!A.find(a=>a.id===S.ast)){const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;S.ast=v||A[0].id}
   const here=A.find(a=>a.id===S.ast),stk=here.i===null?{}:(Y.tot[here.i]||{});
   const isCnt=id=>!!(PX[id]&&PX[id][3]),kgOf=(id,n)=>n*((PX[id]&&PX[id][2])||1000)/1000;
@@ -291,6 +296,10 @@ export function drawBuildPlan(m){
       b.className='on';S.mode='prod';drawBuildPlan(main)});
   };
   setInterval(hookP,700);
+  /* the rock box at the top of the screen also picks the rock for the planners (beta) */
+  document.addEventListener('change',e=>{if(!PPB||!e.target||e.target.id!=='ast'||e.target.value==='')return;
+    const on=[...document.querySelectorAll('#vU.on,#vD.on')][0],main=document.getElementById('main'),Y=window.YIC;if(!on||!main||!Y)return;
+    const v=(Y.asts[+e.target.value]||{}).id;if(!v)return;S.ast=v;S.picked=true;setTimeout(()=>drawBuildPlan(main),0)});
   document.addEventListener('click',e=>{const b=document.getElementById('vD'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
