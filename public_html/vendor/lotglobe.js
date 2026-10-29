@@ -41,7 +41,7 @@
 .lg-row label{color:#8b9ab0;font-size:14px;display:flex;gap:8px;align-items:center}
 .lg-row select{font-size:15px;padding:6px 10px;min-width:0!important;max-width:260px}
 .lg-wrap{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
-.lg-stage{position:relative;flex:1 1 420px;max-width:620px;aspect-ratio:1;background:radial-gradient(circle at 50% 50%,#0d1a30 0,#060a12 70%);border:1px solid #223047;border-radius:14px;overflow:hidden;cursor:grab;touch-action:none}
+.lg-stage{position:relative;flex:0 0 auto;width:min(620px,100%,max(300px,calc(100vh - 330px)));aspect-ratio:1;background:radial-gradient(circle at 50% 50%,#0d1a30 0,#060a12 70%);border:1px solid #223047;border-radius:14px;overflow:hidden;cursor:grab;touch-action:none}
 .lg-stage.drag{cursor:grabbing}
 .lg-stage canvas{width:100%;height:100%;display:block}
 .lg-tip{position:absolute;pointer-events:none;background:#0c1320ee;border:1px solid #4f90ff;color:#e6ebf2;font-size:13px;padding:5px 9px;border-radius:7px;white-space:nowrap;display:none;box-shadow:0 0 12px #4f90ff66}
