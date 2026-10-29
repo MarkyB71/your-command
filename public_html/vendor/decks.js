@@ -17,7 +17,8 @@
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W', 'O'] },
   ];
   // The Daily Grind – the everyday workload, one deck for routine checks (Mark, 28 Oct 2026). LIVE 29 Oct.
-  {
+  // TEST (?beta=1, 29 Oct 2026): Daily Grind removed for now (Mark: "not doing anything") – Fuel check back in Engineering.
+  if (!/[?&]beta=1/.test(location.search)) {
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'G');
     DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
   }
