@@ -28,8 +28,9 @@ const ALLOWED_HOSTS = [GAME + '/*', SITE + '/*'];
 
 let fails = 0, warns = 0;
 const ok = m => console.log('  ✓ ' + m);
-const bad = m => { fails++; console.log('  ✗ ' + m); };
-const warn = m => { warns++; console.log('  ! ' + m); };
+const GH = !!process.env.GITHUB_ACTIONS;    // on GitHub: also show each problem as a note on the run page
+const bad = m => { fails++; console.log('  ✗ ' + m); if (GH) console.log('::error::' + m.replace(/\n/g, ' ')); };
+const warn = m => { warns++; console.log('  ! ' + m); if (GH) console.log('::warning::' + m.replace(/\n/g, ' ')); };
 const check = (cond, good, fail) => cond ? ok(good) : bad(fail || good);
 
 // ---------- Part 1: the files ----------
