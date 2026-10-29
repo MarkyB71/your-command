@@ -876,11 +876,38 @@
     });
   }
 
+  // Click Skippy in the chair → he says hello again (beta). The rest of the chair still opens today's workload.
+  const SKC = /[?&]beta=1/.test(location.search);
+  function skippyClick(br) {
+    const sk = br.querySelector('.brs-sk');
+    if (!sk) return;
+    if (!document.getElementById('skc-css')) {
+      const st = document.createElement('style');
+      st.id = 'skc-css';
+      st.textContent = '.brs-sk.skc{cursor:pointer;transition:box-shadow .2s}.brs-sk.skc:hover,.brs-sk.skc:focus-visible{box-shadow:0 0 18px rgba(143,227,255,.9)}';
+      document.head.appendChild(st);
+    }
+    sk.classList.add('skc');
+    sk.title = 'Click Skippy to hear his welcome';
+    sk.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (document.querySelector('video[data-skc]')) return;
+      const v = document.createElement('video');
+      v.src = 'media/skippy-intro.mp4';
+      v.playsInline = true;
+      v.preload = 'auto';
+      v.dataset.skc = '1';
+      showSkippy(br, v);
+    });
+  }
+
   window.PAGES = window.PAGES || {};
   window.PAGES.N = function (m) {
     // the Bridge; today's workload shows on its viewscreen from the captain's chair
     m.innerHTML = '';
     drawBridge(m);
     skippyIntro(m.querySelector('.brs') || m);
+    if (SKC) skippyClick(m.querySelector('.brs') || m);
   };
 })();
