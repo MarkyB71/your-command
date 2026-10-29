@@ -564,7 +564,7 @@
   const PC_CSS = `
 .brs-mid{align-self:end;position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
 .brs:has(.brs-pc) .brs-floor{height:96px}
-.brs-deck:has(.brs-mid){grid-template-columns:1fr 1fr 1fr .85fr 1fr 1fr 1fr}
+.brs-deck:has(.brs-mid){grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,.85fr) repeat(3,minmax(0,1fr))}
 .brs-pc{all:unset;box-sizing:border-box;cursor:pointer;display:block;position:absolute;top:calc(100% + 14px);left:50%;width:min(230px,150%);padding:8px 6px 9px;z-index:2;text-align:center;border-radius:8px 8px 3px 3px;border:1px solid #6b5a1e;border-top:2px solid #ffd24a;background:linear-gradient(180deg,rgba(255,210,74,.12),rgba(0,0,0,.35));box-shadow:0 0 18px -6px #ffd24a,inset 0 0 22px -10px #ffd24a;transform:translateX(-50%) perspective(500px) rotateX(18deg);transition:box-shadow .2s,transform .2s}
 .brs-pc:hover,.brs-pc:focus-visible{box-shadow:0 0 26px -2px #ffd24a,inset 0 0 26px -8px #ffd24a;transform:translateX(-50%) perspective(500px) rotateX(10deg) translateY(-2px)}
 .brs-pc b{display:block;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ffd24a;text-shadow:0 0 8px rgba(255,210,74,.6)}
