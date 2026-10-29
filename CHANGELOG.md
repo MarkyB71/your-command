@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 578 – 29 Oct 2026 – New Resource Map in the Science Lab: pick a scanned rock and a resource and every lot lights up by how rich it is, in the game's own resource-map colours (6 steps, one colour per resource group). Shows the rock's real shape when you add its 3D model (Add 3D model button right on the page), or a globe otherwise. Your buildings are ringed in the game's building colours; hover a lot for its level; Richest lots list turns the rock to that lot.
+
 ## Version 565 – 29 Oct 2026 – Refresh fixes on the decks: the ⟳ Refresh button now fetches new data quietly (no loading screen, no Bridge flash, no doubled search boxes and Refresh buttons). A browser refresh goes straight back to the page you were on, and if it was on the viewscreen it stays there; the old header no longer flashes up while it loads.
 
 ## Version 560 – 29 Oct 2026 – Filter box above long tables (type to narrow the rows). Building Contents: switch between cards and a table (remembers your choice). Background refresh: game data updates every minute without reloading the page or losing your place. Ship status colours match the game: In orbit blue, In flight orange, Docked white. Tidy: unused old ship-colour test removed.
