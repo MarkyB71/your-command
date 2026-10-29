@@ -9,7 +9,7 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 window.YICREC={MK,FBT};
 /* Ships as tiles too (beta): inputs = the ship's integration step in a Shipyard's dry dock */
-const SHB=/[?&]beta=1/.test(location.search),SHP={};[[4,'Shuttle'],[2,'Light Transport'],[3,'Heavy Transport']].forEach(([t,n])=>{const r=PROCS.find(p=>p[0]===n+' Integration');if(r)SHP['s'+t]=[n,r[2]]});
+const SHB=/[?&]beta=1/.test(location.search),SHP={"s4":["Shuttle",{"165":1,"240":1,"241":3,"242":1,"243":2,"244":1,"245":1}],"s2":["Light Transport",{"148":6,"166":1,"239":4,"240":1,"241":1,"242":2,"243":4,"244":1,"245":2}],"s3":["Heavy Transport",{"148":36,"168":1,"240":3,"241":1,"242":6,"243":6,"244":3,"245":9}]}; /* the ship Integration recipes (SDK 2.7.2, as in chain.js) */
 const BL=SHB?Object.assign({},BLDS,SHP):BLDS,isShip=k=>/^s\d$/.test(k); /* recipes for other pages (Travel: can a rock make its own propellant?) */
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
