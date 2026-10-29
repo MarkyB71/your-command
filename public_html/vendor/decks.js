@@ -21,7 +21,7 @@
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'G');
     DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
   }
-  // The SkippyChain moves to the Bridge – it covers the whole game, not just Engineering (Mark, 29 Oct). Beta test.
+  // The SkippyChain moves to the Bridge – it covers the whole game, not just Engineering (Mark, 29 Oct). 
   {
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'H');
     DECKS[4].pages.splice(DECKS[4].pages.indexOf('U') + 1, 0, 'D'); // Production planner after Construction planner
@@ -79,11 +79,10 @@ body > header{display:none!important}
 `;
 
   let scr = false; // true = the chosen page is on the viewscreen (Mark, 27 Oct)
-  // After a refresh, put the page back on the viewscreen if it was there (Mark, 29 Oct). Beta test.
+  // After a refresh, put the page back on the viewscreen if it was there (Mark, 29 Oct). 
   // v2 (29 Oct): saves page + screen ("S1"), also covers the ⟳ Refresh button, keeps applying
   // until the player touches the deck or 2 minutes pass (big wallets load slowly).
-  const RSB = /[?&]beta=1/.test(location.search),
-    SKEY = 'yicDeckScr2';
+  const SKEY = 'yicDeckScr2';
   let want = null,
     wantScr = false,
     wantUntil = 0;
@@ -92,7 +91,7 @@ body > header{display:none!important}
     wantScr = on;
     wantUntil = Date.now() + 120000;
   };
-  if (RSB) {
+  {
     let v = '';
     try {
       v = sessionStorage.getItem(SKEY) || '';
@@ -463,9 +462,9 @@ body > header{display:none!important}
       const s = document.createElement('style');
       s.id = 'dk-css';
       s.textContent = CSS;
-      // Beta (29 Oct): outside <head> – the site rebuilds <head> while loading, which dropped this style
+      // 29 Oct: outside <head> – the site rebuilds <head> while loading, which dropped this style
       // for a moment and let the old "Quartermaster Skippy's Command Deck" header flash up on a refresh
-      (RSB ? document.documentElement : document.head).appendChild(s);
+      document.documentElement.appendChild(s);
     }
     if (!document.getElementById('dkr-css')) {
       const s = document.createElement('style');
@@ -496,7 +495,7 @@ body > header{display:none!important}
     // search results go on the viewscreen
     const q = document.getElementById('gq');
     if (q && q.value.trim()) scr = true;
-    if (RSB) {
+    {
       if (want && Date.now() > wantUntil) want = null;
       if (want) {
         if (cur === want) scr = wantScr;
@@ -565,9 +564,9 @@ body > header{display:none!important}
       rb.textContent = '⟳ Refresh';
       rb.title = 'Fetch the latest data from the game';
       rb.onclick = () => {
-        // Beta (29 Oct): quiet refresh – fetch the data and swap it in, no loading screen,
+        // 29 Oct: quiet refresh – fetch the data and swap it in, no loading screen,
         // no Bridge, page stays where it is (the old way rebuilt the whole site and doubled the tool buttons)
-        if (RSB && window.YICrefreshNow) {
+        if (window.YICrefreshNow) {
           if (rb.disabled) return;
           rb.disabled = true;
           rb.textContent = '⟳ Refreshing…';
@@ -579,7 +578,7 @@ body > header{display:none!important}
             });
           return;
         }
-        if (RSB) restore(current(), scr);
+        restore(current(), scr);
         const rf = document.getElementById('rf');
         if (rf) rf.click();
         else location.reload();

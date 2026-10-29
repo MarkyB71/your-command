@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 565 – 29 Oct 2026 – Refresh fixes on the decks: the ⟳ Refresh button now fetches new data quietly (no loading screen, no Bridge flash, no doubled search boxes and Refresh buttons). A browser refresh goes straight back to the page you were on, and if it was on the viewscreen it stays there; the old header no longer flashes up while it loads.
+
 ## Version 560 – 29 Oct 2026 – Filter box above long tables (type to narrow the rows). Building Contents: switch between cards and a table (remembers your choice). Background refresh: game data updates every minute without reloading the page or losing your place. Ship status colours match the game: In orbit blue, In flight orange, Docked white. Tidy: unused old ship-colour test removed.
 
 ## Version 557 – 29 Oct 2026 – Construction planner (was Asteroid planner) now plans ships too (Shuttle, Light and Heavy Transport). New Production planner on the Engineering deck: Refinery / Factory / Bioreactor tabs, make any amount (kg / t / kt) of a product on a rock. Both planners ask you to pick a rock first and use the one rock box at the top; Fly in sits beside Fewest flights with each material folded to one line, Materials underneath. The SkippyChain moved to the Bridge: gold console in front of the captain's chair. Tidy: old page banners, drawn banner artwork and header logos (hidden behind the decks) removed.

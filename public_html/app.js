@@ -49,7 +49,7 @@ const allP=[...new Set(tot.flatMap(t=>Object.keys(t)))];
 const pooled={};tot.forEach(t=>{for(const p in t)pooled[p]=(pooled[p]||0)+t[p]});
 window.YIC={asts,tot,pooled,get esc(){return esc},get fmtT(){return fmtT},get tLeft(){return tLeft},get crewTraits(){return crewTraits},get fillFacesIn(){return fillFacesIn},get draw(){return draw},get pc(){return pc},get ricon(){return ricon},get rows(){return rows},get prodOpen(){return open},get sortKey(){return sortKey},set sortKey(v){sortKey=v},get sortDir(){return sortDir},set sortDir(v){sortDir=v},get fq(){return fq},get BT(){return BT},get bthumb(){return bthumb},get PROCN(){return PROCN},get leaseInfo(){return leaseInfo},get isAt(){return isAt},get $(){return $},get ABC(){return ABC},get BONB(){return true},get SCAP(){return SCAP},get SPEC(){return SPEC},get RAR(){return RAR},get astAbund(){return astAbund},get astBonuses(){return astBonuses},get bestAstHTML(){return bestAstHTML},get lotsLoad(){return lotsLoad},get LOTS(){return LOTS},get resBonus(){return resBonus},get wire3d(){return wire3d},get fmt(){return fmt},get ABM(){return ABM},set ABM(v){ABM=v},get BELTO(){return BELTO},set BELTO(v){BELTO=v},get SAMP(){return SAMP},set SAMP(v){SAMP=v},get beltOLoad(){return beltOLoad},set beltOLoad(v){beltOLoad=v},get lfAst(){return lfAst},set lfAst(v){lfAst=v},get lfMode(){return lfMode},set lfMode(v){lfMode=v},get lfRes(){return lfRes},set lfRes(v){lfRes=v},get sampLoad(){return sampLoad},set sampLoad(v){sampLoad=v},get sampOpen(){return sampOpen},set sampOpen(v){sampOpen=v},get view(){return view},get PR(){return PR},get kg(){return kg},get VER(){return VER},get viewNow(){return view},get DLV(){return DLV},set DLV(v){DLV=v},get dlvLoad(){return dlvLoad},set dlvLoad(v){dlvLoad=v},get D(){return D},get crewMult(){return crewMult},get CBJ(){return CBJ},get CBNF(){return CBNF},get habEff(){return habEff},get CMC(){return CMC},get CMT(){return CMT},set view(v){view=v},get pfmt(){return fmt},get pn(){return pn}};
 
-/* Background refresh (TEST ?beta=1): swap in new game data without rebuilding the page */
+/* Background refresh (live since Version 560): swap in new game data without rebuilding the page */
 window.YICquiet=function(N,fetched){
  const sb=$('#sub'),info=()=>{if(sb)sb.textContent='Updated '+D.when+' · '+asts.reduce((n,a)=>n+a.buildings.length,0)+' storage buildings · '+asts.length+' asteroids · '+D.crews+' crews'};
  if(!N){if(fetched)D.when=new Date(fetched*1000).toLocaleString();info();return}
@@ -352,7 +352,7 @@ function buildD(j){
    return{id:c.id,stn:loc.label===5?loc.id:0,name:(c.Name&&c.Name.name)||('Crew #'+c.id),mates:(cr.roster||[]).length,roster:(cr.roster||[]),mn:Object.fromEntries((me.crewmates||[]).map(x=>[x.id,x.name||''])),ast,place,food,busy:cr.readyAt&&cr.readyAt>now?dt(cr.readyAt):''}})}
  return D;
 }
-/* Background refresh (TEST ?beta=1): every 60 s, only while the tab is visible; redraws only if the data changed and the player isn't typing */
+/* Background refresh (live since Version 560): every 60 s, only while the tab is visible; redraws only if the data changed and the player isn't typing */
 let bgW='',bgSig='',bgLast=0,bgBusy=false,bgDirty=false;
 const bgSigOf=j=>{const c=Object.assign({},j);delete c.fetched;return JSON.stringify(c)};
 const bgSafe=()=>{if(document.hidden)return false;const a=document.activeElement;if(a&&a.matches&&a.matches('input,textarea,select,[contenteditable],[contenteditable] *'))return false;const g=window.getSelection&&window.getSelection();return !(g&&String(g).length)};

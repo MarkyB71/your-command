@@ -37,9 +37,9 @@
     for(var i=0;i<s.options.length;i++)if(s.options[i].textContent===n&&s.options[i].value!==''){
       s.value=s.options[i].value;s.dispatchEvent(new Event('change',{bubbles:true}));return}
   }
-  /* Beta (29 Oct): hide the page while it jumps back, so the Bridge doesn't flash up after a refresh.
+  /* 29 Oct: hide the page while it jumps back, so the Bridge doesn't flash up after a refresh.
      The loading screen still shows; everything is shown again once the saved page is open (20 s max). */
-  var RB=/[?&]beta=1/.test(location.search),cover=RB&&saved()!=='vN';
+  var cover=saved()!=='vN';
   if(cover){
     var cs=document.createElement('style');cs.id='yic-rest-css';
     cs.textContent='html.yic-rest #main:not(:has(.ld-star)),html.yic-rest #deckroom,html.yic-rest #deckbar{visibility:hidden!important}';
