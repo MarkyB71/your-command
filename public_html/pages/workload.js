@@ -688,7 +688,7 @@
       br = document.createElement('div');
     br.className = 'brs';
     const station = (d) => {
-      const n = N[d.k],
+      const n = N[d.k] || N[d.id === 'eng' ? 'H' : d.k],
         warn = n[3] && /low|hungry|ready/.test(n[3]);
       return (
         '<button type="button" class="st" data-dk="' + d.k + '" data-deck="' + d.id + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
