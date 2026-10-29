@@ -77,18 +77,19 @@
   const nm = (a) => (a.Name && a.Name.name) || 'Asteroid #' + a.id;
   const pct = (v) => (v * 100).toFixed(1) + '%';
 
-  // colour for a level 0..1 of this rock's best (dark blue → blue → cyan → white)
-  const STOPS = [[0, [26, 39, 64]], [0.35, [31, 91, 208]], [0.65, [79, 195, 255]], [0.88, [191, 244, 255]], [1, [255, 255, 255]]];
-  function col(t) {
-    t = Math.max(0, Math.min(1, t));
-    for (let i = 1; i < STOPS.length; i++) {
-      if (t <= STOPS[i][0]) {
-        const [a, ca] = STOPS[i - 1], [b, cb] = STOPS[i], f = (t - a) / (b - a || 1);
-        return ca.map((c, k) => Math.round(c + (cb[k] - c) * f));
-      }
-    }
-    return STOPS[STOPS.length - 1][1];
+  // Colours as in the game's resource map (influence-client theme.js resources + shaders/resource.glsl):
+  // one colour per resource group, and 6 brightness steps. Step 1 = at the rock's floor (half its abundance),
+  // then 5 equal steps from the floor up to 100%.
+  const CAT = { Volatile: '#5bc0f5', Organic: '#68d346', Metal: '#f8852c', RareEarth: '#f63637', Fissile: '#8a1aff' };
+  const catOf = (r) => (r <= 8 ? 'Volatile' : r <= 11 ? 'Organic' : r === 16 || r === 17 ? 'RareEarth' : r === 15 || r === 22 ? 'Fissile' : 'Metal');
+  const hexRGB = (h) => [1, 3, 5].map((k) => parseInt(h.substr(k, 2), 16));
+  function band(v, ab) {
+    const fl = ab / 2, st = (1 - fl) / 5;
+    let k = 1 + (v >= fl + 0.001 ? 1 : 0);
+    for (let j = 1; j <= 4; j++) if (v >= fl + st * j) k++;
+    return k / 6;
   }
+  function col(t) { return G.rgb.map((c) => Math.round(c * t)); }
 
   // the game's lot layout on a unit sphere
   function lotPos(n) {
@@ -148,7 +149,7 @@
     const val = Y.ABC[k];
     let max = 0, min = 1; for (let i = 1; i <= n; i++) { if (val[i] > max) max = val[i]; if (val[i] < min) min = val[i]; }
     if (!G || G.id !== A.id || G.n !== n) G = { id: A.id, n, pos: lotPos(n) };
-    G.res = S.res; G.val = val; G.max = max; G.min = Math.min(min, max); G.mine = myLots(D, A.id);
+    G.res = S.res; G.ab = ab[S.res]; G.cat = catOf(S.res); G.rgb = hexRGB(CAT[G.cat]); G.val = val; G.max = max; G.min = Math.min(min, max); G.mine = myLots(D, A.id);
     S.focus = null;
     if (HAS[A.id] === undefined) { HAS[A.id] = false; hasModel(A.id).then((v) => { HAS[A.id] = v; if (v && isOn()) page(m); }); }
     const shape = HAS[A.id] && S.view === 'shape';
@@ -165,7 +166,7 @@
       (HAS[A.id] ? '' : '<div class="lg-dim" style="margin:-4px 0 10px">Want the real shape? Add this rock\'s 3D model on the Asteroids page (Download 3D Model in the game, then Add 3D model here).</div>');
     h += '<div class="lg-wrap"><div class="lg-stage' + (shape ? ' lg-3d' : '') + '" id="lg-st">' + (shape ? '' : '<canvas id="lg-c"></canvas>') + '<div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
       '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
-      '<div class="lg-leg"></div><div class="lg-legt"><span>poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
+      '<div class="lg-leg" style="background:linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map((k, x) => 'rgb(' + col(k / 6).join(',') + ') ' + (x * 100 / 6).toFixed(1) + '% ' + ((x + 1) * 100 / 6).toFixed(1) + '%').join(',') + ')"></div><div class="lg-legt"><span>' + esc(G.cat.replace('RareEarth', 'Rare earth')) + ' · poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
       '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + ' · <span class="lg-me"></span>your buildings</div></div>' +
       '<div class="lg-box"><h3>Richest lots</h3><table class="lg-top nosort">' +
       top.slice(0, 10).map((i) => '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">' + (G.mine[i] ? '<span class="lg-me"></span>' + esc(G.mine[i]) : 'Free / other') + '</td><td class="lg-p">' + pct(val[i]) + '</td></tr>').join('') +
@@ -196,11 +197,11 @@
           const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
           if (T3 !== me) { api.stop(); return; }
           me.api = api;
-          if (G && G.id === A.id) api.paint(G.val, G.min, G.max, G.mine);
+          if (G && G.id === A.id) api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine);
           if (S.focus) api.face(S.focus);
         })
         .catch((e) => { el.innerHTML = '<div class="lg-load">Could not show the 3D model (' + Y.esc((e && e.message) || e) + '). Switch to 🌐 Globe.</div>'; });
-    } else if (T3.api) { T3.api.paint(G.val, G.min, G.max, G.mine); T3.api.setSpin(S.spin); }
+    } else if (T3.api) { T3.api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine); T3.api.setSpin(S.spin); }
     st.prepend(T3.el);
   }
   function hover3d(lot, x, y) {
@@ -305,10 +306,10 @@
     ctx.globalCompositeOperation = 'lighter';
     for (let j = 0; j < pts.length; j += 4) {
       const i = pts[j], x = c + pts[j + 1] * R, y = c - pts[j + 2] * R, z = pts[j + 3];
-      const lv = G.max > G.min ? (G.val[i] - G.min) / (G.max - G.min) : 1, [r, g, b] = col(lv);
+      const lv = band(G.val[i], G.ab), [r, g, b] = col(lv);
       const shade = Math.max(0.15, Math.min(1, (z + 0.15) * 1.1)); // dimmer toward the edge
       const s = dot * (0.55 + 0.45 * Math.sqrt(Math.max(0, z))) * (0.7 + 0.5 * lv);
-      if (lv > 0.75) { // rich lots glow
+      if (lv > 0.95) { // top step glows
         const gl = ctx.createRadialGradient(x, y, 0, x, y, s * 3);
         gl.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',' + (0.45 * shade).toFixed(3) + ')');
         gl.addColorStop(1, 'rgba(' + r + ',' + g + ',' + b + ',0)');

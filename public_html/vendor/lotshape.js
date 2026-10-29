@@ -52,15 +52,6 @@ function lotFinder(n) {
   };
 }
 
-const STOPS = [[0, [26, 39, 64]], [0.35, [31, 91, 208]], [0.65, [79, 195, 255]], [0.88, [191, 244, 255]], [1, [255, 255, 255]]];
-function col(t) {
-  t = Math.max(0, Math.min(1, t));
-  for (let i = 1; i < STOPS.length; i++) if (t <= STOPS[i][0]) {
-    const [a, ca] = STOPS[i - 1], [b, cb] = STOPS[i], f = (t - a) / (b - a || 1);
-    return ca.map((c, k) => Math.pow((c + (cb[k] - c) * f) / 255, 2.2)); // linear for three.js
-  }
-  return [1, 1, 1];
-}
 
 // el: box to draw in. buf: the glTF/glb file. o: {stretch, n, onHover(lot|0, x, y), spin}
 export function show(el, buf, o) {
@@ -90,13 +81,12 @@ export function show(el, buf, o) {
       renderer.dispose(); el.innerHTML = '';
     },
     setSpin(v) { wantSpin = !!v; ctl.autoRotate = wantSpin && !over; },
-    // vals: Float32Array of lot levels; min/max for the colour range; my: {lot: name}
-    paint(vals, min, max, my) {
-      const span = max > min ? max - min : 1;
+    // vals: Float32Array of lot levels; fn(level) → [r,g,b] 0..1 (game colours); my: {lot: name}
+    paint(vals, fn, my) {
       meshes.forEach((m, k) => {
         const lo = lotOf[k], c = cols[k];
         for (let i = 0; i < lo.length; i++) {
-          const [r, g, b] = col((vals[lo[i]] - min) / span);
+          const [r, g, b] = fn(vals[lo[i]]).map((x) => Math.pow(x, 2.2)); // linear for three.js
           c.array[i * 3] = r; c.array[i * 3 + 1] = g; c.array[i * 3 + 2] = b;
         }
         c.needsUpdate = true;
@@ -162,7 +152,7 @@ export function show(el, buf, o) {
         [].concat(m.material).forEach((x) => x && x.dispose && x.dispose());
         const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 });
         // rich lots glow a little even on the dark side
-        mat.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vColor.rgb * vColor.rgb * 0.45;'); };
+        mat.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vColor.rgb * 0.85;').replace('#include <color_fragment>', 'diffuseColor.rgb = vec3(0.05) + vColor.rgb * 0.25;'); };
         m.material = mat;
         meshes.push(m); lotOf.push(lo); cols.push(c);
       });
