@@ -82,6 +82,8 @@
   // then 5 equal steps from the floor up to 100%.
   const CAT = { Volatile: '#5bc0f5', Organic: '#68d346', Metal: '#f8852c', RareEarth: '#f63637', Fissile: '#8a1aff' };
   const catOf = (r) => (r <= 8 ? 'Volatile' : r <= 11 ? 'Organic' : r === 16 || r === 17 ? 'RareEarth' : r === 15 || r === 22 ? 'Fissile' : 'Metal');
+  const DOT = { Volatile: '🔵', Organic: '🟢', Metal: '🟠', RareEarth: '🔴', Fissile: '🟣' };
+  const GNM = { Volatile: 'Volatiles', Organic: 'Organics', Metal: 'Metals', RareEarth: 'Rare earths', Fissile: 'Fissiles' };
   const hexRGB = (h) => [1, 3, 5].map((k) => parseInt(h.substr(k, 2), 16));
   function band(v, ab) {
     const fl = ab / 2, st = (1 - fl) / 5;
@@ -160,7 +162,12 @@
     let avg = 0; for (let i = 1; i <= n; i++) avg += val[i]; avg /= n;
 
     let h = '<div class="lg-row"><label>Rock <select id="lg-r">' + own.map((a) => '<option value="' + a.id + '"' + (String(a.id) === S.rock ? ' selected' : '') + '>' + esc(nm(a)) + '</option>').join('') + '</select></label>' +
-      '<label>Resource <select id="lg-s">' + rs.map((r) => '<option value="' + r + '"' + (r === S.res ? ' selected' : '') + '>' + esc(pn(r)) + ' (' + Math.round(ab[r] * 100) + '% of rock)</option>').join('') + '</select></label>' +
+      '<label>Resource <select id="lg-s" style="color:' + CAT[G.cat] + ';border:2px solid ' + CAT[G.cat] + ';box-shadow:0 0 10px -2px ' + CAT[G.cat] + ';background:#0c1320">' +
+        // grouped and coloured by resource group, as in the game (dot works where the menu ignores colours)
+        ['Volatile', 'Organic', 'Metal', 'RareEarth', 'Fissile'].map((c) => {
+          const g = rs.filter((r) => catOf(r) === c);
+          return g.length ? '<optgroup label="' + DOT[c] + ' ' + GNM[c] + '" style="color:' + CAT[c] + '">' + g.map((r) => '<option value="' + r + '"' + (r === S.res ? ' selected' : '') + ' style="color:' + CAT[c] + ';background:#0c1320">' + DOT[c] + ' ' + esc(pn(r)) + ' (' + Math.round(ab[r] * 100) + '% of rock)</option>').join('') + '</optgroup>' : '';
+        }).join('') + '</select></label>' +
       (HAS[A.id] ? '<span class="lg-sw"><button type="button" data-v="shape"' + (shape ? ' class="on"' : '') + '>🪨 Real shape</button><button type="button" data-v="globe"' + (shape ? '' : ' class="on"') + '>🌐 Globe</button></span>' : '') +
       '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>' +
       (HAS[A.id] ? '' : '<div class="lg-dim" style="margin:-4px 0 10px">Want the real shape? Add this rock\'s 3D model on the Asteroids page (Download 3D Model in the game, then Add 3D model here).</div>');
