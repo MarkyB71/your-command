@@ -50,10 +50,12 @@ export function drawBuildPlan(m){
   const D=Y.D||{},PX=D.products||{},A=asteroids(),me=++run;
   if(!A.length){m.innerHTML='<div class="note">No asteroids found for this wallet.</div>';return}
   /* beta (Mark, 29 Oct): pick a rock first – nothing is planned until one is chosen (a rock in the top box counts) */
-  if(PPB&&!S.picked){const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;if(v&&A.find(a=>a.id===v)){S.ast=v;S.picked=true}}
+  if(PPB){const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;if(v&&A.find(a=>a.id===v)){S.ast=v;S.picked=true}else if(!(S.picked&&A.find(a=>a.id===S.ast&&a.i===null)))S.picked=false}
   if(PPB&&!S.picked){const PM0=S.mode==='prod';
     m.innerHTML='<style>'+CSS+'#bpw .bp-need{flex-direction:column;align-items:flex-start;gap:10px;padding:18px 4px}#bpw .bp-need select{font-size:17px;padding:8px 12px;border:2px solid #ffd24a;box-shadow:0 0 16px -2px #ffd24a;border-radius:8px;min-width:0!important}#bpw .bp-need b{font-size:18px;color:#ffd24a}</style><div id="bpw"><div class="bp-bar bp-need"><b>👉 First, pick the rock you want to '+(PM0?'make things on':'build on')+'</b><select id="bpA"><option value="">– Pick a rock –</option>'+A.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')+'</select><span class="a">Everything below is worked out for that rock: its stock, what it can mine and the buildings on it.</span></div></div>';
-    m.querySelector('#bpA').onchange=e=>{if(!e.target.value)return;S.ast=+e.target.value;S.picked=true;drawBuildPlan(m)};return}
+    m.querySelector('#bpA').onchange=e=>{if(!e.target.value)return;const a=A.find(x=>x.id===+e.target.value),box=document.getElementById('ast');S.ast=a.id;S.picked=true;
+      /* rock is in the top box: set that one (its change redraws the planner) – only one rock picker on screen (Mark) */
+      if(a.i!==null&&box){box.value=String(a.i);box.dispatchEvent(new Event('change',{bubbles:true}))}else drawBuildPlan(m)};return}
   if(S.ast===null||!A.find(a=>a.id===S.ast)){const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;S.ast=v||A[0].id}
   const here=A.find(a=>a.id===S.ast),stk=here.i===null?{}:(Y.tot[here.i]||{});
   const isCnt=id=>!!(PX[id]&&PX[id][3]),kgOf=(id,n)=>n*((PX[id]&&PX[id][2])||1000)/1000;
@@ -201,7 +203,7 @@ export function drawBuildPlan(m){
     ''+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
-  let h='<style>'+CSS+TALCSS+PPCSS+'</style><div id="bpw"><div class="bp-bar">'+(PM?'Make on':'Build on')+' <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+''+'</div>'+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">'+(PM?'Pick a product and how much you want.':'Set how many of each building you want to plan – everything is added up in one go.')+'</div></div>':
+  let h='<style>'+CSS+TALCSS+PPCSS+'</style><div id="bpw">'+(PPB&&here.i!==null?'':'<div class="bp-bar">'+(PM?'Make on':'Build on')+' <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select></div>')+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">'+(PM?'Pick a product and how much you want.':'Set how many of each building you want to plan – everything is added up in one go.')+'</div></div>':
     
     '<div class="bp-hd">'+''+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
     (done===rows.length?'<span class="ok">✓ you have everything on this asteroid</span>':'<span class="'+(done?'part':'none')+'">'+done+' of '+rows.length+' materials covered here</span>')+'</div></div>'+
@@ -263,7 +265,7 @@ export function drawBuildPlan(m){
         await show(0)}
       for(const ln of th)if(ln.dataset.ship)await thenOne(ln);else if(!m.querySelector('.bp-pos[data-to="'+ln.dataset.from+'"]'))ln.querySelector('.bp-ft').textContent='(no ship found)';
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
-  m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
+  {const ba=m.querySelector('#bpA');if(ba)ba.onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)}}
   if(PM){m.querySelectorAll('.bp-tab').forEach(b=>b.onclick=()=>{S.ptab=+b.dataset.pt;S.prod=null;S.rec=0;drawBuildPlan(m)});
     const pp=m.querySelector('#ppP'),pr=m.querySelector('#ppR'),pa=m.querySelector('#ppA');
     if(pp)pp.onchange=e=>{S.prod=e.target.value;S.rec=0;drawBuildPlan(m)};if(pr)pr.onchange=e=>{S.rec=+e.target.value;drawBuildPlan(m)};
