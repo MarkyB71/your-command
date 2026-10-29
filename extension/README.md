@@ -38,35 +38,13 @@ an unpacked copy only changes when you replace the folder yourself.
 - Worst case if the Command Deck site were ever hacked: someone could make your game tab
   jump to a different building. Nothing more.
 
-## Checking your download
+## Install
 
-The zip on the site should match this SHA-256 (version 0.4.5):
-
-    b3e2b64d6d59feda815e66b204a08af72dea67e6477cf9dd7b5b7e9546cdc088
-
-On a Mac: `shasum -a 256 skippys-command-deck.zip` · Windows: `certutil -hashfile skippys-command-deck.zip SHA256`
+Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) (Chrome, Brave, or Edge with "allow extensions from other stores"). Updates arrive automatically.
 
 What changed in each version: see [CHANGES.md](CHANGES.md).
 
-Or skip the zip entirely: download this `extension` folder from GitHub and use **Load unpacked** on it.
-
-## Install (Chrome, Brave or Edge on a computer)
-
-1. Unzip the download.
-2. Go to `chrome://extensions` (Brave: `brave://extensions`, Edge: `edge://extensions`).
-3. Switch on **Developer mode**.
-4. Click **Load unpacked** and choose the `skippys-command-deck` folder.
-5. Reload the Command Deck page.
-
-## Rebuilding the download (for the site owner)
-
-From the repo root:
-
-    rm -rf /tmp/scd && mkdir -p /tmp/scd && cp -r extension /tmp/scd/skippys-command-deck
-    rm /tmp/scd/skippys-command-deck/README.md /tmp/scd/skippys-command-deck/CHANGES.md
-    (cd /tmp/scd && zip -qrX skippys-command-deck.zip skippys-command-deck)
-    mv /tmp/scd/skippys-command-deck.zip public_html/downloads/
-    sha256sum public_html/downloads/skippys-command-deck.zip   # update the checksum above
+For testing a new version before it's on the Store: download this `extension` folder from GitHub, then `chrome://extensions` › Developer mode › **Load unpacked**.
 
 ## Checks before every release
-`node tools/check-extension.mjs` (from the repo root) checks the files (manifest, permissions, no remote code, CHANGES.md, download zip) and then loads the extension in a real Chromium against stand-in copies of the site and the game: in-game links, refusing bad links, the S button, hide used deposits, and the options page. GitHub runs it by itself whenever `extension/` or the zip changes (Actions tab › Extension checks).
+`node tools/check-extension.mjs` (from the repo root) checks the files (manifest, permissions, no remote code, CHANGES.md) and then loads the extension in a real Chromium against stand-in copies of the site and the game: in-game links, refusing bad links, the S button, hide used deposits, and the options page. GitHub runs it by itself whenever `extension/` changes (Actions tab › Extension checks).

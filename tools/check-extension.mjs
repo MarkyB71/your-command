@@ -1,10 +1,10 @@
 // Checks for Skippy's Command Deck (the browser extension).
 // Run:  node tools/check-extension.mjs        (from the repo root; needs Node + Playwright's Chromium)
-// Runs by itself on GitHub whenever extension/ or the download zip changes (.github/workflows/checks.yml).
+// Runs by itself on GitHub whenever extension/ changes (.github/workflows/extension-checks.yml).
 //
 // Part 1 – the files: manifest is sound, every file it names exists, every script parses,
 //          no remote code / eval (Chrome Web Store rule), permissions haven't grown,
-//          CHANGES.md has the version, the download zip matches the folder.
+//          CHANGES.md has the version.
 // Part 2 – a real Chromium with the extension loaded, on stand-in copies of the site and the game
 //          (no wallet or log-in needed): it starts, the site sees it, "in game" links work and bad
 //          ones are refused, the S button docks in the side bar, lot colours / hide used deposits
@@ -18,7 +18,6 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const EXT = path.join(ROOT, 'extension');
-const ZIP = path.join(ROOT, 'public_html/downloads/skippys-command-deck.zip');
 const SITE = 'https://your-command.adalia.academy';
 const GAME = 'https://game.influenceth.io';
 
@@ -74,28 +73,6 @@ check(!csHosts.length, 'scripts only run on the site and the game', 'scripts run
 
 const changes = fs.existsSync(path.join(EXT, 'CHANGES.md')) ? fs.readFileSync(path.join(EXT, 'CHANGES.md'), 'utf8') : '';
 check(new RegExp('^## ' + V.replace(/\./g, '\\.') + '\\b', 'm').test(changes), 'CHANGES.md has ' + V, 'CHANGES.md has no "## ' + V + '" entry');
-
-// Download zip: same version = must be the same files; older = fine while testing, but say so.
-if (!fs.existsSync(ZIP)) bad('download zip missing: ' + path.relative(ROOT, ZIP));
-else {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zipchk-'));
-  execFileSync('unzip', ['-q', ZIP, '-d', tmp]);
-  const mf = execFileSync('find', [tmp, '-name', 'manifest.json']).toString().trim().split('\n')[0];
-  const zdir = path.dirname(mf), zv = JSON.parse(fs.readFileSync(mf, 'utf8')).version;
-  const list = d => execFileSync('find', [d, '-type', 'f']).toString().trim().split('\n').map(f => path.relative(d, f)).sort();
-  if (zv === V) {
-    const zl = list(zdir), need = list(EXT).filter(f => !/\.md$/.test(f));
-    const diff = need.filter(f => !zl.includes(f) || !fs.readFileSync(path.join(zdir, f)).equals(fs.readFileSync(path.join(EXT, f))));
-    const extra = zl.filter(f => !need.includes(f));
-    check(!diff.length && !extra.length, 'download zip matches the folder (' + V + ')',
-      'download zip is ' + V + ' but differs: ' + diff.concat(extra).join(', ') + ' – rebuild the zip');
-  } else {
-    const newer = V.split('.').map(Number).reduce((a, n, i) => a || (n - +zv.split('.')[i]), 0) > 0;
-    newer ? warn('download zip is still ' + zv + ' (folder is ' + V + ') – fine while ' + V + ' is in testing; rebuild it before release')
-          : bad('download zip (' + zv + ') is NEWER than the folder (' + V + ')');
-  }
-  fs.rmSync(tmp, { recursive: true, force: true });
-}
 
 // ---------- Part 2: a real browser ----------
 console.log('Part 2 – in Chromium (stand-in site and game pages)');

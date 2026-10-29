@@ -67,19 +67,6 @@
   function panel() {
     var have = !!document.documentElement.dataset.yicGameExt;
     return panelStore(have);
-    return '<button class="x" type="button" title="Close">✕</button>' +
-      '<h3>Skippy\'s Command Deck extension</h3>' +
-      (have ? '<div class="ok">✓ Installed – the "in game ↗" links are switched on.</div>' : '') +
-      '<p>Adds <b>in game ↗</b> links to this site. Click one and your open Influence game tab jumps straight to that building, lot, ship, crew or asteroid – <b>no reload, no PLAY screen</b>.</p>' +
-      '<p class="s">It only works on this site and the game site, only moves the game\'s view, and never touches your wallet. Not from the Chrome Web Store (yet), so it\'s your choice whether to install it. <a href="https://github.com/MarkyB71/your-command/tree/main/extension" target="_blank" rel="noopener" style="color:#8fe3ff">Read the code and safety notes on GitHub ↗</a></p>' +
-      '<a class="dl" href="downloads/skippys-command-deck.zip" download>⬇ Download the extension</a>' +
-      '<p><b>To install</b> (Chrome, Brave or Edge on a computer):</p><ol>' +
-      '<li>Double-click the download to unzip it.</li>' +
-      '<li>Type <code>chrome://extensions</code> in the address bar (Brave: <code>brave://extensions</code>, Edge: <code>edge://extensions</code>).</li>' +
-      '<li>Switch on <b>Developer mode</b> (top right).</li>' +
-      '<li>Click <b>Load unpacked</b> and choose the <b>skippys-command-deck</b> folder.</li>' +
-      '<li>Reload this page.</li></ol>' +
-      '<p class="s">To update later: download again, replace the folder, then click the ↻ reload arrow on the extension.</p>';
   }
   function installTick() {
     if (!document.getElementById('cdx-css') && document.head) {
