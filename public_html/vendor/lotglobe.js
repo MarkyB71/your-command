@@ -8,7 +8,6 @@
    Uses window.YIC (app.js). */
 (function () {
   'use strict';
-  const LGL = /[?&]beta=1/.test(location.search); // in-game links on Richest lots (test)
 
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -197,7 +196,7 @@
       '<div class="lg-leg" style="background:linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map((k, x) => 'rgb(' + col(k / 6).join(',') + ') ' + (x * 100 / 6).toFixed(1) + '% ' + ((x + 1) * 100 / 6).toFixed(1) + '%').join(',') + ')"></div><div class="lg-legt"><span>' + esc(G.cat.replace('RareEarth', 'Rare earth')) + ' · poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
       '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + '</div>' + bldLegend(D, A.id) + '</div>' +
       '<div class="lg-box"><h3>Richest lots</h3><table class="lg-top nosort">' +
-      top.slice(0, 10).map((i) => '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">' + (G.mine[i] ? me(i) + esc(G.mine[i]) : 'Free / other') + '</td><td class="lg-p">' + pct(val[i]) + '</td>' + (LGL && window.GL ? '<td>' + window.GL('/lot/' + (BigInt(A.id) + (BigInt(i) << 32n)).toString(), 'Open Lot #' + i + ' in the game') + '</td>' : '') + '</tr>').join('') +
+      top.slice(0, 10).map((i) => '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">' + (G.mine[i] ? me(i) + esc(G.mine[i]) : 'Free / other') + '</td><td class="lg-p">' + pct(val[i]) + '</td>' + (window.GL ? '<td>' + window.GL('/lot/' + (BigInt(A.id) + (BigInt(i) << 32n)).toString(), 'Open Lot #' + i + ' in the game') + '</td>' : '') + '</tr>').join('') +
       '</table><div class="lg-hint">Click a lot to turn the globe to it. Drag the globe to turn it.</div></div></div></div>';
     m.innerHTML = h;
 
