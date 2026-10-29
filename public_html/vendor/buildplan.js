@@ -162,7 +162,7 @@ export function drawBuildPlan(m){
     return{best,more,detail:'<div class="bp-src">'+flH+st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join('')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+'</div>'}};
   const flyList=o=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>{const n=near(k,o[k]);
     const w='<span class="bp-w">'+amt(k,o[k])+'</span><b class="bp-nm">'+esc(nm(k))+'</b> ';
-    return n.more?'<details class="bp-it"'+' open'+'><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
+    return n.more?'<details class="bp-it"'+(PPB?'':' open')+'><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
   const lst=(o,f)=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>'<div style="margin-top:6px">'+amt(k,o[k])+' <b>'+esc(nm(k))+'</b>'+(f?f(k):'')+'</div>').join('');
   /* Fewest flights: which of your asteroids could supply each fly-in item – from stock, by mining, or by making it there – then the fewest asteroids that cover the most */
   const planCalc=()=>{
