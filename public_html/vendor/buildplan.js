@@ -265,7 +265,7 @@ export function drawBuildPlan(m){
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
     if(!vr||!main||!window.YIC||document.getElementById('vU'))return;
-    const b=document.createElement('button');b.id='vU';b.textContent='Asteroid planner';vr.after(b);
+    const b=document.createElement('button');b.id='vU';b.textContent=/[?&]beta=1/.test(location.search)?'Construction planner':'Asteroid planner';vr.after(b);
     b.addEventListener('click',()=>{
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){}
       b.className='on';drawBuildPlan(main)});
