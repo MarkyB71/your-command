@@ -112,7 +112,9 @@ const GAME_HTML = `<!doctype html><html><head><title>game</title></head><body>
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'extprof-'));
 const ctx = await chromium.launchPersistentContext(prof, {
   headless: true, channel: 'chromium',
-  args: ['--disable-extensions-except=' + EXT, '--load-extension=' + EXT]
+  // No real internet: anything not answered by the stand-in pages below just fails
+  // (a tab the extension opens can start loading before the stand-ins are hooked up).
+  args: ['--disable-extensions-except=' + EXT, '--load-extension=' + EXT, '--host-resolver-rules=MAP * ~NOTFOUND']
 });
 const errs = [];
 try {
