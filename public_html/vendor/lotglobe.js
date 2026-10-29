@@ -110,9 +110,9 @@
     const n = Y.ABM.lotCount(A.id), k = A.id + '_' + S.res;
     if (!Y.ABC[k]) Y.ABC[k] = Y.ABM.lotsFor(A.id, A.Celestial.abundances, S.res, n);
     const val = Y.ABC[k];
-    let max = 0; for (let i = 1; i <= n; i++) if (val[i] > max) max = val[i];
+    let max = 0, min = 1; for (let i = 1; i <= n; i++) { if (val[i] > max) max = val[i]; if (val[i] < min) min = val[i]; }
     if (!G || G.id !== A.id || G.n !== n) G = { id: A.id, n, pos: lotPos(n) };
-    G.res = S.res; G.val = val; G.max = max || 1; G.mine = myLots(D, A.id);
+    G.res = S.res; G.val = val; G.max = max; G.min = Math.min(min, max); G.mine = myLots(D, A.id);
     S.focus = null;
 
     const top = [];
@@ -125,7 +125,7 @@
       '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>';
     h += '<div class="lg-wrap"><div class="lg-stage" id="lg-st"><canvas id="lg-c"></canvas><div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
       '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
-      '<div class="lg-leg"></div><div class="lg-legt"><span>none</span><span>richest ' + pct(max) + '</span></div>' +
+      '<div class="lg-leg"></div><div class="lg-legt"><span>poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
       '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + ' · <span class="lg-me"></span>your buildings</div></div>' +
       '<div class="lg-box"><h3>Richest lots</h3><table class="lg-top nosort">' +
       top.slice(0, 10).map((i) => '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">' + (G.mine[i] ? '<span class="lg-me"></span>' + esc(G.mine[i]) : 'Free / other') + '</td><td class="lg-p">' + pct(val[i]) + '</td></tr>').join('') +
@@ -221,7 +221,7 @@
     ctx.globalCompositeOperation = 'lighter';
     for (let j = 0; j < pts.length; j += 4) {
       const i = pts[j], x = c + pts[j + 1] * R, y = c - pts[j + 2] * R, z = pts[j + 3];
-      const lv = G.val[i] / G.max, [r, g, b] = col(lv);
+      const lv = G.max > G.min ? (G.val[i] - G.min) / (G.max - G.min) : 1, [r, g, b] = col(lv);
       const shade = Math.max(0.15, Math.min(1, (z + 0.15) * 1.1)); // dimmer toward the edge
       const s = dot * (0.55 + 0.45 * Math.sqrt(Math.max(0, z))) * (0.7 + 0.5 * lv);
       if (lv > 0.75) { // rich lots glow
