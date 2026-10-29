@@ -80,15 +80,26 @@ body > header{display:none!important}
 
   let scr = false; // true = the chosen page is on the viewscreen (Mark, 27 Oct)
   // After a refresh, put the page back on the viewscreen if it was there (Mark, 29 Oct). Beta test.
+  // v2 (29 Oct): saves page + screen ("S1"), also covers the ⟳ Refresh button, keeps applying
+  // until the player touches the deck or 2 minutes pass (big wallets load slowly).
   const RSB = /[?&]beta=1/.test(location.search),
-    SKEY = 'yicDeckScr',
-    hp = (location.hash || '').slice(1);
-  let want = RSB && /^v[A-Z]$/.test(hp) && hp !== 'vN' ? hp.slice(1) : null,
-    wantSeen = '';
-  try {
-    wantSeen = sessionStorage.getItem(SKEY) || '';
-  } catch (e) {}
-  setTimeout(() => (want = null), 30000);
+    SKEY = 'yicDeckScr2';
+  let want = null,
+    wantScr = false,
+    wantUntil = 0;
+  const restore = (k, on) => {
+    want = k;
+    wantScr = on;
+    wantUntil = Date.now() + 120000;
+  };
+  if (RSB) {
+    let v = '';
+    try {
+      v = sessionStorage.getItem(SKEY) || '';
+    } catch (e) {}
+    if (/^[A-Z][01]$/.test(v) && v[0] !== 'N') restore(v[0], v[1] === '1');
+  }
+  const touched = () => (want = null); // the player did something on the deck – stop restoring
   const btn = (k) => document.getElementById('v' + k);
   const label = (k) => {
     const b = btn(k);
@@ -107,6 +118,7 @@ body > header{display:none!important}
     }
   };
   window.YICgoDeck = (id) => {
+    touched();
     scr = false;
     const d = DECKS.find((x) => x.id === id);
     if (d) go(d.pages.find((k) => btn(k)) || d.pages[0]);
@@ -346,11 +358,13 @@ body > header{display:none!important}
       room.addEventListener('click', (e) => {
         if (e.target.closest('.dkr-home')) return window.YICgoDeck(d.id);
         if (e.target.closest('.dkr-back')) {
+          touched();
           scr = false;
           return markRoom(room);
         }
         const t = e.target.closest('.dkr-st');
         if (t) {
+          touched();
           scr = true;
           go(t.dataset.pg);
           markRoom(room);
@@ -437,6 +451,7 @@ body > header{display:none!important}
   }
   // a deck piece can ask for its own view back on the screen (e.g. Flight Deck ship details)
   window.YICdeckScreen = (mode) => {
+    touched();
     scr = mode === 'page';
     const room = document.getElementById('deckroom');
     if (room) markRoom(room);
@@ -467,6 +482,7 @@ body > header{display:none!important}
         if (!t) return;
         if (t.dataset.deck) window.YICgoDeck(t.dataset.deck);
         else {
+          touched();
           scr = true;
           go(t.dataset.pg);
         }
@@ -479,12 +495,12 @@ body > header{display:none!important}
     const q = document.getElementById('gq');
     if (q && q.value.trim()) scr = true;
     if (RSB) {
-      if (want && cur === want) {
-        scr = wantSeen ? wantSeen === '1' : d.pages[0] !== want;
-        want = null;
-      } else if (!want && window.YIC) {
+      if (want && Date.now() > wantUntil) want = null;
+      if (want) {
+        if (cur === want) scr = wantScr;
+      } else {
         try {
-          sessionStorage.setItem(SKEY, scr ? '1' : '0');
+          sessionStorage.setItem(SKEY, cur + (scr ? '1' : '0'));
         } catch (e) {}
       }
     }
@@ -547,6 +563,7 @@ body > header{display:none!important}
       rb.textContent = '⟳ Refresh';
       rb.title = 'Fetch the latest data from the game';
       rb.onclick = () => {
+        if (RSB) restore(current(), scr);
         const rf = document.getElementById('rf');
         if (rf) rf.click();
         else location.reload();
