@@ -36,6 +36,9 @@
 .lg-top .lg-p{color:#8fe3ff;font-weight:600;text-align:right}
 .lg-dim{color:#8b9ab0;font-size:12px}
 .lg-me{display:inline-block;width:9px;height:9px;border:2px solid #ffd24a;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.lg-need{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:28px 4px}
+.lg-need b{font-size:18px;color:#ffd24a}
+.lg-need select{font-size:17px;padding:8px 12px;border:2px solid #ffd24a;box-shadow:0 0 16px -2px #ffd24a;border-radius:8px;min-width:0!important}
 .lg-hint{color:#8b9ab0;font-size:12px;margin-top:6px}`;
 
   function css() {
@@ -101,7 +104,15 @@
     // follow the rock picked on the viewscreen when it's one of the scanned ones
     const ai = (document.getElementById('ast') || {}).value;
     if (ai !== undefined && ai !== '' && Y.asts[+ai]) { const f = own.find((a) => nm(a) === Y.asts[+ai].name); if (f) S.rock = String(f.id); }
-    if (!own.some((a) => String(a.id) === S.rock)) S.rock = String(own[0].id);
+    if (!own.some((a) => String(a.id) === S.rock)) {
+      // Mark: no default rock – pick one first (same as the planners)
+      stop(); G = null;
+      m.innerHTML = '<div class="lg-need"><b>👉 First, pick the rock you want to see</b><select id="lg-p"><option value="">– Pick a rock –</option>' +
+        own.map((a) => '<option value="' + a.id + '">' + esc(nm(a)) + '</option>').join('') +
+        '</select><span class="lg-dim">Only rocks that have had their resource scan in the game are listed.</span></div>';
+      m.querySelector('#lg-p').addEventListener('change', (e) => { if (e.target.value) pickRock(Y, own, e.target.value, m); });
+      return;
+    }
     const A = own.find((a) => String(a.id) === S.rock);
     const ab = Y.ABM.abundances(A.Celestial.abundances);
     const rs = Object.keys(ab).filter((k) => ab[k] > 0).map(Number).sort((x, y) => pn(x).localeCompare(pn(y)));
@@ -132,11 +143,19 @@
       '</table><div class="lg-hint">Click a lot to turn the globe to it. Drag the globe to turn it.</div></div></div></div>';
     m.innerHTML = h;
 
-    m.querySelector('#lg-r').addEventListener('change', (e) => { S.rock = e.target.value; const s = document.getElementById('ast'); if (s) { const i = (Y.asts || []).findIndex((a) => a.name === nm(own.find((a) => String(a.id) === S.rock))); s.value = i >= 0 ? String(i) : ''; } page(m); });
+    m.querySelector('#lg-r').addEventListener('change', (e) => pickRock(Y, own, e.target.value, m));
     m.querySelector('#lg-s').addEventListener('change', (e) => { S.res = +e.target.value; page(m); });
     m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; });
     m.querySelectorAll('tr[data-lot]').forEach((tr) => tr.addEventListener('click', () => { S.focus = +tr.dataset.lot; S.spin = false; const c = m.querySelector('#lg-spin'); if (c) c.checked = false; S.pulse = performance.now(); }));
     start(m.querySelector('#lg-st'));
+  }
+
+  // set the rock here and on the viewscreen rock box (by name)
+  function pickRock(Y, own, id, m) {
+    S.rock = String(id);
+    const s = document.getElementById('ast'), a = own.find((x) => String(x.id) === S.rock);
+    if (s && a) { const i = (Y.asts || []).findIndex((x) => x.name === nm(a)); if (i >= 0) s.value = String(i); }
+    page(m);
   }
 
   function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
@@ -271,6 +290,7 @@
       document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
       try { window.YIC.view = 'M'; } catch (e) {} // add-on page showing – app.js leaves #main alone
       b.className = 'on';
+      S.rock = ''; // ask for the rock each time the page is opened (unless the viewscreen box has one)
       page(main);
     });
   };
@@ -279,6 +299,6 @@
     if (b && t && t !== b) b.className = '';
   }, true);
   // redraw when the viewscreen rock box changes
-  document.addEventListener('change', (e) => { if (e.target && e.target.id === 'ast' && isOn()) page(document.getElementById('main')); });
+  document.addEventListener('change', (e) => { if (e.target && e.target.id === 'ast' && isOn()) { if (e.target.value === '') S.rock = ''; } if (e.target && e.target.id === 'ast' && isOn()) page(document.getElementById('main')); });
   setInterval(hook, 700);
 })();
