@@ -12,7 +12,7 @@
     { id: 'bridge', name: 'The Bridge', ico: '◉', col: '#8fe3ff', pages: ['N'] },
     { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', pages: ['S', 'R', 'V', 'J'] },
     { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#3fd68a', pages: ['C', 'Q'] },
-    { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', pages: ['A', 'X', 'F', 'E'] },
+    { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', pages: ['A', 'X', 'F', 'E', 'I'] },
     { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', pages: ['H', 'P', 'U', 'G', 'B', 'T', 'L'] },
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W', 'O'] },
   ];
@@ -130,7 +130,7 @@ body > header{display:none!important}
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
-    E: 'Who can mine what', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel',
+    E: 'Who can mine what', I: 'Lot levels on a globe', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel',
   };
