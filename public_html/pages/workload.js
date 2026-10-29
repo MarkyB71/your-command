@@ -876,8 +876,7 @@
     });
   }
 
-  // Click Skippy in the chair → he says hello again (beta). The rest of the chair still opens today's workload.
-  const SKC = /[?&]beta=1/.test(location.search);
+  // Click Skippy in the chair → he says hello again. The rest of the chair still opens today's workload.
   function skippyClick(br) {
     const sk = br.querySelector('.brs-sk');
     if (!sk) return;
@@ -908,6 +907,6 @@
     m.innerHTML = '';
     drawBridge(m);
     skippyIntro(m.querySelector('.brs') || m);
-    if (SKC) skippyClick(m.querySelector('.brs') || m);
+    skippyClick(m.querySelector('.brs') || m);
   };
 })();
