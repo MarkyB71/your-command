@@ -21,6 +21,8 @@
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'G');
     DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
   }
+  // The SkippyChain moves to the Bridge – it covers the whole game, not just Engineering (Mark, 29 Oct). Beta test.
+  if (/[?&]beta=1/.test(location.search)) DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'H');
   window.YICDECKLIST = DECKS;
 
   const CSS = `

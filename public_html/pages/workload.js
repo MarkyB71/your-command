@@ -558,6 +558,19 @@
     { k: 'H', id: 'eng', alt: 'P', name: 'Engineering', role: 'Production', col: '#e8645a', ry: -7 },
     { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -11 },
   ];
+  // The SkippyChain gets its own gold console in front of the captain's chair (Mark, 29 Oct). Beta test.
+  const PCB = /[?&]beta=1/.test(location.search);
+  if (PCB) Object.assign(DECKS[3], { k: 'P', alt: '' });
+  const PC_CSS = `
+.brs-mid{align-self:end;display:flex;flex-direction:column;align-items:center;gap:8px}
+.brs-pc{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;max-width:190px;padding:8px 10px 9px;text-align:center;border-radius:8px 8px 3px 3px;border:1px solid #6b5a1e;border-top:2px solid #ffd24a;background:linear-gradient(180deg,rgba(255,210,74,.12),rgba(0,0,0,.35));box-shadow:0 0 18px -6px #ffd24a,inset 0 0 22px -10px #ffd24a;transform:perspective(500px) rotateX(18deg);transition:box-shadow .2s,transform .2s}
+.brs-pc:hover,.brs-pc:focus-visible{box-shadow:0 0 26px -2px #ffd24a,inset 0 0 26px -8px #ffd24a;transform:perspective(500px) rotateX(10deg) translateY(-2px)}
+.brs-pc b{display:block;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ffd24a;text-shadow:0 0 8px rgba(255,210,74,.6)}
+.brs-pc span{display:block;font-size:12px;color:#c4cdd9;margin-top:3px}
+.brs-pc i{display:block;font:normal 700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#ffd24a;margin-top:6px;opacity:.85}
+@media (max-width:760px){.brs-mid{grid-column:1/-1;order:5}.brs-mid .brs-chair{order:0}}
+@media (prefers-reduced-motion:reduce){.brs-pc{transition:none}}
+`;
   const BR_CSS = `
 .brs{position:relative;margin:0 0 22px;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
 .brs-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -688,12 +701,19 @@
     br.innerHTML =
       BR_BG +
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
-      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + (PCB ? '<div class="brs-mid">' : '') + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
+      (PCB ? '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>⛓ The SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' : '') +
       station(DECKS[3]) + station(DECKS[4]) +
       // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
       '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>' +
       '</div><div class="brs-floor"></div>';
     m.prepend(br);
+    const pcb = br.querySelector('.brs-pc');
+    if (pcb)
+      pcb.addEventListener('click', () => {
+        const h = document.getElementById('vH');
+        if (h) h.click();
+      });
     const vs = br.querySelector('.brs-vs');
     if (window.YICbeltMap) {
       window.YICbeltMap(vs);
