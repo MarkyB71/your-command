@@ -559,8 +559,7 @@
     { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Commerce', col: '#ffd24a', ry: -11 },
   ];
   // The SkippyChain gets its own gold console in front of the captain's chair (Mark, 29 Oct). Beta test.
-  const PCB = /[?&]beta=1/.test(location.search);
-  if (PCB) Object.assign(DECKS[3], { k: 'P', alt: '' });
+  Object.assign(DECKS[3], { k: 'P', alt: '' });
   const PC_CSS = `
 .brs-mid{align-self:end;position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
 .brs:has(.brs-pc) .brs-floor{height:96px}
@@ -704,8 +703,8 @@
     br.innerHTML =
       BR_BG +
       '<div class="brs-vs"><div class="brs-plate">VIEWSCREEN</div></div>' +
-      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + (PCB ? '<div class="brs-mid">' : '') + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
-      (PCB ? '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>🔗 SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' : '') +
+      '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<div class="brs-mid">' + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
+      '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>🔗 SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' +
       station(DECKS[3]) + station(DECKS[4]) +
       // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
       '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>' +

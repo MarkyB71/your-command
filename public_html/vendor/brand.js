@@ -26,7 +26,7 @@
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
     // New titles (beta): "Your <Page>", no group word, no doubles
-    {const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',E:'Supply Chain',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:(/[?&]beta=1/.test(location.search)?'Construction Planner':'Asteroid Planner'),D:'Production Planner',O:'Where to Buy',G:'Fuel Check'};if(NM[k])return ['Your',NM[k],''];}
+    {const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',E:'Supply Chain',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Construction Planner',D:'Production Planner',O:'Where to Buy',G:'Fuel Check'};if(NM[k])return ['Your',NM[k],''];}
     // Trading and Planners read better without the group word
     if(k==='R')return ['Your','Travel Planner',''];
     if(GRP[k]==='Trading'||GRP[k]==='Planners')return ['Your',name,''];
@@ -45,7 +45,6 @@
     (MOVE?'<animateMotion dur="9s" repeatCount="indefinite" rotate="auto"><mpath href="#bl-o"/></animateMotion>'
          :'<animateTransform attributeName="transform" type="translate" values="0 8" dur="1s" fill="freeze"/>')+
     '</g></g>';
-  const OLDH=/[?&]beta=1/.test(location.search); /* the decks hide the old header (Mark, 29 Oct tidy) */
   function tick(){
     const d=document;
     if(!d.head)return;
@@ -60,7 +59,7 @@
       s.setAttribute('aria-hidden','true');s.innerHTML=LOGO;
       const t=d.createElement('span');t.className='brand-t';while(h1.firstChild)t.appendChild(h1.firstChild);
       const s2=s.cloneNode(true);s2.id='brand-logo2';s2.style.transform='scaleX(-1)';
-      h1.classList.add('brand');if(OLDH)h1.append(t);else h1.append(s,t,s2); /* beta: no logos – the header is hidden by the decks */
+      h1.classList.add('brand');h1.append(t); /* no logos – the decks hide the old header (29 Oct tidy) */
     }
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
@@ -111,7 +110,7 @@
   setInterval(tick,300);tick();
   // TEST (?beta=1): title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
   function fit(){
-    if(OLDH)return;
+    return; /* the decks hide the old header – nothing to fit (29 Oct tidy) */
     const h=document.querySelector('h1.brand'),t=h&&h.querySelector('.brand-t'),b=document.querySelector('#pgband');if(!t)return;
     const W=document.documentElement.clientWidth;
     if(W<=700){if(h.style.fontSize)h.style.fontSize='';b&&b.classList.remove('yic-nolab');return}

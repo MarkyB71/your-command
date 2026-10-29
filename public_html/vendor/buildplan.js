@@ -9,14 +9,13 @@ const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[
 const FBT={1:3,2:5,3:4,4:6,5:6};
 window.YICREC={MK,FBT};
 /* Ships as tiles too (beta): inputs = the ship's integration step in a Shipyard's dry dock */
-const SHB=/[?&]beta=1/.test(location.search),SHP={"s4":["Shuttle",{"165":1,"240":1,"241":3,"242":1,"243":2,"244":1,"245":1}],"s2":["Light Transport",{"148":6,"166":1,"239":4,"240":1,"241":1,"242":2,"243":4,"244":1,"245":2}],"s3":["Heavy Transport",{"148":36,"168":1,"240":3,"241":1,"242":6,"243":6,"244":3,"245":9}]}; /* the ship Integration recipes (SDK 2.7.2, as in chain.js) */
-const BL=SHB?Object.assign({},BLDS,SHP):BLDS,isShip=k=>/^s\d$/.test(k); /* recipes for other pages (Travel: can a rock make its own propellant?) */
+const SHP={"s4":["Shuttle",{"165":1,"240":1,"241":3,"242":1,"243":2,"244":1,"245":1}],"s2":["Light Transport",{"148":6,"166":1,"239":4,"240":1,"241":1,"242":2,"243":4,"244":1,"245":2}],"s3":["Heavy Transport",{"148":36,"168":1,"240":3,"241":1,"242":6,"243":6,"244":3,"245":9}]}; /* the ship Integration recipes (SDK 2.7.2, as in chain.js) */
+const BL=Object.assign({},BLDS,SHP),isShip=k=>/^s\d$/.test(k); /* recipes for other pages (Travel: can a rock make its own propellant?) */
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{;h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10,unit:'t'};
 /* Production planner (beta, Mark 29 Oct): same planner, but for one product made in a Refinery / Factory / Bioreactor */
-const PPB=/[?&]beta=1/.test(location.search);
 const PPCSS='#bpw .bp-pp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px;font-size:15px}#bpw .bp-tabs{display:flex;gap:6px;width:100%}#bpw .bp-tab{padding:7px 14px;border-radius:8px;border:1px solid #2a3646;background:#121a24;color:#c4cdd9;font-weight:700;cursor:pointer}#bpw .bp-tab.on{background:#e8645a;border-color:#e8645a;color:#fff;box-shadow:0 0 12px -2px #e8645a}#bpw .bp-pp select{font-size:15px;padding:5px 8px;min-width:0!important;max-width:100%}#bpw .bp-pp input{width:110px!important;min-width:0!important;flex:none!important;font-size:15px;padding:5px 8px}';
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
 /* can this asteroid make product prod (same rule as the Travel page) */
@@ -50,8 +49,8 @@ export function drawBuildPlan(m){
   const D=Y.D||{},PX=D.products||{},A=asteroids(),me=++run;
   if(!A.length){m.innerHTML='<div class="note">No asteroids found for this wallet.</div>';return}
   /* beta (Mark, 29 Oct): pick a rock first – nothing is planned until one is chosen (a rock in the top box counts) */
-  if(PPB){const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;if(v&&A.find(a=>a.id===v)){S.ast=v;S.picked=true}else if(!(S.picked&&A.find(a=>a.id===S.ast&&a.i===null)))S.picked=false}
-  if(PPB&&!S.picked){const PM0=S.mode==='prod';
+  {const s=document.getElementById('ast'),v=s&&s.value!==''?(Y.asts[+s.value]||{}).id:null;if(v&&A.find(a=>a.id===v)){S.ast=v;S.picked=true}else if(!(S.picked&&A.find(a=>a.id===S.ast&&a.i===null)))S.picked=false}
+  if(!S.picked){const PM0=S.mode==='prod';
     m.innerHTML='<style>'+CSS+'#bpw .bp-need{flex-direction:column;align-items:center;text-align:center;gap:10px;padding:18px 4px}#bpw .bp-need select{font-size:17px;padding:8px 12px;border:2px solid #ffd24a;box-shadow:0 0 16px -2px #ffd24a;border-radius:8px;min-width:0!important}#bpw .bp-need b{font-size:18px;color:#ffd24a}</style><div id="bpw"><div class="bp-bar bp-need"><b>👉 First, pick the rock you want to '+(PM0?'make things on':'build on')+'</b><select id="bpA"><option value="">– Pick a rock –</option>'+A.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')+'</select><span class="a">Everything below is worked out for that rock: its stock, what it can mine and the buildings on it.</span></div></div>';
     m.querySelector('#bpA').onchange=e=>{if(!e.target.value)return;const a=A.find(x=>x.id===+e.target.value),box=document.getElementById('ast');S.ast=a.id;S.picked=true;
       /* rock is in the top box: set that one (its change redraws the planner) – only one rock picker on screen (Mark) */
@@ -67,7 +66,7 @@ export function drawBuildPlan(m){
   const BORD=[2,1,10,3,5,7,9,6,4,8],bKeys=Object.keys(BL).sort((x,y)=>{const i=BORD.indexOf(+x),j=BORD.indexOf(+y);return(i<0?99:i)-(j<0?99:j)});
   {const sel=bKeys.filter(k=>(S.cnt[k]||0)>0);inp={};sel.forEach(k=>{const c=S.cnt[k];for(const id in BL[k][1])inp[id]=(inp[id]||0)+BL[k][1][id]*c});N=1;
     bName=sel.length===1?BL[sel[0]][0]:(sel.some(isShip)?'things':'buildings');bLab=sel.map(k=>plur(S.cnt[k],BL[k][0])).join(', ')||'nothing yet'}
-  const PM=PPB&&S.mode==='prod';let ppHTML='',PR=null;
+  const PM=S.mode==='prod';let ppHTML='',PR=null;
   if(PM){const PL=Object.keys(MK).filter(id=>PX[id]&&MK[id].some(r=>r[1]===S.ptab)).sort((a,b)=>nm(a).localeCompare(nm(b)));
     if(!PL.includes(String(S.prod)))S.prod=PL[0];const RS=MK[S.prod].filter(r=>r[1]===S.ptab);if(!(S.rec<RS.length))S.rec=0;PR=RS[S.rec];
     const cnt=isCnt(S.prod),g=(PX[S.prod]&&PX[S.prod][2])||1000,UF={kg:0.001,t:1,kt:1000},want=cnt?Math.max(1,Math.round(S.amt)||1):Math.max(1e-6,(+S.amt||0)*(UF[S.unit]||1))*1e6/g,runs=want/PR[3];
@@ -162,7 +161,7 @@ export function drawBuildPlan(m){
     return{best,more,detail:'<div class="bp-src">'+flH+st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join('')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+'</div>'}};
   const flyList=o=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>{const n=near(k,o[k]);
     const w='<span class="bp-w">'+amt(k,o[k])+'</span><b class="bp-nm">'+esc(nm(k))+'</b> ';
-    return n.more?'<details class="bp-it"'+(PPB?'':' open')+'><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
+    return n.more?'<details class="bp-it"><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
   const lst=(o,f)=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>'<div style="margin-top:6px">'+amt(k,o[k])+' <b>'+esc(nm(k))+'</b>'+(f?f(k):'')+'</div>').join('');
   /* Fewest flights: which of your asteroids could supply each fly-in item – from stock, by mining, or by making it there – then the fewest asteroids that cover the most */
   const planCalc=()=>{
@@ -203,7 +202,7 @@ export function drawBuildPlan(m){
     ''+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
-  let h='<style>'+CSS+TALCSS+PPCSS+'</style><div id="bpw">'+(PPB&&here.i!==null?'':'<div class="bp-bar">'+(PM?'Make on':'Build on')+' <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select></div>')+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">'+(PM?'Pick a product and how much you want.':'Set how many of each building you want to plan – everything is added up in one go.')+'</div></div>':
+  let h='<style>'+CSS+TALCSS+PPCSS+'</style><div id="bpw">'+(here.i!==null?'':'<div class="bp-bar">'+(PM?'Make on':'Build on')+' <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select></div>')+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">'+(PM?'Pick a product and how much you want.':'Set how many of each building you want to plan – everything is added up in one go.')+'</div></div>':
     
     '<div class="bp-hd">'+''+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
     (done===rows.length?'<span class="ok">✓ you have everything on this asteroid</span>':'<span class="'+(done?'part':'none')+'">'+done+' of '+rows.length+' materials covered here</span>')+'</div></div>');
@@ -212,7 +211,7 @@ export function drawBuildPlan(m){
       '<td class="num"><span class="'+(r.have>=r.need?'ok':r.have>0?'part':'none')+'">'+(r.have>0?amt(r.id,r.have):'None')+'</span></td>'+
       '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+('<td class="bp-mh">'+makeHere(r)+'</td>')+'</tr>').join('')+'</tbody></table></div>';
   const FEW=(shortRows.length?(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''):'');
-  if(Object.keys(inp).length)h+=(PPB&&shortRows.length?'<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div><div style="margin-top:14px">'+MAT+'</div>'
+  if(Object.keys(inp).length)h+=(shortRows.length?'<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div><div style="margin-top:14px">'+MAT+'</div>'
     :'<div class="bp-two"><div class="bp-l">'+MAT+'</div>'+FEW+'</div>'+(shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:''))+chainHTML+'</div>';
   m.innerHTML=h;
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
@@ -293,7 +292,7 @@ export function drawBuildPlan(m){
 {
   const hookP=()=>{
     const vu=document.getElementById('vU'),main=document.getElementById('main');
-    if(!PPB||!vu||!main||!window.YIC||document.getElementById('vD'))return;
+    if(!vu||!main||!window.YIC||document.getElementById('vD'))return;
     const b=document.createElement('button');b.id='vD';b.textContent='Production planner';vu.after(b);
     b.addEventListener('click',()=>{
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){}
@@ -301,14 +300,14 @@ export function drawBuildPlan(m){
   };
   setInterval(hookP,700);
   /* the rock box at the top of the screen also picks the rock for the planners (beta) */
-  document.addEventListener('change',e=>{if(!PPB||!e.target||e.target.id!=='ast'||e.target.value==='')return;
+  document.addEventListener('change',e=>{if(!e.target||e.target.id!=='ast'||e.target.value==='')return;
     const on=[...document.querySelectorAll('#vU.on,#vD.on')][0],main=document.getElementById('main'),Y=window.YIC;if(!on||!main||!Y)return;
     const v=(Y.asts[+e.target.value]||{}).id;if(!v)return;S.ast=v;S.picked=true;setTimeout(()=>drawBuildPlan(main),0)});
   document.addEventListener('click',e=>{const b=document.getElementById('vD'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
     if(!vr||!main||!window.YIC||document.getElementById('vU'))return;
-    const b=document.createElement('button');b.id='vU';b.textContent=/[?&]beta=1/.test(location.search)?'Construction planner':'Asteroid planner';vr.after(b);
+    const b=document.createElement('button');b.id='vU';b.textContent='Construction planner';vr.after(b);
     b.addEventListener('click',()=>{
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){}
       b.className='on';S.mode='bld';drawBuildPlan(main)});
