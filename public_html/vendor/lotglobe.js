@@ -246,7 +246,7 @@
       if (!st.isConnected || !isOn()) { raf = 0; return; }
       const dt = Math.min(0.1, (t - last) / 1000); last = t;
       if (st.getBoundingClientRect().width && Math.abs(st.getBoundingClientRect().width - W) > 2) fit();
-      if (S.spin && !drag) S.rotY += dt * 0.25;
+      if (S.spin && !drag && !mouse) S.rotY += dt * 0.08; // slow (Mark); stops while the pointer is over the globe
       if (S.focus && G) { // ease round to face that lot
         const i = S.focus, x = G.pos[i * 3], y = G.pos[i * 3 + 1], z = G.pos[i * 3 + 2];
         const ty = -Math.atan2(x, z), tx = Math.asin(Math.max(-1, Math.min(1, y)));

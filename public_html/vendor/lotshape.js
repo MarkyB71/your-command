@@ -75,7 +75,7 @@ export function show(el, buf, o) {
   scene.add(new THREE.AmbientLight(0xffffff, 0.35));
   const sun = new THREE.DirectionalLight(0xffffff, 1.8); scene.add(sun);
   const ctl = new OrbitControls(cam, renderer.domElement);
-  ctl.enableDamping = true; ctl.autoRotate = !!o.spin; ctl.autoRotateSpeed = 0.6;
+  ctl.enableDamping = true; ctl.autoRotate = !!o.spin; ctl.autoRotateSpeed = 0.2;
   const F = lotFinder(o.n), st = o.stretch;
   let stopped = false, ro = null, meshes = [], lotOf = [], cols = [], marks = null, size = 1, R = 1, focus = null, mine = {};
   const lotSurf = new Float32Array((o.n + 1) * 3), lotBest = new Float32Array(o.n + 1).fill(-2);
@@ -89,7 +89,7 @@ export function show(el, buf, o) {
       });
       renderer.dispose(); el.innerHTML = '';
     },
-    setSpin(v) { ctl.autoRotate = !!v; },
+    setSpin(v) { wantSpin = !!v; ctl.autoRotate = wantSpin && !over; },
     // vals: Float32Array of lot levels; min/max for the colour range; my: {lot: name}
     paint(vals, min, max, my) {
       const span = max > min ? max - min : 1;
@@ -123,7 +123,7 @@ export function show(el, buf, o) {
   }
 
   const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
-  renderer.domElement.addEventListener('pointerdown', () => { ctl.autoRotate = false; focus = null; });
+  renderer.domElement.addEventListener('pointerdown', () => { ctl.autoRotate = false; wantSpin = false; focus = null; });
   renderer.domElement.addEventListener('pointermove', (e) => {
     if (!meshes.length || !o.onHover) return;
     const r = renderer.domElement.getBoundingClientRect();
@@ -134,7 +134,10 @@ export function show(el, buf, o) {
     const p = hit.point.clone().divide(st).normalize();
     o.onHover(F.near(p.x, p.y, p.z), e.clientX - r.left, e.clientY - r.top);
   });
-  renderer.domElement.addEventListener('pointerleave', () => o.onHover && o.onHover(0));
+  // spin pauses while the pointer is over the rock, so lots can be hovered (Mark)
+  let wantSpin = !!o.spin, over = false;
+  renderer.domElement.addEventListener('pointerenter', () => { over = true; ctl.autoRotate = false; });
+  renderer.domElement.addEventListener('pointerleave', () => { over = false; ctl.autoRotate = wantSpin; if (o.onHover) o.onHover(0); });
 
   return new Promise((resolve, reject) => {
     new GLTFLoader().parse(buf, '', (gltf) => {
