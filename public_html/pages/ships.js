@@ -5,7 +5,13 @@
   'use strict';
 
   // Colour and label for each ship status
-  const STATUS = {
+  // Test (?beta=1, Mark 29 Oct): the game's own colours (influence-client ships list: In Orbit = main blue, In Flight = lightOrange, Docked plain)
+  const GSC = /[?&]beta=1/.test(location.search);
+  const STATUS = GSC ? {
+    d: { colour: '#e6ebf2', label: 'Docked' },
+    o: { colour: '#36a7cd', label: 'In orbit' },
+    f: { colour: '#faaf42', label: 'In flight' }
+  } : {
     d: { colour: '#3fd68a', label: 'Docked' },
     o: { colour: '#ffab3d', label: 'In orbit' },
     f: { colour: '#5b9dff', label: 'In flight' }
