@@ -14,7 +14,7 @@ const BL=SHB?Object.assign({},BLDS,SHP):BLDS,isShip=k=>/^s\d$/.test(k); /* recip
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{;h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
-const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10};
+const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10,unit:'t'};
 /* Production planner (beta, Mark 29 Oct): same planner, but for one product made in a Refinery / Factory / Bioreactor */
 const PPB=/[?&]beta=1/.test(location.search);
 const PPCSS='#bpw .bp-pp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px;font-size:15px}#bpw .bp-tabs{display:flex;gap:6px;width:100%}#bpw .bp-tab{padding:7px 14px;border-radius:8px;border:1px solid #2a3646;background:#121a24;color:#c4cdd9;font-weight:700;cursor:pointer}#bpw .bp-tab.on{background:#e8645a;border-color:#e8645a;color:#fff;box-shadow:0 0 12px -2px #e8645a}#bpw .bp-pp select{font-size:15px;padding:5px 8px;min-width:0!important;max-width:100%}#bpw .bp-pp input{width:110px!important;min-width:0!important;flex:none!important;font-size:15px;padding:5px 8px}';
@@ -63,11 +63,11 @@ export function drawBuildPlan(m){
   const PM=PPB&&S.mode==='prod';let ppHTML='',PR=null;
   if(PM){const PL=Object.keys(MK).filter(id=>PX[id]&&MK[id].some(r=>r[1]===S.ptab)).sort((a,b)=>nm(a).localeCompare(nm(b)));
     if(!PL.includes(String(S.prod)))S.prod=PL[0];const RS=MK[S.prod].filter(r=>r[1]===S.ptab);if(!(S.rec<RS.length))S.rec=0;PR=RS[S.rec];
-    const cnt=isCnt(S.prod),g=(PX[S.prod]&&PX[S.prod][2])||1000,want=cnt?Math.max(1,Math.round(S.amt)||1):Math.max(0.001,+S.amt||0)*1e6/g,runs=want/PR[3];
+    const cnt=isCnt(S.prod),g=(PX[S.prod]&&PX[S.prod][2])||1000,UF={kg:0.001,t:1,kt:1000},want=cnt?Math.max(1,Math.round(S.amt)||1):Math.max(1e-6,(+S.amt||0)*(UF[S.unit]||1))*1e6/g,runs=want/PR[3];
     inp={};for(const id in PR[2]){const back=(PR[4]&&PR[4][id])||0,q=Math.max(PR[2][id],(PR[2][id]-back)*runs);inp[id]=back?q:PR[2][id]*runs}N=1;
     bName=nm(S.prod);bLab=(cnt?Math.round(want).toLocaleString()+' × ':tkg(want*g/1000)+' ')+nm(S.prod);
     ppHTML='<div class="bp-pp"><div class="bp-tabs">'+[1,2,3].map(t=>'<button type="button" class="bp-tab'+(t===S.ptab?' on':'')+'" data-pt="'+t+'">'+PTYPE[t]+'</button>').join('')+'</div>'+
-      'Make <input id="ppA" type="number" min="0" step="any" value="'+esc(S.amt)+'"> '+(cnt?'×':'tonnes of')+' <select id="ppP">'+PL.map(id=>'<option value="'+id+'"'+(id===String(S.prod)?' selected':'')+'>'+esc(nm(id))+'</option>').join('')+'</select>'+
+      'Make <input id="ppA" type="number" min="0" step="any" value="'+esc(S.amt)+'"> '+(cnt?'×':'<select id="ppU">'+['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('')+'</select> of')+' <select id="ppP">'+PL.map(id=>'<option value="'+id+'"'+(id===String(S.prod)?' selected':'')+'>'+esc(nm(id))+'</option>').join('')+'</select>'+
       (RS.length>1?' using <select id="ppR">'+RS.map((r,i)=>'<option value="'+i+'"'+(i===S.rec?' selected':'')+'>'+esc(r[0])+'</option>').join('')+'</select>':' <span class="a">('+esc(PR[0])+')</span>')+'</div>'}
   const pickHTML=PM?ppHTML:'<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="'+(isShip(k)?'shipimg.php?t='+k.slice(1)+'&v=1&s=1':'bimg.php?t='+k)+'" alt="" data-hide><span>'+esc(BL[k][0])+'</span>'+('<!--bpb'+k+'-->')+'<input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+'<button id="bpCalc" type="button">Calculate</button>'+'<button id="bpClr" type="button">Clear all</button></div>';
   const rows=Object.keys(inp).map(id=>{const need=inp[id]*N,have=stk[id]||0,short=Math.max(0,need-have);
@@ -262,6 +262,7 @@ export function drawBuildPlan(m){
   if(PM){m.querySelectorAll('.bp-tab').forEach(b=>b.onclick=()=>{S.ptab=+b.dataset.pt;S.prod=null;S.rec=0;drawBuildPlan(m)});
     const pp=m.querySelector('#ppP'),pr=m.querySelector('#ppR'),pa=m.querySelector('#ppA');
     if(pp)pp.onchange=e=>{S.prod=e.target.value;S.rec=0;drawBuildPlan(m)};if(pr)pr.onchange=e=>{S.rec=+e.target.value;drawBuildPlan(m)};
+    const pu=m.querySelector('#ppU');if(pu)pu.onchange=e=>{S.unit=e.target.value;drawBuildPlan(m)};
     if(pa)pa.onchange=e=>{const v=+e.target.value;if(v>0){S.amt=v;drawBuildPlan(m)}}}
   {const calc=m.querySelector('#bpCalc'),nSel=()=>Object.keys(S.cnt).filter(k=>S.cnt[k]>0).length;
     m.querySelectorAll('.bp-pick input').forEach(x=>{const set=e=>{const v=Math.max(0,Math.min(999,Math.round(+e.target.value)||0));if(S.cnt[e.target.dataset.b]===v||(!v&&!S.cnt[e.target.dataset.b]))return;S.cnt[e.target.dataset.b]=v;
