@@ -82,7 +82,7 @@ export function show(el, buf, o) {
     },
     setSpin(v) { wantSpin = !!v; ctl.autoRotate = wantSpin && !over; },
     // vals: Float32Array of lot levels; fn(level) → [r,g,b] 0..1 (game colours); my: {lot: name}
-    paint(vals, fn, my) {
+    paint(vals, fn, my, myCol) {
       meshes.forEach((m, k) => {
         const lo = lotOf[k], c = cols[k];
         for (let i = 0; i < lo.length; i++) {
@@ -97,8 +97,10 @@ export function show(el, buf, o) {
       if (ids.length) {
         const pos = new Float32Array(ids.length * 3);
         ids.forEach((i, j) => { for (let a = 0; a < 3; a++) pos[j * 3 + a] = lotSurf[i * 3 + a] * 1.004; });
-        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        marks = new THREE.Points(g, new THREE.PointsMaterial({ map: ring(), color: 0xffd24a, size: 14, sizeAttenuation: false, transparent: true, depthWrite: false }));
+        const cl = new Float32Array(ids.length * 3), cc = new THREE.Color();
+        ids.forEach((i, j) => { cc.set((myCol && myCol[i]) || '#ffd24a'); cl[j * 3] = cc.r; cl[j * 3 + 1] = cc.g; cl[j * 3 + 2] = cc.b; });
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(cl, 3));
+        marks = new THREE.Points(g, new THREE.PointsMaterial({ map: ring(), vertexColors: true, size: 14, sizeAttenuation: false, transparent: true, depthWrite: false }));
         scene.add(marks);
       }
     },

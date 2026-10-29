@@ -103,16 +103,32 @@
     return p;
   }
 
-  // your buildings on that rock: lot index → building name
+  // Building colours = the game's lot-map building groups (same as Lot resources, influence-client SearchFilters.js)
+  const BCAT = { 1: '#ff8c00', 10: '#ff8c00', 2: '#ff4a3d', 3: '#e0458a', 4: '#2ecc1a', 5: '#c99a6e', 6: '#7a7aff', 7: '#19d9ff', 8: '#57ff65', 9: '#ffff00' };
+  const BGRP = { 1: 'Storage', 10: 'Storage', 2: 'Extraction', 3: 'Refining', 4: 'Agriculture', 5: 'Manufacturing', 6: 'Shipbuilding', 7: 'Transport', 8: 'Trade', 9: 'Housing' };
+  let MC = {}; // lot index → colour of your building there
+  const me = (i) => '<span class="lg-me" style="border-color:' + (MC[i] || '#ffd24a') + '"></span>';
+  // your buildings on that rock: lot index → building name (colours into MC)
   function myLots(D, astId) {
-    const out = {};
+    const out = {}; MC = {};
     (D.allB || []).forEach((b) => {
       const L = ((b.Location || {}).locations) || [];
       const a = L.find((x) => x.label === 3), l = L.find((x) => x.label === 4);
       if (!a || a.id !== astId || !l || !b.Building || !(b.Building.status >= 1)) return;
-      out[Math.floor(l.id / 4294967296)] = (b.Name && b.Name.name) || 'Your building';
+      const i = Math.floor(l.id / 4294967296), t = b.Building.buildingType;
+      out[i] = (b.Name && b.Name.name) || 'Your building'; MC[i] = BCAT[t] || '#ffd24a';
     });
     return out;
+  }
+
+  function bldLegend(D, astId) {
+    const seen = {};
+    (D.allB || []).forEach((b) => {
+      const L = ((b.Location || {}).locations) || [], a = L.find((x) => x.label === 3);
+      if (a && a.id === astId && b.Building && b.Building.status >= 1) { const g = BGRP[b.Building.buildingType]; if (g) seen[g] = BCAT[b.Building.buildingType]; }
+    });
+    const k = Object.keys(seen);
+    return k.length ? '<div class="lg-dim" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 10px">Your buildings: ' + k.map((g) => '<span style="color:' + seen[g] + '"><span class="lg-me" style="border-color:' + seen[g] + '"></span>' + g + '</span>').join('') + '</div>' : '';
   }
 
   const isOn = () => { const b = document.getElementById('vI'); return !!(b && b.className === 'on'); };
@@ -174,9 +190,9 @@
     h += '<div class="lg-wrap"><div class="lg-stage' + (shape ? ' lg-3d' : '') + '" id="lg-st">' + (shape ? '' : '<canvas id="lg-c"></canvas>') + '<div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
       '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
       '<div class="lg-leg" style="background:linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map((k, x) => 'rgb(' + col(k / 6).join(',') + ') ' + (x * 100 / 6).toFixed(1) + '% ' + ((x + 1) * 100 / 6).toFixed(1) + '%').join(',') + ')"></div><div class="lg-legt"><span>' + esc(G.cat.replace('RareEarth', 'Rare earth')) + ' · poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
-      '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + ' · <span class="lg-me"></span>your buildings</div></div>' +
+      '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + '</div>' + bldLegend(D, A.id) + '</div>' +
       '<div class="lg-box"><h3>Richest lots</h3><table class="lg-top nosort">' +
-      top.slice(0, 10).map((i) => '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">' + (G.mine[i] ? '<span class="lg-me"></span>' + esc(G.mine[i]) : 'Free / other') + '</td><td class="lg-p">' + pct(val[i]) + '</td></tr>').join('') +
+      top.slice(0, 10).map((i) => '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">' + (G.mine[i] ? me(i) + esc(G.mine[i]) : 'Free / other') + '</td><td class="lg-p">' + pct(val[i]) + '</td></tr>').join('') +
       '</table><div class="lg-hint">Click a lot to turn the globe to it. Drag the globe to turn it.</div></div></div></div>';
     m.innerHTML = h;
 
@@ -204,11 +220,11 @@
           const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
           if (T3 !== me) { api.stop(); return; }
           me.api = api;
-          if (G && G.id === A.id) api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine);
+          if (G && G.id === A.id) api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine, MC);
           if (S.focus) api.face(S.focus);
         })
         .catch((e) => { el.innerHTML = '<div class="lg-load">Could not show the 3D model (' + Y.esc((e && e.message) || e) + '). Switch to 🌐 Globe.</div>'; });
-    } else if (T3.api) { T3.api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine); T3.api.setSpin(S.spin); }
+    } else if (T3.api) { T3.api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine, MC); T3.api.setSpin(S.spin); }
     st.prepend(T3.el);
   }
   function hover3d(lot, x, y) {
@@ -221,7 +237,7 @@
   }
   function tipHTML(lot) {
     const Y = window.YIC, esc = Y.esc;
-    return '<b>Lot #' + lot + '</b> · ' + pct(G.val[lot]) + ' ' + esc(Y.pn(G.res)) + (G.mine[lot] ? '<br><span class="lg-me"></span>' + esc(G.mine[lot]) : '');
+    return '<b>Lot #' + lot + '</b> · ' + pct(G.val[lot]) + ' ' + esc(Y.pn(G.res)) + (G.mine[lot] ? '<br>' + me(lot) + esc(G.mine[lot]) : '');
   }
 
   // set the rock here and on the viewscreen rock box (by name)
@@ -328,10 +344,11 @@
     }
     ctx.globalCompositeOperation = 'source-over';
 
-    // your buildings: gold rings on the near side
-    ctx.strokeStyle = 'rgba(255,210,74,.85)'; ctx.lineWidth = 1.4;
+    // your buildings: rings in the game's building-group colours, near side only
+    ctx.lineWidth = 1.6;
     for (let j = 0; j < pts.length; j += 4) {
       const i = pts[j]; if (!G.mine[i] || pts[j + 3] <= 0.05) continue;
+      ctx.strokeStyle = MC[i] || '#ffd24a';
       ctx.beginPath(); ctx.arc(c + pts[j + 1] * R, c - pts[j + 2] * R, dot * 1.3 + 2, 0, 7); ctx.stroke();
     }
 
