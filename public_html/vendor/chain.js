@@ -87,6 +87,12 @@ const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 B
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt)return;const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3);const n=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');if(n!==an)return;if(B.status===3)ok++;else if(B.status===2)bld++;else if(B.status===1)pl++});
   if(ok)return '<div class="pc-fac ok">✓ '+nm+' – you have '+ok+'</div>';
   return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
+/* TEST ?beta=1 (Mark, 29 Oct): warn when a raw is set to "Mine it" but the chosen rock can't mine it */
+const MNB=/[?&]beta=1/.test(location.search);
+const mineHTML=(id,ai)=>{if(!MNB||ai===null)return '';const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},D=Y.D||{};
+  const r=(D.owned||[]).find(x=>x.id===a.id);if(!r)return '';const c=r.Celestial||{};
+  const ok=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?(Y.astAbund(c.abundances)[id]||0)>0:!!((Y.SPEC||{})[c.celestialType]&&Y.SPEC[c.celestialType][1].includes(+id));
+  return ok?'':'<div class="pc-fac no">✗ Can\'t mine this on '+String(a.name||'').replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+' – pick a recipe or fly it in</div>'};
 const SW=id=>('<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>');
 const tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
 const isB=id=>(id<1000)&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
@@ -134,7 +140,7 @@ export function drawChain(m){
       o.forEach(x=>{const op=el('option');op.value=x.i;op.textContent=x.name;if(x===cur)op.selected=true;s.appendChild(op)});
       s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;draw()});c.appendChild(s)};
     if(!all.length||!o.length||mine){const c=el('div','pc-n raw',head(id,qty));if(isRaw&&o.length)sel(c,-1);
-      c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>');
+      c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>'+(isRaw?mineHTML(id,ai):''));
       br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
