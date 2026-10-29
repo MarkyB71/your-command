@@ -64,6 +64,10 @@
 .lg-sw button.on{background:#4f90ff;color:#fff;box-shadow:0 0 12px #4f90ff88}
 .lg-3d{cursor:default}.lg-3dv{position:absolute;inset:0}.lg-3dv canvas{width:100%!important;height:100%!important}
 .lg-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:#8fe3ff;font-size:15px}
+.lg-add{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin:0 0 12px;padding:10px 14px;border:2px solid #ffd24a;border-radius:10px;background:rgba(255,210,74,.07);box-shadow:0 0 16px -4px #ffd24a}
+.lg-add>div{flex:1 1 320px}.lg-add b{color:#ffd24a;font-size:15px}.lg-add span{display:block;color:#c9d3e0;font-size:13px;margin-top:3px}.lg-add span b{font-size:13px}
+.lg-up{background:#ffd24a;color:#1a1408;font-weight:700;border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap;box-shadow:0 0 12px #ffd24a88}
+.lg-up:hover{filter:brightness(1.1)}
 .lg-hint{color:#8b9ab0;font-size:12px;margin-top:6px}`;
 
   function css() {
@@ -186,7 +190,9 @@
         }).join('') + '</select></label>' +
       (HAS[A.id] ? '<span class="lg-sw"><button type="button" data-v="shape"' + (shape ? ' class="on"' : '') + '>🪨 Real shape</button><button type="button" data-v="globe"' + (shape ? '' : ' class="on"') + '>🌐 Globe</button></span>' : '') +
       '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>' +
-      (HAS[A.id] ? '' : '<div class="lg-dim" style="margin:-4px 0 10px">Want the real shape? Add this rock\'s 3D model on the Asteroids page (Download 3D Model in the game, then Add 3D model here).</div>');
+      (HAS[A.id] ? '' : '<div class="lg-add"><div><b>🪨 Only seeing a globe? See the real shape of ' + esc(nm(A)) + '</b>' +
+        '<span>In the game, open this rock\'s management page and press <b>Download 3D Model</b> (owners only). Then add that file here – it stays in this browser only.</span></div>' +
+        '<label class="lg-up">📦 Add 3D model<input type="file" id="lg-file" accept=".glb,.gltf" style="display:none"></label></div>');
     h += '<div class="lg-wrap"><div class="lg-stage' + (shape ? ' lg-3d' : '') + '" id="lg-st">' + (shape ? '' : '<canvas id="lg-c"></canvas>') + '<div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
       '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
       '<div class="lg-leg" style="background:linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map((k, x) => 'rgb(' + col(k / 6).join(',') + ') ' + (x * 100 / 6).toFixed(1) + '% ' + ((x + 1) * 100 / 6).toFixed(1) + '%').join(',') + ')"></div><div class="lg-legt"><span>' + esc(G.cat.replace('RareEarth', 'Rare earth')) + ' · poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
@@ -199,6 +205,8 @@
     m.querySelector('#lg-r').addEventListener('change', (e) => pickRock(Y, own, e.target.value, m));
     m.querySelector('#lg-s').addEventListener('change', (e) => { S.res = +e.target.value; page(m); });
     m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; if (T3 && T3.api) T3.api.setSpin(S.spin); });
+    const fi = m.querySelector('#lg-file');
+    if (fi) fi.addEventListener('change', () => upload(fi, A, m));
     m.querySelectorAll('.lg-sw button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; page(m); }));
     m.querySelectorAll('tr[data-lot]').forEach((tr) => tr.addEventListener('click', () => { S.focus = +tr.dataset.lot; S.spin = false; const c = m.querySelector('#lg-spin'); if (c) c.checked = false; S.pulse = performance.now(); if (shape && T3 && T3.api) T3.api.face(S.focus); }));
     if (shape) { stop(); real(Y, A, m.querySelector('#lg-st')); } else start(m.querySelector('#lg-st'));
@@ -238,6 +246,24 @@
   function tipHTML(lot) {
     const Y = window.YIC, esc = Y.esc;
     return '<b>Lot #' + lot + '</b> · ' + pct(G.val[lot]) + ' ' + esc(Y.pn(G.res)) + (G.mine[lot] ? '<br>' + me(lot) + esc(G.mine[lot]) : '');
+  }
+
+  // Add the 3D model right here – saved the same way as the Asteroids page does (IndexedDB, this browser only)
+  function upload(inp, A, m) {
+    const f = inp.files && inp.files[0], box = m.querySelector('.lg-add');
+    if (!f || !box) return;
+    const say = (t, again) => { box.innerHTML = '<div><b>' + window.YIC.esc(t) + '</b></div>'; if (again) setTimeout(() => { if (isOn()) page(m); }, 4000); };
+    const want = String(A.id), got = (f.name.match(/asteroid_(\d+)/) || [])[1];
+    if (got && got !== want) return say('That file is for asteroid #' + got + ', not ' + nm(A) + ' (#' + want + '). Pick asteroid_' + want + '.gltf.', true);
+    if (f.size > 400e6) return say('That file is too big (over 400 MB).', true);
+    say('Saving the model… (big files take a little while)');
+    f.arrayBuffer().then((buf) => new Promise((res, rej) => {
+      const q = indexedDB.open('influenceStock3d', 1);
+      q.onupgradeneeded = () => q.result.createObjectStore('models');
+      q.onerror = () => rej(q.error);
+      q.onsuccess = () => { const tx = q.result.transaction('models', 'readwrite'); tx.objectStore('models').put({ name: f.name, buf, size: f.size, added: Date.now() }, A.id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); };
+    })).then(() => { HAS[A.id] = true; S.view = 'shape'; if (isOn()) page(m); })
+      .catch(() => say('Could not save it in this browser (storage may be full or turned off).', true));
   }
 
   // set the rock here and on the viewscreen rock box (by name)
