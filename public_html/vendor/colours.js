@@ -167,7 +167,10 @@
 
   /* the coloured strip above the page */
   var last='';
+  /* The decks replaced the old menu colours and page banners (Mark, 29 Oct tidy) – beta: switched off */
+  var OLD=/[?&]beta=1/.test(location.search);
   function tick(){
+    if(OLD){var ob=document.getElementById('pgband');if(ob)ob.remove();return}
     tagMenus();
     addCss(); /* the site rebuilds <head> while loading, so put the colours back if they vanish */
     var main=document.getElementById('main');if(!main)return;

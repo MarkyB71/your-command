@@ -45,6 +45,7 @@
     (MOVE?'<animateMotion dur="9s" repeatCount="indefinite" rotate="auto"><mpath href="#bl-o"/></animateMotion>'
          :'<animateTransform attributeName="transform" type="translate" values="0 8" dur="1s" fill="freeze"/>')+
     '</g></g>';
+  const OLDH=/[?&]beta=1/.test(location.search); /* the decks hide the old header (Mark, 29 Oct tidy) */
   function tick(){
     const d=document;
     if(!d.head)return;
@@ -54,12 +55,12 @@
     }
     if(!d.getElementById('brand-css')){const st=d.createElement('style');st.id='brand-css';st.textContent=CSS;d.head.appendChild(st)}
     const h1=d.querySelector('header h1');
-    if(h1&&!d.getElementById('brand-logo')){
+    if(h1&&!h1.querySelector('.brand-t')){
       const s=d.createElementNS(NS,'svg');s.id='brand-logo';s.setAttribute('viewBox','-26 -26 52 52');
       s.setAttribute('aria-hidden','true');s.innerHTML=LOGO;
       const t=d.createElement('span');t.className='brand-t';while(h1.firstChild)t.appendChild(h1.firstChild);
       const s2=s.cloneNode(true);s2.id='brand-logo2';s2.style.transform='scaleX(-1)';
-      h1.classList.add('brand');h1.append(s,t,s2);
+      h1.classList.add('brand');if(OLDH)h1.append(t);else h1.append(s,t,s2); /* beta: no logos – the header is hidden by the decks */
     }
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
@@ -110,6 +111,7 @@
   setInterval(tick,300);tick();
   // TEST (?beta=1): title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
   function fit(){
+    if(OLDH)return;
     const h=document.querySelector('h1.brand'),t=h&&h.querySelector('.brand-t'),b=document.querySelector('#pgband');if(!t)return;
     const W=document.documentElement.clientWidth;
     if(W<=700){if(h.style.fontSize)h.style.fontSize='';b&&b.classList.remove('yic-nolab');return}
