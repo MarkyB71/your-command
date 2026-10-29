@@ -563,6 +563,20 @@ body > header{display:none!important}
       rb.textContent = '⟳ Refresh';
       rb.title = 'Fetch the latest data from the game';
       rb.onclick = () => {
+        // Beta (29 Oct): quiet refresh – fetch the data and swap it in, no loading screen,
+        // no Bridge, page stays where it is (the old way rebuilt the whole site and doubled the tool buttons)
+        if (RSB && window.YICrefreshNow) {
+          if (rb.disabled) return;
+          rb.disabled = true;
+          rb.textContent = '⟳ Refreshing…';
+          Promise.resolve(window.YICrefreshNow())
+            .catch(() => {})
+            .finally(() => {
+              rb.disabled = false;
+              rb.textContent = '⟳ Refresh';
+            });
+          return;
+        }
         if (RSB) restore(current(), scr);
         const rf = document.getElementById('rf');
         if (rf) rf.click();

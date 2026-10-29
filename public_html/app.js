@@ -366,6 +366,7 @@ async function bgTick(force){
   const N=buildD(j);if(!N)return;bgSig=s;window.YICquiet(N);bgDirty=true;bgApply();
  }catch(e){}finally{bgBusy=false}
 }
+window.YICrefreshNow=()=>bgTick(true); /* ⟳ Refresh on the decks: fetch now, no page rebuild */
 {setInterval(()=>{bgTick();bgApply()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)bgTick()})}
 async function load(wallet){
  bgW='';bgDirty=false;
