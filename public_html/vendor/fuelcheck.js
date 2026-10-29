@@ -65,6 +65,19 @@
     Object.keys(inp).forEach((k) => { if (!(o && o[k])) raws(Y, D, ast, k, seen, out); });
   }
 
+  // Fuel with some inputs flown in (Mark, 29 Oct): the last step's facility is here and at least one
+  // input can be mined/made here. Returns {fly:[inputs to fly in], here:[inputs made/mined here]} or null.
+  function partial(Y, D, ast, prod) {
+    const R = window.YICREC;
+    for (const [, pt, inp, , o] of R.MK[prod] || []) {
+      if (!hasFac(D, ast.id, R.FBT[pt])) continue;
+      const ks = Object.keys(inp).filter((k) => !(o && o[k]));
+      const here = ks.filter((k) => canMake(Y, D, ast, k, { [prod]: 1 }));
+      if (here.length) return { fly: ks.filter((k) => !here.includes(k)), here };
+    }
+    return null;
+  }
+
   function loadSamples(Y) {
     if (Y.SAMP || Y.sampLoad) return;
     Y.sampLoad = fetch('samples.php?wallet=' + encodeURIComponent(Y.D.wallet || ''), { cache: 'no-store' })
@@ -83,9 +96,9 @@
     const rocks = [];
     (Y.asts || []).forEach((a) => { if (a.id) rocks.push({ id: a.id, name: a.name }); });
     (D.owned || []).forEach((a) => { if (a.id && !rocks.some((r) => r.id === a.id)) rocks.push({ id: a.id, name: (a.Name && a.Name.name) || ('Asteroid #' + a.id) }); });
-    rocks.forEach((r) => { r.rec = (D.owned || []).find((x) => x.id === r.id) || { id: r.id }; r.ok = canMake(Y, D, r.rec, PROP, {}); });
-    const good = rocks.filter((r) => r.ok).sort((a, b) => a.name.localeCompare(b.name));
-    const cant = rocks.filter((r) => !r.ok).map((r) => r.name).sort();
+    rocks.forEach((r) => { r.rec = (D.owned || []).find((x) => x.id === r.id) || { id: r.id }; r.ok = canMake(Y, D, r.rec, PROP, {}); if (!r.ok) r.part = partial(Y, D, r.rec, PROP); });
+    const good = rocks.filter((r) => r.ok || r.part).sort((a, b) => a.name.localeCompare(b.name));
+    const cant = rocks.filter((r) => !r.ok && !r.part).map((r) => r.name).sort();
 
     let h = '<div class="fc-note">Making your own fuel (Hydrogen Propellant). Step 1: does every extractor have at least ' + MIN + ' untouched core samples of the raw materials the fuel needs?</div>';
     if (!good.length) {
@@ -94,10 +107,12 @@
     }
     if (!good.some((r) => String(r.id) === S.rock)) S.rock = String(good[0].id);
     const rock = good.find((r) => String(r.id) === S.rock);
-    h += '<div class="fc-row"><label>Rock <select id="fc-r">' + good.map((r) => '<option value="' + r.id + '"' + (String(r.id) === S.rock ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('') + '</select></label>' +
+    h += '<div class="fc-row"><label>Rock <select id="fc-r">' + good.map((r) => '<option value="' + r.id + '"' + (String(r.id) === S.rock ? ' selected' : '') + '>' + esc(r.name) + (r.ok ? '' : ' – fly in ' + esc(r.part.fly.map(pn).join(' + '))) + '</option>').join('') + '</select></label>' +
       (cant.length ? '<span class="fc-dim">Can\'t make fuel: ' + esc(cant.join(', ')) + '</span>' : '') + '</div>';
 
-    const need = new Set(); raws(Y, D, rock.rec, PROP, {}, need);
+    const need = new Set();
+    if (rock.ok) raws(Y, D, rock.rec, PROP, {}, need);
+    else rock.part.here.forEach((k) => raws(Y, D, rock.rec, k, { [PROP]: 1 }, need));
     const needL = [...need].sort((a, b) => pn(a).localeCompare(pn(b)));
 
     if (!Y.SAMP) { loadSamples(Y); m.innerHTML = h + '<div class="note">Loading your core samples…</div>'; wire(m); return; }
@@ -115,7 +130,9 @@
     h += '<div class="fc-box"><h3>Raw materials the fuel needs on ' + esc(rock.name) + '</h3><div class="fc-raws">' +
       needL.map((p) => '<div class="fc-raw">' + Y.ricon(p, 28) + '<span><b>' + esc(pn(p)) + '</b><br><span class="fc-dim">' +
         (tot[p] ? tot[p].n + ' untouched sample' + (tot[p].n === 1 ? '' : 's') + ' · ' + Y.fq(p, tot[p].kg) : '<span class="fc-bad">no untouched samples</span>') +
-        '</span></span></div>').join('') + '</div></div>';
+        '</span></span></div>').join('') + '</div>' +
+      (rock.ok ? '' : '<div class="fc-note" style="margin:10px 0 0">✈ Fly in: <b>' + esc(rock.part.fly.map(pn).join(', ')) + '</b> – this rock has the Refinery but can\'t make ' + (rock.part.fly.length === 1 ? 'it' : 'them') + '.</div>') +
+      '</div>';
 
     // Extractors on this rock
     const now = Date.now() / 1000;
