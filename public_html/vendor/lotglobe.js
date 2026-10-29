@@ -15,6 +15,26 @@
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0 };
   let G = null; // current globe {id, res, n, pos, val, max, mine}
+  // Real shape: the 3D model the player added on the Asteroids page (IndexedDB influenceStock3d/models, key = rock id)
+  S.view = 'shape';
+  const HAS = {};            // rock id → true/false: a model is stored in this browser
+  let T3 = null;             // {id, el, api} – kept while switching resource so the big file loads once
+  function hasModel(id) {
+    return new Promise((res) => {
+      let q; try { q = indexedDB.open('influenceStock3d', 1); } catch (e) { res(false); return; }
+      q.onupgradeneeded = () => q.result.createObjectStore('models');
+      q.onerror = () => res(false);
+      q.onsuccess = () => { try { const r = q.result.transaction('models', 'readonly').objectStore('models').getKey(id); r.onsuccess = () => res(r.result !== undefined); r.onerror = () => res(false); } catch (e) { res(false); } };
+    });
+  }
+  function getModel(id) {
+    return new Promise((res, rej) => {
+      const q = indexedDB.open('influenceStock3d', 1);
+      q.onupgradeneeded = () => q.result.createObjectStore('models');
+      q.onerror = () => rej(q.error);
+      q.onsuccess = () => { const r = q.result.transaction('models', 'readonly').objectStore('models').get(id); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); };
+    });
+  }
   let raf = 0;
 
   const CSS = `.lg-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
@@ -39,6 +59,11 @@
 .lg-need{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:28px 4px}
 .lg-need b{font-size:18px;color:#ffd24a}
 .lg-need select{font-size:17px;padding:8px 12px;border:2px solid #ffd24a;box-shadow:0 0 16px -2px #ffd24a;border-radius:8px;min-width:0!important}
+.lg-sw{display:inline-flex;border:1px solid #4f90ff;border-radius:8px;overflow:hidden}
+.lg-sw button{background:transparent;color:#8fb8ff;border:0;padding:6px 12px;font-size:14px;cursor:pointer}
+.lg-sw button.on{background:#4f90ff;color:#fff;box-shadow:0 0 12px #4f90ff88}
+.lg-3d{cursor:default}.lg-3dv{position:absolute;inset:0}.lg-3dv canvas{width:100%!important;height:100%!important}
+.lg-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:#8fe3ff;font-size:15px}
 .lg-hint{color:#8b9ab0;font-size:12px;margin-top:6px}`;
 
   function css() {
@@ -125,6 +150,8 @@
     if (!G || G.id !== A.id || G.n !== n) G = { id: A.id, n, pos: lotPos(n) };
     G.res = S.res; G.val = val; G.max = max; G.min = Math.min(min, max); G.mine = myLots(D, A.id);
     S.focus = null;
+    if (HAS[A.id] === undefined) { HAS[A.id] = false; hasModel(A.id).then((v) => { HAS[A.id] = v; if (v && isOn()) page(m); }); }
+    const shape = HAS[A.id] && S.view === 'shape';
 
     const top = [];
     for (let i = 1; i <= n; i++) top.push(i);
@@ -133,8 +160,10 @@
 
     let h = '<div class="lg-row"><label>Rock <select id="lg-r">' + own.map((a) => '<option value="' + a.id + '"' + (String(a.id) === S.rock ? ' selected' : '') + '>' + esc(nm(a)) + '</option>').join('') + '</select></label>' +
       '<label>Resource <select id="lg-s">' + rs.map((r) => '<option value="' + r + '"' + (r === S.res ? ' selected' : '') + '>' + esc(pn(r)) + ' (' + Math.round(ab[r] * 100) + '% of rock)</option>').join('') + '</select></label>' +
-      '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>';
-    h += '<div class="lg-wrap"><div class="lg-stage" id="lg-st"><canvas id="lg-c"></canvas><div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
+      (HAS[A.id] ? '<span class="lg-sw"><button type="button" data-v="shape"' + (shape ? ' class="on"' : '') + '>🪨 Real shape</button><button type="button" data-v="globe"' + (shape ? '' : ' class="on"') + '>🌐 Globe</button></span>' : '') +
+      '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>' +
+      (HAS[A.id] ? '' : '<div class="lg-dim" style="margin:-4px 0 10px">Want the real shape? Add this rock\'s 3D model on the Asteroids page (Download 3D Model in the game, then Add 3D model here).</div>');
+    h += '<div class="lg-wrap"><div class="lg-stage' + (shape ? ' lg-3d' : '') + '" id="lg-st">' + (shape ? '' : '<canvas id="lg-c"></canvas>') + '<div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
       '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
       '<div class="lg-leg"></div><div class="lg-legt"><span>poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
       '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + ' · <span class="lg-me"></span>your buildings</div></div>' +
@@ -145,9 +174,46 @@
 
     m.querySelector('#lg-r').addEventListener('change', (e) => pickRock(Y, own, e.target.value, m));
     m.querySelector('#lg-s').addEventListener('change', (e) => { S.res = +e.target.value; page(m); });
-    m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; });
-    m.querySelectorAll('tr[data-lot]').forEach((tr) => tr.addEventListener('click', () => { S.focus = +tr.dataset.lot; S.spin = false; const c = m.querySelector('#lg-spin'); if (c) c.checked = false; S.pulse = performance.now(); }));
-    start(m.querySelector('#lg-st'));
+    m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; if (T3 && T3.api) T3.api.setSpin(S.spin); });
+    m.querySelectorAll('.lg-sw button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; page(m); }));
+    m.querySelectorAll('tr[data-lot]').forEach((tr) => tr.addEventListener('click', () => { S.focus = +tr.dataset.lot; S.spin = false; const c = m.querySelector('#lg-spin'); if (c) c.checked = false; S.pulse = performance.now(); if (shape && T3 && T3.api) T3.api.face(S.focus); }));
+    if (shape) { stop(); real(Y, A, m.querySelector('#lg-st')); } else start(m.querySelector('#lg-st'));
+  }
+
+  // The real shape: load the model once per rock, then repaint it for each resource
+  function real(Y, A, st) {
+    if (T3 && (T3.id !== A.id || (T3.api && T3.api.dead))) { if (T3.api && !T3.api.dead) T3.api.stop(); T3 = null; }
+    if (!T3) {
+      const el = document.createElement('div'); el.className = 'lg-3dv';
+      el.innerHTML = '<div class="lg-load">Loading your 3D model and laying out the lots…</div>';
+      T3 = { id: A.id, el, api: null };
+      const me = T3;
+      Promise.all([import('./lotshape.js?v=' + Y.VER), getModel(A.id)])
+        .then(async ([mod, rec]) => {
+          if (!rec || !rec.buf) throw new Error('model not found');
+          const stretch = await mod.stretchFor(A.id, A.Celestial.radius);
+          el.innerHTML = '';
+          const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
+          if (T3 !== me) { api.stop(); return; }
+          me.api = api;
+          if (G && G.id === A.id) api.paint(G.val, G.min, G.max, G.mine);
+          if (S.focus) api.face(S.focus);
+        })
+        .catch((e) => { el.innerHTML = '<div class="lg-load">Could not show the 3D model (' + Y.esc((e && e.message) || e) + '). Switch to 🌐 Globe.</div>'; });
+    } else if (T3.api) { T3.api.paint(G.val, G.min, G.max, G.mine); T3.api.setSpin(S.spin); }
+    st.prepend(T3.el);
+  }
+  function hover3d(lot, x, y) {
+    const tip = document.getElementById('lg-tip');
+    if (!tip) return;
+    if (!lot || !G) { tip.style.display = 'none'; return; }
+    tip.innerHTML = tipHTML(lot); tip.style.display = 'block';
+    const W = tip.parentNode.clientWidth;
+    tip.style.left = Math.min(W - tip.offsetWidth - 6, x + 14) + 'px'; tip.style.top = Math.max(6, y - tip.offsetHeight - 10) + 'px';
+  }
+  function tipHTML(lot) {
+    const Y = window.YIC, esc = Y.esc;
+    return '<b>Lot #' + lot + '</b> · ' + pct(G.val[lot]) + ' ' + esc(Y.pn(G.res)) + (G.mine[lot] ? '<br><span class="lg-me"></span>' + esc(G.mine[lot]) : '');
   }
 
   // set the rock here and on the viewscreen rock box (by name)
@@ -201,8 +267,7 @@
         if (d < bd) { bd = d; best = p[j]; }
       }
       if (best < 0 || bd > 400) { tip.style.display = 'none'; return; }
-      const Y = window.YIC, esc = Y.esc;
-      tip.innerHTML = '<b>Lot #' + best + '</b> · ' + pct(G.val[best]) + ' ' + esc(Y.pn(G.res)) + (G.mine[best] ? '<br><span class="lg-me"></span>' + esc(G.mine[best]) : '');
+      tip.innerHTML = tipHTML(best);
       tip.style.display = 'block';
       const tx = Math.min(W - tip.offsetWidth - 6, mouse.x + 14), ty = Math.max(6, mouse.y - tip.offsetHeight - 10);
       tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
