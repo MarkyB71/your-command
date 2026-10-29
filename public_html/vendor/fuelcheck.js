@@ -1,4 +1,4 @@
-/* Fuel check – Your Influence Command (Mark, 28 Oct 2026) – TEST on ?beta=1 only
+/* Fuel check – Your Influence Command (Mark, 28 Oct 2026) – LIVE 29 Oct
    Engineering console. Pick one of your rocks that can make its own Hydrogen Propellant,
    then see the raw materials the fuel needs there and whether each extractor on that rock
    has at least 2 untouched core samples of them waiting.
@@ -10,8 +10,6 @@
    Uses window.YIC (app.js), window.YICREC (recipes, vendor/buildplan.js) and samples.php. */
 (function () {
   'use strict';
-  const BETA = /[?&]beta=1/.test(location.search);
-  if (!BETA) return;
   const PROP = '170';   // Hydrogen Propellant
   const MIN = 2;        // samples each extractor should have waiting (Mark)
   const S = { rock: '' };

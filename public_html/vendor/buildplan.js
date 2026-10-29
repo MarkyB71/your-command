@@ -15,7 +15,7 @@ const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
 /* can this asteroid make product prod (same rule as the Travel page) */
 function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const ok=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?(Y.astAbund(c.abundances)[prod]||0)>0:!!((Y.SPEC||{})[c.celestialType]&&Y.SPEC[c.celestialType][1].includes(+prod));
-  /* TEST ?beta=1: a raw not mined here can still be made here (Hydrogen from Water – Mark, 29 Oct) */if(ok||!/[?&]beta=1/.test(location.search))return ok}
+  /* a raw not mined here can still be made here (Hydrogen from Water – Mark, 29 Oct) */if(ok)return true}
   if(seen[prod])return false;seen=Object.assign({},seen,{[prod]:1});
   const has=t=>(D.allB||[]).some(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===ast.id);
   return(MK[prod]||[]).some(([,pt,inp,,out])=>has(pt)&&Object.keys(inp).every(k=>(out&&out[k])||canMk(Y,D,ast,k,seen)))}

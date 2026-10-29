@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 526 – 29 Oct 2026 – New deck The Daily Grind (duty board) with Fuel check moved in from Engineering; Fuel check lists rocks that can make fuel if Silica + Tungsten Powder are flown in; raws a rock can't mine can be made there instead (e.g. Hydrogen from Water) in Fuel check, Travel and the Asteroid planner; SkippyChain warns when a raw is on "Mine it" but the chosen rock can't mine it; decks: bottom Updated / Wallet line hidden
+
 ## Version 515 – 28 Oct 2026 – Browser extension 0.4.5 (sent to the Chrome Web Store): crowned-S button in the game's side bar back to the Command Deck; switches the game's lot colours (Building Categories highlight) on at every load; download zip + README updated
 
 ## Version 506 – 28 Oct 2026 – Where to buy: Quickest / Economy choice (Economy = the trip up to 365 h that burns the least propellant)

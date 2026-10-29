@@ -21,8 +21,8 @@
       const c = ast.Celestial || {};
       const ok = (c.scanStatus || 0) >= 4 && c.abundances && Y.astAbund ? (Y.astAbund(c.abundances)[prod] || 0) > 0
         : !!((Y.SPEC || {})[c.celestialType] && Y.SPEC[c.celestialType][1].includes(+prod));
-      // TEST ?beta=1: a raw not mined here can still be made here (e.g. Hydrogen from Water – Mark, 29 Oct)
-      if (ok || !/[?&]beta=1/.test(location.search)) return ok;
+      // a raw not mined here can still be made here (e.g. Hydrogen from Water – Mark, 29 Oct)
+      if (ok) return true;
     }
     if (seen[prod]) return false; seen = Object.assign({}, seen, { [prod]: 1 });
     const has = t => (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[t] && b.Building.status === 3 &&

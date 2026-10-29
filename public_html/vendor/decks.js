@@ -16,9 +16,8 @@
     { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', pages: ['H', 'P', 'U', 'G', 'B', 'T', 'L'] },
     { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#ffd24a', pages: ['K', 'Y', 'M', 'W', 'O'] },
   ];
-  // The Daily Grind – the everyday workload, one deck for routine checks (Mark, 28 Oct 2026). TEST on ?beta=1.
-  const GRD = /[?&]beta=1/.test(location.search);
-  if (GRD) {
+  // The Daily Grind – the everyday workload, one deck for routine checks (Mark, 28 Oct 2026). LIVE 29 Oct.
+  {
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'G');
     DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
   }

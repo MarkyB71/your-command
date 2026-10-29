@@ -87,9 +87,8 @@ const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 B
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt)return;const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3);const n=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');if(n!==an)return;if(B.status===3)ok++;else if(B.status===2)bld++;else if(B.status===1)pl++});
   if(ok)return '<div class="pc-fac ok">✓ '+nm+' – you have '+ok+'</div>';
   return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
-/* TEST ?beta=1 (Mark, 29 Oct): warn when a raw is set to "Mine it" but the chosen rock can't mine it */
-const MNB=/[?&]beta=1/.test(location.search);
-const mineHTML=(id,ai,nr)=>{if(!MNB||ai===null)return '';const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},D=Y.D||{};
+/* warn when a raw is set to "Mine it" but the chosen rock can't mine it (Mark, 29 Oct) */
+const mineHTML=(id,ai,nr)=>{if(ai===null)return '';const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},D=Y.D||{};
   const r=(D.owned||[]).find(x=>x.id===a.id);if(!r)return '';const c=r.Celestial||{};
   const ok=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?(Y.astAbund(c.abundances)[id]||0)>0:!!((Y.SPEC||{})[c.celestialType]&&Y.SPEC[c.celestialType][1].includes(+id));
   return ok?'':'<div class="pc-fac no">✗ Can\'t mine this on '+String(a.name||'').replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(nr?' – pick a recipe or fly it in':' – fly it in')+'</div>'};

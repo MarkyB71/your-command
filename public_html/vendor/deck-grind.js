@@ -1,10 +1,10 @@
-/* The Daily Grind – Skippy's Command Deck (TEST on ?beta=1, 28 Oct 2026)
+/* The Daily Grind – Skippy's Command Deck (28 Oct 2026, LIVE 29 Oct)
    A deck for the everyday workload. Its viewscreen shows a duty board: one card per
    routine check (Fuel check first), with empty slots for the routines still to come.
    Click a card → opens that check on the viewscreen. Below it a teal console (body.dk-grind). */
 (function () {
   'use strict';
-  if (!window.YICDECKS || !/[?&]beta=1/.test(location.search)) return;
+  if (!window.YICDECKS) return;
   const COL = '#36d6c3';
   // routines on the board – add a row here for each new check (page letter, name, what it does)
   const JOBS = [
