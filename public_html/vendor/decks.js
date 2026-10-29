@@ -463,7 +463,9 @@ body > header{display:none!important}
       const s = document.createElement('style');
       s.id = 'dk-css';
       s.textContent = CSS;
-      document.head.appendChild(s);
+      // Beta (29 Oct): outside <head> – the site rebuilds <head> while loading, which dropped this style
+      // for a moment and let the old "Quartermaster Skippy's Command Deck" header flash up on a refresh
+      (RSB ? document.documentElement : document.head).appendChild(s);
     }
     if (!document.getElementById('dkr-css')) {
       const s = document.createElement('style');
@@ -608,6 +610,7 @@ body > header{display:none!important}
       }
     }
   }
+  tick(); // put the deck CSS in straight away (no flash of the old header)
   setInterval(tick, 400);
   document.addEventListener('click', () => setTimeout(tick, 50), true);
 })();
