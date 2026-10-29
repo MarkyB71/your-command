@@ -74,6 +74,16 @@ body > header{display:none!important}
 `;
 
   let scr = false; // true = the chosen page is on the viewscreen (Mark, 27 Oct)
+  // After a refresh, put the page back on the viewscreen if it was there (Mark, 29 Oct). Beta test.
+  const RSB = /[?&]beta=1/.test(location.search),
+    SKEY = 'yicDeckScr',
+    hp = (location.hash || '').slice(1);
+  let want = RSB && /^v[A-Z]$/.test(hp) && hp !== 'vN' ? hp.slice(1) : null,
+    wantSeen = '';
+  try {
+    wantSeen = sessionStorage.getItem(SKEY) || '';
+  } catch (e) {}
+  setTimeout(() => (want = null), 30000);
   const btn = (k) => document.getElementById('v' + k);
   const label = (k) => {
     const b = btn(k);
@@ -463,6 +473,16 @@ body > header{display:none!important}
     // search results go on the viewscreen
     const q = document.getElementById('gq');
     if (q && q.value.trim()) scr = true;
+    if (RSB) {
+      if (want && cur === want) {
+        scr = wantSeen ? wantSeen === '1' : d.pages[0] !== want;
+        want = null;
+      } else if (!want && window.YIC) {
+        try {
+          sessionStorage.setItem(SKEY, scr ? '1' : '0');
+        } catch (e) {}
+      }
+    }
     deckLook(d);
     tools(db);
     const have = d.pages.filter((k) => btn(k)),
