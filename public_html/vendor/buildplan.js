@@ -98,9 +98,9 @@ export function drawBuildPlan(m){
   const ucOK=UC1,vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
   const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK,AW);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
   /* TEST (CANB): what each building needs for ONE of it on this asteroid */
-  const ucB={},canBadge=k=>{const need=BL[k][1],dd=isShip(k)&&!myFac(5);if(dd)return'<em class="bp-cb pt" title="Ships are put together in a Shipyard (dry dock) here">⚒ Needs '+esc(PTYPE[5])+'</em>';const sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
-    if(!sh.length){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
-    const E=expand(stk,canMine,sh,ucB),fl=Object.keys(E.fly).filter(x=>vis(E.fly,x)),nf=Object.keys(E.fac).filter(t=>!myFac(t));
+  const ucB={},canBadge=k=>{const need=BL[k][1],dd=isShip(k)&&!myFac(5);const sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
+    if(!sh.length&&!dd){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
+    const E=expand(stk,canMine,sh,ucB),fl=Object.keys(E.fly).filter(x=>vis(E.fly,x)),nf=Object.keys(E.fac).filter(t=>!myFac(t));if(dd&&!nf.includes('5'))nf.push('5');
     if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(nm).join(', '))+'">✈ Fly some in</em>';
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
     return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
@@ -184,7 +184,7 @@ export function drawBuildPlan(m){
     ''+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
-  let h='<style>'+CSS+TALCSS+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+''+'</div>'+pickHTML.replace(/<!--bpb(\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">Set how many of each building you want to plan – everything is added up in one go.</div></div>':
+  let h='<style>'+CSS+TALCSS+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+''+'</div>'+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">Set how many of each building you want to plan – everything is added up in one go.</div></div>':
     
     '<div class="bp-hd">'+''+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
     (done===rows.length?'<span class="ok">✓ you have everything on this asteroid</span>':'<span class="'+(done?'part':'none')+'">'+done+' of '+rows.length+' materials covered here</span>')+'</div></div>'+
