@@ -22,7 +22,10 @@
     DECKS.push({ id: 'grind', name: 'The Daily Grind', ico: '⚙️', col: '#36d6c3', pages: ['G'] });
   }
   // The SkippyChain moves to the Bridge – it covers the whole game, not just Engineering (Mark, 29 Oct). Beta test.
-  if (/[?&]beta=1/.test(location.search)) DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'H');
+  if (/[?&]beta=1/.test(location.search)) {
+    DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'H');
+    DECKS[4].pages.splice(DECKS[4].pages.indexOf('U') + 1, 0, 'D'); // Production planner after Construction planner
+  }
   window.YICDECKLIST = DECKS;
 
   const CSS = `
@@ -116,7 +119,7 @@ body > header{display:none!important}
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
-    E: 'Who can mine what', H: 'How things are made', P: 'Stock by product', U: 'What to build where', G: 'Samples ready for fuel',
+    E: 'Who can mine what', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel',
   };

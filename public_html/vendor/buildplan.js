@@ -14,7 +14,10 @@ const BL=SHB?Object.assign({},BLDS,SHP):BLDS,isShip=k=>/^s\d$/.test(k); /* recip
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 /* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
 const HW=h=>{;h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
-const S={ast:null,bld:9,n:1,cnt:{},fuel:'full'};
+const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10};
+/* Production planner (beta, Mark 29 Oct): same planner, but for one product made in a Refinery / Factory / Bioreactor */
+const PPB=/[?&]beta=1/.test(location.search);
+const PPCSS='#bpw .bp-pp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px;font-size:15px}#bpw .bp-tabs{display:flex;gap:6px;width:100%}#bpw .bp-tab{padding:7px 14px;border-radius:8px;border:1px solid #2a3646;background:#121a24;color:#c4cdd9;font-weight:700;cursor:pointer}#bpw .bp-tab.on{background:#e8645a;border-color:#e8645a;color:#fff;box-shadow:0 0 12px -2px #e8645a}#bpw .bp-pp select{font-size:15px;padding:5px 8px;min-width:0!important;max-width:100%}#bpw .bp-pp input{width:110px!important;min-width:0!important;flex:none!important;font-size:15px;padding:5px 8px}';
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
 /* can this asteroid make product prod (same rule as the Travel page) */
 function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const ok=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?(Y.astAbund(c.abundances)[prod]||0)>0:!!((Y.SPEC||{})[c.celestialType]&&Y.SPEC[c.celestialType][1].includes(+prod));
@@ -57,7 +60,16 @@ export function drawBuildPlan(m){
   const BORD=[2,1,10,3,5,7,9,6,4,8],bKeys=Object.keys(BL).sort((x,y)=>{const i=BORD.indexOf(+x),j=BORD.indexOf(+y);return(i<0?99:i)-(j<0?99:j)});
   {const sel=bKeys.filter(k=>(S.cnt[k]||0)>0);inp={};sel.forEach(k=>{const c=S.cnt[k];for(const id in BL[k][1])inp[id]=(inp[id]||0)+BL[k][1][id]*c});N=1;
     bName=sel.length===1?BL[sel[0]][0]:(sel.some(isShip)?'things':'buildings');bLab=sel.map(k=>plur(S.cnt[k],BL[k][0])).join(', ')||'nothing yet'}
-  const pickHTML='<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="'+(isShip(k)?'shipimg.php?t='+k.slice(1)+'&v=1&s=1':'bimg.php?t='+k)+'" alt="" data-hide><span>'+esc(BL[k][0])+'</span>'+('<!--bpb'+k+'-->')+'<input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+'<button id="bpCalc" type="button">Calculate</button>'+'<button id="bpClr" type="button">Clear all</button></div>';
+  const PM=PPB&&S.mode==='prod';let ppHTML='',PR=null;
+  if(PM){const PL=Object.keys(MK).filter(id=>PX[id]&&MK[id].some(r=>r[1]===S.ptab)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+    if(!PL.includes(String(S.prod)))S.prod=PL[0];const RS=MK[S.prod].filter(r=>r[1]===S.ptab);if(!(S.rec<RS.length))S.rec=0;PR=RS[S.rec];
+    const cnt=isCnt(S.prod),g=(PX[S.prod]&&PX[S.prod][2])||1000,want=cnt?Math.max(1,Math.round(S.amt)||1):Math.max(0.001,+S.amt||0)*1e6/g,runs=want/PR[3];
+    inp={};for(const id in PR[2]){const back=(PR[4]&&PR[4][id])||0,q=Math.max(PR[2][id],(PR[2][id]-back)*runs);inp[id]=back?q:PR[2][id]*runs}N=1;
+    bName=nm(S.prod);bLab=(cnt?Math.round(want).toLocaleString()+' × ':tkg(want*g/1000)+' ')+nm(S.prod);
+    ppHTML='<div class="bp-pp"><div class="bp-tabs">'+[1,2,3].map(t=>'<button type="button" class="bp-tab'+(t===S.ptab?' on':'')+'" data-pt="'+t+'">'+PTYPE[t]+'</button>').join('')+'</div>'+
+      'Make <input id="ppA" type="number" min="0" step="any" value="'+esc(S.amt)+'"> '+(cnt?'×':'tonnes of')+' <select id="ppP">'+PL.map(id=>'<option value="'+id+'"'+(id===String(S.prod)?' selected':'')+'>'+esc(nm(id))+'</option>').join('')+'</select>'+
+      (RS.length>1?' using <select id="ppR">'+RS.map((r,i)=>'<option value="'+i+'"'+(i===S.rec?' selected':'')+'>'+esc(r[0])+'</option>').join('')+'</select>':' <span class="a">('+esc(PR[0])+')</span>')+'</div>'}
+  const pickHTML=PM?ppHTML:'<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="'+(isShip(k)?'shipimg.php?t='+k.slice(1)+'&v=1&s=1':'bimg.php?t='+k)+'" alt="" data-hide><span>'+esc(BL[k][0])+'</span>'+('<!--bpb'+k+'-->')+'<input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+'<button id="bpCalc" type="button">Calculate</button>'+'<button id="bpClr" type="button">Clear all</button></div>';
   const rows=Object.keys(inp).map(id=>{const need=inp[id]*N,have=stk[id]||0,short=Math.max(0,need-have);
     const others=A.filter(a=>a.id!==S.ast&&a.i!==null&&(Y.tot[a.i]||{})[id]>0).map(a=>({a,have:Y.tot[a.i][id]}));
     return{id,need,have,short,others}}).sort((x,y)=>(y.short>0)-(x.short>0)||nm(x.id).localeCompare(nm(y.id)));
@@ -105,7 +117,7 @@ export function drawBuildPlan(m){
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
     return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
   const chainRows=rows.filter(r=>r.short&&(!r.others.length||makeOK(r)));
-  const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),UC1,AW),{USED,pool,fly,mine,fac,made}=EX;if(Object.keys(S.cnt).some(k=>isShip(k)&&S.cnt[k]>0))fac[5]=1;
+  const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),UC1,AW),{USED,pool,fly,mine,fac,made}=EX;if(PM)fac[PR[1]]=1;else if(Object.keys(S.cnt).some(k=>isShip(k)&&S.cnt[k]>0))fac[5]=1;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
   shortRows.filter(r=>r.others.length&&!chainRows.includes(r)).forEach(r=>{const t=Math.min(pool[r.id]||0,r.short);pool[r.id]=(pool[r.id]||0)-t;if(r.short-t>0)fly[r.id]=(fly[r.id]||0)+r.short-t});
@@ -184,7 +196,7 @@ export function drawBuildPlan(m){
     ''+
     '<details style="margin:8px 0 6px"><summary class="a" style="cursor:pointer">Things you\'d make along the way ('+Object.keys(made).length+')</summary>'+lst(made,k=>' <span class="a">– '+esc(USED[k][0])+' ('+esc(PTYPE[USED[k][1]])+')</span>')+'</details>';
   const done=rows.filter(r=>!r.short).length;
-  let h='<style>'+CSS+TALCSS+'</style><div id="bpw"><div class="bp-bar">Build on <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+''+'</div>'+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">Set how many of each building you want to plan – everything is added up in one go.</div></div>':
+  let h='<style>'+CSS+TALCSS+PPCSS+'</style><div id="bpw"><div class="bp-bar">'+(PM?'Make on':'Build on')+' <select id="bpA">'+A.map(a=>'<option value="'+a.id+'"'+(a.id===S.ast?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select>'+''+'</div>'+pickHTML.replace(/<!--bpb(s?\d+)-->/g,(_,k)=>canBadge(k))+'<div id="bpStale" class="bp-stale" style="display:none">Counts changed – press <b>Calculate</b> to update the plan.</div>'+((!Object.keys(inp).length)?'<div class="note" style="padding:6px 0">'+(PM?'Pick a product and how much you want.':'Set how many of each building you want to plan – everything is added up in one go.')+'</div></div>':
     
     '<div class="bp-hd">'+''+'<div class="bp-sum"><b>'+esc(bLab)+'</b> on <b>'+esc(here.name)+'</b>: '+
     (done===rows.length?'<span class="ok">✓ you have everything on this asteroid</span>':'<span class="'+(done?'part':'none')+'">'+done+' of '+rows.length+' materials covered here</span>')+'</div></div>'+
@@ -247,6 +259,10 @@ export function drawBuildPlan(m){
       for(const ln of th)if(ln.dataset.ship)await thenOne(ln);else if(!m.querySelector('.bp-pos[data-to="'+ln.dataset.from+'"]'))ln.querySelector('.bp-ft').textContent='(no ship found)';
     }).catch(()=>{sp.forEach(x=>{x.textContent='· no ship ready there'})})};
   m.querySelector('#bpA').onchange=e=>{S.ast=+e.target.value;drawBuildPlan(m)};
+  if(PM){m.querySelectorAll('.bp-tab').forEach(b=>b.onclick=()=>{S.ptab=+b.dataset.pt;S.prod=null;S.rec=0;drawBuildPlan(m)});
+    const pp=m.querySelector('#ppP'),pr=m.querySelector('#ppR'),pa=m.querySelector('#ppA');
+    if(pp)pp.onchange=e=>{S.prod=e.target.value;S.rec=0;drawBuildPlan(m)};if(pr)pr.onchange=e=>{S.rec=+e.target.value;drawBuildPlan(m)};
+    if(pa)pa.onchange=e=>{const v=+e.target.value;if(v>0){S.amt=v;drawBuildPlan(m)}}}
   {const calc=m.querySelector('#bpCalc'),nSel=()=>Object.keys(S.cnt).filter(k=>S.cnt[k]>0).length;
     m.querySelectorAll('.bp-pick input').forEach(x=>{const set=e=>{const v=Math.max(0,Math.min(999,Math.round(+e.target.value)||0));if(S.cnt[e.target.dataset.b]===v||(!v&&!S.cnt[e.target.dataset.b]))return;S.cnt[e.target.dataset.b]=v;
         e.target.closest('.bp-pk').classList.toggle('on',v>0);
@@ -265,13 +281,23 @@ export function drawBuildPlan(m){
 
 /* Adds "Asteroid planner" to the Planners menu, after Travel */
 {
+  const hookP=()=>{
+    const vu=document.getElementById('vU'),main=document.getElementById('main');
+    if(!PPB||!vu||!main||!window.YIC||document.getElementById('vD'))return;
+    const b=document.createElement('button');b.id='vD';b.textContent='Production planner';vu.after(b);
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){}
+      b.className='on';S.mode='prod';drawBuildPlan(main)});
+  };
+  setInterval(hookP,700);
+  document.addEventListener('click',e=>{const b=document.getElementById('vD'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   const hook=()=>{
     const vr=document.getElementById('vR'),main=document.getElementById('main');
     if(!vr||!main||!window.YIC||document.getElementById('vU'))return;
     const b=document.createElement('button');b.id='vU';b.textContent=/[?&]beta=1/.test(location.search)?'Construction planner':'Asteroid planner';vr.after(b);
     b.addEventListener('click',()=>{
       document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){}
-      b.className='on';drawBuildPlan(main)});
+      b.className='on';S.mode='bld';drawBuildPlan(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vU'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700);
