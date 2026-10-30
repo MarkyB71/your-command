@@ -580,6 +580,7 @@
 .brs-vs>div{margin:0!important;border:0!important;border-radius:0!important;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%)}
 .brs-vs canvas{height:clamp(200px,30vw,340px)!important}
 .brs-vs .a{left:50%!important;transform:translateX(-50%);top:auto!important;bottom:6px;white-space:nowrap;opacity:.7}
+.brs-vs a[href^="#al-"] .a{position:static;left:auto!important;transform:none;bottom:auto;white-space:normal;opacity:1}
 .brs-plate{position:absolute;z-index:2;left:50%;top:7px;transform:translateX(-50%);padding:3px 22px 4px;background:#0c1118;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.4em;color:#8fe3ff;text-shadow:0 0 8px rgba(91,195,228,.7);pointer-events:none}
 .brs-deck{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr .7fr 1fr 1fr 1fr;gap:10px;align-items:end;padding:22px 4% 0;perspective:1100px}
 .st{all:unset;box-sizing:border-box;cursor:pointer;display:block;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
