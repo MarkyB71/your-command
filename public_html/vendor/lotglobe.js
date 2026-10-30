@@ -114,12 +114,16 @@
     for (let i = 1; i <= n; i++) idx[i] = i;
     return (Y.ABC[key] = { best, from, sum, idx });
   }
+  const BASE = [38, 48, 66]; // dark slate, close to the rock body
+  const mix = (a, b, t) => a.map((x, k) => Math.round(x + (b[k] - x) * t));
   const POOR = 2 / 6 + 1e-6; // at or just above the rock's floor for every resource
   const isSpot = (i) => G.best[i] <= POOR && !G.mine[i];
   // colour of a lot in All resources: its richest resource's group colour, brighter = richer
   function allRGB(i) {
-    if (S.spots) return isSpot(i) ? hexRGB(SPOT) : hexRGB(CAT[catOf(G.from[i])]).map((c) => Math.round(c * 0.12));
-    return hexRGB(CAT[catOf(G.from[i])]).map((c) => Math.round(c * G.best[i]));
+    if (S.spots) return isSpot(i) ? hexRGB(SPOT) : mix(BASE, hexRGB(CAT[catOf(G.from[i])]), 0.12);
+    // blend from the dark rock grey up to the resource colour (no muddy browns); poorest steps stay grey
+    const t = Math.max(0, (G.best[i] - 2 / 6) / (4 / 6));
+    return mix(BASE, hexRGB(CAT[catOf(G.from[i])]), 0.18 + 0.82 * Math.pow(t, 1.3));
   }
   const lvOf = (i) => (G.all ? (S.spots ? (isSpot(i) ? 1 : 0.15) : G.best[i]) : band(G.val[i], G.ab));
   const rgbOf = (i, lv) => (G.all ? allRGB(i) : col(lv));
