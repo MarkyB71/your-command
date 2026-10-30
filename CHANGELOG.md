@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 201 – 30 Oct 2026 – Resource Map: new "All resources" option (community request). Every lot shows the resource it is richest in, blended into a smooth heat map on the real shape. Tick "Show only the best building spots" to light up free lots that are poor in everything – good places for warehouses, refineries and the like – with a list of the best ones.
+
 ## Version 583 – 29 Oct 2026 – The Daily Grind deck and Fuel check removed for now (code kept to bring back later).
 
 ## Version 578 – 29 Oct 2026 – New Resource Map in the Science Lab: pick a scanned rock and a resource and every lot lights up by how rich it is, in the game's own resource-map colours (6 steps, one colour per resource group). Shows the rock's real shape when you add its 3D model (Add 3D model button right on the page), or a globe otherwise. Your buildings are ringed in the game's building colours; hover a lot for its level; Richest lots list turns the rock to that lot, with an "in game ↗" link on each lot (needs the Command Deck extension).

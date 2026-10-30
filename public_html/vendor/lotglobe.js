@@ -1,4 +1,4 @@
-/* Resource map (was Resource globe) – Your Influence Command (Mark, 29 Oct 2026) – LIVE 29 Oct 2026; "All resources" option TEST on ?beta=1 (30 Oct 2026)
+/* Resource map (was Resource globe) – Your Influence Command (Mark, 29 Oct 2026) – LIVE 29 Oct 2026; "All resources" option LIVE 30 Oct 2026
    Science Lab console. Once you've scanned a rock in the game, every lot has a level for every
    resource. This shows the rock as a spinning globe with each lot glowing by how rich it is in the
    resource you pick. Drag to turn it, hover a lot for its number and level, click a top lot to
@@ -12,9 +12,9 @@
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false };
-  // TEST (?beta=1, Mark 30 Oct 2026 – community request): "All resources" – every resource at once, to find
+  // LIVE 30 Oct 2026 (tested on ?beta=1, Mark – community request): "All resources" – every resource at once, to find
   // lots poor in everything (good spots for warehouses, refineries…) so rich mining lots aren't built over.
-  const BETA = /[?&]beta=1/.test(location.search);
+  const BETA = true; // LIVE 30 Oct 2026 (was the ?beta=1 test)
   const ALL = -1;
   const SPOT = '#e6ebf2'; // best building spots: soft white, stands apart from all five resource colours
   let G = null; // current globe {id, res, n, pos, val, max, mine}

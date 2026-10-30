@@ -82,7 +82,7 @@ export function show(el, buf, o) {
     },
     setSpin(v) { wantSpin = !!v; ctl.autoRotate = wantSpin && !over; },
     // vals: Float32Array of lot levels; fn(level) → [r,g,b] 0..1 (game colours); my: {lot: name}
-    // soft (beta, All resources): each point blends the lots around it, so the rock reads as a smooth heat map
+    // soft (All resources): each point blends the lots around it, so the rock reads as a smooth heat map
     paint(vals, fn, my, myCol, soft) {
       const LC = new Float32Array((o.n + 1) * 3);
       for (let i = 1; i <= o.n; i++) { const q = fn(vals[i]); for (let a = 0; a < 3; a++) LC[i * 3 + a] = Math.pow(q[a], 2.2); } // linear for three.js
