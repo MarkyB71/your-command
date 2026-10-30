@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Skippy's Command Deck",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Opens Command Deck links in your Influence game tab without a reload, adds an S button to the game, and keeps lot colours on.",
   "permissions": [
     "scripting",

@@ -3,6 +3,9 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
+## 0.5.1 – coming soon
+- **Fix:** the Command Deck button no longer jumps into the Ship Inventory (or other panels) when you open a side bar menu.
+
 ## 0.5.0 – coming soon
 - **Options page** – choose which game tweaks you want. Right-click the crowned S in your browser toolbar › Options (or Extensions › Details › Extension options).
 - **Hide used deposits** – when you pick a core sample to extract from, "Show Used Deposits" now starts unticked, so only untouched samples show. You can still tick it.

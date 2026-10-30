@@ -44,7 +44,15 @@
 
     function dock() {
       if (!host.isConnected) (document.body || document.documentElement).appendChild(host);
-      const btns = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')].filter(b => b !== s);
+      // Only the side bar column itself: panels like Ship Inventory reuse the same tooltip id
+      // on their own items, so keep just the right-most column of visible buttons.
+      const all = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')]
+        .filter(b => b !== s)
+        .map(b => ({ b, r: b.getBoundingClientRect() }))
+        .filter(o => o.r.width > 0 && o.r.height > 0);
+      const edge = Math.max(...all.map(o => o.r.left));
+      const btns = all.filter(o => Math.abs(o.r.left - edge) < 8)
+        .sort((a, c) => a.r.top - c.r.top).map(o => o.b);
       if (!btns.length) { if (s.isConnected) s.remove(); host.style.display = ''; return; }
       host.style.display = 'none';
       // Most common class = the game's normal (not selected) side bar button.
