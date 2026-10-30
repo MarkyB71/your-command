@@ -1,4 +1,4 @@
-/* Resource map (was Resource globe) – Your Influence Command (Mark, 29 Oct 2026) – LIVE 29 Oct 2026
+/* Resource map (was Resource globe) – Your Influence Command (Mark, 29 Oct 2026) – LIVE 29 Oct 2026; "All resources" option TEST on ?beta=1 (30 Oct 2026)
    Science Lab console. Once you've scanned a rock in the game, every lot has a level for every
    resource. This shows the rock as a spinning globe with each lot glowing by how rich it is in the
    resource you pick. Drag to turn it, hover a lot for its number and level, click a top lot to
@@ -11,7 +11,12 @@
 
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0 };
+  const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false };
+  // TEST (?beta=1, Mark 30 Oct 2026 – community request): "All resources" – every resource at once, to find
+  // lots poor in everything (good spots for warehouses, refineries…) so rich mining lots aren't built over.
+  const BETA = /[?&]beta=1/.test(location.search);
+  const ALL = -1;
+  const SPOT = '#e6ebf2'; // best building spots: soft white, stands apart from all five resource colours
   let G = null; // current globe {id, res, n, pos, val, max, mine}
   // Real shape: the 3D model the player added on the Asteroids page (IndexedDB influenceStock3d/models, key = rock id)
   S.view = 'shape';
@@ -95,6 +100,32 @@
   }
   function col(t) { return G.rgb.map((c) => Math.round(c * t)); }
 
+  // All resources: for each lot, its highest step (1–6) over every resource, and which resource gives it
+  function combine(Y, A, ab, rs, n) {
+    const key = A.id + '_all';
+    if (Y.ABC[key]) return Y.ABC[key];
+    const best = new Float32Array(n + 1), from = new Uint8Array(n + 1), sum = new Float32Array(n + 1), idx = new Float32Array(n + 1);
+    rs.forEach((r) => {
+      const k = A.id + '_' + r;
+      if (!Y.ABC[k]) Y.ABC[k] = Y.ABM.lotsFor(A.id, A.Celestial.abundances, r, n);
+      const v = Y.ABC[k];
+      for (let i = 1; i <= n; i++) { const b = band(v[i], ab[r]); sum[i] += b; if (b > best[i]) { best[i] = b; from[i] = r; } }
+    });
+    for (let i = 1; i <= n; i++) idx[i] = i;
+    return (Y.ABC[key] = { best, from, sum, idx });
+  }
+  const POOR = 2 / 6 + 1e-6; // at or just above the rock's floor for every resource
+  const isSpot = (i) => G.best[i] <= POOR && !G.mine[i];
+  // colour of a lot in All resources: its richest resource's group colour, brighter = richer
+  function allRGB(i) {
+    if (S.spots) return isSpot(i) ? hexRGB(SPOT) : hexRGB(CAT[catOf(G.from[i])]).map((c) => Math.round(c * 0.12));
+    return hexRGB(CAT[catOf(G.from[i])]).map((c) => Math.round(c * G.best[i]));
+  }
+  const lvOf = (i) => (G.all ? (S.spots ? (isSpot(i) ? 1 : 0.15) : G.best[i]) : band(G.val[i], G.ab));
+  const rgbOf = (i, lv) => (G.all ? allRGB(i) : col(lv));
+  // what the 3D model gets: one value per lot + colour for it (0..1)
+  const paintArgs = () => (G.all ? [G.idx, (i) => allRGB(i).map((c) => c / 255)] : [G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab))]);
+
   // the game's lot layout on a unit sphere
   function lotPos(n) {
     const p = new Float32Array((n + 1) * 3);
@@ -162,25 +193,38 @@
     const A = own.find((a) => String(a.id) === S.rock);
     const ab = Y.ABM.abundances(A.Celestial.abundances);
     const rs = Object.keys(ab).filter((k) => ab[k] > 0).map(Number).sort((x, y) => pn(x).localeCompare(pn(y)));
-    if (!rs.includes(S.res)) S.res = Object.keys(ab).map(Number).sort((x, y) => ab[y] - ab[x])[0];
+    const all = BETA && S.res === ALL;
+    if (!all && !rs.includes(S.res)) S.res = Object.keys(ab).map(Number).sort((x, y) => ab[y] - ab[x])[0];
 
-    const n = Y.ABM.lotCount(A.id), k = A.id + '_' + S.res;
-    if (!Y.ABC[k]) Y.ABC[k] = Y.ABM.lotsFor(A.id, A.Celestial.abundances, S.res, n);
-    const val = Y.ABC[k];
+    const n = Y.ABM.lotCount(A.id);
+    if (all && !Y.ABC[A.id + '_all']) { // every resource takes a moment on a big rock – say so first
+      m.innerHTML = '<div class="note">Working out every resource on ' + esc(nm(A)) + '…</div>';
+      setTimeout(() => { combine(Y, A, ab, rs, n); if (isOn()) page(m); }, 30);
+      return;
+    }
+    const CB = all ? combine(Y, A, ab, rs, n) : null;
+    const k = A.id + '_' + S.res;
+    if (!all && !Y.ABC[k]) Y.ABC[k] = Y.ABM.lotsFor(A.id, A.Celestial.abundances, S.res, n);
+    const val = all ? CB.best : Y.ABC[k];
     let max = 0, min = 1; for (let i = 1; i <= n; i++) { if (val[i] > max) max = val[i]; if (val[i] < min) min = val[i]; }
     if (!G || G.id !== A.id || G.n !== n) G = { id: A.id, n, pos: lotPos(n) };
-    G.res = S.res; G.ab = ab[S.res]; G.cat = catOf(S.res); G.rgb = hexRGB(CAT[G.cat]); G.val = val; G.max = max; G.min = Math.min(min, max); G.mine = myLots(D, A.id);
+    G.all = all; G.res = S.res; G.mine = myLots(D, A.id);
+    if (all) { G.best = CB.best; G.from = CB.from; G.sum = CB.sum; G.idx = CB.idx; G.val = CB.best; G.cat = 'Metal'; G.rgb = hexRGB('#4f90ff'); G.ab = 0; G.lv = (i) => Y.ABC[A.id + '_' + G.from[i]][i]; }
+    else { G.ab = ab[S.res]; G.cat = catOf(S.res); G.rgb = hexRGB(CAT[G.cat]); G.val = val; }
+    G.max = max; G.min = Math.min(min, max);
     S.focus = null;
     if (HAS[A.id] === undefined) { HAS[A.id] = false; hasModel(A.id).then((v) => { HAS[A.id] = v; if (v && isOn()) page(m); }); }
     const shape = HAS[A.id] && S.view === 'shape';
 
     const top = [];
-    for (let i = 1; i <= n; i++) top.push(i);
-    top.sort((a, b) => val[b] - val[a]);
+    for (let i = 1; i <= n; i++) if (!all || isSpot(i)) top.push(i);
+    if (all) top.sort((a, b) => G.best[a] - G.best[b] || G.sum[a] - G.sum[b]); else top.sort((a, b) => val[b] - val[a]);
     let avg = 0; for (let i = 1; i <= n; i++) avg += val[i]; avg /= n;
+    const sc = all ? '#4f90ff' : CAT[G.cat]; // resource box colour (All = Science Lab / Scientist blue)
 
     let h = '<div class="lg-row"><label>Rock <select id="lg-r">' + own.map((a) => '<option value="' + a.id + '"' + (String(a.id) === S.rock ? ' selected' : '') + '>' + esc(nm(a)) + '</option>').join('') + '</select></label>' +
-      '<label>Resource <select id="lg-s" style="color:' + CAT[G.cat] + ';border:2px solid ' + CAT[G.cat] + ';box-shadow:0 0 10px -2px ' + CAT[G.cat] + ';background:#0c1320">' +
+      '<label>Resource <select id="lg-s" style="color:' + sc + ';border:2px solid ' + sc + ';box-shadow:0 0 10px -2px ' + sc + ';background:#0c1320">' +
+        (BETA ? '<option value="' + ALL + '"' + (all ? ' selected' : '') + ' style="color:#4f90ff;background:#0c1320">✨ All resources</option>' : '') +
         // grouped and coloured by resource group, as in the game (dot works where the menu ignores colours)
         ['Volatile', 'Organic', 'Metal', 'RareEarth', 'Fissile'].map((c) => {
           const g = rs.filter((r) => catOf(r) === c);
@@ -191,8 +235,19 @@
       (HAS[A.id] ? '' : '<div class="lg-add"><div><b>🪨 Only seeing a globe? See the real shape of ' + esc(nm(A)) + '</b>' +
         '<span>In the game, open this rock\'s management page and press <b>Download 3D Model</b> (owners only). Then add that file here – it stays in this browser only.</span></div>' +
         '<label class="lg-up">📦 Add 3D model<input type="file" id="lg-file" accept=".glb,.gltf" style="display:none"></label></div>');
-    h += '<div class="lg-wrap"><div class="lg-stage' + (shape ? ' lg-3d' : '') + '" id="lg-st">' + (shape ? '' : '<canvas id="lg-c"></canvas>') + '<div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">' +
-      '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
+    h += '<div class="lg-wrap"><div class="lg-stage' + (shape ? ' lg-3d' : '') + '" id="lg-st">' + (shape ? '' : '<canvas id="lg-c"></canvas>') + '<div class="lg-tip" id="lg-tip"></div></div><div class="lg-side">';
+    if (all) {
+      const grp = ['Volatile', 'Organic', 'Metal', 'RareEarth', 'Fissile'].filter((c) => rs.some((r) => catOf(r) === c));
+      h += '<div class="lg-box"><h3>All resources on ' + esc(nm(A)) + '</h3>' +
+        '<div class="lg-dim">Each lot shows the resource it is richest in. Brighter = richer. Dark lots are poor in everything.</div>' +
+        '<div class="lg-dim" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 10px">' + grp.map((c) => '<span style="color:' + CAT[c] + '">' + DOT[c] + ' ' + GNM[c] + '</span>').join('') + '</div>' +
+        '<label class="lg-dim" style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px;color:' + SPOT + '"><input type="checkbox" id="lg-spots"' + (S.spots ? ' checked' : '') + '> Show only the best building spots</label>' +
+        '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · ' + top.length.toLocaleString() + ' free lots poor in everything</div>' + bldLegend(D, A.id) + '</div>' +
+        '<div class="lg-box"><h3>Best building spots</h3>' + (top.length ? '<table class="lg-top nosort">' +
+        top.slice(0, 10).map((i) => { const f = G.from[i]; return '<tr data-lot="' + i + '"><td>Lot #' + i + '</td><td class="lg-dim">Richest in <span style="color:' + CAT[catOf(f)] + '">' + esc(pn(f)) + '</span></td><td class="lg-p">' + pct(G.lv(i)) + '</td>' + (window.GL ? '<td>' + window.GL('/lot/' + (BigInt(A.id) + (BigInt(i) << 32n)).toString(), 'Open Lot #' + i + ' in the game') + '</td>' : '') + '</tr>'; }).join('') +
+        '</table>' : '<div class="lg-dim">No free lots here are poor in everything.</div>') +
+        '<div class="lg-hint">Only your own buildings are known here – check the lot in the game before building. Click a lot to turn the globe to it.</div></div></div></div>';
+    } else h += '<div class="lg-box"><h3>' + esc(pn(S.res)) + ' on ' + esc(nm(A)) + '</h3>' +
       '<div class="lg-leg" style="background:linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map((k, x) => 'rgb(' + col(k / 6).join(',') + ') ' + (x * 100 / 6).toFixed(1) + '% ' + ((x + 1) * 100 / 6).toFixed(1) + '%').join(',') + ')"></div><div class="lg-legt"><span>' + esc(G.cat.replace('RareEarth', 'Rare earth')) + ' · poorest ' + pct(min) + '</span><span>richest ' + pct(max) + '</span></div>' +
       '<div class="lg-dim" style="margin-top:6px">' + n.toLocaleString() + ' lots · average ' + pct(avg) + '</div>' + bldLegend(D, A.id) + '</div>' +
       '<div class="lg-box"><h3>Richest lots</h3><table class="lg-top nosort">' +
@@ -202,6 +257,8 @@
 
     m.querySelector('#lg-r').addEventListener('change', (e) => pickRock(Y, own, e.target.value, m));
     m.querySelector('#lg-s').addEventListener('change', (e) => { S.res = +e.target.value; page(m); });
+    const sp = m.querySelector('#lg-spots');
+    if (sp) sp.addEventListener('change', (e) => { S.spots = e.target.checked; page(m); });
     m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; if (T3 && T3.api) T3.api.setSpin(S.spin); });
     const fi = m.querySelector('#lg-file');
     if (fi) fi.addEventListener('change', () => upload(fi, A, m));
@@ -226,11 +283,11 @@
           const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
           if (T3 !== me) { api.stop(); return; }
           me.api = api;
-          if (G && G.id === A.id) api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine, MC);
+          if (G && G.id === A.id) api.paint(...paintArgs(), G.mine, MC);
           if (S.focus) api.face(S.focus);
         })
         .catch((e) => { el.innerHTML = '<div class="lg-load">Could not show the 3D model (' + Y.esc((e && e.message) || e) + '). Switch to 🌐 Globe.</div>'; });
-    } else if (T3.api) { T3.api.paint(G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab)), G.mine, MC); T3.api.setSpin(S.spin); }
+    } else if (T3.api) { T3.api.paint(...paintArgs(), G.mine, MC); T3.api.setSpin(S.spin); }
     st.prepend(T3.el);
   }
   function hover3d(lot, x, y) {
@@ -243,6 +300,7 @@
   }
   function tipHTML(lot) {
     const Y = window.YIC, esc = Y.esc;
+    if (G.all) return '<b>Lot #' + lot + '</b> · richest in ' + esc(Y.pn(G.from[lot])) + ' ' + pct(G.lv(lot)) + (isSpot(lot) ? '<br>Poor in everything – good building spot' : '') + (G.mine[lot] ? '<br>' + me(lot) + esc(G.mine[lot]) : '');
     return '<b>Lot #' + lot + '</b> · ' + pct(G.val[lot]) + ' ' + esc(Y.pn(G.res)) + (G.mine[lot] ? '<br>' + me(lot) + esc(G.mine[lot]) : '');
   }
 
@@ -353,10 +411,10 @@
     ctx.globalCompositeOperation = 'lighter';
     for (let j = 0; j < pts.length; j += 4) {
       const i = pts[j], x = c + pts[j + 1] * R, y = c - pts[j + 2] * R, z = pts[j + 3];
-      const lv = band(G.val[i], G.ab), [r, g, b] = col(lv);
+      const lv = lvOf(i), [r, g, b] = rgbOf(i, lv);
       const shade = Math.max(0.15, Math.min(1, (z + 0.15) * 1.1)); // dimmer toward the edge
       const s = dot * (0.55 + 0.45 * Math.sqrt(Math.max(0, z))) * (0.7 + 0.5 * lv);
-      if (lv > 0.95) { // top step glows
+      if (lv > 0.95 && (!G.all || S.spots)) { // top step glows (All resources: only the building spots)
         const gl = ctx.createRadialGradient(x, y, 0, x, y, s * 3);
         gl.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',' + (0.45 * shade).toFixed(3) + ')');
         gl.addColorStop(1, 'rgba(' + r + ',' + g + ',' + b + ',0)');
