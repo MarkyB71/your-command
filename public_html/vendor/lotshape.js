@@ -151,7 +151,18 @@ export function show(el, buf, o) {
   }
 
   const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
-  renderer.domElement.addEventListener('pointerdown', () => { ctl.autoRotate = false; wantSpin = false; focus = null; });
+  let downAt = null;
+  renderer.domElement.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY }; ctl.autoRotate = false; wantSpin = false; focus = null; });
+  // a click (not a drag) on the rock → o.onClick(lot)
+  renderer.domElement.addEventListener('pointerup', (e) => {
+    const d = downAt; downAt = null;
+    if (!d || !o.onClick || !meshes.length || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, cam);
+    const hit = ray.intersectObjects(meshes, false)[0];
+    if (hit) { const p = hit.point.clone().divide(st).normalize(); o.onClick(F.near(p.x, p.y, p.z)); }
+  });
   renderer.domElement.addEventListener('pointermove', (e) => {
     if (!meshes.length || !o.onHover) return;
     const r = renderer.domElement.getBoundingClientRect();

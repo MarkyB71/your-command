@@ -11,7 +11,7 @@
 
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false, blend: true }; // blend: smooth heat map (Mark: the page default), or one patch per lot
+  const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false, blend: true, click: false }; // click: a lot click opens it in the game (Mark: with an on/off switch) // blend: smooth heat map (Mark: the page default), or one patch per lot
   // LIVE 30 Oct 2026 (tested on ?beta=1, Mark – community request): "All resources" – every resource at once, to find
   // lots poor in everything (good spots for warehouses, refineries…) so rich mining lots aren't built over.
   const BETA = true; // LIVE 30 Oct 2026 (was the ?beta=1 test)
@@ -129,6 +129,13 @@
   const lvOf = (i) => (G.all ? (S.spots ? (isSpot(i) ? 1 : 0.15) : G.best[i]) : band(G.val[i], G.ab));
   const rgbOf = (i, lv) => (G.all ? allRGB(i) : col(lv));
   // what the 3D model gets: one value per lot + colour for it (0..1)
+  // open a lot in the game: through the Command Deck extension when it's there (moves the open game tab), else a new tab
+  function openLot(i) {
+    if (!G || !i) return;
+    const path = '/lot/' + (BigInt(G.id) + (BigInt(i) << 32n)).toString();
+    if (window.GL && window.GL.on && window.GL.on()) window.postMessage({ type: 'yic-open', path }, location.origin);
+    else window.open('https://game.influenceth.io' + path, 'influencegame');
+  }
   const softOn = () => S.blend && !(G.all && S.spots);
   const paintArgs = () => (G.all ? [G.idx, (i) => allRGB(i).map((c) => c / 255)] : [G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab))]);
 
@@ -238,6 +245,7 @@
         }).join('') + '</select></label>' +
       (HAS[A.id] ? '<span class="lg-sw"><button type="button" data-v="shape"' + (shape ? ' class="on"' : '') + '>🪨 Real shape</button><button type="button" data-v="globe"' + (shape ? '' : ' class="on"') + '>🌐 Globe</button></span>' : '') +
       '<span class="lg-sw lg-bl"><button type="button" data-b="1"' + (S.blend ? ' class="on"' : '') + '>🌫️ Blend</button><button type="button" data-b="0"' + (S.blend ? '' : ' class="on"') + '>⬡ Lots</button></span>' +
+      '<label title="When on, clicking a lot on the rock opens that lot in the game"><input type="checkbox" id="lg-click"' + (S.click ? ' checked' : '') + '> Click lot → game</label>' +
       '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>' +
       (HAS[A.id] ? '' : '<div class="lg-add"><div><b>🪨 Only seeing a globe? See the real shape of ' + esc(nm(A)) + '</b>' +
         '<span>In the game, open this rock\'s management page and press <b>Download 3D Model</b> (owners only). Then add that file here – it stays in this browser only.</span></div>' +
@@ -266,6 +274,7 @@
     m.querySelector('#lg-s').addEventListener('change', (e) => { S.res = +e.target.value; page(m); });
     const sp = m.querySelector('#lg-spots');
     if (sp) sp.addEventListener('change', (e) => { S.spots = e.target.checked; page(m); });
+    m.querySelector('#lg-click').addEventListener('change', (e) => { S.click = e.target.checked; m.querySelector('#lg-st').style.cursor = S.click ? 'pointer' : ''; });
     m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; if (T3 && T3.api) T3.api.setSpin(S.spin); });
     const fi = m.querySelector('#lg-file');
     if (fi) fi.addEventListener('change', () => upload(fi, A, m));
@@ -288,7 +297,7 @@
           if (!rec || !rec.buf) throw new Error('model not found');
           const stretch = await mod.stretchFor(A.id, A.Celestial.radius);
           el.innerHTML = '';
-          const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
+          const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d, onClick: (l) => { if (S.click) openLot(l); } });
           if (T3 !== me) { api.stop(); return; }
           me.api = api;
           if (G && G.id === A.id) api.paint(...paintArgs(), G.mine, MC, softOn());
@@ -306,7 +315,8 @@
     const W = tip.parentNode.clientWidth;
     tip.style.left = Math.min(W - tip.offsetWidth - 6, x + 14) + 'px'; tip.style.top = Math.max(6, y - tip.offsetHeight - 10) + 'px';
   }
-  function tipHTML(lot) {
+  function tipHTML(lot) { return tipBody(lot) + (S.click ? '<br><span style="color:#8fe3ff">Click to open in the game ↗</span>' : ''); }
+  function tipBody(lot) {
     const Y = window.YIC, esc = Y.esc;
     if (G.all) return '<b>Lot #' + lot + '</b> · richest in ' + esc(Y.pn(G.from[lot])) + ' ' + pct(G.lv(lot)) + (isSpot(lot) ? '<br>Poor in everything – good building spot' : '') + (G.mine[lot] ? '<br>' + me(lot) + esc(G.mine[lot]) : '');
     return '<b>Lot #' + lot + '</b> · ' + pct(G.val[lot]) + ' ' + esc(Y.pn(G.res)) + (G.mine[lot] ? '<br>' + me(lot) + esc(G.mine[lot]) : '');
@@ -343,16 +353,16 @@
   function start(st) {
     stop();
     const cv = st.querySelector('canvas'), tip = st.querySelector('#lg-tip'), ctx = cv.getContext('2d');
-    let W = 0, drag = null, mouse = null, last = performance.now(), proj = null;
+    let W = 0, drag = null, mouse = null, last = performance.now(), proj = null, hot = 0, down = null;
     const fit = () => { const r = st.getBoundingClientRect(), d = window.devicePixelRatio || 1; W = Math.max(200, Math.round(r.width)); cv.width = W * d; cv.height = W * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
     fit();
 
-    st.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, ry: S.rotY, rx: S.rotX }; S.focus = null; st.classList.add('drag'); st.setPointerCapture(e.pointerId); });
+    st.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; drag = { x: e.clientX, y: e.clientY, ry: S.rotY, rx: S.rotX }; S.focus = null; st.classList.add('drag'); st.setPointerCapture(e.pointerId); });
     st.addEventListener('pointermove', (e) => {
       const r = st.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
       if (drag) { S.rotY = drag.ry + (e.clientX - drag.x) * 0.01; S.rotX = Math.max(-1.5, Math.min(1.5, drag.rx + (e.clientY - drag.y) * 0.01)); }
     });
-    const up = () => { drag = null; st.classList.remove('drag'); };
+    const up = (e) => { drag = null; st.classList.remove('drag'); if (S.click && down && e && e.type === 'pointerup' && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5 && hot) openLot(hot); down = null; };
     st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
     st.addEventListener('pointerleave', () => { mouse = null; tip.style.display = 'none'; });
 
@@ -373,6 +383,7 @@
     }
 
     function hover(p) {
+      hot = 0;
       if (!mouse || drag || !p || !G) { tip.style.display = 'none'; return; }
       let best = -1, bd = 1e9;
       for (let j = 0; j < p.length; j += 4) {
@@ -381,6 +392,7 @@
         if (d < bd) { bd = d; best = p[j]; }
       }
       if (best < 0 || bd > 400) { tip.style.display = 'none'; return; }
+      hot = best;
       tip.innerHTML = tipHTML(best);
       tip.style.display = 'block';
       const tx = Math.min(W - tip.offsetWidth - 6, mouse.x + 14), ty = Math.max(6, mouse.y - tip.offsetHeight - 10);
