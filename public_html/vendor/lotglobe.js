@@ -39,6 +39,7 @@
     });
   }
   let raf = 0;
+  let OC = null; // off-screen canvas for the smooth All resources globe
 
   const CSS = `.lg-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
 .lg-row label{color:#8b9ab0;font-size:14px;display:flex;gap:8px;align-items:center}
@@ -412,10 +413,24 @@
       if (z2 < -0.15) continue;
       pts.push(i, x1, y2, z2);
     }
-    ctx.globalCompositeOperation = 'lighter';
+    // All resources: smooth heat map – big overlapping dots drawn off-screen, then blurred onto the globe
+    const soft = G.all && !S.spots;
+    let dc = ctx;
+    if (soft) {
+      const cv = ctx.canvas;
+      if (!OC || OC.width !== cv.width || OC.height !== cv.height) { OC = document.createElement('canvas'); OC.width = cv.width; OC.height = cv.height; }
+      dc = OC.getContext('2d'); dc.setTransform(ctx.getTransform()); dc.clearRect(0, 0, W, W);
+    } else ctx.globalCompositeOperation = 'lighter';
     for (let j = 0; j < pts.length; j += 4) {
       const i = pts[j], x = c + pts[j + 1] * R, y = c - pts[j + 2] * R, z = pts[j + 3];
       const lv = lvOf(i), [r, g, b] = rgbOf(i, lv);
+      if (soft) {
+        const sh = Math.max(0.15, Math.min(1, (z + 0.15) * 1.1));
+        dc.fillStyle = 'rgb(' + Math.round(r * sh) + ',' + Math.round(g * sh) + ',' + Math.round(b * sh) + ')';
+        dc.beginPath(); dc.arc(x, y, dot * 2.3, 0, 7); dc.fill();
+        if (z > 0) out.push(i, x, y, z);
+        continue;
+      }
       const shade = Math.max(0.15, Math.min(1, (z + 0.15) * 1.1)); // dimmer toward the edge
       const s = dot * (0.55 + 0.45 * Math.sqrt(Math.max(0, z))) * (0.7 + 0.5 * lv);
       if (lv > 0.95 && (!G.all || S.spots)) { // top step glows (All resources: only the building spots)
@@ -429,6 +444,12 @@
       if (z > 0) out.push(i, x, y, z);
     }
     ctx.globalCompositeOperation = 'source-over';
+    if (soft) {
+      const d = ctx.getTransform().a;
+      ctx.save(); ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.clip();
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.filter = 'blur(' + (dot * 1.4 * d).toFixed(1) + 'px)';
+      ctx.drawImage(OC, 0, 0); ctx.restore();
+    }
 
     // your buildings: rings in the game's building-group colours, near side only
     ctx.lineWidth = 1.6;
