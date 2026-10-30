@@ -36,7 +36,7 @@ function lotFinder(n) {
   for (let i = 1; i <= n; i++) B[band(P[i * 3 + 1])].push(i);
   const BI = B.map((a) => Int32Array.from(a));
   return {
-    P,
+    P, K, BI, band,
     near(x, y, z) {
       const k = band(y);
       let best = 1, bd = -2;
@@ -68,7 +68,7 @@ export function show(el, buf, o) {
   const ctl = new OrbitControls(cam, renderer.domElement);
   ctl.enableDamping = true; ctl.autoRotate = !!o.spin; ctl.autoRotateSpeed = 0.2;
   const F = lotFinder(o.n), st = o.stretch;
-  let stopped = false, ro = null, meshes = [], lotOf = [], cols = [], marks = null, size = 1, R = 1, focus = null, mine = {};
+  let stopped = false, ro = null, meshes = [], lotOf = [], cols = [], dirs = [], nbs = null, marks = null, size = 1, R = 1, focus = null, mine = {};
   const lotSurf = new Float32Array((o.n + 1) * 3), lotBest = new Float32Array(o.n + 1).fill(-2);
 
   const api = {
@@ -82,12 +82,22 @@ export function show(el, buf, o) {
     },
     setSpin(v) { wantSpin = !!v; ctl.autoRotate = wantSpin && !over; },
     // vals: Float32Array of lot levels; fn(level) → [r,g,b] 0..1 (game colours); my: {lot: name}
-    paint(vals, fn, my, myCol) {
+    // soft (beta, All resources): each point blends the lots around it, so the rock reads as a smooth heat map
+    paint(vals, fn, my, myCol, soft) {
+      const LC = new Float32Array((o.n + 1) * 3);
+      for (let i = 1; i <= o.n; i++) { const q = fn(vals[i]); for (let a = 0; a < 3; a++) LC[i * 3 + a] = Math.pow(q[a], 2.2); } // linear for three.js
+      if (soft && !nbs) nbs = neighbours();
       meshes.forEach((m, k) => {
-        const lo = lotOf[k], c = cols[k];
-        for (let i = 0; i < lo.length; i++) {
-          const [r, g, b] = fn(vals[lo[i]]).map((x) => Math.pow(x, 2.2)); // linear for three.js
-          c.array[i * 3] = r; c.array[i * 3 + 1] = g; c.array[i * 3 + 2] = b;
+        const lo = lotOf[k], c = cols[k], A = c.array;
+        if (soft) {
+          const NL = nbs[k].L, NW = nbs[k].W;
+          for (let i = 0; i < lo.length; i++) {
+            let r = 0, g = 0, b = 0;
+            for (let j = i * NB; j < i * NB + NB; j++) { const l = NL[j], w = NW[j]; if (!w) break; r += LC[l * 3] * w; g += LC[l * 3 + 1] * w; b += LC[l * 3 + 2] * w; }
+            A[i * 3] = r; A[i * 3 + 1] = g; A[i * 3 + 2] = b;
+          }
+        } else {
+          for (let i = 0; i < lo.length; i++) { const l = lo[i]; A[i * 3] = LC[l * 3]; A[i * 3 + 1] = LC[l * 3 + 1]; A[i * 3 + 2] = LC[l * 3 + 2]; }
         }
         c.needsUpdate = true;
       });
@@ -107,6 +117,32 @@ export function show(el, buf, o) {
     // turn the view to face a lot
     face(i) { if (i && lotBest[i] > -2) focus = new THREE.Vector3(lotSurf[i * 3], lotSurf[i * 3 + 1], lotSurf[i * 3 + 2]).normalize(); ctl.autoRotate = false; },
   };
+
+  const NB = 8;
+  function neighbours() {
+    const sp = Math.sqrt((4 * Math.PI) / o.n), sig = sp * 0.75, cmin = Math.cos(sp * 2.2), K = F.K;
+    return dirs.map((dr, mi) => {
+      const cnt = dr.length / 3, L = new Uint32Array(cnt * NB), W = new Float32Array(cnt * NB), tl = [], tw = [];
+      for (let v = 0; v < cnt; v++) {
+        const x = dr[v * 3], y = dr[v * 3 + 1], z = dr[v * 3 + 2], bk = F.band(y);
+        tl.length = 0; tw.length = 0;
+        for (let q = Math.max(0, bk - 3); q <= Math.min(K - 1, bk + 3); q++) {
+          const a = F.BI[q];
+          for (let j = 0; j < a.length; j++) {
+            const i = a[j], d = F.P[i * 3] * x + F.P[i * 3 + 1] * y + F.P[i * 3 + 2] * z;
+            if (d < cmin) continue;
+            const ang = Math.acos(Math.min(1, d)), w = Math.exp(-(ang * ang) / (2 * sig * sig));
+            if (tl.length < NB) { tl.push(i); tw.push(w); }
+            else { let m = 0; for (let t = 1; t < NB; t++) if (tw[t] < tw[m]) m = t; if (w > tw[m]) { tl[m] = i; tw[m] = w; } }
+          }
+        }
+        let s = 0; for (let t = 0; t < tw.length; t++) s += tw[t];
+        if (!s) { tl.length = 0; tl.push(lotOf[mi][v]); tw.length = 0; tw.push(1); s = 1; }
+        for (let t = 0; t < tl.length; t++) { L[v * NB + t] = tl[t]; W[v * NB + t] = tw[t] / s; }
+      }
+      return { L, W };
+    });
+  }
 
   function ring() {
     const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -139,12 +175,12 @@ export function show(el, buf, o) {
       const v = new THREE.Vector3();
       obj.traverse((m) => {
         if (!m.isMesh || !m.geometry || !m.geometry.attributes.position) return;
-        const pa = m.geometry.attributes.position, lo = new Uint32Array(pa.count);
+        const pa = m.geometry.attributes.position, lo = new Uint32Array(pa.count), dr = new Float32Array(pa.count * 3);
         for (let i = 0; i < pa.count; i++) {
           v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld);
           const len = v.length(); if (len > R) R = len;
           const ux = v.x / st.x, uy = v.y / st.y, uz = v.z / st.z, L = Math.hypot(ux, uy, uz) || 1;
-          const k = F.near(ux / L, uy / L, uz / L); lo[i] = k;
+          const k = F.near(ux / L, uy / L, uz / L); lo[i] = k; dr[i * 3] = ux / L; dr[i * 3 + 1] = uy / L; dr[i * 3 + 2] = uz / L;
           const d = (F.P[k * 3] * ux + F.P[k * 3 + 1] * uy + F.P[k * 3 + 2] * uz) / L;
           if (d > lotBest[k]) { lotBest[k] = d; lotSurf[k * 3] = v.x; lotSurf[k * 3 + 1] = v.y; lotSurf[k * 3 + 2] = v.z; }
         }
@@ -156,7 +192,7 @@ export function show(el, buf, o) {
         // rich lots glow a little even on the dark side
         mat.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vColor.rgb * 0.85;').replace('#include <color_fragment>', 'diffuseColor.rgb = vec3(0.05) + vColor.rgb * 0.25;'); };
         m.material = mat;
-        meshes.push(m); lotOf.push(lo); cols.push(c);
+        meshes.push(m); lotOf.push(lo); cols.push(c); dirs.push(dr);
       });
       if (!meshes.length) { api.stop(); reject(new Error('no shape in this file')); return; }
       scene.add(obj);

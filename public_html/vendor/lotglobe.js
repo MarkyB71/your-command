@@ -287,11 +287,11 @@
           const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
           if (T3 !== me) { api.stop(); return; }
           me.api = api;
-          if (G && G.id === A.id) api.paint(...paintArgs(), G.mine, MC);
+          if (G && G.id === A.id) api.paint(...paintArgs(), G.mine, MC, G.all);
           if (S.focus) api.face(S.focus);
         })
         .catch((e) => { el.innerHTML = '<div class="lg-load">Could not show the 3D model (' + Y.esc((e && e.message) || e) + '). Switch to 🌐 Globe.</div>'; });
-    } else if (T3.api) { T3.api.paint(...paintArgs(), G.mine, MC); T3.api.setSpin(S.spin); }
+    } else if (T3.api) { T3.api.paint(...paintArgs(), G.mine, MC, G.all); T3.api.setSpin(S.spin); }
     st.prepend(T3.el);
   }
   function hover3d(lot, x, y) {
