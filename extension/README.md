@@ -18,6 +18,7 @@ All the code is in this folder – it's small enough to read in a few minutes.
 | `site.js` | Runs on the Command Deck site only (top page, not frames). Marks the page so the site knows the extension is installed, and passes link clicks to the extension. Reads nothing else. |
 | `game.js` | Runs on the game page only. Adds the crowned-S button to the game's side bar (looks like the game's own buttons). Clicking it asks the extension to switch to your Command Deck tab. Reads nothing from the game. |
 | `lotcolours.js` | Runs on the game page only, once per load. Finds the game's own settings store and switches on the Building Categories highlight with the game's own colours – exactly what clicking the paint icon does. Changes nothing else. |
+| `statusdots.js` | Runs on the game page only. Reads your buildings from what the game has already loaded and draws small coloured dots beside them on the asteroid view. Never clicks or changes anything in the game, makes no requests. Off by default – switch it on in Options. |
 | `background.js` | When a link is clicked: checks the request came from the Command Deck site, checks it is exactly `/building/<number>` (or lot, ship, crew, crewmate, asteroids), then switches to your game tab and tells the game's own page router to show it. If no game tab is open, it opens the game normally. Toolbar icon or the S button in the game → switches to the Command Deck tab. |
 
 It **never** reads, stores or sends your wallet, keys, passwords, game data or browsing.

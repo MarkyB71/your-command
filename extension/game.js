@@ -6,7 +6,7 @@
 // and sends nothing anywhere.
 (() => {
   if (window.top !== window || document.getElementById('yic-s')) return;
-  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true };
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, statusDots: false };
 
   chrome.storage.sync.get(DEFAULTS, opts => {
     // Hand the choices to the page-side script (lotcolours.js) through a page attribute.

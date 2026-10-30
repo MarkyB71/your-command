@@ -3,10 +3,13 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## 0.5.1 – coming soon
+## 0.6.0 – coming soon
+- **Building status dots** (off by default – switch on in Options) – when you look at one of your asteroids, a tiny dot sits beside each of your buildings: green = ready (finished or idle), yellow = under 3 hours left, red = busy. Planned sites: yellow when the reservation runs out within 3 hours, red when it has run out with materials still in it. No dots on warehouses, tank farms, spaceports, marketplaces or habitats. Uses only what the game has already loaded – no extra requests.
+
+## 0.5.1 – included in 0.6.0
 - **Fix:** the Command Deck button no longer jumps into the Ship Inventory (or other panels) when you open a side bar menu.
 
-## 0.5.0 – coming soon
+## 0.5.0 – 30 Oct 2026
 - **Options page** – choose which game tweaks you want. Right-click the crowned S in your browser toolbar › Options (or Extensions › Details › Extension options).
 - **Hide used deposits** – when you pick a core sample to extract from, "Show Used Deposits" now starts unticked, so only untouched samples show. You can still tick it.
 
