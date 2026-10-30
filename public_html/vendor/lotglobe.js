@@ -11,7 +11,7 @@
 
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false };
+  const S = { rock: '', res: 0, rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false, blend: true }; // blend: smooth heat map (Mark: the page default), or one patch per lot
   // LIVE 30 Oct 2026 (tested on ?beta=1, Mark – community request): "All resources" – every resource at once, to find
   // lots poor in everything (good spots for warehouses, refineries…) so rich mining lots aren't built over.
   const BETA = true; // LIVE 30 Oct 2026 (was the ?beta=1 test)
@@ -129,6 +129,7 @@
   const lvOf = (i) => (G.all ? (S.spots ? (isSpot(i) ? 1 : 0.15) : G.best[i]) : band(G.val[i], G.ab));
   const rgbOf = (i, lv) => (G.all ? allRGB(i) : col(lv));
   // what the 3D model gets: one value per lot + colour for it (0..1)
+  const softOn = () => S.blend && !(G.all && S.spots);
   const paintArgs = () => (G.all ? [G.idx, (i) => allRGB(i).map((c) => c / 255)] : [G.val, (v) => G.rgb.map((c) => (c / 255) * band(v, G.ab))]);
 
   // the game's lot layout on a unit sphere
@@ -236,6 +237,7 @@
           return g.length ? '<optgroup label="' + DOT[c] + ' ' + GNM[c] + '" style="color:' + CAT[c] + '">' + g.map((r) => '<option value="' + r + '"' + (r === S.res ? ' selected' : '') + ' style="color:' + CAT[c] + ';background:#0c1320">' + DOT[c] + ' ' + esc(pn(r)) + ' (' + Math.round(ab[r] * 100) + '% of rock)</option>').join('') + '</optgroup>' : '';
         }).join('') + '</select></label>' +
       (HAS[A.id] ? '<span class="lg-sw"><button type="button" data-v="shape"' + (shape ? ' class="on"' : '') + '>🪨 Real shape</button><button type="button" data-v="globe"' + (shape ? '' : ' class="on"') + '>🌐 Globe</button></span>' : '') +
+      '<span class="lg-sw lg-bl"><button type="button" data-b="1"' + (S.blend ? ' class="on"' : '') + '>🌫️ Blend</button><button type="button" data-b="0"' + (S.blend ? '' : ' class="on"') + '>⬡ Lots</button></span>' +
       '<label><input type="checkbox" id="lg-spin"' + (S.spin ? ' checked' : '') + '> Spin</label></div>' +
       (HAS[A.id] ? '' : '<div class="lg-add"><div><b>🪨 Only seeing a globe? See the real shape of ' + esc(nm(A)) + '</b>' +
         '<span>In the game, open this rock\'s management page and press <b>Download 3D Model</b> (owners only). Then add that file here – it stays in this browser only.</span></div>' +
@@ -267,7 +269,8 @@
     m.querySelector('#lg-spin').addEventListener('change', (e) => { S.spin = e.target.checked; if (T3 && T3.api) T3.api.setSpin(S.spin); });
     const fi = m.querySelector('#lg-file');
     if (fi) fi.addEventListener('change', () => upload(fi, A, m));
-    m.querySelectorAll('.lg-sw button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; page(m); }));
+    m.querySelectorAll('.lg-bl button').forEach((b) => b.addEventListener('click', () => { S.blend = b.dataset.b === '1'; page(m); }));
+    m.querySelectorAll('.lg-sw button[data-v]').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; page(m); }));
     m.querySelectorAll('tr[data-lot]').forEach((tr) => tr.addEventListener('click', () => { S.focus = +tr.dataset.lot; S.spin = false; const c = m.querySelector('#lg-spin'); if (c) c.checked = false; S.pulse = performance.now(); if (shape && T3 && T3.api) T3.api.face(S.focus); }));
     if (shape) { stop(); real(Y, A, m.querySelector('#lg-st')); } else start(m.querySelector('#lg-st'));
   }
@@ -288,11 +291,11 @@
           const api = await mod.show(el, rec.buf, { stretch, n: G.n, spin: S.spin, onHover: hover3d });
           if (T3 !== me) { api.stop(); return; }
           me.api = api;
-          if (G && G.id === A.id) api.paint(...paintArgs(), G.mine, MC, G.all);
+          if (G && G.id === A.id) api.paint(...paintArgs(), G.mine, MC, softOn());
           if (S.focus) api.face(S.focus);
         })
         .catch((e) => { el.innerHTML = '<div class="lg-load">Could not show the 3D model (' + Y.esc((e && e.message) || e) + '). Switch to 🌐 Globe.</div>'; });
-    } else if (T3.api) { T3.api.paint(...paintArgs(), G.mine, MC, G.all); T3.api.setSpin(S.spin); }
+    } else if (T3.api) { T3.api.paint(...paintArgs(), G.mine, MC, softOn()); T3.api.setSpin(S.spin); }
     st.prepend(T3.el);
   }
   function hover3d(lot, x, y) {
@@ -414,7 +417,7 @@
       pts.push(i, x1, y2, z2);
     }
     // All resources: smooth heat map – big overlapping dots drawn off-screen, then blurred onto the globe
-    const soft = G.all && !S.spots;
+    const soft = softOn();
     let dc = ctx;
     if (soft) {
       const cv = ctx.canvas;
