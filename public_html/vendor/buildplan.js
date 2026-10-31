@@ -24,8 +24,8 @@ function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const 
   if(seen[prod])return false;seen=Object.assign({},seen,{[prod]:1});
   const has=t=>(D.allB||[]).some(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===ast.id);
   return(MK[prod]||[]).some(([,pt,inp,,out])=>has(pt)&&Object.keys(inp).every(k=>(out&&out[k])||canMk(Y,D,ast,k,seen)))}
-/* Shipyard tab (TEST: ?beta=1 only, Mark 31 Oct 2026) – ship parts such as Habitation Modules; whole ships stay in the Construction planner (they are built in the dry dock, type 5) */
-const PTABS=/[?&]beta=1/.test(location.search)?[1,2,3,4]:[1,2,3];
+/* Shipyard tab (LIVE 31 Oct 2026, tested on ?beta=1 first) – ship parts such as Habitation Modules; whole ships stay in the Construction planner (they are built in the dry dock, type 5) */
+const PTABS=[1,2,3,4];
 let run=0;
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

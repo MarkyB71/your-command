@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 596 – 31 Oct 2026 – Production planner: new Shipyard tab for ship parts such as Habitation Modules, hulls, engines and modules (whole ships stay in the Construction planner).
+
 ## Version 589 – 30 Oct 2026 – Resource Map: new "All resources" option (community request). Every lot shows the resource it is richest in, blended into a smooth heat map on the real shape. Tick "Show only the best building spots" to light up free lots that are poor in everything – good places for warehouses, refineries and the like – with a list of the best ones.
 
 ## Version 583 – 29 Oct 2026 – The Daily Grind deck and Fuel check removed for now (code kept to bring back later).
