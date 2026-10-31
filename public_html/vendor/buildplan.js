@@ -24,6 +24,8 @@ function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const 
   if(seen[prod])return false;seen=Object.assign({},seen,{[prod]:1});
   const has=t=>(D.allB||[]).some(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===ast.id);
   return(MK[prod]||[]).some(([,pt,inp,,out])=>has(pt)&&Object.keys(inp).every(k=>(out&&out[k])||canMk(Y,D,ast,k,seen)))}
+/* Shipyard tab (TEST: ?beta=1 only, Mark 31 Oct 2026) – ship parts such as Habitation Modules; whole ships stay in the Construction planner (they are built in the dry dock, type 5) */
+const PTABS=/[?&]beta=1/.test(location.search)?[1,2,3,4]:[1,2,3];
 let run=0;
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -67,12 +69,12 @@ export function drawBuildPlan(m){
   {const sel=bKeys.filter(k=>(S.cnt[k]||0)>0);inp={};sel.forEach(k=>{const c=S.cnt[k];for(const id in BL[k][1])inp[id]=(inp[id]||0)+BL[k][1][id]*c});N=1;
     bName=sel.length===1?BL[sel[0]][0]:(sel.some(isShip)?'things':'buildings');bLab=sel.map(k=>plur(S.cnt[k],BL[k][0])).join(', ')||'nothing yet'}
   const PM=S.mode==='prod';let ppHTML='',PR=null;
-  if(PM){const PL=Object.keys(MK).filter(id=>PX[id]&&MK[id].some(r=>r[1]===S.ptab)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+  if(PM){if(!PTABS.includes(S.ptab))S.ptab=1;const PL=Object.keys(MK).filter(id=>PX[id]&&MK[id].some(r=>r[1]===S.ptab)).sort((a,b)=>nm(a).localeCompare(nm(b)));
     if(!PL.includes(String(S.prod)))S.prod=PL[0];const RS=MK[S.prod].filter(r=>r[1]===S.ptab);if(!(S.rec<RS.length))S.rec=0;PR=RS[S.rec];
     const cnt=isCnt(S.prod),g=(PX[S.prod]&&PX[S.prod][2])||1000,UF={kg:0.001,t:1,kt:1000},want=cnt?Math.max(1,Math.round(S.amt)||1):Math.max(1e-6,(+S.amt||0)*(UF[S.unit]||1))*1e6/g,runs=want/PR[3];
     inp={};for(const id in PR[2]){const back=(PR[4]&&PR[4][id])||0,q=Math.max(PR[2][id],(PR[2][id]-back)*runs);inp[id]=back?q:PR[2][id]*runs}N=1;
     bName=nm(S.prod);bLab=(cnt?Math.round(want).toLocaleString()+' × ':tkg(want*g/1000)+' ')+nm(S.prod);
-    ppHTML='<div class="bp-pp"><div class="bp-tabs">'+[1,2,3].map(t=>'<button type="button" class="bp-tab'+(t===S.ptab?' on':'')+'" data-pt="'+t+'">'+PTYPE[t]+'</button>').join('')+'</div>'+
+    ppHTML='<div class="bp-pp"><div class="bp-tabs">'+PTABS.map(t=>'<button type="button" class="bp-tab'+(t===S.ptab?' on':'')+'" data-pt="'+t+'">'+PTYPE[t]+'</button>').join('')+'</div>'+
       'Make <input id="ppA" type="number" min="0" step="any" value="'+esc(S.amt)+'"> '+(cnt?'×':'<select id="ppU">'+['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('')+'</select> of')+' <select id="ppP">'+PL.map(id=>'<option value="'+id+'"'+(id===String(S.prod)?' selected':'')+'>'+esc(nm(id))+'</option>').join('')+'</select>'+
       (RS.length>1?' using <select id="ppR">'+RS.map((r,i)=>'<option value="'+i+'"'+(i===S.rec?' selected':'')+'>'+esc(r[0])+'</option>').join('')+'</select>':' <span class="a">('+esc(PR[0])+')</span>')+'</div>'}
   const pickHTML=PM?ppHTML:'<div class="bp-pick">'+bKeys.map(k=>{const c=S.cnt[k]||0;return'<label class="bp-pk'+(c?' on':'')+'"><img src="'+(isShip(k)?'shipimg.php?t='+k.slice(1)+'&v=1&s=1':'bimg.php?t='+k)+'" alt="" data-hide><span>'+esc(BL[k][0])+'</span>'+('<!--bpb'+k+'-->')+'<input type="number" min="0" max="999" value="'+c+'" data-b="'+k+'"></label>'}).join('')+'<button id="bpCalc" type="button">Calculate</button>'+'<button id="bpClr" type="button">Clear all</button></div>';
