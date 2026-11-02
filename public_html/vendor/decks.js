@@ -1,6 +1,6 @@
-/* Wallet names (TEST ?beta=1, Mark 2 Nov 2026): players with several wallets can name each one; the green
+/* Wallet names (LIVE 2 Nov 2026, tested on ?beta=1 – Mark): players with several wallets can name each one; the green
    wallet button then shows the name. Saved in this browser only (localStorage 'yic-wallet-names'). */
-const WNB = /[?&]beta=1/.test(location.search);
+const WNB = true; // LIVE 2 Nov 2026
 const WNK = 'yic-wallet-names';
 function wNames() { try { return JSON.parse(localStorage.getItem(WNK) || '{}') || {}; } catch (e) { return {}; } }
 function wName(a) { return String(wNames()[String(a).toLowerCase()] || ''); }
@@ -593,7 +593,7 @@ body > header{display:none!important}
         wc.classList.toggle('dk-wal', t !== 'Connect / change wallet');
         wc.title = t === 'Connect / change wallet' ? 'Connect a wallet or enter an address' : (nm ? nm + ' – ' : '') + 'Wallet ' + wa + ' – click to change';
       }
-      // ✎ beside it: name this wallet (TEST ?beta=1, Mark 2 Nov 2026) – the name is kept in this browser only
+      // ✎ beside it: name this wallet (LIVE 2 Nov 2026) – the name is kept in this browser only
       let pen = document.getElementById('wc-nm');
       if (WNB && ok) {
         if (!pen) {
