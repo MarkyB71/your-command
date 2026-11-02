@@ -11,7 +11,7 @@
 
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const S = { rock: '', res: /[?&]beta=1/.test(location.search) ? -1 : 0, /* -1 = All resources: the default (TEST ?beta=1, Mark 2 Nov 2026) */ rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false, blend: true, click: false }; // click: a lot click opens it in the game (Mark: with an on/off switch) // blend: smooth heat map (Mark: the page default), or one patch per lot
+  const S = { rock: '', res: -1, /* -1 = All resources: the default (LIVE 2 Nov 2026, Mark) */ rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false, blend: true, click: false }; // click: a lot click opens it in the game (Mark: with an on/off switch) // blend: smooth heat map (Mark: the page default), or one patch per lot
   // LIVE 30 Oct 2026 (tested on ?beta=1, Mark – community request): "All resources" – every resource at once, to find
   // lots poor in everything (good spots for warehouses, refineries…) so rich mining lots aren't built over.
   const BETA = true; // LIVE 30 Oct 2026 (was the ?beta=1 test)
