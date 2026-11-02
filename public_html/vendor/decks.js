@@ -86,7 +86,7 @@ body > header{display:none!important}
 #dktools #wc-top{order:9}
 #dktools #dkrf{order:10;background:#121a26;color:#8fe3ff;border:1px solid #2a3648;border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}#dktools #dkrf:hover,#dktools #dkrf:focus-visible{border-color:#8fe3ff}
 #dktools #wc-top.dk-wal{background:#0b1a14!important;color:#3fd68a!important;border:1px solid #3fd68a!important;border-radius:8px!important;box-shadow:0 0 8px rgba(63,214,138,.25)!important;font-family:ui-monospace,Menlo,monospace!important;font-weight:600!important;letter-spacing:.02em}
-#dktools #wc-top.dk-wal:hover,#dktools #wc-top.dk-wal:focus-visible{background:#10261c!important;box-shadow:0 0 14px rgba(63,214,138,.5)!important}
+#dktools #wc-nm{background:#0b1a14!important;color:#3fd68a!important;border:1px solid #3fd68a!important;border-radius:8px!important;box-shadow:0 0 8px rgba(63,214,138,.25)!important;font-weight:600!important;min-width:0!important;padding-left:10px!important;padding-right:10px!important}\n#dktools #wc-nm:hover,#dktools #wc-nm:focus-visible,#dktools #wc-top.dk-wal:hover,#dktools #wc-top.dk-wal:focus-visible{background:#10261c!important;box-shadow:0 0 14px rgba(63,214,138,.5)!important}
 #dktools > div:not([data-srch]){display:none!important}
 #dkdl{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin:26px 16px 6px;text-align:center}
 #dkdl [data-inf="1"]{display:none!important}
@@ -602,10 +602,9 @@ body > header{display:none!important}
           pen.type = 'button';
           pen.textContent = '✎';
           pen.title = 'Name this wallet';
-          pen.style.cssText = 'min-width:0;padding-left:10px;padding-right:10px';
           pen.onclick = (e) => { e.stopPropagation(); wNameBox(pen); };
         }
-        if (pen.previousElementSibling !== wc) wc.after(pen);
+        if (wc.parentNode && pen.previousElementSibling !== wc) wc.parentNode.insertBefore(pen, wc.nextSibling);
       } else if (pen) pen.remove();
     }
     // Refresh button beside the wallet button (Mark, 27 Oct)
