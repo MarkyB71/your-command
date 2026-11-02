@@ -36,15 +36,24 @@
       n = document.createElement('div');
       n.id = 'yicg-rc';
       n.setAttribute('role', 'alert');
-      n.style.cssText = 'position:fixed;z-index:99999;left:50%;bottom:24px;transform:translateX(-50%);' +
-        'max-width:calc(100vw - 32px);background:#0d1520;border:1px solid #8fe3ff;border-radius:10px;' +
-        'padding:10px 14px;color:#dbe7f5;font-size:15px;box-shadow:0 0 18px rgba(63,184,255,.45)';
+      // Middle of the screen, glowing like the Command Deck button, so it can't be missed (Mark: first version not clear enough)
+      n.style.cssText = 'position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:min(420px,calc(100vw - 32px));background:#0d1520;border:2px solid #8fe3ff;border-radius:12px;' +
+        'padding:20px 22px;color:#dbe7f5;font-size:16px;line-height:1.5;text-align:center;' +
+        'box-shadow:0 0 14px rgba(143,227,255,.9),0 0 40px rgba(91,157,255,.7)';
       document.body.appendChild(n);
     }
-    n.innerHTML = 'The Command Deck extension has updated. <a href="#" style="color:#8fe3ff;font-weight:700">Refresh this page</a> to reconnect it.' +
-      ' <button type="button" title="Close" style="background:none;border:0;color:#9aa8bb;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
-    n.querySelector('a').onclick = function (ev) { ev.preventDefault(); location.reload(); };
-    n.querySelector('button').onclick = function () { n.remove(); };
+    n.innerHTML = '<button type="button" class="rc-x" title="Close" style="position:absolute;top:6px;right:10px;background:none;border:0;color:#9aa8bb;font-size:20px;cursor:pointer">✕</button>' +
+      '<div style="color:#8fe3ff;font-size:19px;font-weight:700;margin-bottom:6px">Extension updated</div>' +
+      '<div>Skippy\'s Command Deck has updated, so the <b>in game ↗</b> links need this page refreshed.</div>' +
+      '<button type="button" class="rc-go" style="margin-top:14px;padding:10px 22px;border-radius:8px;border:0;' +
+      'background:#1f6feb;color:#fff;font-size:16px;font-weight:700;cursor:pointer">⟳ Refresh page</button>';
+    var go = n.querySelector('.rc-go');
+    // React on pointerdown as well as click, and show "Refreshing…" at once, so one press is enough
+    var doGo = function (ev) { ev.preventDefault(); ev.stopPropagation(); go.textContent = 'Refreshing…'; go.disabled = true; location.reload(); };
+    go.addEventListener('pointerdown', doGo);
+    go.addEventListener('click', doGo);
+    n.querySelector('.rc-x').onclick = function (ev) { ev.stopPropagation(); n.remove(); };
   }
 
   document.addEventListener('click', function (e) {
