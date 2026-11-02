@@ -285,7 +285,7 @@ export function drawChain(m){
         return '<tr><td><a href="#" data-pt="'+i+'" data-pa="'+v+'">'+esc(N[i])+'</a></td><td>'+fu(i,v)+'</td>'+x+(sc?st():'')+'</tr>'}).join('');
       box.appendChild(tb)});
     box.addEventListener('click',e=>{const z=e.target.closest('a.pc-bz');if(z){e.preventDefault();e.stopPropagation();
-      const sn=z.dataset.soon;busyBox('<div style="color:#ffb547;font-size:18px;font-weight:700;margin-bottom:6px">All busy</div>Sorry – all your '+z.dataset.nm+(z.dataset.nm==='Factory'?' buildings':'s')+(z.dataset.an?' on '+z.dataset.an:'')+' are busy right now.'+(sn===''?'':sn==='0'?'<br>One has finished – collect it in the game to free it up.':'<br>The first one is free in about '+hm(+sn)+'.'));return}
+      const sn=z.dataset.soon;busyBox('<div style="color:#ffb547;font-size:18px;font-weight:700;margin-bottom:6px">All busy</div>Sorry – all your '+({Refinery:'Refineries',Factory:'Factories'}[z.dataset.nm]||z.dataset.nm+'s')+(z.dataset.an?' on '+z.dataset.an:'')+' are busy right now.'+(sn===''?'':sn==='0'?'<br>One has finished – collect it in the game to free it up.':'<br>The first one is free in about '+hm(+sn)+'.'));return}
     const a=e.target.closest('a[data-pt]');if(!a)return;e.preventDefault();tipHide();snap();
       S.mode='from';S.prod=+a.dataset.pt;S.amt=+a.dataset.pa;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw();scrollTo(0,0)});
     return box}
