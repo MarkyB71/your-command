@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 598 – 2 Nov 2026 – The SkippyChain: new "Still to produce – whole chain" box (community request). Adds up every product that has to be made anywhere in the chain, across all branches, grouped by building (Refinery, Factory, Bioreactor, Shipyard). Uses your stock first when "Use my stock on" is set. Click a product name to open the SkippyChain on that total.
+
 ## Version 596 – 31 Oct 2026 – Production planner: new Shipyard tab for ship parts such as Habitation Modules, hulls, engines and modules (whole ships stay in the Construction planner).
 
 ## Version 589 – 30 Oct 2026 – Resource Map: new "All resources" option (community request). Every lot shows the resource it is richest in, blended into a smooth heat map on the real shape. Tick "Show only the best building spots" to light up free lots that are poor in everything – good places for warehouses, refineries and the like – with a list of the best ones.

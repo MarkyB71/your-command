@@ -164,7 +164,7 @@ export function drawChain(m){
     document.addEventListener('mouseover',e=>{const t=document.getElementById('pc-tip');if(t&&t.style.display!=='none'&&!e.target.closest('.pc-n'))t.style.display='none'})}
   if(!window.__pcStick){window.__pcStick=1;addEventListener('resize',()=>{const b=document.querySelector('.pc-bar.stick');if(b)stick(b)})}
   
-  const PTP=/[?&]beta=1/.test(location.search);
+  const PTP=true;
   const RT=false; /* DN = top-down tree (test) */
   const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(Object.keys(users)).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
     [['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
