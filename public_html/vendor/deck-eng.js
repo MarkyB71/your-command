@@ -85,6 +85,9 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       return (b.meta && b.meta.asteroid && b.meta.asteroid.name) || (l ? 'Asteroid #' + l.id : '?');
     };
     let mode = '';
+    // "All working · next free in 1h 14m" on each building dial (TEST ?beta=1, Mark 2 Nov 2026)
+    const NXB = /[?&]beta=1/.test(location.search);
+    const hmE = (sec) => { const m = Math.max(1, Math.round(sec / 60)), h = Math.floor(m / 60); return h ? h + 'h ' + (m % 60) + 'm' : m + 'm'; };
     const running = (b) =>
       ['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1));
 
@@ -131,6 +134,9 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
           P[t].op++;
           if (running(b)) {
             P[t].run++;
+            // when this building is free again: its last running job's finish time (NXB)
+            const fin = Math.max(...['Extractors', 'Processors', 'DryDocks'].flatMap((k) => (b[k] || []).filter((x) => x.status === 1).map((x) => x.finishTime || 0)));
+            if (fin > now && (!P[t].soon || fin < P[t].soon)) P[t].soon = fin;
             if (['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1 && x.finishTime <= now))) P[t].done++;
           }
         } else if (S[t] && B.status === 3) {
@@ -156,7 +162,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         if (p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>' + p.done + ' ready to collect');
         if (p.build) lines.push(p.build + ' being built');
         if (!p.op && !p.build) lines.push('None yet');
-        if (p.op && p.op === p.run && !p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>All working');
+        if (p.op && p.op === p.run && !p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>All working' + (NXB && p.soon ? ' · next free in ' + hmE(p.soon - now) : ''));
         return '<button class="en-g" data-go="T" title="' + Y.esc(nm) + ' – open Building Status">' +
           dial(v, col, p.run, 'working of ' + p.op) + '<span class="en-n">' + Y.esc(nm) + '</span><span class="en-s">' + lines.join('<br>') + '</span></button>';
       }).join('');
