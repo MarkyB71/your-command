@@ -88,9 +88,9 @@ const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 B
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt)return;const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3);const n=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');if(n!==an)return;if(B.status===3)ok++;else if(B.status===2)bld++;else if(B.status===1)pl++});
   if(ok)return '<div class="pc-fac ok">✓ '+nm+' – you have '+ok+'</div>';
   return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
-/* Still to produce → "Start it" (TEST ?beta=1, Mark 2 Nov 2026): an in-game link to a FREE building of the right kind
+/* Still to produce → "Start it" (LIVE 2 Nov 2026, tested on ?beta=1 – Mark): an in-game link to a FREE building of the right kind
    (finished, nothing running), on the rock in use if one is picked. If every one is busy, the link shows a box saying so. */
-const PSB=/[?&]beta=1/.test(location.search);
+const PSB=true; /* LIVE 2 Nov 2026 */
 const freeB=(t,an)=>{const bt=FBT[t];if(!bt)return null;const Y=window.YIC||{},D=Y.D||{},now=Date.now()/1000;let free=null,n=0,soon=0;
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt||B.status!==3)return;
     const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3),nm=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');
