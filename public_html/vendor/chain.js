@@ -124,9 +124,18 @@ export function drawChain(m){
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
   const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+SW(id)+(S.use!=null?'':hv(id,qty));
   const take=(id,qty)=>{if(S.use==null||!Y||id>=1000)return 0;if(pool[id]===undefined)pool[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pool[id],qty);pool[id]-=t;return t};
+  /* Covered-from-stock cards can be opened to see how it's made (TEST ?beta=1, Mark 31 Oct bug): opened, the inputs
+     below it are shown as if made fresh – they don't use up stock again (CVF counts how deep we are inside one). */
+  const CVB=/[?&]beta=1/.test(location.search);let CVF=0;
   function node(id,qty,path,key){
-    if(S.use!=null&&!path.includes(id)){const got=take(id,qty);
-      if(got>0&&got>=qty-1e-9){const br=el('div','pc-br');br.appendChild(el('div','pc-n cov',head(id,qty)+'<div class="pc-use">✓ Covered from stock on '+esc((Y.asts[S.use]||{}).name||'')+'</div>'));return br}
+    if(S.use!=null&&!CVF&&!path.includes(id)){const got=take(id,qty);
+      if(got>0&&got>=qty-1e-9){const cn=(Y.asts[S.use]||{}).name||'',canMake=CVB&&(makers[id]||[]).length&&opts(id,path).length;
+        if(canMake&&S.opened.has(key)){CVF++;let r;try{r=node0(id,qty,path,key)}finally{CVF--}
+          const tp=r.querySelector('.pc-n .pc-top');if(tp)tp.insertAdjacentHTML('afterend','<div class="pc-use">✓ Covered from stock on '+esc(cn)+' · showing how it\'s made</div>');
+          const nn=r.querySelector('.pc-n');if(nn)nn.classList.add('cov');return r}
+        const br=el('div','pc-br'),c=el('div','pc-n cov',head(id,qty)+'<div class="pc-use">✓ Covered from stock on '+esc(cn)+'</div>');
+        if(canMake){const t=el('span','pc-tog','show how it\'s made ▾');t.addEventListener('click',()=>{anc(key,t);S.opened.add(key);S.closed.delete(key);draw()});c.appendChild(t)}
+        br.dataset.k=key;br.appendChild(c);return br}
       if(got>0){const r=node0(id,qty-got,path,key),tp=r.querySelector('.pc-n .pc-top');
         if(tp)tp.insertAdjacentHTML('afterend','<div class="pc-use part">Using '+fu(id,got)+' from stock · still need '+fu(id,qty-got)+'</div>');
         const q=r.querySelector('.pc-n .pc-q');if(q)q.textContent=fu(id,qty);return r}}
