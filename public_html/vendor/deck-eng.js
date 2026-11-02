@@ -43,6 +43,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-tl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .en-tl i{font-style:normal;color:#36a7cd}
 .en-tl b{flex:none;font:600 11px ui-monospace,Menlo,monospace;color:#f2ede6}
+.en-tl:hover{color:#f2ede6}
 .en-tl.en-more{justify-content:center;color:#9c8a74}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a1613 0 12px,#0e0807 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
 @media (max-width:700px){.en-g.en-raw{width:84px}.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
@@ -100,8 +101,10 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
     const tlList = (L) => {
       if (!L || !L.length) return '';
       L.sort((x, y) => x.f - y.f);
-      const row = (x) => '<span class="en-tl"><span>' + Y.esc(x.n) + (x.c ? ' <i>(building)</i>' : '') + '</span><b' + (x.f <= now ? ' style="color:#fab219">' + (x.c ? 'Ready to finish' : 'Ready') : '>' + hmE(x.f - now)) + '</b></span>';
-      return '<span class="en-tls">' + L.slice(0, 6).map(row).join('') + (L.length > 6 ? '<span class="en-tl en-more">+' + (L.length - 6) + ' more on Building Status</span>' : '') + '</span>';
+      const wh = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const tip = (x) => x.n + (x.c ? ' (being built)' : '') + ' – ' + (x.f <= now ? (x.c ? 'ready to finish' : 'ready to collect') : hmE(x.f - now) + ' left, done ' + wh(x.f));
+      const row = (x) => '<span class="en-tl" title="' + Y.esc(tip(x)) + '"><span>' + Y.esc(x.n) + (x.c ? ' <i>(building)</i>' : '') + '</span><b' + (x.f <= now ? ' style="color:#fab219">' + (x.c ? 'Ready to finish' : 'Ready') : '>' + hmE(x.f - now)) + '</b></span>';
+      return '<span class="en-tls">' + L.slice(0, 6).map(row).join('') + (L.length > 6 ? '<span class="en-tl en-more" title="' + Y.esc(L.slice(6).map(tip).join('\n')) + '">+' + (L.length - 6) + ' more on Building Status</span>' : '') + '</span>';
     };
     const running = (b) =>
       ['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1));
