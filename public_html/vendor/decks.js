@@ -1,3 +1,41 @@
+/* Wallet names (TEST ?beta=1, Mark 2 Nov 2026): players with several wallets can name each one; the green
+   wallet button then shows the name. Saved in this browser only (localStorage 'yic-wallet-names'). */
+const WNB = /[?&]beta=1/.test(location.search);
+const WNK = 'yic-wallet-names';
+function wNames() { try { return JSON.parse(localStorage.getItem(WNK) || '{}') || {}; } catch (e) { return {}; } }
+function wName(a) { return String(wNames()[String(a).toLowerCase()] || ''); }
+function wNameSet(a, n) {
+  const m = wNames(), k = String(a).toLowerCase();
+  n = String(n || '').trim().slice(0, 24);
+  if (n) m[k] = n; else delete m[k];
+  try { localStorage.setItem(WNK, JSON.stringify(m)); } catch (e) {}
+}
+function wNameBox(pen) {
+  const old = document.getElementById('wc-nmbox');
+  if (old) { old.remove(); return; }
+  const wa = String((window.YIC && window.YIC.D && window.YIC.D.wallet) || '');
+  const b = document.createElement('div');
+  b.id = 'wc-nmbox';
+  const r = pen.getBoundingClientRect();
+  b.style.cssText = 'position:fixed;z-index:99999;top:' + Math.round(r.bottom + 8) + 'px;right:16px;width:min(300px,calc(100vw - 32px));' +
+    'background:#0d1520;border:1px solid #2b5a72;border-radius:10px;padding:14px;color:#dbe7f5;font-size:14px;box-shadow:0 0 20px rgba(63,184,255,.35)';
+  b.innerHTML = '<div style="color:#8fe3ff;font-weight:700;margin-bottom:4px">Name this wallet</div>' +
+    '<div style="color:#8b9ab0;font-size:12px;margin-bottom:8px;word-break:break-all"></div>' +
+    '<input maxlength="24" placeholder="e.g. Main or Alt" style="width:100%;box-sizing:border-box;font:inherit;color:#e6ebf2;background:#131821;border:1px solid #232b38;border-radius:8px;padding:8px">' +
+    '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" data-s style="flex:1">Save</button><button type="button" data-c style="flex:1">Clear name</button></div>' +
+    '<div style="color:#8b9ab0;font-size:12px;margin-top:8px">Saved in this browser only.</div>';
+  b.children[1].textContent = wa;
+  const inp = b.querySelector('input');
+  inp.value = wName(wa);
+  const done = (n) => { wNameSet(wa, n); b.remove(); const wc = document.getElementById('wc-top'); if (wc) wc.textContent = ''; };
+  b.querySelector('[data-s]').onclick = () => done(inp.value);
+  b.querySelector('[data-c]').onclick = () => done('');
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') done(inp.value); if (e.key === 'Escape') b.remove(); });
+  b.addEventListener('click', (e) => e.stopPropagation());
+  setTimeout(() => document.addEventListener('click', function off(e) { if (!b.contains(e.target)) { b.remove(); document.removeEventListener('click', off); } }), 0);
+  document.body.appendChild(b);
+  inp.focus();
+}
 /* Ship decks – Skippy's Command Deck
    LIVE for everyone 27 Oct 2026 (tested on ?beta=1 first). The old header and menu row are hidden;
    a deck bar takes their place: The Bridge · Flight Deck · Crew Quarters · Engineering · Trade Deck.
@@ -548,12 +586,27 @@ body > header{display:none!important}
     const wc = document.getElementById('wc-top'),
       wa = String((window.YIC && window.YIC.D && window.YIC.D.wallet) || '');
     if (wc) {
-      const t = /^0x[0-9a-f]{6,}$/i.test(wa) ? wa.slice(0, 6) + '…' + wa.slice(-4) : 'Connect / change wallet';
+      const ok = /^0x[0-9a-f]{6,}$/i.test(wa), nm = ok && WNB ? wName(wa) : '';
+      const t = ok ? (nm || wa.slice(0, 6) + '…' + wa.slice(-4)) : 'Connect / change wallet';
       if (wc.textContent !== t) {
         wc.textContent = t;
         wc.classList.toggle('dk-wal', t !== 'Connect / change wallet');
-        wc.title = t === 'Connect / change wallet' ? 'Connect a wallet or enter an address' : 'Wallet ' + wa + ' – click to change';
+        wc.title = t === 'Connect / change wallet' ? 'Connect a wallet or enter an address' : (nm ? nm + ' – ' : '') + 'Wallet ' + wa + ' – click to change';
       }
+      // ✎ beside it: name this wallet (TEST ?beta=1, Mark 2 Nov 2026) – the name is kept in this browser only
+      let pen = document.getElementById('wc-nm');
+      if (WNB && ok) {
+        if (!pen) {
+          pen = document.createElement('button');
+          pen.id = 'wc-nm';
+          pen.type = 'button';
+          pen.textContent = '✎';
+          pen.title = 'Name this wallet';
+          pen.style.cssText = 'min-width:0;padding-left:10px;padding-right:10px';
+          pen.onclick = (e) => { e.stopPropagation(); wNameBox(pen); };
+        }
+        if (pen.previousElementSibling !== wc) wc.after(pen);
+      } else if (pen) pen.remove();
     }
     // Refresh button beside the wallet button (Mark, 27 Oct)
     if (!document.getElementById('dkrf')) {
