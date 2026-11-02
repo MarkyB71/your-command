@@ -63,6 +63,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-trail .pc-up{margin-left:auto;font-size:15px}.pc-trail .pc-up+.pc-full{margin-left:6px}.pc-back{color:#ffd24a;border-color:#6b5a1c}.pc-back:disabled{opacity:.4;cursor:default}.pc-nav{display:inline-flex;gap:6px}.pc-navtop{display:flex;justify-content:center;margin:0 0 10px}.pc-navtop .pc-back.big{width:130px;text-align:center;justify-content:center;padding-left:0;padding-right:0}.pc-back.big{background:#ffd24a;color:#1a1300;border:2px solid #ffe58a;font-weight:700;font-size:17px;padding:7px 16px;box-shadow:0 0 12px rgba(255,210,74,.6)}.pc-back.big:hover{box-shadow:0 0 18px rgba(255,210,74,.9)}.pc-back.big:disabled{background:#3a3320;color:#9a8a50;border-color:#6b5a1c;box-shadow:none}.pc-trail a{color:#8fe3ff}.pc-trail .pc-cur{color:#ffd24a}.pc-trail .pc-tl,.pc-trail .pc-sep{color:#8b9ab0}.pc-trail .pc-full{margin-left:auto;font-size:15px}
 .pc-bar.stick{position:sticky!important;z-index:50;background:#0b1018;padding:8px 0;margin-top:0;box-shadow:0 6px 10px -6px rgba(0,0,0,.8)}
 .pc-raws h3{font-size:15px;margin:0 0 6px;color:#ffd24a}
+.pc-ptp summary{cursor:pointer;list-style:none}.pc-ptp summary::-webkit-details-marker{display:none}.pc-ptp summary h3{display:inline}.pc-ptp summary h3:after{content:' ▾';color:#8b9ab0}.pc-ptp:not([open]) summary h3:after{content:' ▸'}.pc-ptp h4{margin:12px 0 4px;color:#8bb8ff;font-size:15px}.pc-ptt{border-collapse:collapse;width:100%;max-width:720px}.pc-ptt th,.pc-ptt td{text-align:left;padding:3px 10px 3px 0;border-bottom:1px solid #1f2a3a}.pc-ptt th{color:#8b9ab0;font-weight:600}.pc-ptt td:not(:first-child),.pc-ptt th:not(:first-child){text-align:right}.pc-ptt a{color:#e6edf6;text-decoration:none;border-bottom:1px dotted #5a6a80}.pc-ptt a:hover{color:#ffd24a}
 .pc-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}.pc-big{font-size:16px}.pc-big .note{font-size:16px}
 .pc-big .pc-bar select,.pc-big .pc-bar input,.pc-big .pc-bar button{font-size:16px;padding:7px 10px}
 .pc-big .pc-n{width:280px;padding:11px 14px;gap:5px}
@@ -163,6 +164,7 @@ export function drawChain(m){
     document.addEventListener('mouseover',e=>{const t=document.getElementById('pc-tip');if(t&&t.style.display!=='none'&&!e.target.closest('.pc-n'))t.style.display='none'})}
   if(!window.__pcStick){window.__pcStick=1;addEventListener('resize',()=>{const b=document.querySelector('.pc-bar.stick');if(b)stick(b)})}
   
+  const PTP=/[?&]beta=1/.test(location.search);
   const RT=false; /* DN = top-down tree (test) */
   const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(Object.keys(users)).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
     [['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
@@ -230,6 +232,31 @@ export function drawChain(m){
       const fit=()=>{b.firstChild.style.width=w.scrollWidth+'px';b.style.display=w.scrollWidth>w.clientWidth+2?'':'none';b.scrollLeft=w.scrollLeft};
       b._fit=fit;try{new ResizeObserver(fit).observe(w.firstChild||w);new ResizeObserver(fit).observe(w)}catch(e){}}
     b._fit()}
+  /* PTP = "Still to produce" totals (TEST on ?beta=1, community request 2 Nov 2026): walks the WHOLE chain (open or closed),
+     with the recipes picked in the dropdowns, and adds up every made product across all branches – e.g. all the
+     Aluminium Sheet a Heavy Transport needs, in one number. With "Use my stock on" set, stock is taken off first. */
+  function totals(){const need={},via={},pl={};
+    const tk=(id,q)=>{if(S.use==null||!Y||id>=1000)return 0;if(pl[id]===undefined)pl[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pl[id],q);pl[id]-=t;return t};
+    const walk=(id,qty,path,key)=>{if(path.includes(id))return;qty-=tk(id,qty);if(qty<=1e-9)return;
+      const o=opts(id,path);if(!o.length||(id<=22&&(S.choice[key]===undefined||S.choice[key]===-1)))return;
+      const p=o.find(x=>x.i===S.choice[key])||o[0];if(path.length){need[id]=(need[id]||0)+qty;via[id]=p.type}
+      const runs=qty/p.out[id];for(const [i,v] of Object.entries(p.inp))walk(+i,v*runs,path.concat(id),key+'/'+i)};
+    walk(S.prod,S.amt,[],'r');return {need,via}}
+  function prodList(){const {need,via}=totals(),ids=Object.keys(need).map(Number),box=el('details','pc-raws pc-ptp');box.open=S.ptpOpen!==false;
+    box.addEventListener('toggle',()=>{S.ptpOpen=box.open});
+    box.appendChild(el('summary',null,'<h3>Still to produce – whole chain'+(S.use!=null?', after your stock on '+esc((Y.asts[S.use]||{}).name||''):'')+' ('+ids.length+')</h3>'));
+    box.appendChild(el('div','note','Every product made somewhere in this chain, added up across all branches (open or closed), with the recipes you picked. Click a name to plan that total in one go.'));
+    if(!ids.length){box.appendChild(el('div',null,'Nothing left to make'));return box}
+    const own=S.use==null&&!!Y;
+    [1,2,3,4,0].forEach(t=>{const g=ids.filter(i=>via[i]===t).sort((a,b)=>N[a].localeCompare(N[b]));if(!g.length)return;
+      box.appendChild(el('h4',null,TYPE[t]+' ('+g.length+')'));
+      const tb=el('table','pc-ptt');tb.innerHTML='<tr><th>Product</th><th>Total needed</th>'+(own?'<th>You have'+where+'</th><th>Still to make</th>':'')+'</tr>'+g.map(i=>{const v=need[i];let x='';
+        if(own){const h=have(i)||0;x='<td class="pc-have '+(h>=v?'ok':h>0?'part':'none')+'">'+(h?fu(i,h):'–')+'</td><td>'+(h>=v?'✓':fu(i,v-h))+'</td>'}
+        return '<tr><td><a href="#" data-pt="'+i+'" data-pa="'+v+'">'+esc(N[i])+'</a></td><td>'+fu(i,v)+'</td>'+x+'</tr>'}).join('');
+      box.appendChild(tb)});
+    box.addEventListener('click',e=>{const a=e.target.closest('a[data-pt]');if(!a)return;e.preventDefault();tipHide();snap();
+      S.mode='from';S.prod=+a.dataset.pt;S.amt=+a.dataset.pa;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw();scrollTo(0,0)});
+    return box}
   function draw0(){m=M0;tipHide();
     raws={};pool={};const host=m;host.innerHTML='';m=el('div','pc-root pc-big');host.appendChild(m);
     m.appendChild(el('h2','pc-title','The SkippyChain'));
@@ -262,6 +289,7 @@ export function drawChain(m){
     w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')}).join('<br>'):'Open more branches to see them')));
+    if(PTP)m.appendChild(prodList());
   }
   if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(document.getElementById('main'))})}
   draw();
