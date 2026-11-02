@@ -21,12 +21,42 @@
   GL.on = on;
   window.GL = GL;
 
+  // Reconnect notice (TEST ?beta=1, 2 Nov 2026): after the extension updates or reloads,
+  // this tab's link to it dies until the page is refreshed, so clicks get no answer.
+  // If no answer comes back within 3 seconds, tell the player to refresh the page.
+  var BETA = /[?&]beta=1/.test(location.search);
+  var waitT = null;
+  window.addEventListener('message', function (e) {
+    if (e.source !== window || !e.data || e.data.type !== 'yic-open-result') return;
+    if (waitT) { clearTimeout(waitT); waitT = null; }
+  });
+  function reconnectNote() {
+    var n = document.getElementById('yicg-rc');
+    if (!n) {
+      n = document.createElement('div');
+      n.id = 'yicg-rc';
+      n.setAttribute('role', 'alert');
+      n.style.cssText = 'position:fixed;z-index:99999;left:50%;bottom:24px;transform:translateX(-50%);' +
+        'max-width:calc(100vw - 32px);background:#0d1520;border:1px solid #8fe3ff;border-radius:10px;' +
+        'padding:10px 14px;color:#dbe7f5;font-size:15px;box-shadow:0 0 18px rgba(63,184,255,.45)';
+      document.body.appendChild(n);
+    }
+    n.innerHTML = 'The Command Deck extension has updated. <a href="#" style="color:#8fe3ff;font-weight:700">Refresh this page</a> to reconnect it.' +
+      ' <button type="button" title="Close" style="background:none;border:0;color:#9aa8bb;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
+    n.querySelector('a').onclick = function (ev) { ev.preventDefault(); location.reload(); };
+    n.querySelector('button').onclick = function () { n.remove(); };
+  }
+
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[data-yicg]');
     if (!a || !document.documentElement.dataset.yicGameExt) return;
     e.preventDefault();
     e.stopPropagation();
     window.postMessage({ type: 'yic-open', path: a.dataset.yicg }, location.origin);
+    if (BETA) {
+      if (waitT) clearTimeout(waitT);
+      waitT = setTimeout(function () { waitT = null; reconnectNote(); }, 3000);
+    }
   }, true);
 
   // Style (re-added if the site rebuilds <head>).
