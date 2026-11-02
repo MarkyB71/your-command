@@ -23,7 +23,7 @@
 
   // Reconnect notice (TEST ?beta=1, 2 Nov 2026): after the extension updates or reloads,
   // this tab's link to it dies until the page is refreshed, so clicks get no answer.
-  // If no answer comes back within 3 seconds, tell the player to refresh the page.
+  // If no answer comes back within 1.5 seconds, tell the player to refresh the page.
   var BETA = /[?&]beta=1/.test(location.search);
   var waitT = null;
   window.addEventListener('message', function (e) {
@@ -64,7 +64,7 @@
     window.postMessage({ type: 'yic-open', path: a.dataset.yicg }, location.origin);
     if (BETA) {
       if (waitT) clearTimeout(waitT);
-      waitT = setTimeout(function () { waitT = null; reconnectNote(); }, 3000);
+      waitT = setTimeout(function () { waitT = null; reconnectNote(); }, 1500);
     }
   }, true);
 
