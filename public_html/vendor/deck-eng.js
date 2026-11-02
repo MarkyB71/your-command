@@ -95,8 +95,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
     // "All working · next free in 1h 14m" on each building dial (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
     const NXB = true; // LIVE 2 Nov 2026
     const hmE = (sec) => { const m = Math.max(1, Math.round(sec / 60)), h = Math.floor(m / 60); return h ? h + 'h ' + (m % 60) + 'm' : m + 'm'; };
-    // Selected rock: each building's time until it's done, under its dial (TEST ?beta=1, Mark 2 Nov 2026)
-    const TL = /[?&]beta=1/.test(location.search);
+    // Selected rock: each building's time until it's done, under its dial (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
+    const TL = true; // LIVE 2 Nov 2026
     const bName = (b) => (b.Name && b.Name.name) || ('#' + b.id);
     const tlList = (L) => {
       if (!L || !L.length) return '';

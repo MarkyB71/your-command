@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## Version 621 – 2 Nov 2026 – Engineering: pick a rock and each dial lists its buildings with the time left, soonest first (hover a line for the full name and finish date). Building Status now also lists buildings under construction with their time left.
+
 ## Version 598 – 2 Nov 2026 – The SkippyChain: new "Still to produce – whole chain" box (community request). Adds up every product that has to be made anywhere in the chain, across all branches, grouped by building (Refinery, Factory, Bioreactor, Shipyard). Uses your stock first when "Use my stock on" is set. Click a product name to open the SkippyChain on that total.
 
 ## Version 596 – 31 Oct 2026 – Production planner: new Shipyard tab for ship parts such as Habitation Modules, hulls, engines and modules (whole ships stay in the Construction planner).

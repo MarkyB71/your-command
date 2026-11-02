@@ -9,8 +9,8 @@
   const STATE = { run: ['#0ca30c', 'Working'], done: ['#fab219', 'Finished – collect'], idle: ['#d03b3b', 'Idle'],
     build: ['#36a7cd', 'Being built'], built: ['#fab219', 'Built – ready to finish'] };
   const RANK = { idle: 0, done: 1, built: 1, run: 2, build: 3 };
-  // Buildings under construction listed with their time left (TEST ?beta=1, Mark 2 Nov 2026)
-  const CON = /[?&]beta=1/.test(location.search);
+  // Buildings under construction listed with their time left (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
+  const CON = true; // LIVE 2 Nov 2026
   const when = t => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const dot = s => '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + STATE[s][0] +
     ';margin-right:7px;vertical-align:middle"></span>' + STATE[s][1];
