@@ -6,8 +6,11 @@
   'use strict';
 
   const PRODUCTION_TYPES = [2, 3, 4, 5, 6];   // extractor, refinery, bioreactor, factory, shipyard
-  const STATE = { run: ['#0ca30c', 'Working'], done: ['#fab219', 'Finished – collect'], idle: ['#d03b3b', 'Idle'] };
-  const RANK = { idle: 0, done: 1, run: 2 };
+  const STATE = { run: ['#0ca30c', 'Working'], done: ['#fab219', 'Finished – collect'], idle: ['#d03b3b', 'Idle'],
+    build: ['#36a7cd', 'Being built'], built: ['#fab219', 'Built – ready to finish'] };
+  const RANK = { idle: 0, done: 1, built: 1, run: 2, build: 3 };
+  // Buildings under construction listed with their time left (TEST ?beta=1, Mark 2 Nov 2026)
+  const CON = /[?&]beta=1/.test(location.search);
   const when = t => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const dot = s => '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + STATE[s][0] +
     ';margin-right:7px;vertical-align:middle"></span>' + STATE[s][1];
@@ -29,6 +32,16 @@
     (D.allB || []).forEach(b => {
       const st = b.Building && b.Building.status, a = astOf(b);
       if (an && a !== an) return;
+      if (CON && st === 2) {   // being built: one row with its construction finish time
+        const bt2 = b.Building.buildingType, f = b.Building.finishTime || 0;
+        const nm2 = (b.Name && b.Name.name) || ((BT[bt2] || 'Building') + ' #' + b.id);
+        const cr2 = (D.crewN || {})[b.Control && b.Control.controller && b.Control.controller.id] || '';
+        const s2 = f && f <= now ? 'built' : 'build';
+        const g2 = groups[a] = groups[a] || { prod: [], other: {} };
+        if (okQ(nm2, BT[bt2], cr2, 'construction', STATE[s2][1]))
+          g2.prod.push({ id: b.id, name: nm2, type: BT[bt2] || 'Building', crew: cr2, s: s2, jobs: [{ s: s2, what: 'Under construction', out: '', fin: f }], fin: f || Infinity });
+        return;
+      }
       if (st === 1 || st === 2) { sites[a] = (sites[a] || 0) + 1; return; }   // planned / being built
       if (st !== 3) return;
 
@@ -71,7 +84,8 @@
 
       h += '<h2>' + esc(a) + '</h2><div class="note" style="padding:0 0 10px">' + g.prod.length + ' production buildings · ' +
         '<b style="color:#4cd04c">' + n('run') + ' working</b> · <b style="color:#ff7a7a">' + n('idle') + ' idle</b>' +
-        (n('done') ? ' · <b style="color:#fab219">' + n('done') + ' finished, waiting to collect</b>' : '') + '</div>';
+        (n('done') ? ' · <b style="color:#fab219">' + n('done') + ' finished, waiting to collect</b>' : '') +
+        (n('build') + n('built') ? ' · <b style="color:#36a7cd">' + (n('build') + n('built')) + ' being built</b>' : '') + '</div>';
 
       if (g.prod.length) h += '<div class="wrap"><table><thead><tr><th>Status</th><th>Building</th><th>Type</th><th>Crew</th>' +
         '<th>Doing</th><th>Output</th><th>Finishes</th><th>Time left</th></tr></thead><tbody>' +
@@ -79,7 +93,7 @@
 
       const o = Object.entries(g.other).map(([k, v]) => v + ' ' + k + (v > 1 ? 's' : '')).join(', ');
       if (o || sites[a]) h += '<div class="note" style="padding:8px 0 0">' + (o ? 'Also here: ' + esc(o) + '. ' : '') +
-        (sites[a] ? sites[a] + ' unfinished construction site' + (sites[a] > 1 ? 's' : '') + ' not shown.' : '') + '</div>';
+        (sites[a] ? sites[a] + (CON ? ' planned site' : ' unfinished construction site') + (sites[a] > 1 ? 's' : '') + ' not shown.' : '') + '</div>';
     });
 
     h += '<div class="note" style="padding:14px 0 0">Shipyard output amounts and secondary refinery outputs aren\'t shown. ' +
@@ -94,8 +108,8 @@
       '<td class="cls">' + esc(x.type) + '</td><td class="cls">' + esc(x.crew) + '</td>' +
       '<td style="white-space:normal">' + (js.map(j => esc(j.what)).join('<br>') || '–') + '</td>' +
       '<td class="cls" style="white-space:normal">' + js.map(j => esc(j.out || '')).join('<br>') + '</td>' +
-      '<td class="cls">' + js.map(j => j.fin ? (j.s === 'done' ? 'Done ' + esc(when(j.fin)) : esc(when(j.fin))) : '').join('<br>') + '</td>' +
-      '<td>' + js.map(j => j.fin ? (j.s === 'done' ? '<span style="color:#fab219">Ready to collect</span>'
+      '<td class="cls">' + js.map(j => j.fin ? (j.s === 'done' || j.s === 'built' ? 'Done ' + esc(when(j.fin)) : esc(when(j.fin))) : '').join('<br>') + '</td>' +
+      '<td>' + js.map(j => j.fin ? (j.s === 'built' ? '<span style="color:#fab219">Ready to finish</span>' : j.s === 'done' ? '<span style="color:#fab219">Ready to collect</span>'
         : '<b data-fin="' + j.fin + '">' + Y.tLeft(j.fin, now) + '</b>') : '').join('<br>') + '</td></tr>';
   }
 

@@ -38,6 +38,12 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-g.en-raw svg{width:80px;height:50px}
 .en-rv{margin-top:1px;font:700 13px/1.2 system-ui,sans-serif}
 .en-rn{margin-top:2px;font:11px/1.25 system-ui,sans-serif;color:#b9a68f;text-align:center}
+.en-tls{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:6px;padding-top:5px;border-top:1px solid #3a211d}
+.en-tl{display:flex;justify-content:space-between;gap:6px;font:11px/1.3 system-ui,sans-serif;color:#b9a68f}
+.en-tl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.en-tl i{font-style:normal;color:#36a7cd}
+.en-tl b{flex:none;font:600 11px ui-monospace,Menlo,monospace;color:#f2ede6}
+.en-tl.en-more{justify-content:center;color:#9c8a74}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a1613 0 12px,#0e0807 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
 @media (max-width:700px){.en-g.en-raw{width:84px}.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
 @media (prefers-reduced-motion:reduce){.en-arc,.en-g{transition:none}}
@@ -88,6 +94,15 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
     // "All working · next free in 1h 14m" on each building dial (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
     const NXB = true; // LIVE 2 Nov 2026
     const hmE = (sec) => { const m = Math.max(1, Math.round(sec / 60)), h = Math.floor(m / 60); return h ? h + 'h ' + (m % 60) + 'm' : m + 'm'; };
+    // Selected rock: each building's time until it's done, under its dial (TEST ?beta=1, Mark 2 Nov 2026)
+    const TL = /[?&]beta=1/.test(location.search);
+    const bName = (b) => (b.Name && b.Name.name) || ('#' + b.id);
+    const tlList = (L) => {
+      if (!L || !L.length) return '';
+      L.sort((x, y) => x.f - y.f);
+      const row = (x) => '<span class="en-tl"><span>' + Y.esc(x.n) + (x.c ? ' <i>(building)</i>' : '') + '</span><b' + (x.f <= now ? ' style="color:#fab219">' + (x.c ? 'Ready to finish' : 'Ready') : '>' + hmE(x.f - now)) + '</b></span>';
+      return '<span class="en-tls">' + L.slice(0, 6).map(row).join('') + (L.length > 6 ? '<span class="en-tl en-more">+' + (L.length - 6) + ' more on Building Status</span>' : '') + '</span>';
+    };
     const running = (b) =>
       ['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1));
 
@@ -122,12 +137,13 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       mode = Y.view;
       if (mode === 'P') return drawRaws(ai);
       const an = ai === '' || !Y.asts[+ai] ? null : Y.asts[+ai].name;
-      const P = {}, S = {};
+      const P = {}, S = {}, L = {};
       PROD.forEach(([t]) => (P[t] = { op: 0, run: 0, done: 0, build: 0 }));
       STORE.forEach(([t]) => (S[t] = { n: 0, mass: 0, cap: 0, f: 0 }));
       (Y.D.allB || []).forEach((b) => {
         const B = b.Building || {}, t = B.buildingType;
         if (an && astOf(b) !== an) return;
+        if (TL && an && B.status === 2 && B.finishTime) (L[t] = L[t] || []).push({ n: bName(b), f: B.finishTime, c: 1 });
         if (P[t]) {
           if (B.status === 2) P[t].build++;
           if (B.status !== 3) return;
@@ -137,6 +153,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
             // when this building is free again: its last running job's finish time (NXB)
             const fin = Math.max(...['Extractors', 'Processors', 'DryDocks'].flatMap((k) => (b[k] || []).filter((x) => x.status === 1).map((x) => x.finishTime || 0)));
             if (fin > now && (!P[t].soon || fin < P[t].soon)) P[t].soon = fin;
+            if (TL && an && fin > 0) (L[t] = L[t] || []).push({ n: bName(b), f: fin });
             if (['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1 && x.finishTime <= now))) P[t].done++;
           }
         } else if (S[t] && B.status === 3) {
@@ -164,7 +181,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         if (!p.op && !p.build) lines.push('None yet');
         if (p.op && p.op === p.run && !p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>All working' + (NXB && p.soon ? ' · next free in ' + hmE(p.soon - now) : ''));
         return '<button class="en-g" data-go="T" title="' + Y.esc(nm) + ' – open Building Status">' +
-          dial(v, col, p.run, 'working of ' + p.op) + '<span class="en-n">' + Y.esc(nm) + '</span><span class="en-s">' + lines.join('<br>') + '</span></button>';
+          dial(v, col, p.run, 'working of ' + p.op) + '<span class="en-n">' + Y.esc(nm) + '</span><span class="en-s">' + lines.join('<br>') + '</span>' + tlList(L[t]) + '</button>';
       }).join('');
       const store = STORE.map(([t, nm]) => {
         const s = S[t], pct = s.cap ? s.mass / s.cap : 0;
@@ -172,7 +189,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         return '<button class="en-g" data-go="B" title="' + Y.esc(nm) + ' – open Building Contents">' +
           dial(pct, col, s.n ? Math.round(pct * 100) + '%' : '–', s.n ? 'full · ' + s.n + ' building' + (s.n > 1 ? 's' : '') : 'none') +
           '<span class="en-n">' + Y.esc(nm) + '</span><span class="en-s">' +
-          (s.n ? 'Fullest ' + Math.round(s.f * 100) + '%' + (s.f >= 0.75 ? ' <span class="en-lamp" style="--l:' + col + '"></span>' : '') : 'None yet') + '</span></button>';
+          (s.n ? 'Fullest ' + Math.round(s.f * 100) + '%' + (s.f >= 0.75 ? ' <span class="en-lamp" style="--l:' + col + '"></span>' : '') : 'None yet') + '</span>' + tlList(L[t]) + '</button>';
       }).join('');
       el.innerHTML =
         '<div class="en-plate">ENGINEERING</div>' +
