@@ -85,8 +85,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       return (b.meta && b.meta.asteroid && b.meta.asteroid.name) || (l ? 'Asteroid #' + l.id : '?');
     };
     let mode = '';
-    // "All working · next free in 1h 14m" on each building dial (TEST ?beta=1, Mark 2 Nov 2026)
-    const NXB = /[?&]beta=1/.test(location.search);
+    // "All working · next free in 1h 14m" on each building dial (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
+    const NXB = true; // LIVE 2 Nov 2026
     const hmE = (sec) => { const m = Math.max(1, Math.round(sec / 60)), h = Math.floor(m / 60); return h ? h + 'h ' + (m % 60) + 'm' : m + 'm'; };
     const running = (b) =>
       ['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1));
