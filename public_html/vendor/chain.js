@@ -124,9 +124,9 @@ export function drawChain(m){
     return'<details class="pc-wd"><summary class="pc-have click '+c+'">'+txt+' ▾</summary><div class="pc-where">'+list+'</div></details>'};
   const head=(id,qty)=>'<div class="pc-top"><img src="'+img(id)+'" alt="" loading="lazy" data-hide><div><div class="pc-nm">'+esc(N[id])+'</div><div class="pc-q">'+fu(id,qty)+'</div></div></div>'+SW(id)+(S.use!=null?'':hv(id,qty));
   const take=(id,qty)=>{if(S.use==null||!Y||id>=1000)return 0;if(pool[id]===undefined)pool[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pool[id],qty);pool[id]-=t;return t};
-  /* Covered-from-stock cards can be opened to see how it's made (TEST ?beta=1, Mark 31 Oct bug): opened, the inputs
+  /* Covered-from-stock cards can be opened to see how it's made (LIVE 2 Nov 2026, tested on ?beta=1 – Mark 31 Oct bug): opened, the inputs
      below it are shown as if made fresh – they don't use up stock again (CVF counts how deep we are inside one). */
-  const CVB=/[?&]beta=1/.test(location.search);let CVF=0;
+  const CVB=true;let CVF=0; /* LIVE 2 Nov 2026 */
   function node(id,qty,path,key){
     if(S.use!=null&&!CVF&&!path.includes(id)){const got=take(id,qty);
       if(got>0&&got>=qty-1e-9){const cn=(Y.asts[S.use]||{}).name||'',canMake=CVB&&(makers[id]||[]).length&&opts(id,path).length;
@@ -158,7 +158,7 @@ export function drawChain(m){
     c.insertAdjacentHTML('beforeend','<span class="pc-t">'+(o.length>1?o.length+' recipes · ':esc(p.name)+' · ')+TYPE[p.type]+'</span>');
     const by=Object.entries(p.out).filter(([k])=>+k!==id).map(([k,v])=>fu(k,v*runs)+' '+esc(N[k]));
     if(by.length)c.insertAdjacentHTML('beforeend','<span class="pc-also">Also makes: '+by.join(', ')+'</span>');
-    const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',op?'hide inputs ▴':'show '+n+' input'+(n>1?'s':'')+' ▾');
+    const op=isOpen(key,path.length),n=Object.keys(p.inp).length,t=el('span','pc-tog',op?'hide how it\'s made ▴':'show how it\'s made ▾');
     t.addEventListener('click',()=>{anc(key,t);S.focus=op?null:key;if(op){S.closed.add(key);S.opened.delete(key)}else{S.opened.add(key);S.closed.delete(key)}draw()});c.appendChild(t);
     if(key!==(S.foc||'r')){const f=el('span','pc-foc','⌖ Focus on this');f.title='Show only this part of the chain';f.addEventListener('click',()=>{tipHide();snap();S.foc=key;S.anchor=null;draw();const b=M0.querySelector('.pc-trail');if(b)b.scrollIntoView({block:'center'})});c.appendChild(f)}
     br.dataset.k=key;br.appendChild(c);
