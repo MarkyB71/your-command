@@ -2,17 +2,19 @@
 // - Reads your choices from the extension's options and passes them to lotcolours.js.
 // - Command Deck button: a crowned S at the bottom of the game's right-hand side bar.
 // - Hide used deposits: unticks "Show Used Deposits" once each time the core sample picker opens.
+// - Auto-pick core sample: when the Extract window opens with no deposit chosen, picks the top one.
 // It reads nothing from the game beyond what it needs to place the button / find that tick box,
 // and sends nothing anywhere.
 (() => {
   if (window.top !== window || document.getElementById('yic-s')) return;
-  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, statusDots: false };
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true };
 
   chrome.storage.sync.get(DEFAULTS, opts => {
     // Hand the choices to the page-side script (lotcolours.js) through a page attribute.
     document.documentElement.dataset.yicOpts = JSON.stringify(opts);
     if (opts.sideButton) sideButton();
     if (opts.hideUsedDeposits) hideUsed();
+    if (opts.autoSample) autoSample();
   });
 
   function sideButton() {
@@ -81,6 +83,48 @@
         el.click();
       }
     }
-    setInterval(check, 400);
+    setInterval(check, 150);
+  }
+  function autoSample() {
+    // When the game's Extract Resource window opens and its Deposit box still says "Select",
+    // open the sample list, click the top sample and press Done – the same clicks you'd make.
+    // Once per window, so you can still change it. It never presses Extract.
+    const done = new WeakSet();
+    const leaf = (root, re) => [...root.querySelectorAll('*')].find(e => !e.children.length && re.test(e.textContent.trim()));
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    let busy = false;
+    async function pick(slot) {
+      busy = true;
+      try {
+        slot.click();
+        let table = null;
+        for (let i = 0; i < 40 && !table; i++) {
+          await wait(50);
+          table = [...document.querySelectorAll('table')].find(t => /Used Status/i.test(t.innerText));
+        }
+        if (!table) return;
+        await wait(300); // let "Hide used deposits" untick first
+        table = [...document.querySelectorAll('table')].find(t => /Used Status/i.test(t.innerText));
+        if (!table) return;
+        let box = table; while (box.parentElement && !leaf(box, /^(done|cancel)$/i)) box = box.parentElement;
+        const row = table.querySelector('tbody tr');
+        const btn = re => { const e = leaf(box, re); return e && (e.closest('button') || e); };
+        if (!row) { const c = btn(/^cancel$/i); if (c) c.click(); return; }
+        row.click();
+        await wait(80);
+        const d = btn(/^done$/i); if (d) d.click();
+      } finally { busy = false; }
+    }
+    function check() {
+      if (busy) return;
+      const h = [...document.querySelectorAll('h1')].find(e => /^extract resource$/i.test(e.textContent.trim()));
+      if (!h) return;
+      let panel = h; while (panel.parentElement && !leaf(panel, /^deposit$/i)) panel = panel.parentElement;
+      const label = leaf(panel, /^deposit$/i), slot = label && label.nextElementSibling;
+      if (!slot || done.has(slot)) return;
+      done.add(slot);
+      if (/^select\b/i.test(slot.innerText.trim())) pick(slot);
+    }
+    setInterval(check, 150);
   }
 })();

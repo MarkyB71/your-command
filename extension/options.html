@@ -32,6 +32,8 @@
       <span class="d">Switches on Filter Lots › Building Categories colours each time the game loads, so you don't have to click the paint icon.</span></span></label>
     <label><input type="checkbox" name="hideUsedDeposits"><span><b>Hide used deposits</b>
       <span class="d">When you choose a core sample to extract from, "Show Used Deposits" starts unticked, so only untouched samples show. You can still tick it.</span></span></label>
+    <label><input type="checkbox" name="autoSample"><span><b>Auto-pick core sample</b>
+      <span class="d">When you open Extract Resource and no deposit is chosen yet, the top sample in the list is picked for you. You can still change it, and you still press Extract yourself.</span></span></label>
     <label><input type="checkbox" name="statusDots"><span><b>Building status dots</b>
       <span class="d">A tiny dot beside each of your buildings when you look at an asteroid: green ready, yellow under 3 hours left, red busy. Planned sites: yellow if the reservation runs out within 3 hours, red if it ran out with materials still in it.</span></span></label>
     <label><input type="checkbox" name="sideButton"><span><b>Command Deck button in the game</b>
@@ -39,15 +41,17 @@
   </div>
   <div class="new">
     <h2 style="margin-top:0">What's new</h2>
+    <h3>0.6.1</h3>
+    <ul><li>Status dots now on by default, and working on big asteroids like Adalia Prime.</li>
+      <li>Green dot when a planned site has all its materials.</li>
+      <li>Auto-pick core sample in the Extract window.</li>
+      <li>After an update, the Command Deck tells you to refresh the page if an "in game" link can't reach the extension.</li></ul>
     <h3>0.6.0</h3>
-    <ul><li>Building status dots on your asteroids – see at a glance what's ready (switch on above).</li>
+    <ul><li>Building status dots on your asteroids – see at a glance what's ready.</li>
       <li>Fix: the Command Deck button no longer jumps into the Ship Inventory.</li></ul>
     <h3>0.5.0</h3>
     <ul><li>This options page – choose which game tweaks you want.</li>
       <li>Hide used deposits when picking a core sample.</li></ul>
-    <h3>0.4.5</h3>
-    <ul><li>Crowned S button in the game's side bar, back to your Command Deck.</li>
-      <li>Lot colours (Building Categories) switched on every time the game loads.</li></ul>
     <p class="foot" style="margin:10px 0 0"><a href="https://github.com/MarkyB71/your-command/blob/main/extension/CHANGES.md" target="_blank" rel="noopener">Full list of changes</a></p>
   </div>
   <p class="foot">Changes apply when you reload the game tab. Your choices are saved in your browser only.</p>

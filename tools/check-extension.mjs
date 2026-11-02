@@ -180,10 +180,10 @@ try {
   await op.goto('chrome-extension://' + extId + '/' + man.options_ui.page);
   await new Promise(r => setTimeout(r, 800));
   const boxes = await op.$$eval('input[type=checkbox]', b => b.map(x => [x.name, x.checked]));
-  const OFF = ['statusDots']; // off by default
-  check(boxes.length >= 4 && boxes.every(b => b[1] === !OFF.includes(b[0])), 'options page shows ' + boxes.length + ' choices, right ones on by default (status dots off)', 'options page: ' + JSON.stringify(boxes));
+  const OFF = []; // everything on by default since 0.6.1 (status dots were off in 0.6.0)
+  check(boxes.length >= 4 && boxes.every(b => b[1] === !OFF.includes(b[0])), 'options page shows ' + boxes.length + ' choices, all on by default', 'options page: ' + JSON.stringify(boxes));
   const sd = await game.evaluate(() => document.documentElement.dataset.yicStatusDots || '').catch(() => '');
-  check(/switched off/.test(sd), 'status dots stay off until switched on', 'status dots: ' + sd);
+  check(sd && !/switched off/.test(sd), 'status dots on by default (' + sd + ')', 'status dots: ' + sd);
   await op.click('input[name=sideButton]');
   await op.waitForFunction(() => document.getElementById('saved').textContent === 'Saved', null, { timeout: 3000 }).catch(() => {});
   const g2 = await ctx.newPage();

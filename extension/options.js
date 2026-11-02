@@ -1,5 +1,5 @@
 // Skippy's Command Deck – options. Saved in your browser (chrome.storage.sync) only.
-const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, statusDots: false };
+const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true };
 const box = document.getElementById('opts');
 chrome.storage.sync.get(DEFAULTS, o => {
   box.querySelectorAll('input[type=checkbox]').forEach(cb => {
