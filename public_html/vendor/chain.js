@@ -88,6 +88,23 @@ const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 B
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt)return;const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3);const n=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');if(n!==an)return;if(B.status===3)ok++;else if(B.status===2)bld++;else if(B.status===1)pl++});
   if(ok)return '<div class="pc-fac ok">✓ '+nm+' – you have '+ok+'</div>';
   return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
+/* Still to produce → "Start it" (TEST ?beta=1, Mark 2 Nov 2026): an in-game link to a FREE building of the right kind
+   (finished, nothing running), on the rock in use if one is picked. If every one is busy, the link shows a box saying so. */
+const PSB=/[?&]beta=1/.test(location.search);
+const freeB=(t,an)=>{const bt=FBT[t];if(!bt)return null;const Y=window.YIC||{},D=Y.D||{},now=Date.now()/1000;let free=null,n=0,soon=0;
+  (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt||B.status!==3)return;
+    const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3),nm=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');
+    if(an&&nm!==an)return;n++;
+    const jobs=[].concat(b.Processors||[],b.DryDocks||[]).filter(x=>x.status===1);
+    if(!jobs.length){if(!free)free=b;return}
+    const f=Math.max.apply(null,jobs.map(x=>x.finishTime||0));if(!soon||f<soon)soon=f});
+  return {free,n,soon:soon&&soon>now?soon-now:soon?0:null,nm:FBN[bt]}};
+const busyBox=(msg)=>{let n=document.getElementById('pc-busy');if(n)n.remove();n=document.createElement('div');n.id='pc-busy';n.setAttribute('role','alert');
+  n.style.cssText='position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,calc(100vw - 32px));background:#0d1520;border:2px solid #ffb547;border-radius:12px;padding:18px 22px;color:#dbe7f5;font-size:16px;line-height:1.5;text-align:center;box-shadow:0 0 14px rgba(255,181,71,.6)';
+  n.innerHTML='<button type="button" title="Close" style="position:absolute;top:6px;right:10px;background:none;border:0;color:#9aa8bb;font-size:20px;cursor:pointer">✕</button>'+msg;
+  n.querySelector('button').onclick=()=>n.remove();document.body.appendChild(n);
+  const off=e=>{if(!n.contains(e.target)){n.remove();document.removeEventListener('click',off,true)}};setTimeout(()=>document.addEventListener('click',off,true),0)};
+const hm=s=>{s=Math.round(s/60);const h=Math.floor(s/60),m=s%60;return h?h+'h '+m+'m':m+'m'};
 /* warn when a raw is set to "Mine it" but the chosen rock can't mine it (Mark, 29 Oct) */
 const mineHTML=(id,ai,nr)=>{if(ai===null)return '';const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},D=Y.D||{};
   const r=(D.owned||[]).find(x=>x.id===a.id);if(!r)return '';const c=r.Celestial||{};
@@ -259,11 +276,17 @@ export function drawChain(m){
     const own=S.use==null&&!!Y;
     [1,2,3,4,0].forEach(t=>{const g=ids.filter(i=>via[i]===t).sort((a,b)=>N[a].localeCompare(N[b]));if(!g.length)return;
       box.appendChild(el('h4',null,TYPE[t]+' ('+g.length+')'));
-      const tb=el('table','pc-ptt');tb.innerHTML='<tr><th>Product</th><th>Total needed</th>'+(own?'<th>You have'+where+'</th><th>Still to make</th>':'')+'</tr>'+g.map(i=>{const v=need[i];let x='';
+      const an=S.use!=null?((Y&&Y.asts[S.use])||{}).name:ai!==null?((Y&&Y.asts[ai])||{}).name:'',sc=PSB&&Y&&FBT[t]&&window.GL&&window.GL.on&&window.GL.on();
+      const st=()=>{const f=freeB(t,an);if(!f.n)return '<td class="pc-have none">No '+f.nm+(an?' on '+esc(an):'')+'</td>';
+        if(f.free)return '<td>'+window.GL('/building/'+f.free.id,'Open a free '+f.nm+' in the game to start it').replace(' <a','<a')+'</td>';
+        return '<td><a href="#" class="yicg pc-bz" data-nm="'+f.nm+'" data-an="'+esc(an||'')+'" data-soon="'+(f.soon==null?'':f.soon)+'">in game ↗</a></td>'};
+      const tb=el('table','pc-ptt');tb.innerHTML='<tr><th>Product</th><th>Total needed</th>'+(own?'<th>You have'+where+'</th><th>Still to make</th>':'')+(sc?'<th>Start it</th>':'')+'</tr>'+g.map(i=>{const v=need[i];let x='';
         if(own){const h=have(i)||0;x='<td class="pc-have '+(h>=v?'ok':h>0?'part':'none')+'">'+(h?fu(i,h):'–')+'</td><td>'+(h>=v?'✓':fu(i,v-h))+'</td>'}
-        return '<tr><td><a href="#" data-pt="'+i+'" data-pa="'+v+'">'+esc(N[i])+'</a></td><td>'+fu(i,v)+'</td>'+x+'</tr>'}).join('');
+        return '<tr><td><a href="#" data-pt="'+i+'" data-pa="'+v+'">'+esc(N[i])+'</a></td><td>'+fu(i,v)+'</td>'+x+(sc?st():'')+'</tr>'}).join('');
       box.appendChild(tb)});
-    box.addEventListener('click',e=>{const a=e.target.closest('a[data-pt]');if(!a)return;e.preventDefault();tipHide();snap();
+    box.addEventListener('click',e=>{const z=e.target.closest('a.pc-bz');if(z){e.preventDefault();e.stopPropagation();
+      const sn=z.dataset.soon;busyBox('<div style="color:#ffb547;font-size:18px;font-weight:700;margin-bottom:6px">All busy</div>Sorry – all your '+z.dataset.nm+(z.dataset.nm==='Factory'?' buildings':'s')+(z.dataset.an?' on '+z.dataset.an:'')+' are busy right now.'+(sn===''?'':sn==='0'?'<br>One has finished – collect it in the game to free it up.':'<br>The first one is free in about '+hm(+sn)+'.'));return}
+    const a=e.target.closest('a[data-pt]');if(!a)return;e.preventDefault();tipHide();snap();
       S.mode='from';S.prod=+a.dataset.pt;S.amt=+a.dataset.pa;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw();scrollTo(0,0)});
     return box}
   function draw0(){m=M0;tipHide();
