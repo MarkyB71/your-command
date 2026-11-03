@@ -637,8 +637,8 @@ body > header{display:none!important}
       };
       tray.appendChild(rb);
     }
-    // ? Help button after Refresh – opens the help / wiki page in a new tab (test, ?beta=1 – Mark, 3 Nov 2026)
-    if (/[?&]beta=1/.test(location.search) && !document.getElementById('dkhelp')) {
+    // ? Help button after Refresh – opens the help / wiki page in a new tab (LIVE 3 Nov 2026, tested on ?beta=1 – Mark)
+    if (!document.getElementById('dkhelp')) {
       const hb = document.createElement('a');
       hb.id = 'dkhelp';
       hb.href = 'help.html';
