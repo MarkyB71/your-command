@@ -85,6 +85,7 @@ body > header{display:none!important}
 #dktools button{position:static!important;font-size:12px!important;padding:5px 10px!important;line-height:1.2!important;white-space:nowrap}
 #dktools #wc-top{order:9}
 #dktools #dkrf{order:10;background:#121a26;color:#8fe3ff;border:1px solid #2a3648;border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}#dktools #dkrf:hover,#dktools #dkrf:focus-visible{border-color:#8fe3ff}
+#dktools #dkhelp{order:11;background:#121a26;color:#8fe3ff;border:1px solid #2a3648;border-radius:8px;padding:5px 10px;font-size:12px;line-height:1.2;text-decoration:none;white-space:nowrap}#dktools #dkhelp:hover,#dktools #dkhelp:focus-visible{border-color:#8fe3ff}
 #dktools #wc-top.dk-wal{background:#0b1a14!important;color:#3fd68a!important;border:1px solid #3fd68a!important;border-radius:8px!important;box-shadow:0 0 8px rgba(63,214,138,.25)!important;font-family:ui-monospace,Menlo,monospace!important;font-weight:600!important;letter-spacing:.02em}
 #dktools #wc-nm{order:9;background:#0b1a14!important;color:#3fd68a!important;border:1px solid #3fd68a!important;border-radius:8px!important;box-shadow:0 0 8px rgba(63,214,138,.25)!important;font-weight:600!important;min-width:0!important;padding-left:10px!important;padding-right:10px!important}\n#dktools #wc-nm:hover,#dktools #wc-nm:focus-visible,#dktools #wc-top.dk-wal:hover,#dktools #wc-top.dk-wal:focus-visible{background:#10261c!important;box-shadow:0 0 14px rgba(63,214,138,.5)!important}
 #dktools > div:not([data-srch]){display:none!important}
@@ -635,6 +636,17 @@ body > header{display:none!important}
         else location.reload();
       };
       tray.appendChild(rb);
+    }
+    // ? Help button after Refresh – opens the help / wiki page in a new tab (test, ?beta=1 – Mark, 3 Nov 2026)
+    if (/[?&]beta=1/.test(location.search) && !document.getElementById('dkhelp')) {
+      const hb = document.createElement('a');
+      hb.id = 'dkhelp';
+      hb.href = 'help.html';
+      hb.target = '_blank';
+      hb.rel = 'noopener';
+      hb.textContent = '? Help';
+      hb.title = 'How to use the Command Deck and the browser extension';
+      tray.appendChild(hb);
     }
     // Download sits at the bottom of the page now (Mark, 27 Oct); the Updated / wallet line follows it there
     const csv = document.getElementById('csv'),

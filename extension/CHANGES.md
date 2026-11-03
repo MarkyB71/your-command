@@ -9,6 +9,7 @@ Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.c
 - **Green dot on planned sites** once every material for the building has been delivered – ready for you to start building.
 - **"Refresh this page" message** – after the extension updates, the Command Deck now tells you straight away to refresh the page if an "in game ↗" link can't reach it, instead of the click doing nothing.
 - **Auto-pick core sample** (on by default – switch off in Options) – when you open Extract Resource and no deposit is chosen yet, the top sample in the list is picked for you. You still press Extract yourself.
+- **Help & guide link** on the Options page – opens the new help page on the Command Deck.
 
 ## 0.6.0 – 30 Oct 2026
 - **Building status dots** (off by default – switch on in Options) – when you look at one of your asteroids, a tiny dot sits beside each of your buildings: green = ready (finished or idle), yellow = under 3 hours left, red = busy. Planned sites: yellow when the reservation runs out within 3 hours, red when it has run out with materials still in it. No dots on warehouses, tank farms, spaceports, marketplaces or habitats. Uses only what the game has already loaded – no extra requests.
