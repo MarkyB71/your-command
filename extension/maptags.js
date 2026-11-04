@@ -133,18 +133,20 @@
     varying vec3 vColor;
     void main() {
       vColor = highlightColor;
-      gl_PointSize = 11.0;
+      gl_PointSize = SIZE;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }`;
   const RING_FRAG = `
     varying vec3 vColor;
     void main() {
       float d = length(gl_PointCoord - vec2(0.5));
-      if (d > 0.5 || d < 0.3) discard;
-      gl_FragColor = vec4(vColor, 0.95);
+      if (d > 0.5 || d < 0.32) discard;
+      gl_FragColor = vec4(vColor, 1.0);
     }`;
   // Marketplace diamond: a bold outline with a faint glow inside, bigger than the tag rings so it stands out.
-  const DIA_VERT = RING_VERT.replace('11.0', '15.0');
+  // Sizes are in screen points; multiplied by the screen's pixel ratio (Retina / high-res screens
+  // have 2 pixels per point, so without this everything came out half size).
+  const RING_PT = 14, DIA_PT = 16;
   const DIA_FRAG = `
     varying vec3 vColor;
     void main() {
@@ -157,7 +159,9 @@
   function makeRings(pts, vert, frag, name) {
     const geom = new pts.geometry.constructor();
     const mat = pts.material.clone();
-    mat.vertexShader = vert || RING_VERT; mat.fragmentShader = frag || RING_FRAG; mat.uniforms = {};
+    const dpr = (store && store.getState().gl && store.getState().gl.getPixelRatio && store.getState().gl.getPixelRatio()) || window.devicePixelRatio || 1;
+    const size = ((vert === 'dia' ? DIA_PT : RING_PT) * dpr).toFixed(1);
+    mat.vertexShader = RING_VERT.replace('SIZE', size); mat.fragmentShader = frag || RING_FRAG; mat.uniforms = {};
     mat.depthWrite = false; mat.transparent = true; mat.needsUpdate = true;
     const r = new pts.constructor(geom, mat);
     r.name = name || 'yic-map-tags';
@@ -173,7 +177,7 @@
     const pts = gamePoints(st.scene);
     if (!pts) { if (rings) rings.visible = false; if (diamonds) diamonds.visible = false; note('waiting for the belt map'); return; }
     if (!rings) rings = makeRings(pts);
-    if (!diamonds) diamonds = makeRings(pts, DIA_VERT, DIA_FRAG, 'yic-map-markets');
+    if (!diamonds) diamonds = makeRings(pts, 'dia', DIA_FRAG, 'yic-map-markets');
     for (const o of [rings, diamonds]) if (o.parent !== pts.parent) { if (o.parent) o.parent.remove(o); pts.parent.add(o); dirty = true; }
     // Only on the zoomed-out belt map (the game dims its dots when you're at an asteroid).
     const u = pts.material.uniforms && pts.material.uniforms.uOpacity;
