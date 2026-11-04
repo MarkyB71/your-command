@@ -143,14 +143,16 @@
       if (d > 0.5 || d < 0.3) discard;
       gl_FragColor = vec4(vColor, 0.95);
     }`;
-  const DIA_VERT = RING_VERT.replace('11.0', '9.0');
+  // Marketplace diamond: a bold outline with a faint glow inside, bigger than the tag rings so it stands out.
+  const DIA_VERT = RING_VERT.replace('11.0', '15.0');
   const DIA_FRAG = `
     varying vec3 vColor;
     void main() {
       vec2 c = abs(gl_PointCoord - vec2(0.5));
       float d = c.x + c.y;
-      if (d > 0.5 || d < 0.3) discard;
-      gl_FragColor = vec4(vColor, 0.95);
+      if (d > 0.5) discard;
+      float a = d > 0.36 ? 1.0 : 0.22;
+      gl_FragColor = vec4(vColor, a);
     }`;
   function makeRings(pts, vert, frag, name) {
     const geom = new pts.geometry.constructor();
