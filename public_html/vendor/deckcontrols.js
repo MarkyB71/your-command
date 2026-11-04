@@ -181,14 +181,15 @@
     if (on) setOn(br, true);
   }
 
-  if (!document.getElementById('dc-css')) {
-    const st = document.createElement('style');
-    st.id = 'dc-css';
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
   // The Bridge is redrawn when data refreshes – put the panel back each time.
   const check = () => {
+    // The site rebuilds <head> as it starts, so (re)add our styles whenever they are missing.
+    if (!document.getElementById('dc-css') && document.head) {
+      const st = document.createElement('style');
+      st.id = 'dc-css';
+      st.textContent = CSS;
+      document.head.appendChild(st);
+    }
     const br = document.querySelector('.brs');
     if (br && !br.querySelector('.dc-holo')) addPanel(br);
   };
