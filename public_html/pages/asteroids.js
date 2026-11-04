@@ -1,5 +1,3 @@
-// read ?beta=1 as the page opens – the site swaps the address to ?wallet=… once the wallet loads
-window.YIC_BELT_BETA = /[?&]beta=1/.test(location.search);
 /* Asteroids › Asteroids – Your Influence Command
    One file per page (started 2026-10-18). A card per asteroid you own or control, with the Adalia system map on top.
    APP = window.YIC: shared data, helpers and page state that still live in app.js
@@ -449,10 +447,9 @@ window.YIC_BELT_BETA = /[?&]beta=1/.test(location.search);
         });
         cv.addEventListener('pointermove', (e) => {
           if (!drag) return;
-          // TEST ?beta=1: drag the same way as the game (Mark, 4 Nov)
-          const dd = window.YIC_BELT_BETA ? -1 : 1;
-          az = drag.az + dd * (e.clientX - drag.x) * 0.008;
-          tilt = Math.max(0.15, Math.min(1.45, drag.tilt + dd * (e.clientY - drag.y) * 0.006));
+          // drag the same way as the game (LIVE 4 Nov 2026, tested on ?beta=1 – Mark)
+          az = drag.az - (e.clientX - drag.x) * 0.008;
+          tilt = Math.max(0.15, Math.min(1.45, drag.tilt - (e.clientY - drag.y) * 0.006));
           if (calm) frame();
         });
         cv.addEventListener('pointerup', () => {
