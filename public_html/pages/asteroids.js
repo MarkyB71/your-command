@@ -428,14 +428,13 @@ window.YIC_BELT_BETA = /[?&]beta=1/.test(location.search);
           });
         };
         let raf = 0;
-        const BETA_SPIN = window.YIC_BELT_BETA ? -0.0012 : 0.0012;
         const loop = () => {
           if (!box.isConnected) {
             cancelAnimationFrame(raf);
             return;
           }
           raf = requestAnimationFrame(loop);
-          if (!drag && !calm) az += BETA_SPIN; // TEST ?beta=1: belt turns the same way as the game (Mark, 4 Nov)
+          if (!drag && !calm) az += 0.0012;
           frame();
         };
         if (calm) frame();
@@ -450,8 +449,10 @@ window.YIC_BELT_BETA = /[?&]beta=1/.test(location.search);
         });
         cv.addEventListener('pointermove', (e) => {
           if (!drag) return;
-          az = drag.az + (e.clientX - drag.x) * 0.008;
-          tilt = Math.max(0.15, Math.min(1.45, drag.tilt + (e.clientY - drag.y) * 0.006));
+          // TEST ?beta=1: drag the same way as the game (Mark, 4 Nov)
+          const dd = window.YIC_BELT_BETA ? -1 : 1;
+          az = drag.az + dd * (e.clientX - drag.x) * 0.008;
+          tilt = Math.max(0.15, Math.min(1.45, drag.tilt + dd * (e.clientY - drag.y) * 0.006));
           if (calm) frame();
         });
         cv.addEventListener('pointerup', () => {
