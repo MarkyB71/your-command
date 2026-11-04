@@ -16,6 +16,21 @@
   b{display:block;color:#fff}
   span.d{color:#9fb0c4;font-size:14px}
   .foot{color:#8b9ab0;font-size:13px;margin-top:18px}
+  .cols{display:flex;gap:16px;margin-top:8px;font-size:14px;color:#c3d2e2}
+  .cols span{display:flex;align-items:center;gap:6px}
+  input[type=color]{width:28px;height:22px;margin:0;padding:0;border:1px solid #2a3a50;background:none;cursor:pointer}
+  .tags{padding:14px 16px;margin:-4px 0 10px;border:1px solid #1e2a3a;border-radius:10px;background:#0a101b}
+  .tags b{display:inline;color:#fff}
+  #tagList{margin:10px 0}
+  .trow{display:flex;gap:8px;align-items:center;margin:0 0 6px}
+  .trow input[type=text]{flex:1;min-width:0;width:auto;height:auto;margin:0;font:inherit;font-size:14px;padding:4px 6px;background:#0d2933;color:#fff;border:1px solid #2a3a50}
+  .trow code{color:#9fb0c4;font-size:12px}
+  .trow select{font:inherit;font-size:14px;background:#0d2933;color:#fff;border:1px solid #2a3a50;padding:3px}
+  .trow .rm,.tbtn button{cursor:pointer;font:inherit;font-size:13px;background:#0c1320;color:#d7e6f5;border:1px solid #2a3a50;border-radius:6px;padding:5px 9px}
+  .trow .rm:hover,.tbtn button:hover{border-color:#4fb3ff}
+  .tbtn{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+  .tbtn .danger{color:#ff564d;border-color:#5a2a2a}
+  .tbtn .danger:hover{border-color:#ff564d}
   #saved{color:#3fd68a;font-weight:600;margin-left:8px}
   .new{margin-top:26px;padding:14px 16px;border:1px solid #1e2a3a;border-radius:10px;background:#0a101b}
   .new h3{margin:12px 0 4px;font-size:14px;color:#ffd24a}
@@ -36,11 +51,34 @@
       <span class="d">When you open Extract Resource and no deposit is chosen yet, the top sample in the list is picked for you. You can still change it, and you still press Extract yourself.</span></span></label>
     <label><input type="checkbox" name="statusDots"><span><b>Building status dots</b>
       <span class="d">A tiny dot beside each of your buildings when you look at an asteroid: green ready, yellow under 3 hours left, red busy. Planned sites: yellow if the reservation runs out within 3 hours, red if it ran out with materials still in it.</span></span></label>
+    <label><input type="checkbox" name="crewFood"><span><b>Crew food %</b>
+      <span class="d">A food bar along the bottom of each crew's card in the game's My Crews list, with the %. It fades from green when full to red at 50% (hungry).</span></span></label>
+    <label><input type="checkbox" name="shipProp"><span><b>Ship propellant %</b>
+      <span class="d">A propellant bar along the bottom of each ship in the game's My Assets › Ships list, with the %. Red at 10% and under, yellow around a quarter, green from half a tank.</span></span></label>
+    <label><input type="checkbox" name="mapTags"><span><b>Friend / foe tags on the system map</b>
+      <span class="d">Click an asteroid on the belt map to tag its owner as friendly, neutral or hostile. All of that owner's asteroids get a coloured ring. Tags are saved in this browser only.</span>
+      <span class="cols"><span><input type="color" name="tagCol_friendly"> Friendly</span><span><input type="color" name="tagCol_neutral"> Neutral</span><span><input type="color" name="tagCol_hostile"> Hostile</span></span></span></label>
+    <label><input type="checkbox" name="mapMarkets"><span><b>Open marketplaces on the system map</b>
+      <span class="d">A small green diamond on each asteroid with open market orders. Hover it for a count, or click it for each marketplace. The list comes from the Command Deck (your-command.adalia.academy) and updates every 5 minutes.</span></span></label>
+    <div class="tags">
+      <b>Your tagged players</b> <span class="d" id="tagCount"></span>
+      <div id="tagList"></div>
+      <div class="tbtn"><button type="button" id="tagExport">Export (share with friends)</button>
+        <button type="button" id="tagImport">Import a friend's list</button>
+        <button type="button" id="tagClear" class="danger">Clear all tags</button>
+        <input type="file" id="tagFile" accept=".json,application/json" hidden></div>
+      <span class="d">Import adds a friend's tags to yours – where you've both tagged the same player, theirs is used. On the belt map, the small "Tags" switch at the top hides or shows the rings, and hovering a ringed asteroid shows the owner's name.</span>
+    </div>
     <label><input type="checkbox" name="sideButton"><span><b>Command Deck button in the game</b>
       <span class="d">Adds the crowned S to the bottom of the game's right-hand side bar. Click it to jump back to your Command Deck.</span></span></label>
   </div>
   <div class="new">
     <h2 style="margin-top:0">What's new</h2>
+    <h3>0.6.2</h3>
+    <ul><li>Friend / foe tags on the system map – tag an asteroid's owner, share your list, clear it any time.</li>
+      <li>Open marketplaces on the system map.</li>
+      <li>Ship propellant bar in My Assets › Ships.</li>
+      <li>Crew food bar in My Crews.</li></ul>
     <h3>0.6.1</h3>
     <ul><li>Status dots now on by default, and working on big asteroids like Adalia Prime.</li>
       <li>Green dot when a planned site has all its materials.</li>
@@ -55,5 +93,4 @@
     <p class="foot" style="margin:10px 0 0"><a href="https://github.com/MarkyB71/your-command/blob/main/extension/CHANGES.md" target="_blank" rel="noopener">Full list of changes</a></p>
   </div>
   <p class="foot">Changes apply when you reload the game tab. Your choices are saved in your browser only.</p>
-  <p class="foot"><a href="https://your-command.adalia.academy/help.html#extension" target="_blank" rel="noopener">Help &amp; guide – how to use the extension and the Command Deck</a></p>
-</main><script src="options.js"></script></body></html>
+</main><script src="options.js"></script><script src="tags-options.js"></script></body></html>

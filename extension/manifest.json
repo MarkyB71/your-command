@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Skippy's Command Deck",
-  "version": "0.6.1",
-  "description": "Opens Command Deck links in your Influence game tab without a reload, adds an S button to the game, and keeps lot colours on.",
+  "version": "0.6.2",
+  "description": "Links the Command Deck to your Influence game tab and adds helpers: status dots, food and propellant bars, map tags and markets.",
   "permissions": [
     "scripting",
     "storage"
@@ -15,6 +15,17 @@
     "service_worker": "background.js"
   },
   "content_scripts": [
+    {
+      "matches": [
+        "https://game.influenceth.io/*"
+      ],
+      "js": [
+        "r3fstore.js",
+        "maptags.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": [
         "https://your-command.adalia.academy/*"
@@ -51,6 +62,26 @@
         "statusdots.js"
       ],
       "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://game.influenceth.io/*"
+      ],
+      "js": [
+        "crewfood.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://game.influenceth.io/*"
+      ],
+      "js": [
+        "shipprop.js"
+      ],
+      "run_at": "document_idle",
       "world": "MAIN"
     }
   ],

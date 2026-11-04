@@ -12,25 +12,9 @@
   const root = document.documentElement;
   const note = t => { if (root) root.dataset.yicStatusDots = t; };
 
-  // ---- 1. Catch the game's 3D store as the game starts up --------------------------------
-  // react-three-fiber puts a small "__r3f" record on every 3D object it makes, and that record
-  // points at the 3D store (camera, scene, canvas). For a moment we watch for the first one being
-  // set, keep its store, then remove the watcher. (It has to be here at page start: the game makes
-  // its objects while loading.)
+  // ---- 1. The game's 3D store – caught at page start by r3fstore.js (shared with the map tags) ----
   let store = null;
-  const KEY = '__r3f';
-  function stopWatching() {
-    const d = Object.getOwnPropertyDescriptor(Object.prototype, KEY);
-    if (d && d.set === watcher) delete Object.prototype[KEY];
-  }
-  function watcher(v) {
-    if (v && v.root && typeof v.root.getState === 'function' && !store) { store = v.root; stopWatching(); }
-    Object.defineProperty(this, KEY, { value: v, writable: true, configurable: true, enumerable: true });
-  }
-  if (!Object.getOwnPropertyDescriptor(Object.prototype, KEY)) {
-    Object.defineProperty(Object.prototype, KEY, { configurable: true, set: watcher });
-    setTimeout(stopWatching, 120000); // never leave it on
-  }
+  const getStore = () => store || (store = window.__yicR3f || null);
 
   // ---- settings ---------------------------------------------------------------------------
   const COL = { green: '#57ff65', yellow: '#ffd94f', red: '#ff564d' }; // the game's own colours
@@ -217,7 +201,7 @@
   }
 
   function refresh() { // every 2 s: buildings, asteroid on screen, colours
-    if (!store) return;
+    if (!getStore()) return;
     const st = store.getState(), V = st.camera.position.constructor, M = st.camera.matrixWorld.constructor;
     readBuildings();
     const rock = findRock(st.scene);
@@ -254,7 +238,7 @@
   }
 
   function frame() {
-    if (!store || !view || view.ast == null || !view.lots.length) return;
+    if (!getStore() || !view || view.ast == null || !view.lots.length) return;
     const st = store.getState(), cam = st.camera, canvas = st.gl && st.gl.domElement;
     if (!canvas) return;
     const t = performance.now();
@@ -291,10 +275,10 @@
   let waited = 0;
   const go = setInterval(() => {
     const raw = root.dataset.yicOpts;
-    if (!raw) { if (++waited > 60) { clearInterval(go); stopWatching(); note('options not found'); } return; }
+    if (!raw) { if (++waited > 60) { clearInterval(go); note('options not found'); } return; }
     clearInterval(go);
     let on = true; try { on = JSON.parse(raw).statusDots === true; } catch (e) {}
-    if (!on) { stopWatching(); note('switched off in options'); return; }
+    if (!on) { note('switched off in options'); return; }
     setInterval(() => { try { refresh(); } catch (e) { clearView(); note('paused – ' + e.message); } }, 2000);
     const loop = () => { requestAnimationFrame(loop); try { frame(); } catch (e) { clearView(); note('paused – ' + e.message); } };
     requestAnimationFrame(loop);

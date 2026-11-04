@@ -2,12 +2,14 @@
 // - Reads your choices from the extension's options and passes them to lotcolours.js.
 // - Command Deck button: a crowned S at the bottom of the game's right-hand side bar.
 // - Hide used deposits: unticks "Show Used Deposits" once each time the core sample picker opens.
+// - Marketplaces on the map: fetches the Command Deck's market list (via the background) for maptags.js.
+// - Friend / foe tags: passes your map tags between the extension's storage and maptags.js.
 // - Auto-pick core sample: when the Extract window opens with no deposit chosen, picks the top one.
 // It reads nothing from the game beyond what it needs to place the button / find that tick box,
 // and sends nothing anywhere.
 (() => {
   if (window.top !== window || document.getElementById('yic-s')) return;
-  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true };
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
 
   chrome.storage.sync.get(DEFAULTS, opts => {
     // Hand the choices to the page-side script (lotcolours.js) through a page attribute.
@@ -15,7 +17,32 @@
     if (opts.sideButton) sideButton();
     if (opts.hideUsedDeposits) hideUsed();
     if (opts.autoSample) autoSample();
+    if (opts.mapTags !== false) tagBridge();
+    if (opts.mapMarkets !== false) marketBridge();
   });
+
+  function marketBridge() {
+    // Open marketplaces for the system map: asks the extension's background for the Command Deck's
+    // belt-wide market list (refreshed every 5 minutes) and passes it to maptags.js in the page.
+    const get = () => chrome.runtime.sendMessage({ type: 'yic-markets' }, r => {
+      if (chrome.runtime.lastError || !r || !r.ok) return;
+      window.postMessage({ yic: 'markets', data: r.data, fetched: r.fetched }, location.origin);
+    });
+    get(); setInterval(get, 300000);
+  }
+
+  function tagBridge() {
+    // Friend / foe tags: kept in the extension's own storage (so the options page can list, share and
+    // clear them). Passes them to maptags.js in the page, and saves the changes it sends back.
+    const send = t => window.postMessage({ yic: 'tags', tags: t || {} }, location.origin);
+    chrome.storage.local.get({ mapTags: {} }, o => send(o.mapTags));
+    chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch.mapTags) send(ch.mapTags.newValue); });
+    window.addEventListener('message', e => {
+      if (e.source !== window || !e.data || e.data.yic !== 'tags-save') return;
+      const t = e.data.tags;
+      if (t && typeof t === 'object' && !Array.isArray(t)) chrome.storage.local.set({ mapTags: t });
+    });
+  }
 
   function sideButton() {
     const icon = chrome.runtime.getURL('icons/icon48.png');
