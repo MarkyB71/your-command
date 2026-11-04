@@ -432,7 +432,7 @@
             return;
           }
           raf = requestAnimationFrame(loop);
-          if (!drag && !calm) az += 0.0012;
+          if (!drag && !calm) az -= 0.0012; // turn the same way as the game (Mark, 4 Nov)
           frame();
         };
         if (calm) frame();
