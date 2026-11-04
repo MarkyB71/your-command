@@ -426,13 +426,14 @@
           });
         };
         let raf = 0;
+        const BETA_SPIN = /[?&]beta=1/.test(location.search) ? -0.0012 : 0.0012;
         const loop = () => {
           if (!box.isConnected) {
             cancelAnimationFrame(raf);
             return;
           }
           raf = requestAnimationFrame(loop);
-          if (!drag && !calm) az -= 0.0012; // turn the same way as the game (Mark, 4 Nov)
+          if (!drag && !calm) az += BETA_SPIN; // TEST ?beta=1: belt turns the same way as the game (Mark, 4 Nov)
           frame();
         };
         if (calm) frame();
