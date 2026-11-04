@@ -158,6 +158,10 @@
       scr.className = 'dc-scr';
       vs.insertBefore(scr, plate);
     }
+    // Keep the viewscreen the same size as the map, so it doesn't jump when the controls open (Mark, 4 Nov).
+    // The controls scroll inside it if they don't fit.
+    const h = map && map.style.display !== 'none' ? map.offsetHeight : 0;
+    if (h > 0) scr.style.height = h + 'px';
     if (map) map.style.display = 'none';
     plate.textContent = 'DECK CONTROLS · EXTENSION';
     if (holo) holo.classList.add('on');
