@@ -70,6 +70,11 @@
     markets = m; mktFetched = e.data.fetched || 0; dirty = true; showPill();
     if (shownId) showBox(shownId);
   });
+  // "Sells Food 2 kt · 0.22 SWAY/kg"
+  const fmtAmt = (n, counted) => counted ? '×' + Math.round(n).toLocaleString()
+    : n < 1000 ? Math.round(n).toLocaleString() + ' kg' : n < 1e6 ? (+(n / 1000).toFixed(n < 1e4 ? 1 : 0)).toLocaleString() + ' t' : (+(n / 1e6).toFixed(2)).toLocaleString() + ' kt';
+  const fmtPrice = (p, counted) => (p >= 100 ? Math.round(p).toLocaleString() : (+p.toPrecision(3)).toLocaleString()) + ' SWAY' + (counted ? ' each' : '/kg');
+  const itemLine = it => (it[1] === 2 ? 'Sells ' : 'Buys ') + it[0] + ' ' + fmtAmt(it[2], it[4]) + ' · ' + fmtPrice(it[3], it[4]);
   const mktLine = list => {
     let s = 0, b = 0; list.forEach(x => { s += x[1] || 0; b += x[2] || 0; });
     return list.length + ' marketplace' + (list.length === 1 ? '' : 's') + ' · ' + s + ' for sale · ' + b + ' buy order' + (b === 1 ? '' : 's');
@@ -240,7 +245,8 @@
       .s{font-size:11px;color:#8b9ab0;margin-top:6px}
       .m{margin:0 0 8px;padding:6px 8px;border-left:3px solid ${MKT};background:rgba(87,255,101,.05)}
       .m b{color:#fff;font-weight:600}
-      .m ul{margin:4px 0 0;padding-left:16px;max-height:140px;overflow:auto}
+      .m ul{margin:4px 0 0;padding-left:16px;max-height:260px;overflow:auto}
+      .m li{margin-bottom:6px}
       .m li{color:#c3d2e2}
       .m small{display:block;color:#8b9ab0;font-size:11px;margin-top:3px}
     </style><div class="b"><div class="t"><span id="n"></span><button class="x" id="x" title="Close">✕</button></div>
@@ -283,7 +289,13 @@
       box.m.textContent = '';
       const h = document.createElement('b'); h.textContent = '🛒 ' + mktLine(ml); box.m.appendChild(h);
       const ul = document.createElement('ul');
-      ml.forEach(x => { const li = document.createElement('li'); li.textContent = (x[0] || 'Marketplace') + ' – ' + (x[1] || 0) + ' for sale, ' + (x[2] || 0) + ' buy'; ul.appendChild(li); });
+      ml.forEach(x => {
+        const li = document.createElement('li');
+        const h2 = document.createElement('div'); h2.textContent = (x[0] || 'Marketplace') + ' – ' + (x[1] || 0) + ' for sale, ' + (x[2] || 0) + ' buy'; h2.style.color = '#fff';
+        li.appendChild(h2);
+        (x[3] || []).forEach(it => { const d = document.createElement('div'); d.textContent = itemLine(it); d.style.color = it[1] === 2 ? '#c3d2e2' : '#ffd94f'; li.appendChild(d); });
+        ul.appendChild(li);
+      });
       box.m.appendChild(ul);
       const sm = document.createElement('small');
       sm.textContent = 'Open orders from the Command Deck' + (mktFetched ? ', as of ' + new Date(mktFetched * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '') + ' (updates every 5 min)';
@@ -318,12 +330,21 @@
     if (!tip || !tip.isConnected) {
       tip = document.createElement('div');
       tip.style.cssText = 'position:fixed;z-index:2147483000;pointer-events:none;font:12px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;'
-        + 'color:#fff;background:rgba(8,14,24,.9);padding:3px 7px;border-left:3px solid;white-space:nowrap';
+        + 'color:#fff;background:rgba(8,14,24,.92);padding:4px 8px;border-left:3px solid;white-space:nowrap';
       (document.body || root).appendChild(tip);
     }
     tip.textContent = '';
     if (t && t.tag) { const d = document.createElement('div'); d.textContent = (t.name || short(a.owner)) + ' · ' + LABEL[t.tag]; tip.appendChild(d); }
-    if (ml) { const d = document.createElement('div'); d.textContent = '🛒 ' + mktLine(ml); tip.appendChild(d); }
+    if (ml) {
+      const d = document.createElement('div'); d.textContent = '🛒 ' + mktLine(ml); d.style.fontWeight = '600'; tip.appendChild(d);
+      const all = []; ml.forEach(x => (x[3] || []).forEach(it => all.push(it)));
+      const MAX = 8;
+      all.slice(0, MAX).forEach(it => {
+        const r = document.createElement('div'); r.textContent = itemLine(it);
+        r.style.color = it[1] === 2 ? '#c3d2e2' : '#ffd94f'; tip.appendChild(r);
+      });
+      if (all.length > MAX) { const r = document.createElement('div'); r.textContent = '+ ' + (all.length - MAX) + ' more – click the asteroid for the full list'; r.style.color = '#8b9ab0'; tip.appendChild(r); }
+    }
     tip.style.borderLeftColor = t && t.tag ? COL[t.tag] : MKT;
     tip.style.left = (e.clientX + 16) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
     tip.style.display = '';
