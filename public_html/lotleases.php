@@ -35,7 +35,7 @@ if ($aid <= 0) {
 }
 if ($aid > 250000) fail(400, 'Asteroid numbers go from 1 to 250,000.');
 
-$cf = $CACHE . '/lotleases_' . $aid . '.json';
+$cf = $CACHE . '/lotleases2_' . $aid . '.json';
 if (is_file($cf) && time() - filemtime($cf) < LL_KEEP) { readfile($cf); exit; }
 ll_limit();
 
@@ -73,16 +73,20 @@ for ($pg = 0; $pg < LL_MAX_PAGES; $pg++) {
   if (count($r[0]) < 500) break;
 }
 
-// ---- tenant and administrator crew names ----
-$crews = [];
+// ---- tenant and administrator crew names, and the wallet that owns each crew (for friend / foe tags) ----
+$crews = []; $owners = [];
 $ids = array_values(array_unique(array_filter(array_merge([$admin], array_map(fn($l) => $l[1], $leases)))));
 foreach (array_chunk($ids, 500) as $chunk) {
   usleep(LL_PAUSE);
-  $r = try_search('crew_v1', ['size' => 500, '_source' => ['id', 'Name'], 'query' => ['terms' => ['id' => $chunk]]]);
-  if ($r) foreach ($r[0] as $c) if (!empty($c['Name']['name'])) $crews[$c['id']] = $c['Name']['name'];
+  $r = try_search('crew_v1', ['size' => 500, '_source' => ['id', 'Name', 'Nft'], 'query' => ['terms' => ['id' => $chunk]]]);
+  if ($r) foreach ($r[0] as $c) {
+    if (!empty($c['Name']['name'])) $crews[$c['id']] = $c['Name']['name'];
+    $w = $c['Nft']['owner'] ?? ($c['Nft']['owners']['starknet'] ?? null);
+    if (is_string($w) && preg_match('/^0x[0-9a-f]+$/i', $w)) $owners[$c['id']] = '0x' . (ltrim(strtolower(substr($w, 2)), '0') ?: '0');
+  }
 }
 
 $out = json_encode(['id' => $aid, 'name' => $A['Name']['name'] ?? null, 'admin' => $admin, 'offer' => $offer,
-  'public' => $public, 'contract' => $contract, 'leases' => $leases, 'crews' => (object)$crews, 'fetched' => $now]);
+  'public' => $public, 'contract' => $contract, 'leases' => $leases, 'crews' => (object)$crews, 'owners' => (object)$owners, 'fetched' => $now]);
 @file_put_contents($cf . '.tmp', $out, LOCK_EX); @rename($cf . '.tmp', $cf);
 echo $out;

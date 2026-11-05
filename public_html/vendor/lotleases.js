@@ -13,8 +13,20 @@
   // colours: the game's own (influence-client theme) – green = free/available, gold = yours, grey = someone else's
   const C_FREE = [87, 255, 101], C_MINE = [255, 210, 74], C_OTHER = [139, 154, 176];
   const C_CHEAP = [87, 255, 101], C_MID = [255, 217, 79], C_DEAR = [255, 86, 77];
-  const S = { q: '', zoom: 1, rotY: 0.6, rotX: -0.35, spin: MOVE, byPrice: false, show: { free: true, mine: true, other: true } };
+  const S = { q: '', ff: false, zoom: 1, rotY: 0.6, rotX: -0.35, spin: MOVE, byPrice: false, show: { free: true, mine: true, other: true } };
   const CACHE = {}, LOAD = {};
+  // friend / foe tags: kept in the Command Deck extension (0.6.3+), keyed by the owner's wallet
+  let TAGS = null, TCOL = { friendly: '#88e675', neutral: '#ffd94f', hostile: '#ff564d' };
+  const hexRGB = (h) => [1, 3, 5].map((k) => parseInt(h.substr(k, 2), 16));
+  window.addEventListener('message', (e) => {
+    if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== 'yic-opts') return;
+    TAGS = e.data.tags || {}; const o = e.data.opts || {};
+    ['friendly', 'neutral', 'hostile'].forEach((k) => { if (/^#[0-9a-f]{6}$/i.test(o['tagCol_' + k] || '')) TCOL[k] = o['tagCol_' + k]; });
+    if (G) G.tagRGB = null;
+    if (isOn() && G) page(document.getElementById('main'));
+  });
+  const askTags = () => window.postMessage({ type: 'yic-opts-get' }, location.origin);
+  const tagOf = (crew) => { const w = G && G.owners && G.owners[crew]; const t = w && TAGS && TAGS[w]; return t && TCOL[t.tag] ? t : null; };
   let G = null, raf = 0;
 
   const CSS = `
@@ -111,7 +123,7 @@
       const st = new Uint8Array(n + 1), rate = new Float32Array(n + 1), info = {};
       d.leases.forEach(([lot, crew, r, end]) => { if (lot < 1 || lot > n) return; st[lot] = mine.has(crew) ? 2 : 1; rate[lot] = r; info[lot] = [crew, r, end]; });
       const rates = [...new Set(d.leases.map((l) => l[2]))].sort((a, b) => a - b);
-      G = { id: d.id, n, pos: lotPos(n), st, rate, info, rates, leased: d.leases.map((l) => l[0]).filter((i) => i >= 1 && i <= n), lo: rates[0] || 0, hi: rates[rates.length - 1] || 0 };
+      G = { owners: d.owners || {}, id: d.id, n, pos: lotPos(n), st, rate, info, rates, leased: d.leases.map((l) => l[0]).filter((i) => i >= 1 && i <= n), lo: rates[0] || 0, hi: rates[rates.length - 1] || 0 };
       if (G.rates.length < 2) S.byPrice = false;
     }
     const nm = d.name || 'Asteroid #' + d.id;
@@ -120,7 +132,7 @@
 
     let offer;
     if (d.offer) offer = '<div class="ll-offer"><b>' + esc(nm) + '</b> leases its lots for <b>' + fmtSway(perDay(d.offer.rate)) + ' a day</b>' +
-      ' · minimum ' + days(d.offer.minTerm) + ' · notice ' + days(d.offer.notice) + (d.admin ? ' · from ' + esc(crew(d.admin)) : '') + '</div>';
+      ' · minimum ' + days(d.offer.minTerm) + ' · notice ' + days(d.offer.notice) + (d.admin ? ' · from ' + esc(crew(d.admin)) + (() => { const t = TAGS && d.owners && d.owners[d.admin] && TAGS[d.owners[d.admin]]; return t && TCOL[t.tag] ? ' <span style="color:' + TCOL[t.tag] + '">(' + t.tag + ')</span>' : ''; })() : '') + '</div>';
     else if (d.public) offer = '<div class="ll-offer"><b>' + esc(nm) + '</b> lets anyone use its lots free (public).</div>';
     else offer = '<div class="ll-offer no"><b>' + esc(nm) + '</b> is not offering lots for lease at the moment' + (d.contract ? ' (it uses contracts instead).' : '.') + '</div>';
 
@@ -134,6 +146,15 @@
         '<div class="ll-bar"></div><div class="ll-dim" style="display:flex;justify-content:space-between"><span>' + fmtSway(perDay(G.lo)) + '/day</span><span>' + fmtSway(perDay(G.hi)) + '/day</span></div>' +
         '<div class="ll-dim" style="margin-top:4px">Leases here were made at different prices.</div>';
     }
+    {
+      const tc = { friendly: 0, neutral: 0, hostile: 0 };
+      d.leases.forEach((l) => { const t = tagOf(l[1]); if (t) tc[t.tag]++; });
+      side += '<h3>Friend / foe</h3>';
+      if (TAGS === null) side += '<div class="ll-dim">Needs Skippy\'s Command Deck 0.6.3 or later – your tags from the game\'s belt map show here.</div>';
+      else side += '<label><input type="checkbox" id="ll-ff"' + (S.ff ? ' checked' : '') + '>Colour leased lots by your tags</label>' +
+        ['friendly', 'neutral', 'hostile'].map((k) => '<div class="ll-dim" style="display:flex;align-items:center;gap:8px;padding:2px 10px"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + TCOL[k] + '"></i>' + k[0].toUpperCase() + k.slice(1) + '<span style="margin-left:auto;color:#fff">' + tc[k].toLocaleString() + '</span></div>').join('') +
+        '<div class="ll-dim" style="margin-top:4px">Untagged tenants stay grey. Tag players on the game\'s belt map or in Deck controls.</div>';
+    }
     const mineList = d.leases.filter((l) => G.st[l[0]] === 2).sort((a, b) => a[3] - b[3]);
     if (mineList.length) side += '<h3>Your leases here</h3><div class="ll-mine">' + mineList.map((l) => '<div><a href="#" data-lot="' + l[0] + '" style="color:#8fe3ff">Lot ' + l[0].toLocaleString() + ' ↗</a> – ends ' + day(l[3]) + '</div>').join('') + '</div>';
     side += '<p class="ll-dim" style="margin-top:12px">' + G.n.toLocaleString() + ' lots · updated ' + new Date(d.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (kept 30 min). Drag to turn the rock, scroll or pinch (or + / −) to zoom, hover a lot for details, click a lot to open it in the game.</p></div>';
@@ -141,7 +162,8 @@
     m.innerHTML = h + offer + '<div class="ll-grid"><div class="ll-st"><canvas></canvas><div class="ll-zm"><button data-z="in" title="Zoom in">+</button><button data-z="out" title="Zoom out">−</button><button data-z="0" title="Whole rock" style="font-size:12px">⟲</button></div><div class="ll-tip" id="ll-tip"></div></div>' + side + '</div>';
     bind();
     m.querySelectorAll('.ll-side input[data-k]').forEach((x) => x.addEventListener('change', () => { S.show[x.dataset.k] = x.checked; }));
-    const pc = m.querySelector('#ll-price'); if (pc) pc.addEventListener('change', () => { S.byPrice = pc.checked; });
+    const pc = m.querySelector('#ll-price'); if (pc) pc.addEventListener('change', () => { S.byPrice = pc.checked; if (pc.checked) { S.ff = false; const f = m.querySelector('#ll-ff'); if (f) f.checked = false; } });
+    const fc = m.querySelector('#ll-ff'); if (fc) fc.addEventListener('change', () => { S.ff = fc.checked; if (fc.checked) { S.byPrice = false; if (pc) pc.checked = false; } });
     G.crew = crew; G.offer = d.offer;
     m.querySelectorAll('.ll-mine a[data-lot]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); openLot(+a.dataset.lot); }));
     start(m.querySelector('.ll-st'));
@@ -157,6 +179,7 @@
     if (s === 0) return S.show.free ? C_FREE : null;
     if (s === 2) return S.show.mine ? C_MINE : null;
     if (!S.show.other) return null;
+    if (S.ff) { const t = tagOf(G.info[i] && G.info[i][0]); return t ? hexRGB(TCOL[t.tag]) : C_OTHER; }
     return S.byPrice ? priceRGB(G.rate[i]) : C_OTHER;
   }
 
@@ -164,7 +187,7 @@
     const f = G.info[i];
     let t = '<b>Lot ' + i.toLocaleString() + '</b><br>';
     if (!f) return t + (G.offer ? 'Free to lease – ' + fmtSway(perDay(G.offer.rate)) + ' a day' : 'Not leased') + CLICK;
-    return t + (G.st[i] === 2 ? '<span style="color:#ffd24a">Leased by you</span> (' + esc(G.crew(f[0])) + ')' : 'Leased by ' + esc(G.crew(f[0]))) +
+    return t + (G.st[i] === 2 ? '<span style="color:#ffd24a">Leased by you</span> (' + esc(G.crew(f[0])) + ')' : 'Leased by ' + esc(G.crew(f[0])) + (() => { const t = tagOf(f[0]); return t ? ' <span style="color:' + TCOL[t.tag] + '">' + t.tag + (t.name ? ' – ' + esc(t.name) : '') + '</span>' : ''; })()) +
       '<br>' + fmtSway(perDay(f[1])) + ' a day · ends ' + day(f[2]) + CLICK;
   }
 
@@ -200,7 +223,7 @@
       const dt = Math.min(0.1, (t - last) / 1000); last = t;
       if (Math.abs(st.getBoundingClientRect().width - W) > 2) fit();
       if (S.spin && !drag && !mouse) S.rotY += dt * 0.08;
-      const key = [W, S.rotY, S.rotX, S.zoom, S.show.free, S.show.mine, S.show.other, S.byPrice].join('|');
+      const key = [W, S.rotY, S.rotX, S.zoom, S.show.free, S.show.mine, S.show.other, S.byPrice, S.ff, TAGS ? Object.keys(TAGS).length : -1].join('|');
       if (key !== lastKey) { lastP = draw(ctx, W); lastKey = key; } // big rocks: only redraw when the view changes
       hover(lastP);
       raf = requestAnimationFrame(frame);
@@ -310,6 +333,7 @@
       document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
       try { window.YIC.view = 'M'; } catch (e) {}
       b.className = 'on';
+      askTags();
       page(main);
     });
   };
