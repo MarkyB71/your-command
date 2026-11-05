@@ -17,7 +17,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 .cq-read{position:absolute;left:16px;top:6px;font:600 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#9be8bf;text-transform:uppercase}
 .cq-read b{color:#e6ebf2}
 .cq-row{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 0;scrollbar-width:thin}
-.cq-lk{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 172px;position:relative;display:flex;flex-direction:column;padding:8px 9px 10px;border:1px solid #2c3d35;border-bottom:0;border-radius:6px 6px 0 0;background:linear-gradient(90deg,#141c19,#1b2621 45%,#141c19);box-shadow:inset 0 0 0 1px rgba(0,0,0,.4);transition:border-color .15s,box-shadow .15s,transform .15s}
+.cq-lk{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 172px;width:172px!important;min-width:0!important;max-width:172px!important;position:relative;display:flex;flex-direction:column;padding:8px 9px 10px;border:1px solid #2c3d35;border-bottom:0;border-radius:6px 6px 0 0;background:linear-gradient(90deg,#141c19,#1b2621 45%,#141c19);box-shadow:inset 0 0 0 1px rgba(0,0,0,.4);transition:border-color .15s,box-shadow .15s,transform .15s}
 .cq-lk:hover,.cq-lk:focus-visible{border-color:${COL};box-shadow:0 0 14px -3px ${COL},inset 0 0 0 1px rgba(0,0,0,.4);transform:translateY(-2px)}
 .cq-vent{height:14px;margin:0 18px 7px 0;background:repeating-linear-gradient(180deg,#0a0f0d 0 2px,#26332d 2px 4px);border-radius:2px}
 .cq-led{position:absolute;top:10px;right:10px;width:9px;height:9px;border-radius:50%;background:var(--led);box-shadow:0 0 8px var(--led)}
@@ -41,7 +41,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 .cq-card .crewcard{margin:0!important;box-shadow:0 0 18px -6px #3fd68a}
 /* Crew Quarters: no crews list under the lockers (Mark, 27 Oct) */
 #deckroom[data-deck="crew"]:not(.scr) + #main{display:none!important}
-@media (max-width:700px){.cq-lk{flex-basis:138px}.cq-read{display:none}}
+@media (max-width:700px){.cq-lk{flex-basis:138px;width:138px!important;max-width:138px!important}.cq-read{display:none}}
 @media (prefers-reduced-motion:reduce){.cq-lk{transition:none}.cq-lk:hover{transform:none}.cq-led.hot{animation:none}}
 `;
 
