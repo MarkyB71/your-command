@@ -146,7 +146,9 @@ body > header{display:none!important}
     return b ? (b.textContent || '').replace(/[▾▸]/g, '').trim() : '';
   };
   const current = () => {
-    const on = [...document.querySelectorAll('[id^="v"].on')].find((b) => /^v[A-Z]{1,2}$/.test(b.id)); // two-letter keys too (vLL = Lot leases, Mark 5 Nov)
+    // two-letter keys too (vLL = Lot leases, Mark 5 Nov) – but only real deck pages: the old hidden
+    // "Buildings ▾" button (vBB) also lights up on Contents/Status and was sending them to the Bridge (fix 5 Nov)
+    const on = [...document.querySelectorAll('[id^="v"].on')].find((b) => /^v[A-Z]{1,2}$/.test(b.id) && (b.id === 'vN' || DECKS.some((d) => d.pages.includes(b.id.slice(1)))));
     return on ? on.id.slice(1) : 'N';
   };
   const deckOf = (k) => DECKS.find((d) => d.pages.includes(k)) || DECKS[0];
