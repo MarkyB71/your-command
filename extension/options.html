@@ -60,6 +60,14 @@
       <span class="cols"><span><input type="color" name="tagCol_friendly"> Friendly</span><span><input type="color" name="tagCol_neutral"> Neutral</span><span><input type="color" name="tagCol_hostile"> Hostile</span></span></span></label>
     <label><input type="checkbox" name="mapMarkets"><span><b>Open marketplaces on the system map</b>
       <span class="d">A small green diamond on each asteroid with open market orders. Hover it for a count, or click it for each marketplace. The list comes from the Command Deck (your-command.adalia.academy) and updates every 5 minutes.</span></span></label>
+    <label><input type="checkbox" name="mapFlights"><span><b>Ships in flight on the system map</b>
+      <span class="d">A purple dot where each of your ships is right now, with a faint line along its route, a ring where ship and rock meet, and light blue dots to where that rock is now. Hover a ship for its route and arrival time. Other players' ships come from the Command Deck's belt-wide list (updates every 5 minutes) and show as triangles in your tag colours.</span></span></label>
+    <div style="margin:-6px 0 12px 30px;padding-left:12px;border-left:1px solid #2a3a50">
+      <label><input type="checkbox" name="flightsFriendly"><span><b>Friendly players' ships</b> <span class="d">(teal)</span></span></label>
+      <label><input type="checkbox" name="flightsNeutral"><span><b>Neutral players' ships</b> <span class="d">(yellow)</span></span></label>
+      <label><input type="checkbox" name="flightsHostile"><span><b>Hostile players' ships</b> <span class="d">(red – routes always drawn)</span></span></label>
+      <label><input type="checkbox" name="flightsOther"><span><b>Untagged players' ships</b> <span class="d">(orange)</span></span></label>
+    </div>
     <div class="tags">
       <b>Your tagged players</b> <span class="d" id="tagCount"></span>
       <div id="tagList"></div>
@@ -74,6 +82,8 @@
   </div>
   <div class="new">
     <h2 style="margin-top:0">What's new</h2>
+    <h3>0.6.5</h3>
+    <ul><li>Ships in flight on the system map – your ships and other players' (in your tag colours), with routes and where they meet their rock. A tick box for each group.</li></ul>
     <h3>0.6.4</h3>
     <ul><li>Fix: the crew food bar now counts Dietitians and Food Preparation crewmates, so it matches the game.</li></ul>
     <h3>0.6.3</h3>

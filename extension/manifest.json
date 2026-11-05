@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Skippy's Command Deck",
-  "version": "0.6.4",
-  "description": "Links the Command Deck to your Influence game tab and adds helpers: status dots, food and propellant bars, map tags and markets.",
+  "name": "TEST – Skippy's Command Deck",
+  "version": "0.6.5",
+  "description": "Links the Command Deck to your Influence game tab and adds helpers: status dots, food/fuel bars, map tags, markets, ships in flight.",
   "permissions": [
     "scripting",
     "storage"
@@ -83,22 +83,32 @@
       ],
       "run_at": "document_idle",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://game.influenceth.io/*"
+      ],
+      "js": [
+        "flights.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
     }
   ],
   "action": {
     "default_title": "Skippy's Command Deck – back to your Command Deck",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons-test/icon16.png",
+      "32": "icons-test/icon32.png",
+      "48": "icons-test/icon48.png",
+      "128": "icons-test/icon128.png"
     }
   },
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons-test/icon16.png",
+    "32": "icons-test/icon32.png",
+    "48": "icons-test/icon48.png",
+    "128": "icons-test/icon128.png"
   },
   "web_accessible_resources": [
     {

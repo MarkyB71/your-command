@@ -101,6 +101,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
     <li><a href="#extension">The extension</a></li>
     <li><a href="#options">Extension options</a></li>
     <li><a href="#dots">Status dots</a></li>
+    <li><a href="#flights">Ships in flight</a></li>
     <li><a href="#safe">Safety &amp; privacy</a></li>
     <li><a href="#faq">Problems &amp; FAQ</a></li>
     <li><a href="#support">Help &amp; support</a></li>
@@ -258,7 +259,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <section id="options">
 <h2>Extension options</h2>
 <p>To open the options: right-click the crowned S in your browser toolbar › <b>Options</b>. Or go to Extensions › Skippy's Command Deck › Details › Extension options.</p>
-<p>Tick or untick each one. Changes apply when you reload the game tab.</p>
+<p>Tick or untick each one. Most changes apply when you reload the game tab. You can also change them on the Command Deck: Bridge › Deck controls (above the captain's chair).</p>
 <table>
   <thead><tr><th>Option</th><th>What it does</th></tr></thead>
   <tbody>
@@ -267,6 +268,11 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
     <tr><td><b>Auto-pick core sample</b></td><td>When you open Extract Resource and no deposit is chosen, the top sample is picked for you. You can change it, and you still press Extract yourself.</td></tr>
     <tr><td><b>Building status dots</b></td><td>A small coloured dot beside each of your buildings on the asteroid view. See <a href="#dots">Status dots</a>.</td></tr>
     <tr><td><b>Command Deck button in the game</b></td><td>Adds the crowned S to the game's right-hand side bar.</td></tr>
+    <tr><td><b>Crew food %</b></td><td>A food bar along the bottom of each crew's card in the game's My Crews list, counting Dietitians and Food Preparation crewmates like the game does.</td></tr>
+    <tr><td><b>Ship propellant %</b></td><td>A propellant bar along the bottom of each ship in My Assets › Ships: red at 10% and under, yellow around a quarter, green from half a tank.</td></tr>
+    <tr><td><b>Friend / foe tags on the system map</b></td><td>Click an asteroid on the belt map to tag its owner as friendly, neutral or hostile. All of that owner's asteroids get a coloured ring. Share your list with friends from the Options page.</td></tr>
+    <tr><td><b>Open marketplaces on the system map</b></td><td>A small green diamond on each asteroid with open market orders. Hover it for a count, click it for each marketplace.</td></tr>
+    <tr><td><b>Ships in flight on the system map</b> (coming in 0.6.5)</td><td>Your ships and other players' ships moving across the belt map. See <a href="#flights">Ships in flight</a>. Each group (friendly, neutral, hostile, untagged) has its own tick box.</td></tr>
   </tbody>
 </table>
 </section>
@@ -283,13 +289,24 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <p>Warehouses, tank farms, spaceports, marketplaces and habitats don't get a dot. The dots use only what the game has already loaded – no extra requests.</p>
 </section>
 
+<section id="flights">
+<h2>Ships in flight (coming in extension 0.6.5)</h2>
+<p>Zoom out to the belt map in the game and every ship in flight shows where it is right now, worked out with the game's own flight maths:</p>
+<ul>
+  <li><span class="dot" style="background:#884fff"></span><b>Your ships</b> – purple dots, with a faint purple line along each route.</li>
+  <li><b>Other players' ships</b> – triangles in your tag colours: <b style="color:#2ee6c9">teal</b> friendly, <b style="color:#ffd94f">yellow</b> neutral, <b style="color:#ff564d">red</b> hostile, <b style="color:#ff8c1a">orange</b> not tagged. Hostile routes are always drawn; hover any other ship to see its route.</li>
+  <li>A <b>hollow ring</b> marks where a ship and its destination rock meet. The rocks keep moving while the ship flies, so <b>light blue dots</b> lead from the ring back to where that rock is today.</li>
+</ul>
+<p>Hover a ship for its name, owner, route, when it leaves (if it hasn't yet) and when it arrives. The <b>Ships in flight</b> switch at the top right of the map hides or shows them all. Other players' ships come from the Command Deck's belt-wide list, which updates every 5 minutes.</p>
+</section>
+
 <section id="safe">
 <h2>Safety &amp; privacy</h2>
 <ul>
   <li>The website only <b>reads</b> your wallet address. It never asks you to sign anything and never sends a transaction.</li>
   <li>The extension can only reach two sites: <b>game.influenceth.io</b> and <b>your-command.adalia.academy</b>.</li>
   <li>It never reads, stores or sends your wallet, keys, passwords, game data or browsing.</li>
-  <li>The only thing it ever fetches is the belt-wide list of open market orders, and only from the Command Deck itself (for the marketplaces on the system map). It sends nothing about you when it does.</li>
+  <li>The only things it ever fetches are the belt-wide lists of open market orders and (from 0.6.5) ships in flight, and only from the Command Deck itself (for the system map). It sends nothing about you when it does.</li>
   <li>Inside the game it only changes how things look. It never clicks, buys, signs or sends anything.</li>
   <li>Your extension choices are saved in your browser only.</li>
   <li>All the code is public on <a href="https://github.com/MarkyB71/your-command" target="_blank" rel="noopener noreferrer">GitHub</a> – the extension is small enough to read in a few minutes.</li>

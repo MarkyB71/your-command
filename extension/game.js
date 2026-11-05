@@ -9,17 +9,41 @@
 // and sends nothing anywhere.
 (() => {
   if (window.top !== window || document.getElementById('yic-s')) return;
-  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, mapFlights: true, flightsFriendly: true, flightsNeutral: true, flightsHostile: true, flightsOther: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
 
   chrome.storage.sync.get(DEFAULTS, opts => {
     // Hand the choices to the page-side script (lotcolours.js) through a page attribute.
     document.documentElement.dataset.yicOpts = JSON.stringify(opts);
+    // yicOpts live: keep the page's copy up to date when a choice changes in Options / Deck controls
+    // (features that check it each time, like ships in flight, then follow without a refresh).
+    chrome.storage.onChanged.addListener((ch, area) => {
+      if (area !== 'sync') return;
+      for (const k in ch) opts[k] = ch[k].newValue;
+      document.documentElement.dataset.yicOpts = JSON.stringify(opts);
+    });
     if (opts.sideButton) sideButton();
     if (opts.hideUsedDeposits) hideUsed();
     if (opts.autoSample) autoSample();
     if (opts.mapTags !== false) tagBridge();
     if (opts.mapMarkets !== false) marketBridge();
+    if (opts.mapFlights !== false) { flightBridge(); if (opts.mapTags === false) tagBridge(); }
   });
+
+  function flightBridge() {
+    // Other players' ships in flight for the system map: asks the extension's background for the Command Deck's
+    // belt-wide flight list (refreshed every 5 minutes) and passes it to flights.js in the page.
+    let timer = null;
+    const get = () => {
+      if (!chrome.runtime || !chrome.runtime.id) { clearInterval(timer); return; }
+      try {
+        chrome.runtime.sendMessage({ type: 'yic-flights' }, r => {
+          if (chrome.runtime.lastError || !r || !r.ok) return;
+          window.postMessage({ yic: 'flights', data: r.data, fetched: r.fetched }, location.origin);
+        });
+      } catch (e) { clearInterval(timer); }
+    };
+    get(); timer = setInterval(get, 300000);
+  }
 
   function marketBridge() {
     // Open marketplaces for the system map: asks the extension's background for the Command Deck's

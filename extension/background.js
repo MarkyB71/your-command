@@ -9,7 +9,7 @@ const OK = /^\/(building|lot|ship|asteroids|crew|crewmate)\/\d{1,20}$/;
 let last = 0;
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
-  if (msg && msg.type === 'yic-markets') return; // answered by the marketplaces listener below
+  if (msg && (msg.type === 'yic-markets' || msg.type === 'yic-flights')) return; // answered by the listeners below
   // "Command Deck" button on the game page: jump back to the site.
   if (msg && msg.type === 'yic-deck' && sender.tab && sender.origin === GAME) {
     goDeck().then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
@@ -99,5 +99,28 @@ async function marketSummary() {
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (!msg || msg.type !== 'yic-markets' || !sender.tab || sender.origin !== GAME) return;
   marketSummary().then(m => reply({ ok: true, ...m }), e => reply({ ok: false, error: String(e && e.message || e) }));
+  return true;
+});
+
+// Other players' ships in flight for the system map (flights.js), from the Command Deck's belt-wide flight list.
+// Only the game tab may ask; the list is kept for 5 minutes (the server rebuilds it every 5 minutes too).
+let flt = null, fltAt = 0, fltBusy = null;
+async function flightList() {
+  if (flt && Date.now() - fltAt < 300000) return flt;
+  if (fltBusy) return fltBusy;
+  fltBusy = (async () => {
+    const r = await fetch(SITE + '/flights.php', { credentials: 'omit', cache: 'no-store' });
+    if (!r.ok) throw new Error('flights ' + r.status);
+    const j = await r.json();
+    if (!j || !Array.isArray(j.ships)) throw new Error('flights: no list');
+    flt = { data: { ships: j.ships, orbits: j.orbits || {}, names: j.names || {} }, fetched: +j.fetched || Math.floor(Date.now() / 1000) };
+    fltAt = Date.now();
+    return flt;
+  })();
+  try { return await fltBusy; } finally { fltBusy = null; }
+}
+chrome.runtime.onMessage.addListener((msg, sender, reply) => {
+  if (!msg || msg.type !== 'yic-flights' || !sender.tab || sender.origin !== GAME) return;
+  flightList().then(f => reply({ ok: true, ...f }), e => reply({ ok: false, error: String(e && e.message || e) }));
   return true;
 });
