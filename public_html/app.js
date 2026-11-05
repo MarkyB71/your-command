@@ -348,7 +348,7 @@ function buildD(j){
    if(loc.label===10){ast=an(sh.transitDestination);place='In flight (escape module) from '+an(sh.transitOrigin)+', arrives '+dt(1609459200+(sh.transitArrival||0)/24)}
    else if(loc.label===6){const sp=shipById[loc.id],sl=sp&&sp.Location&&sp.Location.location;if(sl&&sl.label===10){ast=an(sp.Ship.transitDestination);place='Aboard '+((me.ship&&me.ship.name)||'ship')+' · in flight from '+an(sp.Ship.transitOrigin)+', arrives '+dt(1609459200+sp.Ship.transitArrival/24)}else place='Aboard '+((me.ship&&me.ship.name)||'ship')+(me.building&&me.building.name?' · '+me.building.name:'')}
    else if(loc.label===5)place=(me.building&&me.building.name)||'Building';else if(loc.label===4)place='Lot #'+Math.floor(loc.id/4294967296);else if(loc.label===3)place='In orbit';
-   const ys=Math.max(0,now-(cr.lastFed||0))*24/31536000/(/[?&]beta=1/.test(location.search)?crewMult(14,(cr.roster||[]).map(id=>(D.crewmates||{})[id])):1),food=cr.lastFed?Math.min(Math.max(0,1-ys,0.75-0.5*ys),1):null;
+   const ys=Math.max(0,now-(cr.lastFed||0))*24/31536000/(/[?&]beta=1/.test(location.search)?(cr.roster||[]).reduce((m,id)=>{const x=(D.crewmates||{})[id];if(!x)return m;const t=x.title;if(t>=1&&t<=65&&(t-1)%13===10)m+=0.05*(Math.floor((t-1)/13)+1+(x.coll===1?0.5:0));(x.impactful||[]).forEach(i=>{if(i===29)m+=0.1});return m},1):1),food=cr.lastFed?Math.min(Math.max(0,1-ys,0.75-0.5*ys),1):null;
    return{id:c.id,stn:loc.label===5?loc.id:0,name:(c.Name&&c.Name.name)||('Crew #'+c.id),mates:(cr.roster||[]).length,roster:(cr.roster||[]),mn:Object.fromEntries((me.crewmates||[]).map(x=>[x.id,x.name||''])),ast,place,food,busy:cr.readyAt&&cr.readyAt>now?dt(cr.readyAt):''}})}
  return D;
 }
