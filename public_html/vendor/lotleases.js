@@ -52,7 +52,7 @@
 .ll-tip b{color:#fff}
 .ll-side label{display:flex;align-items:center;gap:8px;padding:7px 10px;margin:0 0 6px;border:1px solid #1e2a3a;border-radius:8px;background:#0c1320;cursor:pointer;color:#c4cdd9}
 .ll-side label:hover{border-color:#4fb3ff}
-.ll-side input[type=checkbox]{flex:none;width:16px;height:16px;margin:0;padding:0}
+.ll-side input[type=checkbox]{flex:none!important;width:16px;height:16px;min-width:0!important;max-width:none;margin:0;padding:0}
 .ll-side label{text-align:left;line-height:1.3}
 .ll-side i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
 .ll-side .n{margin-left:auto;color:#fff;font-weight:600}
@@ -208,7 +208,14 @@
     stop();
     const cv = st.querySelector('canvas'), tip = st.querySelector('#ll-tip'), ctx = cv.getContext('2d');
     let W = 0, drag = null, mouse = null, last = performance.now(), hot = 0, down = null, lastKey = '', lastP = null;
-    const fit = () => { const r = st.getBoundingClientRect(), dp = window.devicePixelRatio || 1; W = Math.max(200, Math.round(r.width)); cv.width = W * dp; cv.height = W * dp; ctx.setTransform(dp, 0, 0, dp, 0, 0); };
+    // On a deck viewscreen the page scrolls inside a fixed-height screen: make the rock fit the screen's height too.
+    const sizeToScreen = () => {
+      const box = st.closest('.dkr-pg'); if (!box) return;
+      const room = box.getBoundingClientRect().bottom - st.getBoundingClientRect().top - 12, wide = st.parentElement.getBoundingClientRect().width;
+      const w = Math.round(Math.max(240, Math.min(640, wide, room)));
+      if (Math.abs(parseFloat(st.style.width || 0) - w) > 2) st.style.width = w + 'px';
+    };
+    const fit = () => { sizeToScreen(); const r = st.getBoundingClientRect(), dp = window.devicePixelRatio || 1; W = Math.max(200, Math.round(r.width)); cv.width = W * dp; cv.height = W * dp; ctx.setTransform(dp, 0, 0, dp, 0, 0); };
     fit();
     const zoomBy = (f) => { S.zoom = Math.max(1, Math.min(40, S.zoom * f)); if (S.zoom > 1) S.spin = false; };
     st.querySelectorAll('.ll-zm button').forEach((b) => { b.addEventListener('pointerdown', (e) => e.stopPropagation()); b.addEventListener('click', (e) => { e.stopPropagation(); const z = b.dataset.z; if (z === 'in') zoomBy(1.6); else if (z === 'out') zoomBy(1 / 1.6); else S.zoom = 1; }); });
