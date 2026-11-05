@@ -231,7 +231,7 @@
     const after = document.getElementById('vI'), main = document.getElementById('main');
     if (!after || !main || document.getElementById('vLL')) return;
     const b = document.createElement('button');
-    b.id = 'vLL'; b.textContent = 'Lot leases (test)';
+    b.id = 'vLL'; b.textContent = 'Lot leases';
     after.after(b);
     b.addEventListener('click', () => {
       document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
