@@ -205,8 +205,9 @@
       raf = requestAnimationFrame(frame);
     }
     function hover(p) {
+      if (drag) { tip.style.display = 'none'; return; } // keep the lot under the pointer for a click
       hot = 0;
-      if (!mouse || drag || !p) { tip.style.display = 'none'; st.style.cursor = ''; return; }
+      if (!mouse || !p) { tip.style.display = 'none'; st.style.cursor = ''; return; }
       let best = -1, bd = 1e9;
       for (let j = 0; j < p.length; j += 3) { const dx = p[j + 1] - mouse.x, dy = p[j + 2] - mouse.y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = p[j]; } }
       if (best < 0 || bd > 400) { tip.style.display = 'none'; st.style.cursor = ''; return; }
