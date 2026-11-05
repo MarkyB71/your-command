@@ -37,12 +37,12 @@
 .ll-quick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .ll-quick button{padding:4px 10px;border:1px solid #1e2a3a;border-radius:12px;background:#0c1320;color:#c4cdd9;font-size:12px;cursor:pointer}
 .ll-quick button:hover{border-color:#4fb3ff}
-.ll-offer{padding:10px 14px;margin:0 0 12px;border:1px solid #2a3646;border-left:3px solid #57ff65;background:#0c1320;color:#c4cdd9;line-height:1.5}
+.ll-offer{padding:8px 10px;margin:0 0 6px;border:1px solid #1e2a3a;border-left:3px solid #57ff65;border-radius:8px;background:#0c1320;color:#c4cdd9;font-size:12.5px;line-height:1.5}
 .ll-offer.no{border-left-color:#8b9ab0}
 .ll-offer b{color:#fff}
 .ll-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);gap:16px;align-items:start}
 @media (max-width:760px){.ll-grid{grid-template-columns:minmax(0,1fr)}}
-.ll-st{position:relative;width:100%;max-width:640px;aspect-ratio:1;margin:0 auto;cursor:grab;touch-action:none}
+.ll-st{position:relative;width:min(100%,640px,calc(100vh - 230px));min-width:240px;aspect-ratio:1;margin:0 auto;cursor:grab;touch-action:none}
 .ll-st.drag{cursor:grabbing}
 .ll-st canvas{width:100%;height:100%;display:block}
 .ll-zm{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:3}
@@ -52,6 +52,8 @@
 .ll-tip b{color:#fff}
 .ll-side label{display:flex;align-items:center;gap:8px;padding:7px 10px;margin:0 0 6px;border:1px solid #1e2a3a;border-radius:8px;background:#0c1320;cursor:pointer;color:#c4cdd9}
 .ll-side label:hover{border-color:#4fb3ff}
+.ll-side input[type=checkbox]{flex:none;width:16px;height:16px;margin:0;padding:0}
+.ll-side label{text-align:left;line-height:1.3}
 .ll-side i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
 .ll-side .n{margin-left:auto;color:#fff;font-weight:600}
 .ll-side h3{margin:14px 0 6px;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#4fb3ff}
@@ -137,7 +139,8 @@
     else offer = '<div class="ll-offer no"><b>' + esc(nm) + '</b> is not offering lots for lease at the moment' + (d.contract ? ' (it uses contracts instead).' : '.') + '</div>';
 
     const row = (k, c, label, n) => '<label><input type="checkbox" data-k="' + k + '"' + (S.show[k] ? ' checked' : '') + '><i style="background:rgb(' + c.join(',') + ')"></i>' + label + '<span class="n">' + n.toLocaleString() + '</span></label>';
-    let side = '<div class="ll-side"><h3>Lots</h3>' +
+    // the lease offer sits at the top of the side panel (Mark, 5 Nov: the full-width bar pushed the rock off small screens)
+    let side = '<div class="ll-side"><h3>Lease offer</h3>' + offer + '<h3>Lots</h3>' +
       row('free', C_FREE, d.offer || d.public ? 'Free to lease' : 'Not leased', cnt[0]) +
       row('mine', C_MINE, 'Leased by you', cnt[2]) +
       row('other', C_OTHER, 'Leased by others', cnt[1]);
@@ -159,7 +162,7 @@
     if (mineList.length) side += '<h3>Your leases here</h3><div class="ll-mine">' + mineList.map((l) => '<div><a href="#" data-lot="' + l[0] + '" style="color:#8fe3ff">Lot ' + l[0].toLocaleString() + ' ↗</a> – ends ' + day(l[3]) + '</div>').join('') + '</div>';
     side += '<p class="ll-dim" style="margin-top:12px">' + G.n.toLocaleString() + ' lots · updated ' + new Date(d.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (kept 30 min). Drag to turn the rock, scroll or pinch (or + / −) to zoom, hover a lot for details, click a lot to open it in the game.</p></div>';
 
-    m.innerHTML = h + offer + '<div class="ll-grid"><div class="ll-st"><canvas></canvas><div class="ll-zm"><button data-z="in" title="Zoom in">+</button><button data-z="out" title="Zoom out">−</button><button data-z="0" title="Whole rock" style="font-size:12px">⟲</button></div><div class="ll-tip" id="ll-tip"></div></div>' + side + '</div>';
+    m.innerHTML = h + '<div class="ll-grid"><div class="ll-st"><canvas></canvas><div class="ll-zm"><button data-z="in" title="Zoom in">+</button><button data-z="out" title="Zoom out">−</button><button data-z="0" title="Whole rock" style="font-size:12px">⟲</button></div><div class="ll-tip" id="ll-tip"></div></div>' + side + '</div>';
     bind();
     m.querySelectorAll('.ll-side input[data-k]').forEach((x) => x.addEventListener('change', () => { S.show[x.dataset.k] = x.checked; }));
     const pc = m.querySelector('#ll-price'); if (pc) pc.addEventListener('change', () => { S.byPrice = pc.checked; if (pc.checked) { S.ff = false; const f = m.querySelector('#ll-ff'); if (f) f.checked = false; } });
