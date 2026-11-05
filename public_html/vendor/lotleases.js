@@ -132,14 +132,15 @@
         '<div class="ll-dim" style="margin-top:4px">Leases here were made at different prices.</div>';
     }
     const mineList = d.leases.filter((l) => G.st[l[0]] === 2).sort((a, b) => a[3] - b[3]);
-    if (mineList.length) side += '<h3>Your leases here</h3><div class="ll-mine">' + mineList.map((l) => '<div>Lot ' + l[0].toLocaleString() + ' – ends ' + day(l[3]) + '</div>').join('') + '</div>';
-    side += '<p class="ll-dim" style="margin-top:12px">' + G.n.toLocaleString() + ' lots · updated ' + new Date(d.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (kept 30 min). Drag to turn the rock, hover a lot for details.</p></div>';
+    if (mineList.length) side += '<h3>Your leases here</h3><div class="ll-mine">' + mineList.map((l) => '<div><a href="#" data-lot="' + l[0] + '" style="color:#8fe3ff">Lot ' + l[0].toLocaleString() + ' ↗</a> – ends ' + day(l[3]) + '</div>').join('') + '</div>';
+    side += '<p class="ll-dim" style="margin-top:12px">' + G.n.toLocaleString() + ' lots · updated ' + new Date(d.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (kept 30 min). Drag to turn the rock, hover a lot for details, click a lot to open it in the game.</p></div>';
 
     m.innerHTML = h + offer + '<div class="ll-grid"><div class="ll-st"><canvas></canvas><div class="ll-tip" id="ll-tip"></div></div>' + side + '</div>';
     bind();
     m.querySelectorAll('.ll-side input[data-k]').forEach((x) => x.addEventListener('change', () => { S.show[x.dataset.k] = x.checked; }));
     const pc = m.querySelector('#ll-price'); if (pc) pc.addEventListener('change', () => { S.byPrice = pc.checked; });
     G.crew = crew; G.offer = d.offer;
+    m.querySelectorAll('.ll-mine a[data-lot]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); openLot(+a.dataset.lot); }));
     start(m.querySelector('.ll-st'));
   }
 
@@ -159,24 +160,33 @@
   function tipHTML(i) {
     const f = G.info[i];
     let t = '<b>Lot ' + i.toLocaleString() + '</b><br>';
-    if (!f) return t + (G.offer ? 'Free to lease – ' + fmtSway(perDay(G.offer.rate)) + ' a day' : 'Not leased');
+    if (!f) return t + (G.offer ? 'Free to lease – ' + fmtSway(perDay(G.offer.rate)) + ' a day' : 'Not leased') + CLICK;
     return t + (G.st[i] === 2 ? '<span style="color:#ffd24a">Leased by you</span> (' + esc(G.crew(f[0])) + ')' : 'Leased by ' + esc(G.crew(f[0]))) +
-      '<br>' + fmtSway(perDay(f[1])) + ' a day · ends ' + day(f[2]);
+      '<br>' + fmtSway(perDay(f[1])) + ' a day · ends ' + day(f[2]) + CLICK;
   }
+
+  // open a lot in the game: through the Command Deck extension when it's there (moves the open game tab), else a new tab
+  function openLot(i) {
+    if (!G || !i) return;
+    const path = '/lot/' + (BigInt(G.id) + (BigInt(i) << 32n)).toString();
+    if (window.GL && window.GL.on && window.GL.on()) window.postMessage({ type: 'yic-open', path }, location.origin);
+    else window.open('https://game.influenceth.io' + path, 'influencegame');
+  }
+  const CLICK = '<br><span style="color:#8fe3ff">Click to open in the game ↗</span>';
 
   function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
   function start(st) {
     stop();
     const cv = st.querySelector('canvas'), tip = st.querySelector('#ll-tip'), ctx = cv.getContext('2d');
-    let W = 0, drag = null, mouse = null, last = performance.now();
+    let W = 0, drag = null, mouse = null, last = performance.now(), hot = 0, down = null;
     const fit = () => { const r = st.getBoundingClientRect(), dp = window.devicePixelRatio || 1; W = Math.max(200, Math.round(r.width)); cv.width = W * dp; cv.height = W * dp; ctx.setTransform(dp, 0, 0, dp, 0, 0); };
     fit();
-    st.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, ry: S.rotY, rx: S.rotX }; st.classList.add('drag'); st.setPointerCapture(e.pointerId); });
+    st.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; drag = { x: e.clientX, y: e.clientY, ry: S.rotY, rx: S.rotX }; st.classList.add('drag'); st.setPointerCapture(e.pointerId); });
     st.addEventListener('pointermove', (e) => {
       const r = st.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
       if (drag) { S.rotY = drag.ry + (e.clientX - drag.x) * 0.01; S.rotX = Math.max(-1.5, Math.min(1.5, drag.rx + (e.clientY - drag.y) * 0.01)); }
     });
-    const up = () => { drag = null; st.classList.remove('drag'); };
+    const up = (e) => { drag = null; st.classList.remove('drag'); if (down && e && e.type === 'pointerup' && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5 && hot) openLot(hot); down = null; };
     st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
     st.addEventListener('pointerleave', () => { mouse = null; tip.style.display = 'none'; });
     function frame(t) {
@@ -189,10 +199,12 @@
       raf = requestAnimationFrame(frame);
     }
     function hover(p) {
-      if (!mouse || drag || !p) { tip.style.display = 'none'; return; }
+      hot = 0;
+      if (!mouse || drag || !p) { tip.style.display = 'none'; st.style.cursor = ''; return; }
       let best = -1, bd = 1e9;
       for (let j = 0; j < p.length; j += 3) { const dx = p[j + 1] - mouse.x, dy = p[j + 2] - mouse.y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = p[j]; } }
-      if (best < 0 || bd > 400) { tip.style.display = 'none'; return; }
+      if (best < 0 || bd > 400) { tip.style.display = 'none'; st.style.cursor = ''; return; }
+      hot = best; st.style.cursor = 'pointer';
       tip.innerHTML = tipHTML(best); tip.style.display = 'block';
       tip.style.left = Math.min(W - tip.offsetWidth - 6, mouse.x + 14) + 'px'; tip.style.top = Math.max(6, mouse.y - tip.offsetHeight - 10) + 'px';
     }
