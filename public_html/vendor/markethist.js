@@ -29,7 +29,8 @@ export function drawMarketHistory(m){
   const Y=window.YIC;let D=null,pf=null,pn=null;try{D=Y.D;pf=Y.pfmt;pn=Y.pn}catch(e){}
   const pName=p=>pn?pn(p):'Product '+p,pAmt=(p,a)=>{try{return pf?pf(p,a)||'0':String(a)}catch(e){return String(a)}};
   const mine=new Set(((D&&D.crewList)||[]).map(c=>c.id)),crewName={};((D&&D.crewList)||[]).forEach(c=>crewName[c.id]=c.name);
-  const who=id=>(crewName[id]?'<span class="mh-me">'+esc(crewName[id])+'</span>':'Crew #'+id)+(window.GL?window.GL('/crew/'+id,'Open this crew in the game'):'');
+  const beta=/[?&]beta=1/.test(location.search),other=id=>{const h=beta&&HC[S.range];return h&&h.crews&&h.crews[id]};
+  const who=id=>(crewName[id]?'<span class="mh-me">'+esc(crewName[id])+'</span>':other(id)?esc(other(id)):'Crew #'+id)+(window.GL?window.GL('/crew/'+id,'Open this crew in the game'):'');
 
   function chart(rows){ /* price per unit over time for one product */
     const pts=rows.map(r=>[r[0],r[4]/1e6]).sort((a,b)=>a[0]-b[0]);if(pts.length<2)return'';
@@ -65,7 +66,7 @@ export function drawMarketHistory(m){
     [rs,ps,ms,me,q].forEach(x=>bar.appendChild(x));m.appendChild(bar);
     const qq=S.q.trim().toLowerCase();
     const L=T.filter(r=>(!S.prod||String(r[2])===S.prod)&&(!S.mk||String(r[5])===S.mk)&&(!S.mine||mine.has(r[6])||mine.has(r[7]))&&
-      (!qq||(pName(r[2])+' '+((MK[r[5]]||{}).name||'')+' '+((MK[r[5]]||{}).ast||'')+' '+(crewName[r[6]]||'')+' '+(crewName[r[7]]||'')).toLowerCase().includes(qq)));
+      (!qq||(pName(r[2])+' '+((MK[r[5]]||{}).name||'')+' '+((MK[r[5]]||{}).ast||'')+' '+(crewName[r[6]]||other(r[6])||'')+' '+(crewName[r[7]]||other(r[7])||'')).toLowerCase().includes(qq)));
     if(!L.length){m.appendChild(el('div','note','No trades match.'));return}
     const tot=L.reduce((s,r)=>s+swayN(r[4],r[3]),0);
     const sum=el('div','mh-sum');

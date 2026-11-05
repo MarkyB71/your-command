@@ -24,7 +24,9 @@ function mh_answer($A, $range) {
   if ($range === '100') $T = array_slice($T, 0, 100);
   elseif ($cut) $T = array_values(array_filter($T, fn($t) => $t[0] >= $cut));
   $todo = count(array_filter($A['cursor'], fn($p) => $p > 0));
-  return json_encode(['fetched' => $A['updated'], 'range' => $range, 'markets' => $A['markets'], 'trades' => $T,
+  $C = [];  // names of the crews in these trades (unnamed crews are left out)
+  foreach ($T as $t) foreach ([$t[6], $t[7]] as $c) if (!empty($A['crews'][$c])) $C[$c] = $A['crews'][$c];
+  return json_encode(['fetched' => $A['updated'], 'range' => $range, 'markets' => $A['markets'], 'trades' => $T, 'crews' => (object)$C,
     'complete' => $todo === 0, 'backfilling' => $todo, 'since' => $A['oldest'] ?? null]);
 }
 
@@ -90,6 +92,17 @@ function mh_update($af, $first) {
       $A['cursor'][$mid] = $page;
       if ($budget <= 0) break;
     }
+  }
+  // 3) crew names for every buyer and seller (500 crews per request; all re-read once a day, as crews can be renamed)
+  if (time() - ($A['crewsAt'] ?? 0) >= 86400) { $A['crews'] = []; $A['crewsAt'] = time(); }
+  $need = [];
+  foreach ($A['trades'] as $t) foreach ([$t[6], $t[7]] as $c) if ($c && !isset($A['crews'][$c])) $need[$c] = 1;
+  foreach (array_chunk(array_keys($need), 500) as $ids) {
+    usleep(MH_PAUSE);
+    $r = try_search('crew_v1', ['size' => 500, 'query' => ['terms' => ['id' => $ids]], '_source' => ['id', 'Name']]);
+    if (!$r) break;
+    foreach ($ids as $c) $A['crews'][$c] = '';
+    foreach ($r[0] as $c) $A['crews'][$c['id']] = $c['Name']['name'] ?? '';
   }
   $A['updated'] = time();
   @file_put_contents($af . '.tmp', json_encode($A), LOCK_EX); @rename($af . '.tmp', $af);
