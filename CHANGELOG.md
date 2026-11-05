@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 5 Nov 2026 – Fix: Crews food % now counts Dietitians and Food Preparation crewmates (Arvad Specialists get their extra half tier), so it matches the game.
+
 ## 5 Nov 2026 – New Lot leases page (Science Lab, community request): type any asteroid's name or number to see its lease offer (price a day, minimum term, notice) and every lot on a globe – free to lease, leased by you or leased by someone else. Zoom in, hover a lot for the tenant, price and end date, click it to open it in the game. Colour leased lots by price where prices vary, or by your friend / foe tags (extension 0.6.3+).
 
 ## 5 Nov 2026 – Market history: other players' crews now show by name (community request). Unnamed crews still show as "Crew #number".
