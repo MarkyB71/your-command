@@ -3,7 +3,10 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## 0.6.3 – coming soon
+## Next release (0.6.4)
+- **Fix:** the crew food bar now counts Dietitians and Food Preparation crewmates (Arvad Specialists get their extra half tier), so it matches the game's own food figure.
+
+## 0.6.3 – 5 Nov 2026
 - **Deck controls on the Command Deck** – the extension's settings are now on the Command Deck site too: click the glowing panel above the captain's chair on the Bridge to switch each game tweak on or off, pick the friend / foe ring colours and change or remove your tagged players. Everything is still saved inside the extension in your browser; the Options page works as before.
 - **Lighter on the game** – the hide-used-deposits and auto-pick-sample helpers now only wake up when the game's screen changes, instead of checking the whole page several times a second. Helps the game load and run more smoothly.
 - **Fix:** the crew food bar no longer sometimes shows under the game's top-left crew panel – it now only appears in the My Crews list.
