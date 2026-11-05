@@ -1,6 +1,6 @@
 // Skippy's Command Deck – crew food % (runs on game.influenceth.io, in the page).
 // Adds a small food bar beside each crew's name in the game's My Crews list along the bottom of each crew's card.
-// Same maths as the game's sdk (getCurrentFoodRatio) and the Command Deck site.
+// Same maths as the game's sdk (getCurrentFoodRatio with the crew's food-consumption bonus) and the Command Deck site.
 //   bar fades red (50% and under, hungry) -> yellow (75%) -> green (full)
 // It only READS what the game has already loaded (no requests of its own), checks every 5 s,
 // never clicks or changes anything, and switches itself off quietly if a game update moves things.
@@ -31,9 +31,22 @@
     return null;
   }
 
-  const foodOf = lastFed => {
+  // Food lasts longer with Dietitians (+10% each) and Food Preparation department crewmates
+  // (+5% x title tier, +0.5 tier for Arvad Specialists) – the game's FOOD_CONSUMPTION_TIME ability.
+  const FOOD_PREP = 11, DIETITIAN = 29;
+  const consumptionOf = mates => {
+    let m = 1;
+    mates.forEach(x => {
+      if (!x) return;
+      const t = x.title;
+      if (t >= 1 && t <= 65 && (t - 1) % 13 + 1 === FOOD_PREP) m += 0.05 * (Math.floor((t - 1) / 13) + 1 + (x.coll === 1 || x.collection === 1 ? 0.5 : 0));
+      (x.impactful || []).forEach(i => { if (i === DIETITIAN) m += 0.1; });
+    });
+    return m;
+  };
+  const foodOf = (lastFed, consumption = 1) => {
     if (!lastFed) return null;
-    const ys = Math.max(0, Date.now() / 1000 - lastFed) * ACCEL / YEAR;
+    const ys = Math.max(0, Date.now() / 1000 - lastFed) * ACCEL / YEAR / consumption;
     return Math.round(Math.min(Math.max(0, 1 - ys, 0.75 - 0.5 * ys), 1) * 100);
   };
   const nameOf = c => (c.Name && c.Name.name) || ('Crew #' + Number(c.id).toLocaleString('en-US'));
@@ -43,12 +56,17 @@
     if (!qc) qc = findQueryClient();
     if (!qc) return null;
     const out = new Map();
-    const take = c => { if (c && c.label === 1 && c.Crew && c.Crew.lastFed) out.set(nameOf(c), foodOf(c.Crew.lastFed)); };
+    const crews = [], mates = {};
     qc.getQueryCache().getAll().forEach(q => {
       const k = q.queryKey, d = q.state && q.state.data;
-      if (!k || (k[0] !== 'entities' && k[0] !== 'entity') || k[1] !== 1 || !d) return;
-      Array.isArray(d) ? d.forEach(take) : take(d);
+      if (!k || (k[0] !== 'entities' && k[0] !== 'entity') || (k[1] !== 1 && k[1] !== 2) || !d) return;
+      (Array.isArray(d) ? d : [d]).forEach(e => {
+        if (!e) return;
+        if (e.label === 1 && e.Crew && e.Crew.lastFed) crews.push(e);
+        else if (e.label === 2 && e.Crewmate) mates[e.id] = e.Crewmate;
+      });
     });
+    crews.forEach(c => out.set(nameOf(c), foodOf(c.Crew.lastFed, consumptionOf((c.Crew.roster || []).map(id => mates[id])))));
     return out;
   }
 
