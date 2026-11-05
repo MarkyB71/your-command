@@ -13,7 +13,7 @@
   // colours: the game's own (influence-client theme) – green = free/available, gold = yours, grey = someone else's
   const C_FREE = [87, 255, 101], C_MINE = [255, 210, 74], C_OTHER = [139, 154, 176];
   const C_CHEAP = [87, 255, 101], C_MID = [255, 217, 79], C_DEAR = [255, 86, 77];
-  const S = { q: '', rotY: 0.6, rotX: -0.35, spin: MOVE, byPrice: false, show: { free: true, mine: true, other: true } };
+  const S = { q: '', zoom: 1, rotY: 0.6, rotX: -0.35, spin: MOVE, byPrice: false, show: { free: true, mine: true, other: true } };
   const CACHE = {}, LOAD = {};
   let G = null, raf = 0;
 
@@ -33,6 +33,9 @@
 .ll-st{position:relative;width:100%;max-width:640px;aspect-ratio:1;margin:0 auto;cursor:grab;touch-action:none}
 .ll-st.drag{cursor:grabbing}
 .ll-st canvas{width:100%;height:100%;display:block}
+.ll-zm{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:3}
+.ll-zm button{width:30px;height:30px;padding:0;border:1px solid #2a3646;border-radius:6px;background:rgba(16,26,38,.9);color:#8fe3ff;font:700 16px/1 system-ui,sans-serif;cursor:pointer}
+.ll-zm button:hover{border-color:#8fe3ff}
 .ll-tip{position:absolute;display:none;pointer-events:none;padding:6px 9px;background:rgba(8,14,24,.94);border:1px solid #2a3646;border-radius:6px;color:#c4cdd9;font-size:12px;line-height:1.45;white-space:nowrap;z-index:2}
 .ll-tip b{color:#fff}
 .ll-side label{display:flex;align-items:center;gap:8px;padding:7px 10px;margin:0 0 6px;border:1px solid #1e2a3a;border-radius:8px;background:#0c1320;cursor:pointer;color:#c4cdd9}
@@ -133,9 +136,9 @@
     }
     const mineList = d.leases.filter((l) => G.st[l[0]] === 2).sort((a, b) => a[3] - b[3]);
     if (mineList.length) side += '<h3>Your leases here</h3><div class="ll-mine">' + mineList.map((l) => '<div><a href="#" data-lot="' + l[0] + '" style="color:#8fe3ff">Lot ' + l[0].toLocaleString() + ' ↗</a> – ends ' + day(l[3]) + '</div>').join('') + '</div>';
-    side += '<p class="ll-dim" style="margin-top:12px">' + G.n.toLocaleString() + ' lots · updated ' + new Date(d.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (kept 30 min). Drag to turn the rock, hover a lot for details, click a lot to open it in the game.</p></div>';
+    side += '<p class="ll-dim" style="margin-top:12px">' + G.n.toLocaleString() + ' lots · updated ' + new Date(d.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (kept 30 min). Drag to turn the rock, scroll or pinch (or + / −) to zoom, hover a lot for details, click a lot to open it in the game.</p></div>';
 
-    m.innerHTML = h + offer + '<div class="ll-grid"><div class="ll-st"><canvas></canvas><div class="ll-tip" id="ll-tip"></div></div>' + side + '</div>';
+    m.innerHTML = h + offer + '<div class="ll-grid"><div class="ll-st"><canvas></canvas><div class="ll-zm"><button data-z="in" title="Zoom in">+</button><button data-z="out" title="Zoom out">−</button><button data-z="0" title="Whole rock" style="font-size:12px">⟲</button></div><div class="ll-tip" id="ll-tip"></div></div>' + side + '</div>';
     bind();
     m.querySelectorAll('.ll-side input[data-k]').forEach((x) => x.addEventListener('change', () => { S.show[x.dataset.k] = x.checked; }));
     const pc = m.querySelector('#ll-price'); if (pc) pc.addEventListener('change', () => { S.byPrice = pc.checked; });
@@ -181,10 +184,13 @@
     let W = 0, drag = null, mouse = null, last = performance.now(), hot = 0, down = null;
     const fit = () => { const r = st.getBoundingClientRect(), dp = window.devicePixelRatio || 1; W = Math.max(200, Math.round(r.width)); cv.width = W * dp; cv.height = W * dp; ctx.setTransform(dp, 0, 0, dp, 0, 0); };
     fit();
+    const zoomBy = (f) => { S.zoom = Math.max(1, Math.min(40, S.zoom * f)); if (S.zoom > 1) S.spin = false; };
+    st.querySelectorAll('.ll-zm button').forEach((b) => { b.addEventListener('pointerdown', (e) => e.stopPropagation()); b.addEventListener('click', (e) => { e.stopPropagation(); const z = b.dataset.z; if (z === 'in') zoomBy(1.6); else if (z === 'out') zoomBy(1 / 1.6); else S.zoom = 1; }); });
+    st.addEventListener('wheel', (e) => { e.preventDefault(); zoomBy(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0025))); }, { passive: false });
     st.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; drag = { x: e.clientX, y: e.clientY, ry: S.rotY, rx: S.rotX }; st.classList.add('drag'); st.setPointerCapture(e.pointerId); });
     st.addEventListener('pointermove', (e) => {
       const r = st.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
-      if (drag) { S.rotY = drag.ry + (e.clientX - drag.x) * 0.01; S.rotX = Math.max(-1.5, Math.min(1.5, drag.rx + (e.clientY - drag.y) * 0.01)); }
+      if (drag) { const k = 0.01 / S.zoom; S.rotY = drag.ry + (e.clientX - drag.x) * k; S.rotX = Math.max(-1.5, Math.min(1.5, drag.rx + (e.clientY - drag.y) * k)); }
     });
     const up = (e) => { drag = null; st.classList.remove('drag'); if (down && e && e.type === 'pointerup' && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5 && hot) openLot(hot); down = null; };
     st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
@@ -215,19 +221,21 @@
   function draw(ctx, W) {
     ctx.clearRect(0, 0, W, W);
     if (!G) return null;
-    const c = W / 2, R = W * 0.4, n = G.n;
+    const c = W / 2, R = W * 0.4 * S.zoom, n = G.n;
     const cy = Math.cos(S.rotY), sy = Math.sin(S.rotY), cx = Math.cos(S.rotX), sx = Math.sin(S.rotX);
     const body = ctx.createRadialGradient(c - R * 0.35, c - R * 0.35, R * 0.1, c, c, R);
     body.addColorStop(0, '#1c2638'); body.addColorStop(1, '#070b13');
     ctx.fillStyle = body; ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.fill();
-    const dot = Math.max(1.1, Math.min(9, R * Math.sqrt(4 / n) * 0.9));
+    const dot = Math.max(1.1, Math.min(14, R * Math.sqrt(4 / n) * 0.9));
     const out = [];
     for (let i = 1; i <= n; i++) {
       const rgb = rgbOf(i); if (!rgb) continue;
       const x = G.pos[i * 3], y = G.pos[i * 3 + 1], z = G.pos[i * 3 + 2];
       const x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y2 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
       if (z2 < -0.1) continue;
-      const sh = Math.max(0.15, Math.min(1, (z2 + 0.15) * 1.1)), px = c + x1 * R, py = c - y2 * R;
+      const px = c + x1 * R, py = c - y2 * R;
+      if (px < -10 || py < -10 || px > W + 10 || py > W + 10) continue; // off screen when zoomed in
+      const sh = Math.max(0.15, Math.min(1, (z2 + 0.15) * 1.1));
       const free = G.st[i] === 0, a = sh * (free ? 0.45 : 1);
       ctx.fillStyle = 'rgba(' + rgb.join(',') + ',' + a.toFixed(3) + ')';
       ctx.beginPath(); ctx.arc(px, py, dot * (free ? 0.75 : 1) * (0.55 + 0.45 * Math.sqrt(Math.max(0, z2))), 0, 7); ctx.fill();
