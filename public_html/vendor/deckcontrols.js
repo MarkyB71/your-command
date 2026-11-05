@@ -39,6 +39,8 @@
 .dc-t select,.dc-t button{width:100%;height:28px;font:inherit;font-size:12px;background:#0d2933;color:#fff;border:1px solid #2a3a50;border-radius:5px;padding:0 6px;cursor:pointer}
 .dc-t button:hover{border-color:#ff564d}
 .dc-msg{padding:14px;border:1px solid #2a3646;border-radius:8px;background:#0c1320;margin-top:10px}
+.dc-get{display:inline-block;margin-top:10px;padding:7px 14px;border:1px solid #8fe3ff;border-radius:6px;color:#8fe3ff;text-decoration:none;font-weight:600}
+.dc-get:hover{background:rgba(143,227,255,.12)}
 @media (prefers-reduced-motion:reduce){.dc-holo{transition:none}}
 `;
 
@@ -92,7 +94,7 @@
     const ver = document.documentElement.dataset.yicGameExt;
     let h = '<div class="dc-in"><div class="dc-top"><span class="s" aria-hidden="true">S</span><div><b>Skippy\'s Command Deck – browser extension</b><span>These are the extension\'s own settings' + (ver ? ' (version ' + esc(ver) + ')' : '') + '. They\'re saved in the extension in this browser.</span></div><span class="dc-ok"></span></div>';
     if (!ver) {
-      h += '<div class="dc-msg"><b>Skippy\'s Command Deck isn\'t installed in this browser.</b><br>These are its settings – install it from the Chrome Web Store with the Command Deck button at the top of the page, then come back here.</div>';
+      h += '<div class="dc-msg"><b>Skippy\'s Command Deck isn\'t installed in this browser.</b><br>These are its settings – install it from the Chrome Web Store, then come back here.<br><a class="dc-get" href="https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd" target="_blank" rel="noopener">Get it from the Chrome Web Store</a></div>';
     } else if (!data && waiting) {
       h += '<div class="dc-msg">Asking the extension for its settings…</div>';
     } else if (!data) {
