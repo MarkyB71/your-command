@@ -2,9 +2,8 @@
 // A holo-panel hangs above the captain's chair; clicking it puts the extension's settings on the
 // viewscreen. Settings stay saved INSIDE the extension (so it still works if the site is down) –
 // the site only asks the extension for them and sends changes back (needs extension 0.6.3+).
-// Test only for now (?beta=1). Skippy (welcome) and the chair (today's workload) keep their clicks.
+// LIVE 5 Nov 2026 (tested on ?beta=1, once extension 0.6.3 was approved). Skippy (welcome) and the chair (today's workload) keep their clicks.
 (function () {
-  if (!/[?&]beta=1/.test(location.search)) return;
 
   const CSS = `
 .dc-holo{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:grid;grid-template-columns:auto auto;align-items:center;gap:12px;margin:0 auto 34px;padding:10px 14px;border:1.5px solid #8fe3ff;border-radius:7px;background:#101a26;box-shadow:0 0 14px -4px rgba(143,227,255,.6);transition:box-shadow .2s}
