@@ -57,7 +57,11 @@
     ['System map'],
     ['mapTags', 'Friend / foe tags', "Click an asteroid on the belt map to tag its owner. All of that owner's asteroids get a coloured ring.", true],
     ['mapMarkets', 'Open marketplaces', 'A small green diamond on each asteroid with open market orders (updates every 5 minutes).'],
-    ['mapFlights', 'Your ships in flight', 'A purple dot where each of your ships is now, its route, a ring where ship and rock meet, and light blue dots to where that rock is now.', false, true],
+    ['mapFlights', 'Ships in flight', "Your ships as purple dots with their routes. Other players' ships as triangles in your tag colours (belt-wide list, updates every 5 minutes). Hover any ship for its route and arrival.", false, true],
+    ['flightsFriendly', '· Friendly players\' ships', 'Teal triangles.', false, true],
+    ['flightsNeutral', '· Neutral players\' ships', 'Yellow triangles.', false, true],
+    ['flightsHostile', '· Hostile players\' ships', 'Red triangles – their routes are always drawn.', false, true],
+    ['flightsOther', '· Untagged players\' ships', 'Orange triangles.', false, true],
   ];
   const TAGS = { friendly: 'Friendly', neutral: 'Neutral', hostile: 'Hostile' };
 
