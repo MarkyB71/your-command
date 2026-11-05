@@ -88,15 +88,23 @@
     return null;
   }
 
-  // the My Crews list = the first box above its "My Crews" heading that also holds a crew name
+  // the My Crews list = the first box above its "My Crews" heading that also holds a crew name.
+  // Only a heading you can see, and never a box as big as the whole screen – otherwise a hidden
+  // "My Crews" label could climb up to the game's top-left crew panel and put a bar there.
   function myCrewsPanel(crews) {
-    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    let h = null;
-    for (let t = w.nextNode(); t; t = w.nextNode()) if (/^my crews$/i.test(t.nodeValue.trim())) { h = t.parentElement; break; }
-    if (!h) return null;
     const names = [...crews.keys()];
-    for (let x = h.parentElement, i = 0; x && x !== document.body && i < 10; x = x.parentElement, i++)
-      if (names.some(nm => x.textContent.includes(nm))) return x;
+    const vw = innerWidth, vh = innerHeight;
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+      if (!/^my crews$/i.test(t.nodeValue.trim())) continue;
+      const h = t.parentElement, hr = h && h.getBoundingClientRect();
+      if (!hr || !hr.width || !hr.height) continue;
+      for (let x = h.parentElement, i = 0; x && x !== document.body && i < 10; x = x.parentElement, i++) {
+        const r = x.getBoundingClientRect();
+        if (x.querySelector('canvas') || r.width * r.height > vw * vh * 0.6) break;
+        if (names.some(nm => x.textContent.includes(nm))) return x;
+      }
+    }
     return null;
   }
 
@@ -107,7 +115,7 @@
     let n = 0;
     // only inside the game's My Crews list – the crew panel at the top left already shows food
     const panel = myCrewsPanel(crews);
-    if (!panel) { note('My Crews list not open'); return; }
+    if (!panel) { document.querySelectorAll('.yic-food').forEach(b => b.remove()); note('My Crews list not open'); return; }
     const w = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT);
     const hits = [];
     for (let t = w.nextNode(); t; t = w.nextNode()) {

@@ -24,11 +24,19 @@
   function marketBridge() {
     // Open marketplaces for the system map: asks the extension's background for the Command Deck's
     // belt-wide market list (refreshed every 5 minutes) and passes it to maptags.js in the page.
-    const get = () => chrome.runtime.sendMessage({ type: 'yic-markets' }, r => {
-      if (chrome.runtime.lastError || !r || !r.ok) return;
-      window.postMessage({ yic: 'markets', data: r.data, fetched: r.fetched }, location.origin);
-    });
-    get(); setInterval(get, 300000);
+    // After the extension is reloaded or updated, this old copy can't reach it any more –
+    // stop quietly instead of throwing "Extension context invalidated".
+    let timer = null;
+    const get = () => {
+      if (!chrome.runtime || !chrome.runtime.id) { clearInterval(timer); return; }
+      try {
+        chrome.runtime.sendMessage({ type: 'yic-markets' }, r => {
+          if (chrome.runtime.lastError || !r || !r.ok) return;
+          window.postMessage({ yic: 'markets', data: r.data, fetched: r.fetched }, location.origin);
+        });
+      } catch (e) { clearInterval(timer); }
+    };
+    get(); timer = setInterval(get, 300000);
   }
 
   function tagBridge() {
@@ -95,6 +103,19 @@
     setInterval(dock, 1000);
   }
 
+  function onChange(fn) {
+    // Runs fn only when the game's page actually changes, at most about 3 times a second –
+    // instead of searching the whole page every 0.15 seconds all the time.
+    let t = null;
+    const run = () => { t = null; fn(); };
+    const start = () => {
+      new MutationObserver(() => { if (!t) t = setTimeout(run, 300); })
+        .observe(document.body, { childList: true, subtree: true });
+      fn();
+    };
+    if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+  }
+
   function hideUsed() {
     // The picker always opens with "Show Used Deposits" ticked. Each time a new picker
     // appears, click that tick box once – the same as you doing it. Never touches it again,
@@ -110,7 +131,7 @@
         el.click();
       }
     }
-    setInterval(check, 150);
+    onChange(check);
   }
   function autoSample() {
     // When the game's Extract Resource window opens and its Deposit box still says "Select",
@@ -152,6 +173,6 @@
       done.add(slot);
       if (/^select\b/i.test(slot.innerText.trim())) pick(slot);
     }
-    setInterval(check, 150);
+    onChange(check);
   }
 })();

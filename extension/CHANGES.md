@@ -3,7 +3,14 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## 0.6.2 – coming soon
+## 0.6.3 – coming soon
+- **Deck controls on the Command Deck** – the extension's settings are now on the Command Deck site too: click the glowing panel above the captain's chair on the Bridge to switch each game tweak on or off, pick the friend / foe ring colours and change or remove your tagged players. Everything is still saved inside the extension in your browser; the Options page works as before.
+- **Lighter on the game** – the hide-used-deposits and auto-pick-sample helpers now only wake up when the game's screen changes, instead of checking the whole page several times a second. Helps the game load and run more smoothly.
+- **Fix:** the crew food bar no longer sometimes shows under the game's top-left crew panel – it now only appears in the My Crews list.
+- **Fix:** no more "Extension context invalidated" error after the extension updates while the game tab is open.
+- **Fix:** the ship propellant bar no longer shows in a lot's Resources panel – it only appears in the My Assets › Ships list. (Reported by a player.)
+
+## 0.6.2 – 4 Nov 2026
 - **Friend / foe tags on the system map** (on by default – switch off in Options) – click an asteroid on the belt map and tag its owner as friendly, neutral or hostile, with an optional name. Every asteroid that owner has on the map gets a coloured ring (game green / yellow / red – change them in Options). Tags follow the owner, so a sold rock changes colour. Saved in your browser only; uses only what the game has already loaded.
   - **Your tag list in Options** – see everyone you've tagged, rename them, change or remove a tag.
   - **Share with friends** – export your list as a file; a friend imports it and sees the same friends and foes.

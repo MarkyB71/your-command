@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Skippy's Command Deck",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Links the Command Deck to your Influence game tab and adds helpers: status dots, food and propellant bars, map tags and markets.",
   "permissions": [
     "scripting",
@@ -86,7 +86,7 @@
     }
   ],
   "action": {
-    "default_title": "Skippy's Command Deck \u2013 back to your Command Deck",
+    "default_title": "Skippy's Command Deck – back to your Command Deck",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

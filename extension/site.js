@@ -19,3 +19,38 @@ window.addEventListener('message', e => {
     reply({ ok: false, error: 'reconnect' });
   }
 });
+
+// Deck controls on the Command Deck's Bridge (0.6.3): the site can show these settings and the
+// friend / foe tags, and send back changes. Only the known settings are accepted; nothing else
+// on the page is read, and everything stays saved in this browser only.
+(() => {
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
+  const TAG = { friendly: 1, neutral: 1, hostile: 1 };
+  const alive = () => { try { return !!(chrome.runtime && chrome.runtime.id); } catch (e) { return false; } };
+  const reply = () => {
+    if (!alive()) return;
+    chrome.storage.sync.get(DEFAULTS, opts => chrome.storage.local.get({ mapTags: {} }, o =>
+      window.postMessage({ type: 'yic-opts', opts, tags: o.mapTags || {} }, location.origin)));
+  };
+  window.addEventListener('message', e => {
+    if (e.source !== window || e.origin !== location.origin || !alive()) return;
+    const d = e.data;
+    if (!d || typeof d.type !== 'string') return;
+    if (d.type === 'yic-opts-get') reply();
+    else if (d.type === 'yic-opts-set') {
+      const k = d.key, v = d.value;
+      if (!Object.prototype.hasOwnProperty.call(DEFAULTS, k)) return;
+      const ok = typeof DEFAULTS[k] === 'boolean' ? typeof v === 'boolean' : (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v));
+      if (ok) chrome.storage.sync.set({ [k]: v });
+    } else if (d.type === 'yic-tags-set') {
+      const t = d.tags, clean = {};
+      if (!t || typeof t !== 'object' || Array.isArray(t)) return;
+      Object.keys(t).slice(0, 2000).forEach(a => {
+        const x = t[a];
+        if (!/^0x[0-9a-f]{1,64}$/i.test(a) || !x || typeof x !== 'object') return;
+        clean[a] = { tag: TAG[x.tag] ? x.tag : '', name: typeof x.name === 'string' ? x.name.slice(0, 40) : '' };
+      });
+      chrome.storage.local.set({ mapTags: clean });
+    }
+  });
+})();
