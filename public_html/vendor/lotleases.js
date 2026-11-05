@@ -289,8 +289,10 @@
     ctx.fillStyle = body; ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.fill();
     const dot = Math.max(1.1, Math.min(14, R * Math.sqrt(4 / n) * 0.9));
     // big rock: free lots one by one only when zoomed in far enough that few are in view, else a wash
-    const vr = big && dot * 0.75 >= 1.6 ? visibleRange(W) : null;
-    const freeDots = !big || (vr && vr[1] - vr[0] <= 60000);
+    // lots actually on screen ≈ screen area ÷ area of one lot on screen (the y-band loop itself is cheap)
+    const onScreen = Math.min(n / 2, (W * W * n) / (4 * Math.PI * R * R));
+    const vr = big && dot * 0.75 >= 1.6 && onScreen <= 40000 ? visibleRange(W) : null;
+    const freeDots = !big || !!vr;
     if (big && S.show.free && !freeDots) {
       const g = ctx.createRadialGradient(c - R * 0.35, c - R * 0.35, R * 0.1, c, c, R);
       g.addColorStop(0, 'rgba(87,255,101,.32)'); g.addColorStop(1, 'rgba(87,255,101,.08)');
