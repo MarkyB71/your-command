@@ -29,7 +29,7 @@ export function drawMarketHistory(m){
   const Y=window.YIC;let D=null,pf=null,pn=null;try{D=Y.D;pf=Y.pfmt;pn=Y.pn}catch(e){}
   const pName=p=>pn?pn(p):'Product '+p,pAmt=(p,a)=>{try{return pf?pf(p,a)||'0':String(a)}catch(e){return String(a)}};
   const mine=new Set(((D&&D.crewList)||[]).map(c=>c.id)),crewName={};((D&&D.crewList)||[]).forEach(c=>crewName[c.id]=c.name);
-  const beta=/[?&]beta=1/.test(location.search),other=id=>{const h=beta&&HC[S.range];return h&&h.crews&&h.crews[id]};
+  const other=id=>{const h=HC[S.range]; /* other players' crew names – LIVE 5 Nov 2026 */return h&&h.crews&&h.crews[id]};
   const who=id=>(crewName[id]?'<span class="mh-me">'+esc(crewName[id])+'</span>':other(id)?esc(other(id)):'Crew #'+id)+(window.GL?window.GL('/crew/'+id,'Open this crew in the game'):'');
 
   function chart(rows){ /* price per unit over time for one product */

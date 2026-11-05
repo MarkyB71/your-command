@@ -2,6 +2,10 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 5 Nov 2026 – New Lot leases page (Science Lab, community request): type any asteroid's name or number to see its lease offer (price a day, minimum term, notice) and every lot on a globe – free to lease, leased by you or leased by someone else. Zoom in, hover a lot for the tenant, price and end date, click it to open it in the game. Colour leased lots by price where prices vary, or by your friend / foe tags (extension 0.6.3+).
+
+## 5 Nov 2026 – Market history: other players' crews now show by name (community request). Unnamed crews still show as "Crew #number".
+
 ## 3 Nov 2026 – New Help page (help.html): how to use every deck and the browser extension. Open it with the ? Help button beside ⟳ Refresh.
 
 ## Version 621 – 2 Nov 2026 – Engineering: pick a rock and each dial lists its buildings with the time left, soonest first (hover a line for the full name and finish date). Building Status now also lists buildings under construction with their time left.

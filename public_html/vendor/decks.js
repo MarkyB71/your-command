@@ -63,8 +63,8 @@ function wNameBox(pen) {
     DECKS[4].pages = DECKS[4].pages.filter((k) => k !== 'H');
     DECKS[4].pages.splice(DECKS[4].pages.indexOf('U') + 1, 0, 'D'); // Production planner after Construction planner
   }
-  // Lot leases – test only (?beta=1, Mark 5 Nov 2026): fills the Science Lab's spare console
-  if (/[?&]beta=1/.test(location.search)) DECKS[3].pages.push('LL');
+  // Lot leases (Mark, 5 Nov 2026 – LIVE 5 Nov): fills the Science Lab's spare console
+  DECKS[3].pages.push('LL');
   window.YICDECKLIST = DECKS;
 
   const CSS = `

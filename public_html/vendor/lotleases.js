@@ -1,4 +1,4 @@
-/* Lot leases – Your Influence Command (Mark, 5 Nov 2026) – TEST ONLY (?beta=1)
+/* Lot leases – Your Influence Command (Mark, 5 Nov 2026) – LIVE 5 Nov 2026
    Community request: see which lots can be leased. Pick ANY asteroid (name or number) and see
    the owner's lease offer once, plus every lot on a globe: leased by you, leased by someone else, or free.
    Where the leases on a rock were made at different prices, "Colour by price" shows them as a heat map.
@@ -6,7 +6,7 @@
    Lot positions: the game's lot layout (golden-angle spiral), lot count from vendor/abund.js. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1/.test(location.search)) return;
+  // LIVE 5 Nov 2026 (tested on ?beta=1, Mark)
 
   const GA = Math.PI * (3 - Math.sqrt(5));
   const MOVE = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
