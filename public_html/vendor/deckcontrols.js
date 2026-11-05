@@ -30,6 +30,10 @@
 .dc-row input[type=checkbox]{width:18px;height:18px;padding:0;margin-top:1px;accent-color:#4fb3ff}
 .dc-row b{display:block;color:#fff;font-weight:600}
 .dc-row label span{display:block;color:#9fb0c4;font-size:12px}
+.dc-row .dc-sub{display:grid;grid-template-columns:16px minmax(0,1fr);gap:10px;align-items:center;margin:8px 0 0 30px;padding:3px 0 3px 12px;border-left:1px solid #2a3a50;cursor:pointer}
+.dc-row .dc-sub input[type=checkbox]{width:16px;height:16px;margin:0}
+.dc-row .dc-sub span{color:#c3d2e2;font-size:12.5px}
+.dc-row .dc-sub span i{font-style:normal;color:#8b9ab0}
 .dc-cols{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0 0 30px}
 .dc-cols label{display:flex;align-items:center;gap:6px;font-size:12px;color:#c3d2e2;cursor:pointer}
 .dc-cols input[type=color]{width:28px;height:20px;padding:0;border:1px solid #2a3a50;border-radius:4px;background:none;cursor:pointer}
@@ -58,10 +62,10 @@
     ['mapTags', 'Friend / foe tags', "Click an asteroid on the belt map to tag its owner. All of that owner's asteroids get a coloured ring.", true],
     ['mapMarkets', 'Open marketplaces', 'A small green diamond on each asteroid with open market orders (updates every 5 minutes).'],
     ['mapFlights', 'Ships in flight', "Your ships as purple dots with their routes. Other players' ships as triangles in your tag colours (belt-wide list, updates every 5 minutes). Hover any ship for its route and arrival.", false, true],
-    ['flightsFriendly', '· Friendly players\' ships', 'Teal triangles.', false, true],
-    ['flightsNeutral', '· Neutral players\' ships', 'Yellow triangles.', false, true],
-    ['flightsHostile', '· Hostile players\' ships', 'Red triangles – their routes are always drawn.', false, true],
-    ['flightsOther', '· Untagged players\' ships', 'Orange triangles.', false, true],
+    ['flightsFriendly', 'Friendly players\' ships', 'Teal triangles.', false, true, true],
+    ['flightsNeutral', 'Neutral players\' ships', 'Yellow triangles.', false, true, true],
+    ['flightsHostile', 'Hostile players\' ships', 'Red triangles – their routes are always drawn.', false, true, true],
+    ['flightsOther', 'Untagged players\' ships', 'Orange triangles.', false, true, true],
   ];
   const TAGS = { friendly: 'Friendly', neutral: 'Neutral', hostile: 'Hostile' };
 
@@ -109,6 +113,7 @@
       OPTS.forEach((r) => {
         if (r.length === 1) { h += '<h3>' + r[0] + '</h3>'; return; }
         if (r[4] && !(r[0] in o)) return;   // newer switch – only shown once your extension has it
+        if (r[5]) { h = h.slice(0, -6) + '<label class="dc-sub"><input type="checkbox" data-k="' + r[0] + '"' + (o[r[0]] !== false ? ' checked' : '') + '><span>' + r[1] + ' <i>– ' + r[2] + '</i></span></label></div>'; return; }   // a sub-choice, inside the row above
         h += '<div class="dc-row"><label><input type="checkbox" data-k="' + r[0] + '"' + (o[r[0]] !== false ? ' checked' : '') + '><span><b>' + r[1] + '</b>' + r[2] + '</span></label>';
         if (r[3]) h += '<div class="dc-cols">' + Object.keys(TAGS).map((t) => '<label><input type="color" data-k="tagCol_' + t + '" value="' + esc(o['tagCol_' + t] || '#ffffff') + '">' + TAGS[t] + ' ring</label>').join('') + '</div>';
         h += '</div>';
