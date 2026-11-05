@@ -111,7 +111,7 @@
       const st = new Uint8Array(n + 1), rate = new Float32Array(n + 1), info = {};
       d.leases.forEach(([lot, crew, r, end]) => { if (lot < 1 || lot > n) return; st[lot] = mine.has(crew) ? 2 : 1; rate[lot] = r; info[lot] = [crew, r, end]; });
       const rates = [...new Set(d.leases.map((l) => l[2]))].sort((a, b) => a - b);
-      G = { id: d.id, n, pos: lotPos(n), st, rate, info, rates, lo: rates[0] || 0, hi: rates[rates.length - 1] || 0 };
+      G = { id: d.id, n, pos: lotPos(n), st, rate, info, rates, leased: d.leases.map((l) => l[0]).filter((i) => i >= 1 && i <= n), lo: rates[0] || 0, hi: rates[rates.length - 1] || 0 };
       if (G.rates.length < 2) S.byPrice = false;
     }
     const nm = d.name || 'Asteroid #' + d.id;
@@ -181,7 +181,7 @@
   function start(st) {
     stop();
     const cv = st.querySelector('canvas'), tip = st.querySelector('#ll-tip'), ctx = cv.getContext('2d');
-    let W = 0, drag = null, mouse = null, last = performance.now(), hot = 0, down = null;
+    let W = 0, drag = null, mouse = null, last = performance.now(), hot = 0, down = null, lastKey = '', lastP = null;
     const fit = () => { const r = st.getBoundingClientRect(), dp = window.devicePixelRatio || 1; W = Math.max(200, Math.round(r.width)); cv.width = W * dp; cv.height = W * dp; ctx.setTransform(dp, 0, 0, dp, 0, 0); };
     fit();
     const zoomBy = (f) => { S.zoom = Math.max(1, Math.min(40, S.zoom * f)); if (S.zoom > 1) S.spin = false; };
@@ -200,8 +200,9 @@
       const dt = Math.min(0.1, (t - last) / 1000); last = t;
       if (Math.abs(st.getBoundingClientRect().width - W) > 2) fit();
       if (S.spin && !drag && !mouse) S.rotY += dt * 0.08;
-      const p = draw(ctx, W);
-      hover(p);
+      const key = [W, S.rotY, S.rotX, S.zoom, S.show.free, S.show.mine, S.show.other, S.byPrice].join('|');
+      if (key !== lastKey) { lastP = draw(ctx, W); lastKey = key; } // big rocks: only redraw when the view changes
+      hover(lastP);
       raf = requestAnimationFrame(frame);
     }
     function hover(p) {
@@ -210,6 +211,7 @@
       if (!mouse || !p) { tip.style.display = 'none'; st.style.cursor = ''; return; }
       let best = -1, bd = 1e9;
       for (let j = 0; j < p.length; j += 3) { const dx = p[j + 1] - mouse.x, dy = p[j + 2] - mouse.y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = p[j]; } }
+      if ((best < 0 || bd > 400) && G && G.n > BIG && S.show.free) { const f = lotAt(mouse.x, mouse.y, W); if (f && G.st[f] === 0) { best = f; bd = 0; } }
       if (best < 0 || bd > 400) { tip.style.display = 'none'; st.style.cursor = ''; return; }
       hot = best; st.style.cursor = 'pointer';
       tip.innerHTML = tipHTML(best); tip.style.display = 'block';
@@ -218,29 +220,77 @@
     raf = requestAnimationFrame(frame);
   }
 
-  // returns [lot, x, y] for lots on the near side
+  // Big rocks (Adalia Prime has about 1.7 million lots): free lots are a green wash until you zoom in
+  // far enough to see them one by one, and then only the lots in view are drawn.
+  const BIG = 40000;
+  // screen point → point on the rock (unit sphere), or null off the rock
+  function unproject(px, py, W) {
+    const c = W / 2, R = W * 0.4 * S.zoom, x1 = (px - c) / R, y2 = (c - py) / R, q = 1 - x1 * x1 - y2 * y2;
+    if (q < 0) return null;
+    const z2 = Math.sqrt(q), cy = Math.cos(S.rotY), sy = Math.sin(S.rotY), cx = Math.cos(S.rotX), sx = Math.sin(S.rotX);
+    const y = y2 * cx + z2 * sx, z1 = -y2 * sx + z2 * cx;
+    return [x1 * cy - z1 * sy, y, x1 * sy + z1 * cy];
+  }
+  const idxOfY = (y) => 1 + ((1 - y) / 2) * (G.n - 1);
+  // the lot nearest a screen point (searches the spiral around the right height)
+  function lotAt(px, py, W) {
+    const u = unproject(px, py, W); if (!u) return 0;
+    const n = G.n, w = Math.ceil(3 * Math.sqrt(n)), m = Math.round(idxOfY(u[1]));
+    let best = 0, bd = 9;
+    for (let i = Math.max(1, m - w); i <= Math.min(n, m + w); i++) {
+      const dx = G.pos[i * 3] - u[0], dy = G.pos[i * 3 + 1] - u[1], dz = G.pos[i * 3 + 2] - u[2], d = dx * dx + dy * dy + dz * dz;
+      if (d < bd) { bd = d; best = i; }
+    }
+    return best;
+  }
+  // lot numbers that can be on screen (lot number follows height on the rock)
+  function visibleRange(W) {
+    let lo = 2, hi = -2, any = false;
+    for (let a = 0; a <= 8; a++) for (let b = 0; b <= 8; b++) {
+      const u = unproject((W * a) / 8, (W * b) / 8, W); if (!u) continue;
+      any = true; lo = Math.min(lo, u[1]); hi = Math.max(hi, u[1]);
+    }
+    if (!any || S.zoom < 1.5) return [1, G.n];
+    const pad = 3 * Math.sqrt(G.n);
+    return [Math.max(1, Math.floor(idxOfY(hi) - pad)), Math.min(G.n, Math.ceil(idxOfY(lo) + pad))];
+  }
+
+  // returns [lot, x, y] for lots drawn on the near side
   function draw(ctx, W) {
     ctx.clearRect(0, 0, W, W);
     if (!G) return null;
-    const c = W / 2, R = W * 0.4 * S.zoom, n = G.n;
+    const c = W / 2, R = W * 0.4 * S.zoom, n = G.n, big = n > BIG;
     const cy = Math.cos(S.rotY), sy = Math.sin(S.rotY), cx = Math.cos(S.rotX), sx = Math.sin(S.rotX);
     const body = ctx.createRadialGradient(c - R * 0.35, c - R * 0.35, R * 0.1, c, c, R);
     body.addColorStop(0, '#1c2638'); body.addColorStop(1, '#070b13');
     ctx.fillStyle = body; ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.fill();
     const dot = Math.max(1.1, Math.min(14, R * Math.sqrt(4 / n) * 0.9));
+    const freeDots = !big || dot * 0.75 >= 1.6; // big rock, not zoomed in enough: free lots as a wash
+    if (big && S.show.free && !freeDots) {
+      const g = ctx.createRadialGradient(c - R * 0.35, c - R * 0.35, R * 0.1, c, c, R);
+      g.addColorStop(0, 'rgba(87,255,101,.32)'); g.addColorStop(1, 'rgba(87,255,101,.08)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.fill();
+    }
     const out = [];
-    for (let i = 1; i <= n; i++) {
-      const rgb = rgbOf(i); if (!rgb) continue;
+    const one = (i) => {
+      const rgb = rgbOf(i); if (!rgb) return;
       const x = G.pos[i * 3], y = G.pos[i * 3 + 1], z = G.pos[i * 3 + 2];
       const x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y2 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
-      if (z2 < -0.1) continue;
+      if (z2 < -0.1) return;
       const px = c + x1 * R, py = c - y2 * R;
-      if (px < -10 || py < -10 || px > W + 10 || py > W + 10) continue; // off screen when zoomed in
+      if (px < -10 || py < -10 || px > W + 10 || py > W + 10) return; // off screen when zoomed in
       const sh = Math.max(0.15, Math.min(1, (z2 + 0.15) * 1.1));
       const free = G.st[i] === 0, a = sh * (free ? 0.45 : 1);
+      // on big rocks leased lots stay at least 2.5 px so they show on the wash
+      const r = Math.max(free || !big ? 0 : 2.5, dot * (free ? 0.75 : 1) * (0.55 + 0.45 * Math.sqrt(Math.max(0, z2))));
       ctx.fillStyle = 'rgba(' + rgb.join(',') + ',' + a.toFixed(3) + ')';
-      ctx.beginPath(); ctx.arc(px, py, dot * (free ? 0.75 : 1) * (0.55 + 0.45 * Math.sqrt(Math.max(0, z2))), 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill();
       if (z2 > 0) out.push(i, px, py);
+    };
+    if (!big) for (let i = 1; i <= n; i++) one(i);
+    else {
+      if (freeDots && S.show.free) { const [a, b] = visibleRange(W); for (let i = a; i <= b; i++) if (G.st[i] === 0) one(i); }
+      G.leased.forEach(one);
     }
     ctx.strokeStyle = 'rgba(79,144,255,.5)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(c, c, R, 0, 7); ctx.stroke();
