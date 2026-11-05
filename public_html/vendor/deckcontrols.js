@@ -57,6 +57,7 @@
     ['System map'],
     ['mapTags', 'Friend / foe tags', "Click an asteroid on the belt map to tag its owner. All of that owner's asteroids get a coloured ring.", true],
     ['mapMarkets', 'Open marketplaces', 'A small green diamond on each asteroid with open market orders (updates every 5 minutes).'],
+    ['mapFlights', 'Your ships in flight', 'A purple dot where each of your ships is now, its route, a ring where ship and rock meet, and light blue dots to where that rock is now.', false, true],
   ];
   const TAGS = { friendly: 'Friendly', neutral: 'Neutral', hostile: 'Hostile' };
 
@@ -103,6 +104,7 @@
       const o = data.opts;
       OPTS.forEach((r) => {
         if (r.length === 1) { h += '<h3>' + r[0] + '</h3>'; return; }
+        if (r[4] && !(r[0] in o)) return;   // newer switch – only shown once your extension has it
         h += '<div class="dc-row"><label><input type="checkbox" data-k="' + r[0] + '"' + (o[r[0]] !== false ? ' checked' : '') + '><span><b>' + r[1] + '</b>' + r[2] + '</span></label>';
         if (r[3]) h += '<div class="dc-cols">' + Object.keys(TAGS).map((t) => '<label><input type="color" data-k="tagCol_' + t + '" value="' + esc(o['tagCol_' + t] || '#ffffff') + '">' + TAGS[t] + ' ring</label>').join('') + '</div>';
         h += '</div>';
