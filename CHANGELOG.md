@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 5 Nov 2026 – Fix: opening Lot leases from the Science Lab no longer lights up The Bridge tab – the Science Lab stays selected.
+
 ## 5 Nov 2026 – Deck controls on the Bridge: click the glowing panel above the captain's chair to change the browser extension's settings and friend / foe tags right on the Command Deck (needs extension 0.6.3, now on the Chrome Web Store).
 
 ## 5 Nov 2026 – Fix: Crews food % now counts Dietitians and Food Preparation crewmates (Arvad Specialists get their extra half tier), so it matches the game.

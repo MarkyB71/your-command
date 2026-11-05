@@ -136,7 +136,8 @@ body > header{display:none!important}
     try {
       v = sessionStorage.getItem(SKEY) || '';
     } catch (e) {}
-    if (/^[A-Z][01]$/.test(v) && v[0] !== 'N') restore(v[0], v[1] === '1');
+    const m = /^([A-Z]{1,2})([01])$/.exec(v); // page keys can be two letters (LL = Lot leases)
+    if (m && m[1] !== 'N') restore(m[1], m[2] === '1');
   }
   const touched = () => (want = null); // the player did something on the deck – stop restoring
   const btn = (k) => document.getElementById('v' + k);
@@ -145,7 +146,7 @@ body > header{display:none!important}
     return b ? (b.textContent || '').replace(/[▾▸]/g, '').trim() : '';
   };
   const current = () => {
-    const on = [...document.querySelectorAll('[id^="v"].on')].find((b) => /^v[A-Z]$/.test(b.id));
+    const on = [...document.querySelectorAll('[id^="v"].on')].find((b) => /^v[A-Z]{1,2}$/.test(b.id)); // two-letter keys too (vLL = Lot leases, Mark 5 Nov)
     return on ? on.id.slice(1) : 'N';
   };
   const deckOf = (k) => DECKS.find((d) => d.pages.includes(k)) || DECKS[0];
