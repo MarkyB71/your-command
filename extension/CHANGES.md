@@ -3,7 +3,7 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## Next release (0.6.4)
+## 0.6.4 – coming soon
 - **Fix:** the crew food bar now counts Dietitians and Food Preparation crewmates (Arvad Specialists get their extra half tier), so it matches the game's own food figure.
 
 ## 0.6.3 – 5 Nov 2026
