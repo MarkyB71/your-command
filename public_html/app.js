@@ -36,7 +36,7 @@ doc.head.innerHTML='<meta name="viewport" content="width=device-width,initial-sc
 const asts=D.asteroids;
 doc.body.innerHTML='<header><meta charset="utf-8"><h1>Your <span>Influence</span> Command</h1><div class="sub" id="sub"></div>'+
 '<div class="bar"><input id="q" placeholder="Search product or building…"><select id="ast"></select><select id="cls"></select>'+
-'<span class="seg"><button id="vN" class="on">Today\'s Workload</button><button id="vP">Products</button><button id="vBB">Buildings ▾</button><span class="ddm" id="ddm"><button id="vB">Contents</button><button id="vT">Status</button></span><button id="vA">Asteroids</button><button id="vX">Core Samples</button><button id="vL">Leases</button><button id="vK">Market</button><button id="vY">Trade finder</button><button id="vC">Crews</button><button id="vS">Ships</button><button id="vR">Travel</button></span><button id="csv" title="Download your stock, buildings, crews and ships as a spreadsheet or PDF">Download your Command Deck</button></div></header><main id="main"></main>';
+'<span class="seg"><button id="vN" class="on">Today\'s Workload</button><button id="vP">Products</button><span class="ddm" id="ddm"><button id="vB">Contents</button><button id="vT">Status</button></span><button id="vA">Asteroids</button><button id="vX">Core Samples</button><button id="vL">Leases</button><button id="vK">Market</button><button id="vY">Trade finder</button><button id="vC">Crews</button><button id="vS">Ships</button><button id="vR">Travel</button></span><button id="csv" title="Download your stock, buildings, crews and ships as a spreadsheet or PDF">Download your Command Deck</button></div></header><main id="main"></main>';
 $('#sub').textContent='Updated '+D.when+' · '+asts.reduce((n,a)=>n+a.buildings.length,0)+' storage buildings · '+asts.length+' asteroids · '+D.crews+' crews';
 $('#ast').innerHTML='<option value="">All asteroids</option>'+asts.map((a,i)=>'<option value="'+i+'">'+esc(a.name)+'</option>').join('');
 const classes=[...new Set(Object.keys(PR).map(pc).filter(Boolean))].sort();
@@ -187,7 +187,6 @@ function navGroups(){
   p.addEventListener('click',e=>{e.stopPropagation();const c=e.target.closest('[data-c]');if(c){const t=c.dataset.c,done=()=>{c.textContent='Copied ✓';setTimeout(()=>{c.textContent='Copy'},2000)};if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>{const s=getSelection(),g=document.createRange();g.selectNodeContents(c.previousSibling);s.removeAllRanges();s.addRange(g);c.textContent='Press Ctrl+C'});else{const s=getSelection(),g=document.createRange();g.selectNodeContents(c.previousSibling);s.removeAllRanges();s.addRange(g);c.textContent='Press Ctrl+C'}}if(e.target.closest('[data-x]'))p.style.display='none'});
   document.addEventListener('click',()=>{p.style.display='none'});document.addEventListener('keydown',e=>{if(e.key==='Escape')p.style.display='none'})}
  const G=[['Fleet',['S','C']],['Logistics',['P','V']],['Asteroids',['A','X','F','E']],['Buildings',['B','T','L']],['Trading',['K','Y']],['Planners',['R']]];
- const old=$('#vBB');if(old)old.style.display='none';
  const menus=[],btns=[];
  const closeAll=()=>menus.forEach(d=>d.style.display='none');
  const frag=[];
@@ -262,9 +261,8 @@ function csv(){
  const a=doc.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'}));const _n=new Date(),_p=x=>String(x).padStart(2,'0');a.download='influence-stock_'+_n.getFullYear()+'-'+_p(_n.getMonth()+1)+'-'+_p(_n.getDate())+'_'+_p(_n.getHours())+'-'+_p(_n.getMinutes())+'.csv';doc.body.appendChild(a);a.click();a.remove();
 }
 $('#q').addEventListener('input',draw);$('#ast').addEventListener('change',draw);$('#cls').addEventListener('change',draw);
-const setV=v=>{view=v;['N','P','B','T','A','K','C','S','R','X','L','Y','V','F','E'].forEach(k=>{const e=$('#v'+k);if(e)e.className=k===v?'on':''});$('#vBB').className=(v==='B'||v==='T')?'on':'';$('#vBB').textContent=v==='B'?'Buildings: Contents ▾':v==='T'?'Buildings: Status ▾':'Buildings ▾';$('#ddm').style.display='none';draw()};
+const setV=v=>{view=v;['N','P','B','T','A','K','C','S','R','X','L','Y','V','F','E'].forEach(k=>{const e=$('#v'+k);if(e)e.className=k===v?'on':''});$('#ddm').style.display='none';draw()};
 $('#vP').addEventListener('click',()=>setV('P'));$('#vB').addEventListener('click',()=>setV('B'));$('#vN').addEventListener('click',()=>setV('N'));$('#vC').addEventListener('click',()=>setV('C'));$('#vS').addEventListener('click',()=>setV('S'));$('#vT').addEventListener('click',()=>setV('T'));
-$('#vBB').addEventListener('click',e=>{e.stopPropagation();const d=$('#ddm');if(d.style.display==='flex'){d.style.display='none';return}const r=$('#vBB').getBoundingClientRect();d.style.left=r.left+'px';d.style.top=(r.bottom+4)+'px';d.style.display='flex'});
 document.addEventListener('click',()=>{const d=$('#ddm');if(d)d.style.display='none'});window.addEventListener('scroll',()=>{const d=$('#ddm');if(d)d.style.display='none'});$('#vA').addEventListener('click',()=>setV('A'));$('#vK').addEventListener('click',()=>setV('K'));if($('#vX'))$('#vX').addEventListener('click',()=>setV('X'));$('#vL').addEventListener('click',()=>setV('L'));if($('#vY'))$('#vY').addEventListener('click',()=>setV('Y'));$('#vR').addEventListener('click',()=>setV('R'));
 $('#csv').addEventListener('click',csv);
 navGroups();
