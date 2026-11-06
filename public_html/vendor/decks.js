@@ -64,6 +64,8 @@ function wNameBox(pen) {
   }
   // Lot leases (Mark, 5 Nov 2026 – LIVE 5 Nov): fills the Science Lab's spare console
   DECKS[3].pages.push('LL');
+  // Storage tidy (Mark, 6 Nov 2026) – TEST ONLY on ?beta=1: renames storage to the "Skippy's X" standard (vendor/tidy.js)
+  if (/[?&]beta=1\b/.test(location.search)) DECKS[4].pages.push('ST');
   window.YICDECKLIST = DECKS;
 
   const CSS = `
@@ -177,7 +179,7 @@ body > header{display:none!important}
     C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
     E: 'Who can mine what', LL: 'Who leases which lots', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
-    Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel',
+    Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename storage (test)',
   };
   const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
   const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
