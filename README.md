@@ -1,6 +1,6 @@
-# Your Influence Command
+# Skippy's Awesome Command Deck
 
-Source for https://your-command.adalia.academy
+(Also called Your Influence Command.) Source for https://your-command.adalia.academy – a free community tool for players of Influence.
 
 - `public_html/` mirrors the live site (except `config.php` and `cache/`, which stay on the server only).
 - Deploy: cPanel › Git Version Control › Manage › Pull or Deploy › "Update from Remote", then "Deploy HEAD Commit". `.cpanel.yml` copies `public_html/` over the live folder.
