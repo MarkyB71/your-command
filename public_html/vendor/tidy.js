@@ -14,7 +14,7 @@
 
   const DISPATCHER = '0x0422d33a3638dcc4c62e72e1d6942cd31eb643ef596ccac2351e0e21f6cd4bf4';
   // Newark plan, agreed by Mark 6 Nov 2026 (building id, name now, new name)
-  const PLAN = {
+  const PLANS = [{
     rock: 'Newark',
     renames: [
       [40805, 'Skippys Iron', "Skippys Troilite"],
@@ -34,11 +34,39 @@
       [34498, 24646, [66, 169]],     // Gases → Supplies: Silica Powder, Tungsten Powder
       [41438, 24646, [25]],          // Water → Supplies: Raw Salts
     ],
-  };
+  }, {
+    // TRCS Leisure Potato – Mark's first rock, fully built, home of the Den of Iniquity (agreed 6 Nov 2026).
+    // Kept as they are: Skippys Moonshine, Hydrogen, Nitrogen, Oxygen, Ammonia, Sulfur Dioxide, Burgers,
+    // Building Supplies, Ship Parts, Modules, HT Assembly, Supply Co LTD. Moves come later.
+    rock: 'TRCS Leisure Potato',
+    renames: [
+      [31376, 'Skippys HydroNitro Tank Farm', 'Skippys Nitrogen 2'],
+      [32085, 'Skippys Water Store', 'Skippys Water'],
+      [31889, 'Skippys Fuel Tank Farm', 'Skippys Fuel'],
+      [37870, 'Skippys Oxides', 'Skippys Carbon Gases'],
+      [31649, 'Skippys Acid', 'Skippys Spare Tank 1'],
+      [32661, 'Skippys Deliveries', 'Skippys Spare Tank 2'],
+      [32779, 'Skippys Sulfur Dioxide 1', 'Skippys Spare Tank 3'],
+      [32778, 'Skippys Sulfur Dioxide 3', 'Skippys Spare Tank 4'],
+      [39277, 'Skippys Hydrogen II', 'Skippys Spare Tank 5'],
+      [32305, 'Skippys Bare Rocks', 'Skippys Rocks'],
+      [32307, 'Skippys Pyroxene Olivine', 'Skippys Rocks 2'],
+      [30437, 'Skippys Farts', 'Skippys Oxides'],
+      [25462, 'Skippys Store', 'Skippys Oxides 2'],
+      [30438, 'Skippys Rock Storage', 'Skippys Salts'],
+      [4723, 'Skippys Steel Production', 'Skippys Metals'],
+      [22598, 'Skippys Ship Building', 'Skippys Glass and Fibre'],
+      [41854, 'Skippys Barrels', 'Skippys Acids'],
+      [4623, 'Skippys Mixing WH1', 'Skippys Mixing'],
+    ],
+    moves: [],
+  }];
+  let PLAN = PLANS[1];
   const PN = { 5: 'Sulfur Dioxide', 6: 'Carbon Dioxide', 7: 'Carbon Monoxide', 18: 'Rhabdite', 19: 'Graphite', 20: 'Taenite', 23: 'Oxygen', 25: 'Raw Salts', 31: 'Nickel', 37: 'Iron Sulfide', 66: 'Silica Powder', 169: 'Tungsten Powder' };
   const SLOT = 2; // warehouse / tank farm main storage (inventoryType 10 / 19)
   // renames are done (6 Nov); step 2 goes all at once (Mark: "lets go for all at once this time")
   const S = { tick: {}, mtick: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, busy: false, msg: '', tx: '' };
+  PLANS[1].renames.forEach(([id]) => { S.tick[id] = true; }); // Leisure Potato: all renames ticked
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const D = () => (window.YIC && window.YIC.D) || null;
@@ -126,6 +154,7 @@
     const allDone = r.every((x) => x.state === 'done');
     m.innerHTML = `<div id="st-wrap">
 <h2>Storage tidy – ${esc(PLAN.rock)} <span class="st-test">TEST</span></h2>
+<div class="st-w">${PLANS.map((p, i) => `<button data-rock="${i}"${p === PLAN ? ' style="border-color:#8fe3ff;color:#8fe3ff"' : ''}>${esc(p.rock)}</button>`).join('')}</div>
 <p>Nothing happens unless you press Approve <b>and</b> approve again in your wallet.</p>
 <h3 style="color:#8fe3ff;margin:18px 0 0">Step 1 of 3: renames${allDone ? ' – done ✓' : ''}</h3>
 <table><thead><tr><th></th><th>Name now</th><th>New name</th><th>Crew</th><th>Check</th></tr></thead><tbody>
@@ -133,13 +162,13 @@ ${r.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.state ==
 <td>${esc(x.now || x.was)}</td><td class="st-to">${esc(x.to)}</td><td>${esc(x.crewName)}</td><td>${esc(x.note)}</td></tr>`).join('')}
 </tbody></table>
 ${allDone ? '' : `<button class="st-go" id="st-go"${picked.length && !S.busy ? '' : ' disabled'}>Approve ${picked.length} rename${picked.length === 1 ? '' : 's'}</button>`}
-<h3 style="color:#8fe3ff;margin:26px 0 0">Step 2 of 3: move goods</h3>
+${mv.length ? `<h3 style="color:#8fe3ff;margin:26px 0 0">Step 2 of 3: move goods</h3>
 <p>Each delivery sends everything of those products that the building holds right now.</p>
 <table><thead><tr><th></th><th>From</th><th>To</th><th>Goods</th><th>Sent by</th><th>Check</th></tr></thead><tbody>
 ${mv.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.state === 'ok' ? `<input type="checkbox" data-mi="${x.i}"${S.mtick[x.i] ? ' checked' : ''}>` : ''}</td>
 <td>${esc(x.fromN)}</td><td class="st-to">${esc(x.toN)}</td><td>${x.items.map((it) => esc(PN[it.p] || '#' + it.p) + ' ' + tonnes(it.a)).join('<br>') || '–'}</td><td>${esc(x.crewName)}</td><td>${esc(x.note)}</td></tr>`).join('')}
 </tbody></table>
-<button class="st-go" id="st-mgo"${mpicked.length && !S.busy ? '' : ' disabled'}>Approve ${mpicked.length} deliver${mpicked.length === 1 ? 'y' : 'ies'}</button>
+<button class="st-go" id="st-mgo"${mpicked.length && !S.busy ? '' : ' disabled'}>Approve ${mpicked.length} deliver${mpicked.length === 1 ? 'y' : 'ies'}</button>` : '<p style="margin-top:22px">Step 2 (moving goods) for this rock comes later.</p>'}
 <div class="st-w" id="st-wl"></div>
 <div id="st-msg"></div>
 <p style="margin-top:16px;font-size:13px">Step 3 (accepting deliveries and checking the result) comes later. Until then, accept them in the game or see Waiting to accept on the Bridge.</p>
@@ -148,7 +177,9 @@ ${mv.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.state =
     m.querySelectorAll('input[data-mi]').forEach((c) => c.addEventListener('change', () => { S.mtick[c.dataset.mi] = c.checked; page(m); }));
     const g = m.querySelector('#st-go');
     if (g) g.addEventListener('click', () => start(m, () => renameCalls(picked), 'rename'));
-    m.querySelector('#st-mgo').addEventListener('click', () => start(m, () => moveCalls(mpicked), 'delivery'));
+    const mg = m.querySelector('#st-mgo');
+    if (mg) mg.addEventListener('click', () => start(m, () => moveCalls(mpicked), 'delivery'));
+    m.querySelectorAll('button[data-rock]').forEach((b) => b.addEventListener('click', () => { if (S.busy) return; PLAN = PLANS[+b.dataset.rock]; S.msg = ''; page(m); }));
     if (S.msg) say(m, S.msg, S.msgErr);
   }
 
