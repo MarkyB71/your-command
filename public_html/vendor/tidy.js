@@ -60,6 +60,7 @@
       [4623, 'Skippys Mixing WH1', 'Skippys Mixing'],
     ],
     moves: [],
+    extractors: true,
   }];
   let PLAN = PLANS[1];
   const PN = { 5: 'Sulfur Dioxide', 6: 'Carbon Dioxide', 7: 'Carbon Monoxide', 18: 'Rhabdite', 19: 'Graphite', 20: 'Taenite', 23: 'Oxygen', 25: 'Raw Salts', 31: 'Nickel', 37: 'Iron Sulfide', 66: 'Silica Powder', 169: 'Tungsten Powder' };
@@ -86,20 +87,49 @@
   };
   const sameAddr = (a, b) => { try { return BigInt(a) === BigInt(b); } catch (e) { return false; } };
 
+  // all of the wallet's buildings on the rock this plan is for
+  const onRock = (all) => all.filter((b) => b.meta && b.meta.asteroid && b.meta.asteroid.name === PLAN.rock);
+  const lotIdx = (b) => { const l = ((b.Location && b.Location.locations) || []).find((x) => x.label === 4); return l ? Math.floor(l.id / 4294967296) : 0; };
+
   function rows() {
     const d = D(), all = (d && d.allB) || [];
-    return PLAN.renames.map(([id, was, to]) => {
+    let list = PLAN.renames.slice();
+    // blanket extractor names (Mark, 6 Nov 2026): "Skippys Extractor 1, 2, 3…" on each rock, numbered by lot.
+    // Working extractors only; they go FIRST so a name an extractor is using (e.g. "Skippys Water") is freed up
+    // before a storage building takes it in the same approval.
+    if (PLAN.extractors) {
+      const ex = onRock(all).filter((b) => b.Building.buildingType === 2 && b.Building.status === 3).sort((a, b) => lotIdx(a) - lotIdx(b));
+      const xs = ex.map((b, k) => [b.id, (b.Name && b.Name.name) || '', 'Skippys Extractor ' + (k + 1), 1]);
+      if (!S.xinit) { S.xinit = true; xs.forEach(([id]) => { S.tick[id] = true; }); }
+      list = xs.concat(list);
+    }
+    const out = list.map(([id, was, to, isEx]) => {
       const b = all.find((x) => x.id === id);
       const now = b && b.Name && b.Name.name;
       const crew = b && b.Control && b.Control.controller && b.Control.controller.id;
       const crewName = (crew && d.crewN && d.crewN[crew]) || (crew ? 'Crew #' + crew : '');
-      let state = 'ok', note = 'Ready';
+      let state = 'ok', note = isEx ? 'Ready (extractor)' : 'Ready';
       if (!b) { state = 'no'; note = 'Not found in your buildings'; }
       else if (now === to) { state = 'done'; note = 'Already done ✓'; }
       else if (now !== was) { state = 'no'; note = 'Name has changed since the plan – skipped'; }
       else if (nameErr(to)) { state = 'no'; note = 'New name ' + nameErr(to); }
-      return { id, was, to, now, crew, crewName, state, note };
+      return { id, was, to, now: now || (isEx ? '(no name)' : ''), crew, crewName, state, note, isEx };
     });
+    // names must be unique on each rock (E6014: not unique) – play the ticked renames through in order
+    const held = {};
+    onRock(all).forEach((b) => { if (b.Name && b.Name.name) held[b.Name.name.toLowerCase()] = b.id; });
+    out.forEach((x) => {
+      if (x.state !== 'ok' || !S.tick[x.id]) return;
+      const k = x.to.toLowerCase(), who = held[k];
+      if (who && who !== x.id) {
+        const ob = all.find((b) => b.id === who);
+        x.state = 'no'; x.note = 'Name already used on this rock by ' + ((ob && ob.Name && ob.Name.name) ? 'another building' : 'building #' + who) + ' – skipped';
+        return;
+      }
+      if (x.now) delete held[x.now.toLowerCase()];
+      held[k] = x.id;
+    });
+    return out;
   }
 
   function css() {
