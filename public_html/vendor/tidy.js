@@ -3,11 +3,12 @@
      1 pick a rock · 2 naming (own prefix + styles, every name editable) · 3 moves (product groups → buildings,
      best free logistics crew, deliveries per approval) · 4 finish in the game + check again.
    Nothing is sent until the player presses Approve AND approves again in their own wallet. Only the game's
-   ChangeName and SendDelivery systems are ever called, only on the wallet's own buildings, and the connected
+   ChangeName, SendDelivery and ResupplyFood systems are ever called, only on the wallet's own buildings, and the connected
    wallet must be the one the page is showing. No pasted code, no other actions.
    Call formats checked against @influenceth/sdk 2.8.1 System.getRunSystemCall:
      run_system('ChangeName', [5, buildingId, name, 1, crewId])
      run_system('SendDelivery', [5, fromId, 2, n, (product, amount)×n, 5, toId, 2, 1, crewId])
+     run_system('ResupplyFood', [5, buildingId, 2, food, 1, crewId])
    Game rules learned on 6 Nov 2026 (Newark + TRCS Leisure Potato):
      names 4–28 letters/numbers/spaces (E6013 for an apostrophe), unique on each rock (E6014);
      renames work from anywhere; deliveries need the sending crew ON the rock (E4001); any of the wallet's
@@ -242,7 +243,7 @@
       // normal rations). Mark, 6 Nov: a 0%-food crew's transfers took 5–45 min instead of arriving at once.
       const food = typeof c.food === 'number' ? Math.max(0, Math.min(1, c.food)) : 1;
       const fm = Math.min(1, Math.max(0.25, food / 0.5));
-      return { id: c.id, name: c.name, busy: c.busy || '', free: free * fm, speed: speed * fm, food, fm };
+      return { id: c.id, name: c.name, busy: c.busy || '', free: free * fm, speed: speed * fm, rawFree: free, rawSpeed: speed, food, fm, mates: c.roster.length };
     }).sort((a, b) => (!!a.busy - !!b.busy) || (b.free - a.free) || (b.speed - a.speed));
   }
   function movePlan(job) {
@@ -411,6 +412,7 @@ ${GROUPS.map(([g, n, tank]) => `<tr><td>${esc(n)}${tank ? ' <span style="color:#
 <div class="st-w">${plan.crews.length ? sel('st-mover', plan.crews.map((c) => [c.id, c.name + ' – free transport ×' + c.free.toFixed(2) + ' – food ' + Math.round(c.food * 100) + '%' + (c.fm < 1 ? ' (hungry, slower)' : '') + (c.busy ? ' – busy until ' + c.busy : '')]), S.mover) : '<span class="st-bad">None of your crews is on this rock right now – fly one there to move goods.</span>'}
 <span style="color:#8b9ab0;font-size:13px">best first: deliveries inside the free transport distance arrive straight away</span></div>
 ${(() => { const c = plan.crews.find((x) => x.id === S.mover); return c && c.fm < 1 ? `<p class="st-bad">${esc(c.name)} has only ${Math.round(c.food * 100)}% food, so its deliveries will be slower (×${c.fm.toFixed(2)}). Feed the crew first, or pick another one.</p>` : ''; })()}
+${feedHTML(plan.crews)}
 <h3>Deliveries (${plan.rows.length})</h3>
 <div class="st-w"><label>Deliveries per approval ${sel('st-bs', BATCHES.map((n) => [n, n]), S.bs)}</label><button id="st-tick">Tick the next ${S.bs === 'All' ? 'all' : S.bs}</button><button id="st-untick">Untick all</button></div>
 <table><thead><tr><th></th><th>From</th><th>To</th><th>Goods</th><th>Check</th></tr></thead><tbody>
@@ -423,6 +425,26 @@ ${plan.rows.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.
 <table><thead><tr><th>Storage</th><th>Weight</th><th>Space</th></tr></thead><tbody>
 ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n, w, v]) => `<tr><td>${esc(n)}</td><td>${bar(w)}</td><td>${bar(v)}</td></tr>`).join('')}
 </tbody></table>`;
+  }
+
+  // feeding: the best crew for moving if it were fed (raw bonus), topped up from Food stored on this rock
+  // with the game's ResupplyFood [5, building, 2, food, 1, crew]. A full ration is 1,000 kg per crewmate
+  // (SDK Crew.CREWMATE_FOOD_PER_YEAR).
+  function feedPlan(cl) {
+    const best = cl.filter((c) => !c.busy).sort((a, b) => (b.rawFree - a.rawFree) || (b.rawSpeed - a.rawSpeed))[0];
+    if (!best || best.food >= 0.95) return null;
+    // time since fed, in years, from the food ratio (inverse of SDK getCurrentFoodRatio), at most one year's food
+    const yrs = Math.min(1, best.food >= 0.5 ? 1 - best.food : (0.75 - best.food) / 0.5);
+    const need = Math.floor(best.mates * 1000 * yrs);
+    const src = onRock().filter(isStore).map((b) => { const i = inv(b); const f = ((i && i.contents) || []).reduce((s, c) => s + (c.product === 129 ? c.amount : 0), 0); return [b, f]; }).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+    return { crew: best, need, src: src && src[0], have: src ? src[1] : 0, give: src ? Math.min(need, src[1]) : 0 };
+  }
+  function feedHTML(cl) {
+    const f = feedPlan(cl);
+    if (!f || f.need <= 0) return '';
+    const head = `Best crew for moving: <b>${esc(f.crew.name)}</b> (free transport ×${f.crew.rawFree.toFixed(2)} when fed) – food ${Math.round(f.crew.food * 100)}%.`;
+    if (!f.src) return `<p>${head} <span class="st-bad">No Food stored on this rock to feed it.</span></p>`;
+    return `<div class="st-w"><span>${head}</span><button class="st-go" id="st-feed"${S.busy ? ' disabled' : ''}>Feed ${esc(f.crew.name)}: ${tonnes(f.give)} Food from ${esc(nm(f.src))}</button></div>`;
   }
 
   function step4() {
@@ -445,6 +467,13 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     const rg = q('#st-rgo'); if (rg) rg.addEventListener('click', () => start(m, () => renamePlan().order.map((x) => ({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ChangeName'), '0x5', '0x5', hex(x.b.id), short(x.to), '0x1', hex(x.crew)] })), 'rename'));
     qa('select[id^="st-g-"]').forEach((s) => s.addEventListener('change', () => { const [, , g, k] = s.id.split('-'); S.groups[g][+k] = +s.value; S.mtick = {}; S.mtinit = false; page(m); }));
     qa('input[data-lv]').forEach((c) => c.addEventListener('change', () => { S.leave[c.dataset.lv] = c.checked; S.mtick = {}; S.mtinit = false; page(m); }));
+    const fd = q('#st-feed');
+    if (fd) fd.addEventListener('click', () => {
+      const f = feedPlan(crews());
+      if (!f || !f.src || !f.give) return;
+      S.mover = f.crew.id;
+      start(m, () => [{ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(f.src.id), hex(SLOT), hex(f.give), '0x1', hex(f.crew.id)] }], 'feed');
+    });
     const mvr = q('#st-mover'); if (mvr) mvr.addEventListener('change', () => { S.mover = +mvr.value; page(m); });
     const bs = q('#st-bs'); if (bs) bs.addEventListener('change', () => { S.bs = bs.value === 'All' ? 'All' : +bs.value; S.mtick = {}; S.mtinit = false; page(m); });
     const tk = q('#st-tick'); if (tk) tk.addEventListener('click', () => { S.mtick = {}; S.mtinit = false; page(m); });
@@ -520,7 +549,9 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
       const h = res && (res.transaction_hash || res.transactionHash);
       if (kind === 'delivery') (S.lastPicked || []).forEach((k) => { S.sent[k] = 1; delete S.mtick[k]; });
       say(m, '✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer">${esc(String(h).slice(0, 10))}…</a>. ` : '') +
-        (kind === 'rename' ? 'In a minute or two press ↻ Check again – the new names then show here.' : 'Finish them in the game with Finish All Ready Items, then press ↻ Check again.'));
+        (kind === 'rename' ? 'In a minute or two press ↻ Check again – the new names then show here.'
+          : kind === 'feed' ? 'Crew fed. In a minute or two press ↻ Check again – it should then be the mover, at full speed.'
+          : 'Finish them in the game with Finish All Ready Items, then press ↻ Check again.'));
     } catch (e) {
       const t = String((e && e.message) || e || '');
       say(m, /reject|cancel|abort|denied|User/i.test(t) ? 'Cancelled in the wallet – nothing was changed.' : 'Not sent: ' + esc(t), true);
