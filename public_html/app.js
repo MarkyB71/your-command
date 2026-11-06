@@ -198,7 +198,7 @@ function navGroups(){
   d.addEventListener('click',()=>{closeAll();setTimeout(upd,0)});
   menus.push(d);btns.push([b,d,name]);frag.push(b);document.body.appendChild(d)});
  
- frag.forEach(e=>{if(e)seg.appendChild(e)});if(old)seg.appendChild(old);
+ frag.forEach(e=>{if(e)seg.appendChild(e)});
  document.addEventListener('click',closeAll);window.addEventListener('scroll',closeAll);
  const upd=()=>btns.forEach(([b,d,name])=>{const on=d.querySelector('button.on');b.className=on?'on':'';b.textContent=(on?name+': '+on.textContent:name)+' ▾'});
  seg.addEventListener('click',()=>setTimeout(upd,0));upd();
