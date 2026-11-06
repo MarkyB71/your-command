@@ -156,6 +156,9 @@ body > header{display:none!important}
     const b = btn(k);
     if (b) {
       b.click();
+      // redraw the deck straight away – waiting for the next tick let the new page flash up
+      // on its own for a moment when changing deck, e.g. Bridge → Flight Deck (Mark, 6 Nov)
+      try { tick(); } catch (e) {}
       scrollTo(0, 0);
     }
   };
