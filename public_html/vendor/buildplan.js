@@ -8,14 +8,14 @@ const PROCS=[["Water Electrolysis",1,{"24":9},{"2":1,"23":8}],["Water Vacuum-eva
 const MK={};PROCS.forEach(([pn,pt,inp,out])=>{for(const k in out)(MK[k]=MK[k]||[]).push([pn,pt,inp,out[k],out])});
 const FBT={1:3,2:5,3:4,4:6,5:6};
 window.YICREC={MK,FBT};
-/* Ships as tiles too (beta): inputs = the ship's integration step in a Shipyard's dry dock */
+/* Ships as tiles too: inputs = the ship's integration step in a Shipyard's dry dock */
 const SHP={"s4":["Shuttle",{"165":1,"240":1,"241":3,"242":1,"243":2,"244":1,"245":1}],"s2":["Light Transport",{"148":6,"166":1,"239":4,"240":1,"241":1,"242":2,"243":4,"244":1,"245":2}],"s3":["Heavy Transport",{"148":36,"168":1,"240":3,"241":1,"242":6,"243":6,"244":3,"245":9}]}; /* the ship Integration recipes (SDK 2.7.2, as in chain.js) */
 const BL=Object.assign({},BLDS,SHP),isShip=k=>/^s\d$/.test(k); /* recipes for other pages (Travel: can a rock make its own propellant?) */
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
-/* flight time in weeks / days / hours (1 game day = 1 real hour) – TEST only */
+/* flight time in weeks / days / hours (1 game day = 1 real hour) */
 const HW=h=>{;h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
 const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10,unit:'t'};
-/* Production planner (beta, Mark 29 Oct): same planner, but for one product made in a Refinery / Factory / Bioreactor */
+/* Production planner (Mark, 29 Oct): same planner, but for one product made in a Refinery / Factory / Bioreactor */
 const PPCSS='#bpw .bp-pp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px;font-size:15px}#bpw .bp-tabs{display:flex;gap:6px;width:100%}#bpw .bp-tab{padding:7px 14px;border-radius:8px;border:1px solid #2a3646;background:#121a24;color:#c4cdd9;font-weight:700;cursor:pointer}#bpw .bp-tab.on{background:#e8645a;border-color:#e8645a;color:#fff;box-shadow:0 0 12px -2px #e8645a}#bpw .bp-pp select{font-size:15px;padding:5px 8px;min-width:0!important;max-width:100%}#bpw .bp-pp input{width:110px!important;min-width:0!important;flex:none!important;font-size:15px;padding:5px 8px}';
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
 /* can this asteroid make product prod (same rule as the Travel page) */
@@ -111,13 +111,13 @@ export function drawBuildPlan(m){
   items.forEach(([id,q])=>want(id,q,0,[]));
   return{USED,pool,fly,mine,fac,made}};
   const myFac=(t,aid=S.ast)=>(D.allB||[]).filter(b=>b.Building&&b.Building.buildingType===FBT[t]&&b.Building.status===3&&(((b.Location||{}).locations||[]).find(x=>x.label===3)||{}).id===aid).length;
-  /* TEST: materials your other asteroids hold but that can be made fully here (own stock + mining, facilities you already have) are made here instead of flown in */
+  /* materials your other asteroids hold but that can be made fully here (own stock + mining, facilities you already have) are made here instead of flown in */
   const AWAY={};{A.forEach(a=>{if(a.id===S.ast||a.i===null)return;const t=Y.tot[a.i]||{};for(let k=1;k<=22;k++)if((t[k]||0)>=1000)AWAY[k]=1});
     (D.owned||[]).forEach(a=>{if(a.id===S.ast)return;const c=a.Celestial||{},ab2=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?Y.astAbund(c.abundances):null,sp=(Y.SPEC||{})[c.celestialType];for(let k=1;k<=22;k++)if(ab2?(ab2[k]||0)>0:sp&&sp[1].includes(k))AWAY[k]=1})}
   const UC1={},AW=AWAY;
   const ucOK=UC1,vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
   const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK,AW);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
-  /* TEST (CANB): what each building needs for ONE of it on this asteroid */
+  /* what each building needs for ONE of it on this asteroid */
   const ucB={},canBadge=k=>{const need=BL[k][1],dd=isShip(k)&&!myFac(5);const sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
     if(!sh.length&&!dd){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
     const E=expand(stk,canMine,sh,ucB),fl=Object.keys(E.fly).filter(x=>vis(E.fly,x)),nf=Object.keys(E.fac).filter(t=>!myFac(t));if(dd&&!nf.includes('5'))nf.push('5');
@@ -192,7 +192,7 @@ export function drawBuildPlan(m){
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
   const planHTML=Object.keys(fly).length?'<div id="bpPlan" class="bp-plan"><span class="a">Working it out…</span></div>':'';
   const facList=Object.keys(fac).map(t=>{const n=myFac(t);return'<div class="'+(n?'ok':'none')+'">'+(n?'✓ ':'✗ ')+esc(PTYPE[t])+(n?' – you have '+n:' – none on '+esc(here.name))+'</div>'}).join('')||'<span class="a">None needed</span>';
-  /* TEST: facilities you don't have here that would let you make a fly-in item on site instead (e.g. Bioreactor for Soil) */
+  /* facilities you don't have here that would let you make a fly-in item on site instead (e.g. Bioreactor for Soil) */
   const could={};Object.keys(fly).forEach(k=>{if(+k<=22||!vis(fly,k))return;const E=expand(stk,canMine,[[k,fly[k]]],ucOK);
     if(!E.USED[k]||Object.keys(E.fly).some(f=>vis(E.fly,f)))return;Object.keys(E.fac).filter(t=>!myFac(t)).forEach(t=>{(could[t]=could[t]||[]).push(nm(k))})});
   const facAll=facList+(Object.keys(could).length?'<div class="a" style="margin-top:6px">To make more here instead of flying it in:</div>'+Object.keys(could).map(t=>'<div class="part">✗ '+esc(PTYPE[t])+' – none on '+esc(here.name)+' <span class="a">· would let you make '+could[t].map(esc).join(', ')+' here</span></div>').join(''):'');
@@ -224,7 +224,7 @@ export function drawBuildPlan(m){
     Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
       const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
       /* "Then send it": loaded flight from the source asteroid to the build asteroid with the chosen ship */
-      /* crew engine bonus (exhaust velocity): crew aboard the ship, else the crew that controls it – TEST only */
+      /* crew engine bonus (exhaust velocity): crew aboard the ship, else the crew that controls it */
       const crewOf=sh=>{const cs=D.crewsRaw||[];return cs.find(c=>{const l=(c.Location&&c.Location.location)||{};return l.label===6&&l.id===sh.id&&((c.Crew&&c.Crew.roster)||[]).length})||cs.find(c=>c.id===sh.crewId)};
       const bon=sh=>{if(!T.exhaustBonus)return 1;const cr=crewOf(sh),mates=((cr&&cr.Crew&&cr.Crew.roster)||[]).map(id=>(D.crewmates||{})[id]).filter(Boolean);try{return mates.length?T.exhaustBonus(mates)||1:1}catch(e){return 1}};
       const bonTxt=sh=>{const b=bon(sh),cr=crewOf(sh);return ' · crew engine bonus <b>×'+b.toFixed(2)+'</b>'+(cr&&cr.Name&&cr.Name.name?' ('+esc(cr.Name.name)+')':'')};
@@ -282,7 +282,7 @@ export function drawBuildPlan(m){
       x.onchange=set});
     if(calc){calc.onclick=()=>drawBuildPlan(m)}
     const cl=m.querySelector('#bpClr');if(cl)cl.onclick=()=>{S.cnt={};drawBuildPlan(m)}}
-  /* TEST (CANB): "Make it here" badge opens The SkippyChain on that building in a NEW TAB, using this asteroid's stock */
+  /* "Make it here" badge opens The SkippyChain on that building in a NEW TAB, using this asteroid's stock */
   m.querySelectorAll('.bp-go').forEach(g=>{const go=e=>{e.preventDefault();e.stopPropagation();
       const q=new URLSearchParams(location.search);q.set('pcp',String(isShip(g.dataset.go)?2000+(+g.dataset.go.slice(1)):1000+(+g.dataset.go)));q.set('pca',here.name);
       window.open(location.pathname+'?'+q.toString()+'#vH','_blank')};
@@ -301,7 +301,7 @@ export function drawBuildPlan(m){
       b.className='on';S.mode='prod';drawBuildPlan(main)});
   };
   setInterval(hookP,700);
-  /* the rock box at the top of the screen also picks the rock for the planners (beta) */
+  /* the rock box at the top of the screen also picks the rock for the planners */
   document.addEventListener('change',e=>{if(!e.target||e.target.id!=='ast'||e.target.value==='')return;
     const on=[...document.querySelectorAll('#vU.on,#vD.on')][0],main=document.getElementById('main'),Y=window.YIC;if(!on||!main||!Y)return;
     const v=(Y.asts[+e.target.value]||{}).id;if(!v)return;S.ast=v;S.picked=true;setTimeout(()=>drawBuildPlan(main),0)});

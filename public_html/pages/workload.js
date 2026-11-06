@@ -160,7 +160,7 @@
         g[k].gp.push(x.gp);
         if (x.crew) g[k].crew.add(x.crew);
       });
-      // Each idle building gets its own "in game" link (beta first)
+      // Each idle building gets its own "in game" link
       const one = (x, i) => APP.esc(x.n[i]) + (x.gp[i] && window.GL ? window.GL(x.gp[i], 'Open in the game') : '');
       S.idle = Object.values(g).map((x) => ({
         lvl: 1,
@@ -392,7 +392,7 @@
       ],
       ['prop', 'Ships low on propellant', 'Ships with less than a quarter of a tank.'],
     ];
-    // Idle buildings: count buildings (not groups) + asteroids (beta first)
+    // Idle buildings: count buildings (not groups) + asteroids
     const cnt = (k) => S[k].reduce((n, x) => n + (x.cnt || 1), 0);
     const COL = { 2: '#ff7a7a', 1: '#fab219', 0: '#5fc3e4' },
       dot = (l) =>

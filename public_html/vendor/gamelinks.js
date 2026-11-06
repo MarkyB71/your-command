@@ -2,7 +2,6 @@
 // They only appear when the "Your Command – Game Links" browser extension is
 // installed (it marks the page with data-yic-game-ext). Clicking one asks the
 // extension to move the player's open game tab there, without a reload.
-// While testing, links also need ?beta=1 in the address.
 (function () {
   var GAME = 'https://game.influenceth.io';
   var OK = /^\/(building|lot|ship|asteroids|crew|crewmate)\/\d+$/;
@@ -73,7 +72,7 @@
     'color:#8fe3ff;border:1px solid #2b5a72;border-radius:10px;padding:0 7px;margin-left:6px;' +
     'line-height:18px;text-decoration:none;vertical-align:middle}' +
     'a.yicg:hover{background:#12384a;color:#fff;box-shadow:0 0 8px #3fb8ff}';
-  // Install button + panel (test: ?beta=1). Sits just after "Play Influence".
+  // Install button + panel. Sits just after "Play Influence".
   var BCSS = '#cdx{color:#d8f7ff!important;font-weight:700;border-color:#8fe3ff!important;' +
     'box-shadow:0 0 8px rgba(143,227,255,.95),0 0 22px rgba(91,157,255,.75);' +
     'text-shadow:0 0 8px rgba(143,227,255,.9);animation:playGlow 2.4s ease-in-out infinite}' +

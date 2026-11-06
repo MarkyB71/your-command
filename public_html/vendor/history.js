@@ -44,7 +44,7 @@ export function drawHistory(m){
     switch(+e.label){case 1:return crewName[id]||('Crew #'+id);case 2:return 'Crewmate #'+id;case 3:return aName[id]||('Asteroid #'+id);
       case 4:{const a=id%4294967296;return 'Lot '+Math.floor(id/4294967296)+(aName[a]?' on '+aName[a]:'')}case 5:return bName[id]||('Building #'+id);case 6:return sName[id]||('Ship #'+id);
       case 7:return 'Deposit #'+id;case 9:return 'Delivery #'+id;default:return '#'+id}};
-  // Name + game link (beta + extension only, via vendor/gamelinks.js)
+  // Name + game link (needs the extension, via vendor/gamelinks.js)
   const GP={1:'/crew/',2:'/crewmate/',3:'/asteroids/',4:'/lot/',5:'/building/',6:'/ship/'};
   const E=(e,d)=>{const n=esc(ent(e)||d||'');const g=e&&typeof e==='object'&&GP[+e.label];return n+(g&&window.GL?window.GL(g+e.id,'Open in the game'):'')};
   const prods=v=>(v.products||[]).map(x=>'<b>'+esc(pAmt(x.product,x.amount))+' '+esc(pName(x.product))+'</b>').join(', ');

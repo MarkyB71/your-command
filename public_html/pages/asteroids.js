@@ -8,7 +8,7 @@
   const APP = new Proxy({}, { get: (_, k) => window.YIC[k], set: (_, k, v) => ((window.YIC[k] = v), true) });
 
 
-  // Who can supply who (test on ?beta=1, 26 Oct 2026): grid of raw resources × your rocks – which rocks can MINE each one
+  // Who can supply who (LIVE, 26 Oct 2026): grid of raw resources × your rocks – which rocks can MINE each one
   let supAll = false;
   try { supAll = localStorage.getItem('yic-sup-all') === '1'; } catch (e) {}
   function supplyHTML() {
@@ -56,7 +56,7 @@
         : '<div class="note">Every one of your rocks can mine every resource any of them can.</div>')
     );
   }
-  // Flight times on the red cells (test on ?beta=1): nearest rock that can supply it, fastest trip leaving now,
+  // Flight times on the red cells: nearest rock that can supply it, fastest trip leaving now,
   // standard Light Transport, full tank, full 2,000 t cargo (same as Trade finder)
   const ftMemo = {};
   let ftRun = 0;
@@ -468,7 +468,7 @@
   window.YICbeltMap = beltMap;
 
   window.PAGES = window.PAGES || {};
-  // Asteroids › Supply chain (view 'E') – own page, button only on ?beta=1 for now
+  // Asteroids › Supply chain (view 'E') – own page
   window.PAGES.E = function (m) {
     const h = supplyHTML();
     m.innerHTML = h || '<div class="note">You need at least two asteroids to compare.</div>';
@@ -476,6 +476,6 @@
   };
   window.PAGES.A = function (m) {
     drawAsteroids(m);
-    if (!window.YICDECKS) beltMap(m); // decks (beta): the Science Lab rack replaces the system map
+    if (!window.YICDECKS) beltMap(m); // decks: the Science Lab rack replaces the system map
   };
 })();

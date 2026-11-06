@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  // Cards or one table – TEST on ?beta=1 (26 Oct 2026). Default cards; the choice is remembered.
+  // Cards or one table – LIVE (26 Oct 2026). Default cards; the choice is remembered.
   const LS = 'yic-contents-view';
   function mode() { try { return localStorage.getItem(LS) === 'table' ? 'table' : 'cards'; } catch (e) { return 'cards'; } }
   function setMode(v) { try { localStorage.setItem(LS, v); } catch (e) {} }

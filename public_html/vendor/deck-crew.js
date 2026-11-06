@@ -1,4 +1,4 @@
-/* Crew Quarters look – Skippy's Command Deck (test on ?beta=1, 27 Oct 2026)
+/* Crew Quarters look – Skippy's Command Deck (LIVE, 27 Oct 2026)
    A row of crew lockers above every Crew Quarters page. Each crew has its own locker:
    name plate, a window with the crewmates' faces (class colour borders), food bar,
    where they are, and a light on the door (green ready, amber busy, red hungry).

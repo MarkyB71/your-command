@@ -1,4 +1,4 @@
-/* Flight Deck look – Skippy's Command Deck (test on ?beta=1, 26 Oct 2026)
+/* Flight Deck look – Skippy's Command Deck (LIVE, 26 Oct 2026)
    A navigation window above every Flight Deck page: the star, your rocks and their orbits,
    every ship docked at its rock and every ship in flight on its way (straight-line course from
    where it left to where it lands, placed by how far through the trip it is).

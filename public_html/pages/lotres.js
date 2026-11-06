@@ -180,7 +180,7 @@
         '</div>';
     }
     
-    // Game links: shared helper (vendor/gamelinks.js) – beta + extension only.
+    // Game links: shared helper (vendor/gamelinks.js) – needs the extension.
     const gl = (p, t) => (window.GL ? window.GL(p, t) : '');
     const mine = {};
     (APP.D.allB || []).forEach((b) => {

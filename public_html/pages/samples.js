@@ -6,7 +6,7 @@
   'use strict';
   // window.YIC is only set once app.js has loaded your data, so look it up each time
   const APP = new Proxy({}, { get: (_, k) => window.YIC[k], set: (_, k, v) => ((window.YIC[k] = v), true) });
-  // Hide tiny samples (beta test, 26 Oct 2026): under 2 t hidden by default; the choice is remembered in this browser
+  // Hide tiny samples (LIVE, 26 Oct 2026): under 2 t hidden by default; the choice is remembered in this browser
   const SMALL_KG = 2000,
     SKEY = 'yic-samp-show-small';
   let SHOWSM = false;
@@ -14,7 +14,7 @@
     SHOWSM = localStorage.getItem(SKEY) === '1';
   } catch (e) {}
 
-  // Group by rock (test on ?beta=1, 26 Oct 2026): switch "By resource | By rock", remembered
+  // Group by rock (LIVE, 26 Oct 2026): switch "By resource | By rock", remembered
   let byRock = true;
   try { if (localStorage.getItem('yic-samp-group') === 'res') byRock = false; } catch (e) {}
   const SW_CSS = '<style>.sm-sw{display:inline-flex;margin:0 14px 10px 0;border:1px solid #3a4658;border-radius:8px;overflow:hidden;vertical-align:middle}' +

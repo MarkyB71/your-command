@@ -1,4 +1,4 @@
-/* Engineering look – Skippy's Command Deck (test on ?beta=1, 27 Oct 2026)
+/* Engineering look – Skippy's Command Deck (LIVE, 27 Oct 2026)
    A production floor control panel above every Engineering page: one big dial per kind of
    facility (Extractors, Refineries, Factories, Bioreactors, Shipyards) showing how many are
    working out of how many you have, plus fill dials for Warehouses and Tank Farms.

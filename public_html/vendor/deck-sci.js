@@ -1,4 +1,4 @@
-/* Science Lab look – Skippy's Command Deck (test on ?beta=1, 27 Oct 2026)
+/* Science Lab look – Skippy's Command Deck (LIVE, 27 Oct 2026)
    A specimen rack above every Science Lab page: each of your rocks in its own glass tube,
    with its picture, spectral type, untouched core samples and a scanned / not scanned light.
    Click a tube to pick that rock in the asteroid box (click again for all asteroids).

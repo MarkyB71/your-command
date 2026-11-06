@@ -22,7 +22,7 @@
     '.yic-flt span{color:var(--muted);font-size:13px}' +
     '.yic-flt button{padding:4px 10px;font-size:13px}';
 
-  // Filter box above long tables (TEST: ?beta=1 only, 26 Oct 2026)
+  // Filter box above long tables (LIVE, 26 Oct 2026)
   var FMIN = 8;                 // only tables with at least this many rows get a box
   var ftext = {};               // what was typed, per page + table, kept across redraws
 

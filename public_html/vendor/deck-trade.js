@@ -1,4 +1,4 @@
-/* Trade Deck look – Skippy's Command Deck (test on ?beta=1, 27 Oct 2026)
+/* Trade Deck look – Skippy's Command Deck (LIVE, 27 Oct 2026)
    An exchange board above every Trade Deck page, like an old split-flap station board:
    the belt's busiest products with the best price to buy (lowest for sale) and to sell
    (highest wanted), a ticker of recent trades along the bottom, and a light for your own

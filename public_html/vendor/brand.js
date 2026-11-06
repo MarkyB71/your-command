@@ -25,7 +25,7 @@
     if(k==='N'||!b)return ['Quartermaster Skippy\'s','Command','Deck'];
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
-    // New titles (beta): "Your <Page>", no group word, no doubles
+    // New titles: "Your <Page>", no group word, no doubles
     {const NM={S:'Ships',C:'Crews',P:'Products',V:'Deliveries',J:'Activity Log',A:'Asteroids',X:'Core Samples',F:'Lot Resources',E:'Supply Chain',B:'Building Contents',T:'Building Status',L:'Leases',K:'Market',Y:'Trade Finder',M:'Market History',Q:'Crew Planner',R:'Travel Planner',U:'Construction Planner',D:'Production Planner',O:'Where to Buy',G:'Fuel Check',I:'Resource Map'};if(NM[k])return ['Your',NM[k],''];}
     // Trading and Planners read better without the group word
     if(k==='R')return ['Your','Travel Planner',''];
@@ -74,7 +74,7 @@
         t.innerHTML=T[0]==='Quartermaster Skippy\'s'?'<span>Quartermaster</span> <b class="bw">Skippy&#39;s</b> <span>Command Deck</span>':esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
         d.title=T.filter(Boolean).join(' ');}
     }
-    // TEST (MVB): banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
+    // Banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
     if(hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
       if(main&&hb){hb.dataset.mv='1';main.before(hb)}
       if(main&&tr){tr.dataset.mv='1';main.before(tr)}
@@ -108,7 +108,7 @@
         d.querySelectorAll('.pc-bar.stick').forEach(b=>{if(b.style.top!==vis+'px')b.style.top=vis+'px'});}}
   }
   setInterval(tick,300);tick();
-  // TEST (?beta=1): title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
+  // Title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
   function fit(){
     return; /* the decks hide the old header – nothing to fit (29 Oct tidy) */
     const h=document.querySelector('h1.brand'),t=h&&h.querySelector('.brand-t'),b=document.querySelector('#pgband');if(!t)return;
@@ -123,7 +123,7 @@
     let n=size(true),hide=false;if(n<26){hide=true;b&&b.classList.add('yic-nolab');n=Math.max(18,Math.min(25,size(false)))}else b&&b.classList.remove('yic-nolab');
     if(h.style.fontSize!==n+'px')h.style.setProperty('font-size',n+'px','important');
     if(!document.getElementById('fit-css')){const st=document.createElement('style');st.id='fit-css';st.textContent='#pgband.yic-nolab .pg,#pgband.yic-nolab .pn{visibility:hidden}h1.brand .brand-t{white-space:nowrap}';document.head.appendChild(st)}}
-  // TEST (?beta=1): Updated/wallet lines and the Download button stay together, on the right, on one row
+  // Updated/wallet lines and the Download button stay together, on the right, on one row
   function ic(){const bar=document.querySelector('.bar[data-mv="1"]');if(!bar)return;
     if(!document.getElementById('ic-css')){const st=document.createElement('style');st.id='ic-css';st.textContent='.bar .yic-ic{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}.bar .yic-ic>[data-inf="1"]{margin-left:0}.bar [data-srch="2"]{margin-left:0!important}';document.head.appendChild(st)}
     const inf=bar.querySelector(':scope > [data-inf="1"]'),cv=bar.querySelector(':scope > #csv');if(!inf||!cv||bar.querySelector('.yic-ic'))return;
