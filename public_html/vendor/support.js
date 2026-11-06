@@ -9,6 +9,7 @@
     '#sup .bmc{background:#ffdd00;color:#111}#sup .pp{background:#0070ba;color:#fff}' +
     '#sup .sc{background:#161d27;color:#ffd24a;border:1px solid #ffd24a}' +
     '#don{display:none!important}' + // menu SkipCoin hidden; strip button opens its box
+    (NEWN ? '#sup .bmc{background:#161d27;color:#ffdd00;border:1px solid #ffdd00}' : '') +
     '#sup .snm{color:#ffd24a;font-weight:700;text-shadow:0 0 8px rgba(255,210,74,.55),0 0 18px rgba(255,210,74,.3)}' +
     '#sup a:hover,#sup a:focus-visible{filter:brightness(1.12);box-shadow:0 0 10px rgba(143,227,255,.35)}';
   function foot() {
@@ -29,9 +30,12 @@
     if (!s) {
       s = document.createElement('div'); s.id = 'sup';
       s.innerHTML = (NEWN ? '<span class="snm">Enjoying Skippy&#39;s Awesome Command Deck?</span> ' : 'Enjoying the Command Deck? ') +
-        '<a class="bmc" href="https://buymeacoffee.com/skippyinfluence" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee</a>' +
-        '<a class="sc" href="#" role="button" title="Donate crypto (Ethereum or Starknet)">SkipCoin</a>' +
-        '<a class="pp" href="https://paypal.me/SkippyInfluence" target="_blank" rel="noopener noreferrer">PayPal</a>';
+        (function () {
+          var B = '<a class="bmc" href="https://buymeacoffee.com/skippyinfluence" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee</a>',
+            C = '<a class="sc" href="#" role="button" title="Donate crypto (Ethereum or Starknet)">SkipCoin</a>',
+            P = '<a class="pp" href="https://paypal.me/SkippyInfluence" target="_blank" rel="noopener noreferrer">PayPal</a>';
+          return NEWN ? B + P + C : B + C + P; // TEST: PayPal in the middle breaks up the gold
+        })();
       s.querySelector('.sc').addEventListener('click', function (e) {
         e.preventDefault(); e.stopPropagation();
         var d = document.getElementById('don'); if (d) d.click();
