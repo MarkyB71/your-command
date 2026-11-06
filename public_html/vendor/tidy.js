@@ -238,7 +238,11 @@
       const ms = c.roster.map((id) => cm[id]).filter(Boolean);
       let free = 1, speed = 1;
       try { free = y.crewMult(11, ms); speed = y.crewMult(3, ms) * (y.CBNF && y.CBNF[3] ? 1 : y.habEff(c)); } catch (e) {}
-      return { id: c.id, name: c.name, busy: c.busy || '', free, speed };
+      // food: below 50% a crew works slower, down to x0.25 when starving (SDK Crew.getFoodMultiplier,
+      // normal rations). Mark, 6 Nov: a 0%-food crew's transfers took 5–45 min instead of arriving at once.
+      const food = typeof c.food === 'number' ? Math.max(0, Math.min(1, c.food)) : 1;
+      const fm = Math.min(1, Math.max(0.25, food / 0.5));
+      return { id: c.id, name: c.name, busy: c.busy || '', free: free * fm, speed: speed * fm, food, fm };
     }).sort((a, b) => (!!a.busy - !!b.busy) || (b.free - a.free) || (b.speed - a.speed));
   }
   function movePlan(job) {
@@ -404,8 +408,9 @@ ${GROUPS.map(([g, n, tank]) => `<tr><td>${esc(n)}${tank ? ' <span style="color:#
 <p>Ticked buildings are not touched – nothing is taken out or put in (e.g. stock you sell).</p>
 <div class="st-w">${store.map((b) => `<label style="margin-right:10px"><input type="checkbox" data-lv="${b.id}"${S.leave[b.id] ? ' checked' : ''}> ${esc(nm(b) || 'Building #' + b.id)}</label>`).join('')}</div>
 <h3>Who moves it</h3>
-<div class="st-w">${plan.crews.length ? sel('st-mover', plan.crews.map((c) => [c.id, c.name + ' – free transport ×' + c.free.toFixed(2) + (c.busy ? ' – busy until ' + c.busy : '')]), S.mover) : '<span class="st-bad">None of your crews is on this rock right now – fly one there to move goods.</span>'}
+<div class="st-w">${plan.crews.length ? sel('st-mover', plan.crews.map((c) => [c.id, c.name + ' – free transport ×' + c.free.toFixed(2) + ' – food ' + Math.round(c.food * 100) + '%' + (c.fm < 1 ? ' (hungry, slower)' : '') + (c.busy ? ' – busy until ' + c.busy : '')]), S.mover) : '<span class="st-bad">None of your crews is on this rock right now – fly one there to move goods.</span>'}
 <span style="color:#8b9ab0;font-size:13px">best first: deliveries inside the free transport distance arrive straight away</span></div>
+${(() => { const c = plan.crews.find((x) => x.id === S.mover); return c && c.fm < 1 ? `<p class="st-bad">${esc(c.name)} has only ${Math.round(c.food * 100)}% food, so its deliveries will be slower (×${c.fm.toFixed(2)}). Feed the crew first, or pick another one.</p>` : ''; })()}
 <h3>Deliveries (${plan.rows.length})</h3>
 <div class="st-w"><label>Deliveries per approval ${sel('st-bs', BATCHES.map((n) => [n, n]), S.bs)}</label><button id="st-tick">Tick the next ${S.bs === 'All' ? 'all' : S.bs}</button><button id="st-untick">Untick all</button></div>
 <table><thead><tr><th></th><th>From</th><th>To</th><th>Goods</th><th>Check</th></tr></thead><tbody>
