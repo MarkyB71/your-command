@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 6 Nov 2026 – New Skippy welcome on the Bridge: he now says "Welcome to Skippy's Awesome Command Deck" (also when you click him in the captain's chair).
+
 ## 6 Nov 2026 – Bottom of the site: "Enjoying Skippy's Awesome Command Deck?" in gold, a quieter Buy me a coffee button, and PayPal moved to the middle.
 
 ## 6 Nov 2026 – Renamed to "Skippy's Awesome Command Deck" (community suggestion) – browser tab title and the full-list download. The browser extension gets the new name in its next update.

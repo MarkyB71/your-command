@@ -844,7 +844,7 @@
     btn.addEventListener('click', () => {
       // Create and unlock the video inside the click, so the browser lets it play with sound
       const v = document.createElement('video');
-      v.src = /[?&]beta=1/.test(location.search) ? 'media/skippy-intro3.mp4' : 'media/skippy-intro.mp4'; // TEST 6 Nov: Skippy 3 clip (moving head)
+      v.src = 'media/skippy-intro3.mp4'; // Skippy 3 welcome clip (6 Nov 2026)
       v.playsInline = true;
       v.preload = 'auto';
       const un = v.play();
@@ -921,7 +921,7 @@
       e.stopPropagation();
       if (document.querySelector('video[data-skc]')) return;
       const v = document.createElement('video');
-      v.src = /[?&]beta=1/.test(location.search) ? 'media/skippy-intro3.mp4' : 'media/skippy-intro.mp4'; // TEST 6 Nov: Skippy 3 clip (moving head)
+      v.src = 'media/skippy-intro3.mp4'; // Skippy 3 welcome clip (6 Nov 2026)
       v.playsInline = true;
       v.preload = 'auto';
       v.dataset.skc = '1';
