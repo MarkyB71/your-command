@@ -88,7 +88,7 @@
   const PN = { 5: 'Sulfur Dioxide', 6: 'Carbon Dioxide', 7: 'Carbon Monoxide', 18: 'Rhabdite', 19: 'Graphite', 20: 'Taenite', 23: 'Oxygen', 25: 'Raw Salts', 31: 'Nickel', 37: 'Iron Sulfide', 66: 'Silica Powder', 169: 'Tungsten Powder' };
   const SLOT = 2; // warehouse / tank farm main storage (inventoryType 10 / 19)
   // renames are done (6 Nov); step 2 goes all at once (Mark: "lets go for all at once this time")
-  const S = { tick: {}, mtick: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, sent: {}, busy: false, msg: '', tx: '' };
+  const S = { tick: {}, mtick: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, sent: {}, bs: BATCH, busy: false, msg: '', tx: '' };
   PLANS[1].renames.forEach(([id]) => { S.tick[id] = true; }); // Leisure Potato: all renames ticked
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -260,8 +260,8 @@ ${r.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.state ==
 </tbody></table>
 ${allDone ? '' : `<button class="st-go" id="st-go"${picked.length && !S.busy ? '' : ' disabled'}>Approve ${picked.length} rename${picked.length === 1 ? '' : 's'}</button>`}
 ${mv.length ? `<h3 style="color:#8fe3ff;margin:26px 0 0">Step 2 of 3: move goods</h3>
-<p>Each delivery sends everything of those products that the building holds right now.${PLAN.rules ? ` ${mv.length} deliveries in all; ${BATCH} are ticked at a time to keep each approval a sensible size.` : ''}</p>
-${PLAN.rules ? `<div class="st-w"><button id="st-next">Tick the next ${BATCH}</button><button id="st-none">Untick all</button></div>` : ''}
+<p>Each delivery sends everything of those products that the building holds right now.${PLAN.rules ? ` ${mv.length} deliveries in all.` : ''}</p>
+${PLAN.rules ? `<div class="st-w"><label style="align-self:center">Deliveries per approval: <select id="st-bs">${[15, 30, 50, 'All'].map((n) => `<option value="${n}"${String(S.bs) === String(n) ? ' selected' : ''}>${n}</option>`).join('')}</select></label><button id="st-next">Tick the next ${S.bs === 'All' ? 'all' : S.bs}</button><button id="st-none">Untick all</button></div>` : ''}
 <table><thead><tr><th></th><th>From</th><th>To</th><th>Goods</th><th>Sent by</th><th>Check</th></tr></thead><tbody>
 ${mv.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.state === 'ok' ? `<input type="checkbox" data-mi="${esc(x.key)}"${S.mtick[x.key] ? ' checked' : ''}>` : ''}</td>
 <td>${esc(x.fromN)}</td><td class="st-to">${esc(x.toN)}</td><td>${x.items.map((it) => esc(PN[it.p] || pname(it.p)) + ' ' + amt(it)).join('<br>') || '–'}</td><td>${esc(x.crewName)}</td><td>${esc(x.note)}</td></tr>`).join('')}
@@ -274,7 +274,10 @@ ${mv.map((x) => `<tr class="${x.state === 'ok' ? '' : 'st-off'}"><td>${x.state =
     m.querySelectorAll('input[data-id]').forEach((c) => c.addEventListener('change', () => { S.tick[c.dataset.id] = c.checked; page(m); }));
     m.querySelectorAll('input[data-mi]').forEach((c) => c.addEventListener('change', () => { S.mtick[c.dataset.mi] = c.checked; page(m); }));
     const nx = m.querySelector('#st-next');
-    if (nx) nx.addEventListener('click', () => { S.mtick = {}; mv.filter((x) => x.state === 'ok' && !S.sent[x.key]).slice(0, BATCH).forEach((x) => { S.mtick[x.key] = 1; }); page(m); });
+    const tickNext = () => { S.mtick = {}; const n = S.bs === 'All' ? Infinity : +S.bs; mv.filter((x) => x.state === 'ok' && !S.sent[x.key]).slice(0, n).forEach((x) => { S.mtick[x.key] = 1; }); page(m); };
+    if (nx) nx.addEventListener('click', tickNext);
+    const bs = m.querySelector('#st-bs');
+    if (bs) bs.addEventListener('change', () => { S.bs = bs.value === 'All' ? 'All' : +bs.value; tickNext(); });
     const nn = m.querySelector('#st-none');
     if (nn) nn.addEventListener('click', () => { S.mtick = {}; page(m); });
     const g = m.querySelector('#st-go');
