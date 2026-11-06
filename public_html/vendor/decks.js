@@ -179,7 +179,7 @@ body > header{display:none!important}
     C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
     E: 'Who can mine what', LL: 'Who leases which lots', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
-    Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename storage (test)',
+    Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
   const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
   const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
