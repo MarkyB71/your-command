@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 6 Nov 2026 – Renamed to "Skippy's Awesome Command Deck" (community suggestion) – browser tab title and the full-list download. The browser extension gets the new name in its next update.
+
 ## 5 Nov 2026 – Fix: opening Lot leases from the Science Lab no longer lights up The Bridge tab – the Science Lab stays selected.
 
 ## 5 Nov 2026 – Deck controls on the Bridge: click the glowing panel above the captain's chair to change the browser extension's settings and friend / foe tags right on the Command Deck (needs extension 0.6.3, now on the Chrome Web Store).

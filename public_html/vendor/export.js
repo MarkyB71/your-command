@@ -45,7 +45,7 @@
   function csvOut(G) {
     const c = (v) => { let t = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
     const row = (a) => a.map((x) => (typeof x === 'number' ? x : c(x))).join(',') + '\n';
-    let s = row(["Quartermaster Skippy's Command Deck – full list"]) + row(['Wallet', G.wallet]) + row(['Game data from', G.when]) + '\n';
+    let s = row(["Skippy's Awesome Command Deck – full list"]) + row(['Wallet', G.wallet]) + row(['Game data from', G.when]) + '\n';
     s += row(['STOCK']) + row(['Product', 'Type', 'Unit', ...G.astNames, 'Total']);
     G.stock.forEach((x) => { s += row([x.name, x.type, x.unit, ...x.v, x.total]); });
     s += '\n' + row(['BUILDINGS']) + row(['Asteroid', 'Lot', 'Name', 'Type', 'Status', 'Crew']);
@@ -84,7 +84,7 @@
       '.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}td.r:last-child{color:#e6f6fc;font-weight:600}.none{color:#5b6677;text-align:center}' +
       'footer{color:#5b6677;font-size:8pt;text-align:center;margin-top:4mm}' +
       '</style></head><body>' +
-      '<header><h1><b>Quartermaster</b> Skippy\'s <b>Command Deck</b></h1><div class="sub">Full list for wallet <b>' + e(G.wallet) + '</b> · game data from <b>' + e(G.when) + '</b></div></header>' +
+      '<header><h1>Skippy\'s Awesome <b>Command Deck</b></h1><div class="sub">Full list for wallet <b>' + e(G.wallet) + '</b> · game data from <b>' + e(G.when) + '</b></div></header>' +
       sec('📦', 'Stock', G.stock.length + ' products', tbl(['Product', 'Type', 'Unit', ...G.astNames, 'Total'], G.stock.map((x) => [x.name, x.type, x.unit, ...x.v, x.total]), [...astCols, 3 + G.astNames.length])) +
       sec('🏭', 'Buildings', G.blds.length + ' buildings', tbl(['Asteroid', 'Lot', 'Name', 'Type', 'Status', 'Crew'], G.blds.map((x) => [x.ast, x.lot === '' ? '' : '#' + x.lot, x.name, x.type, x.status, x.crew]), [])) +
       sec('👥', 'Crews', G.crews.length + ' crews', tbl(['Crew', 'Asteroid', 'Where', 'Crewmates', 'Food', 'Busy until'], G.crews.map((x) => [x.name, x.ast, x.place, x.mates, x.food, x.busy]), [4])) +

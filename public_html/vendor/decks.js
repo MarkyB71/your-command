@@ -508,7 +508,7 @@ body > header{display:none!important}
       s.id = 'dk-css';
       s.textContent = CSS;
       // 29 Oct: outside <head> – the site rebuilds <head> while loading, which dropped this style
-      // for a moment and let the old "Quartermaster Skippy's Command Deck" header flash up on a refresh
+      // for a moment and let the old "Skippy's Awesome Command Deck" header flash up on a refresh
       document.documentElement.appendChild(s);
     }
     if (!document.getElementById('dkr-css')) {

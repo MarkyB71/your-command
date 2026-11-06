@@ -22,7 +22,7 @@
     if(gq&&gq.value.trim())return ['Your','Search','Results'];
     const b=[].slice.call(document.querySelectorAll('button.on[id^="v"]')).filter(x=>/^v[A-Z]$/.test(x.id))[0];
     const k=b?b.id.slice(1):'N';
-    if(k==='N'||!b)return ['Quartermaster Skippy\'s','Command','Deck'];
+    if(k==='N'||!b)return ['Skippy\'s Awesome','Command','Deck'];
     const name=b.textContent.replace(/[▾▸◂]/g,'').trim();
     if(/^The /.test(name))return ['The',name.slice(4),''];
     // New titles: "Your <Page>", no group word, no doubles
@@ -66,12 +66,12 @@
     if(false&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
     // Title font: Rye (western whiskey-label style)
     if(h1){const t0=h1.querySelector('.brand-t');if(t0&&t0.style.fontFamily.indexOf('Rye')<0)t0.style.fontFamily='Rye,Jura,serif'}
-    // Title follows the page: landing = Quartermaster Skippy's Command Deck, others = Your <Group> <Page>
+    // Title follows the page: landing = Skippy's Awesome Command Deck, others = Your <Group> <Page>
     const t=h1&&h1.querySelector('.brand-t');
     if(t){
       const T=title();
       if(t.dataset.n!==T.join('|')){t.dataset.n=T.join('|');
-        t.innerHTML=T[0]==='Quartermaster Skippy\'s'?'<span>Quartermaster</span> <b class="bw">Skippy&#39;s</b> <span>Command Deck</span>':esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
+        t.innerHTML=T[0]==='Skippy\'s Awesome'?'<b class="bw">Skippy&#39;s Awesome</b> <span>Command Deck</span>':esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
         d.title=T.filter(Boolean).join(' ');}
     }
     // Banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
