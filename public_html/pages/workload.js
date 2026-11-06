@@ -687,9 +687,9 @@
       st.id = 'br-css';
       st.textContent =
         BR_CSS +
-        // Test (?beta=1, 3 Nov 2026): table rows on the screen line up at the top, so a long
-        // opened list never sits beside a label centred in the middle of the row
-        (/[?&]beta=1/.test(location.search) ? '.brs-vs td{vertical-align:top}' : '');
+        // table rows on the screen line up at the top, so a long opened list never sits beside
+        // a label centred in the middle of the row (LIVE 6 Nov 2026, tested on ?beta=1 from 3 Nov)
+        '.brs-vs td{vertical-align:top}';
       document.head.appendChild(st);
     }
     const N = bridgeNums(),
