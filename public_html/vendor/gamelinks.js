@@ -25,13 +25,12 @@
   // this tab's link to it dies until the page is refreshed, so clicks get no answer.
   // Extension 0.6.1+ answers at once with error 'reconnect'; for older versions, if no answer
   // comes back within 1.5 seconds, tell the player to refresh the page.
-  var BETA = true; // LIVE 2 Nov 2026 (was the ?beta=1 test)
   var waitT = null;
   window.addEventListener('message', function (e) {
     if (e.source !== window || !e.data || e.data.type !== 'yic-open-result') return;
     if (waitT) { clearTimeout(waitT); waitT = null; }
     var r = e.data.result;
-    if (BETA && r && r.error === 'reconnect') reconnectNote();
+    if (r && r.error === 'reconnect') reconnectNote();
   });
   function reconnectNote() {
     var n = document.getElementById('yicg-rc');
@@ -65,10 +64,8 @@
     e.preventDefault();
     e.stopPropagation();
     window.postMessage({ type: 'yic-open', path: a.dataset.yicg }, location.origin);
-    if (BETA) {
-      if (waitT) clearTimeout(waitT);
-      waitT = setTimeout(function () { waitT = null; reconnectNote(); }, 1500);
-    }
+    if (waitT) clearTimeout(waitT);
+    waitT = setTimeout(function () { waitT = null; reconnectNote(); }, 1500);
   }, true);
 
   // Style (re-added if the site rebuilds <head>).

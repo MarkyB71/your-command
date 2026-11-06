@@ -10,7 +10,6 @@
     build: ['#36a7cd', 'Being built'], built: ['#fab219', 'Built – ready to finish'] };
   const RANK = { idle: 0, done: 1, built: 1, run: 2, build: 3 };
   // Buildings under construction listed with their time left (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
-  const CON = true; // LIVE 2 Nov 2026
   const when = t => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const dot = s => '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + STATE[s][0] +
     ';margin-right:7px;vertical-align:middle"></span>' + STATE[s][1];
@@ -32,7 +31,7 @@
     (D.allB || []).forEach(b => {
       const st = b.Building && b.Building.status, a = astOf(b);
       if (an && a !== an) return;
-      if (CON && st === 2) {   // being built: one row with its construction finish time
+      if (st === 2) {   // being built: one row with its construction finish time
         const bt2 = b.Building.buildingType, f = b.Building.finishTime || 0;
         const nm2 = (b.Name && b.Name.name) || ((BT[bt2] || 'Building') + ' #' + b.id);
         const cr2 = (D.crewN || {})[b.Control && b.Control.controller && b.Control.controller.id] || '';
@@ -93,7 +92,7 @@
 
       const o = Object.entries(g.other).map(([k, v]) => v + ' ' + k + (v > 1 ? 's' : '')).join(', ');
       if (o || sites[a]) h += '<div class="note" style="padding:8px 0 0">' + (o ? 'Also here: ' + esc(o) + '. ' : '') +
-        (sites[a] ? sites[a] + (CON ? ' planned site' : ' unfinished construction site') + (sites[a] > 1 ? 's' : '') + ' not shown.' : '') + '</div>';
+        (sites[a] ? sites[a] + ' planned site' + (sites[a] > 1 ? 's' : '') + ' not shown.' : '') + '</div>';
     });
 
     h += '<div class="note" style="padding:14px 0 0">Shipyard output amounts and secondary refinery outputs aren\'t shown. ' +

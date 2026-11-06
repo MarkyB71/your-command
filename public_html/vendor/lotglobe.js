@@ -14,7 +14,6 @@
   const S = { rock: '', res: -1, /* -1 = All resources: the default (LIVE 2 Nov 2026, Mark) */ rotY: 0.6, rotX: -0.35, spin: MOVE, focus: null, pulse: 0, spots: false, blend: true, click: false }; // click: a lot click opens it in the game (Mark: with an on/off switch) // blend: smooth heat map (Mark: the page default), or one patch per lot
   // LIVE 30 Oct 2026 (tested on ?beta=1, Mark – community request): "All resources" – every resource at once, to find
   // lots poor in everything (good spots for warehouses, refineries…) so rich mining lots aren't built over.
-  const BETA = true; // LIVE 30 Oct 2026 (was the ?beta=1 test)
   const ALL = -1;
   const SPOT = '#e6ebf2'; // best building spots: soft white, stands apart from all five resource colours
   let G = null; // current globe {id, res, n, pos, val, max, mine}
@@ -206,7 +205,7 @@
     const A = own.find((a) => String(a.id) === S.rock);
     const ab = Y.ABM.abundances(A.Celestial.abundances);
     const rs = Object.keys(ab).filter((k) => ab[k] > 0).map(Number).sort((x, y) => pn(x).localeCompare(pn(y)));
-    const all = BETA && S.res === ALL;
+    const all = S.res === ALL;
     if (!all && !rs.includes(S.res)) S.res = Object.keys(ab).map(Number).sort((x, y) => ab[y] - ab[x])[0];
 
     const n = Y.ABM.lotCount(A.id);
@@ -237,7 +236,7 @@
 
     let h = '<div class="lg-row"><label>Rock <select id="lg-r">' + own.map((a) => '<option value="' + a.id + '"' + (String(a.id) === S.rock ? ' selected' : '') + '>' + esc(nm(a)) + '</option>').join('') + '</select></label>' +
       '<label>Resource <select id="lg-s" style="color:' + sc + ';border:2px solid ' + sc + ';box-shadow:0 0 10px -2px ' + sc + ';background:#0c1320">' +
-        (BETA ? '<option value="' + ALL + '"' + (all ? ' selected' : '') + ' style="color:#4f90ff;background:#0c1320">✨ All resources</option>' : '') +
+        '<option value="' + ALL + '"' + (all ? ' selected' : '') + ' style="color:#4f90ff;background:#0c1320">✨ All resources</option>' +
         // grouped and coloured by resource group, as in the game (dot works where the menu ignores colours)
         ['Volatile', 'Organic', 'Metal', 'RareEarth', 'Fissile'].map((c) => {
           const g = rs.filter((r) => catOf(r) === c);

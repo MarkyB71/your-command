@@ -93,10 +93,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
     };
     let mode = '';
     // "All working · next free in 1h 14m" on each building dial (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
-    const NXB = true; // LIVE 2 Nov 2026
     const hmE = (sec) => { const m = Math.max(1, Math.round(sec / 60)), h = Math.floor(m / 60); return h ? h + 'h ' + (m % 60) + 'm' : m + 'm'; };
     // Selected rock: each building's time until it's done, under its dial (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
-    const TL = true; // LIVE 2 Nov 2026
     const bName = (b) => (b.Name && b.Name.name) || ('#' + b.id);
     const tlList = (L) => {
       if (!L || !L.length) return '';
@@ -146,17 +144,17 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       (Y.D.allB || []).forEach((b) => {
         const B = b.Building || {}, t = B.buildingType;
         if (an && astOf(b) !== an) return;
-        if (TL && an && B.status === 2 && B.finishTime) (L[t] = L[t] || []).push({ n: bName(b), f: B.finishTime, c: 1 });
+        if (an && B.status === 2 && B.finishTime) (L[t] = L[t] || []).push({ n: bName(b), f: B.finishTime, c: 1 });
         if (P[t]) {
           if (B.status === 2) P[t].build++;
           if (B.status !== 3) return;
           P[t].op++;
           if (running(b)) {
             P[t].run++;
-            // when this building is free again: its last running job's finish time (NXB)
+            // when this building is free again: its last running job's finish time
             const fin = Math.max(...['Extractors', 'Processors', 'DryDocks'].flatMap((k) => (b[k] || []).filter((x) => x.status === 1).map((x) => x.finishTime || 0)));
             if (fin > now && (!P[t].soon || fin < P[t].soon)) P[t].soon = fin;
-            if (TL && an && fin > 0) (L[t] = L[t] || []).push({ n: bName(b), f: fin });
+            if (an && fin > 0) (L[t] = L[t] || []).push({ n: bName(b), f: fin });
             if (['Extractors', 'Processors', 'DryDocks'].some((k) => (b[k] || []).some((x) => x.status === 1 && x.finishTime <= now))) P[t].done++;
           }
         } else if (S[t] && B.status === 3) {
@@ -182,7 +180,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         if (p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>' + p.done + ' ready to collect');
         if (p.build) lines.push(p.build + ' being built');
         if (!p.op && !p.build) lines.push('None yet');
-        if (p.op && p.op === p.run && !p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>All working' + (NXB && p.soon ? ' · next free in ' + hmE(p.soon - now) : ''));
+        if (p.op && p.op === p.run && !p.done) lines.push('<span class="en-lamp" style="--l:#3fd68a"></span>All working' + (p.soon ? ' · next free in ' + hmE(p.soon - now) : ''));
         return '<button class="en-g" data-go="T" title="' + Y.esc(nm) + ' – open Building Status">' +
           dial(v, col, p.run, 'working of ' + p.op) + '<span class="en-n">' + Y.esc(nm) + '</span><span class="en-s">' + lines.join('<br>') + '</span>' + tlList(L[t]) + '</button>';
       }).join('');

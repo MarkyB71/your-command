@@ -1,6 +1,5 @@
 /* Wallet names (LIVE 2 Nov 2026, tested on ?beta=1 – Mark): players with several wallets can name each one; the green
    wallet button then shows the name. Saved in this browser only (localStorage 'yic-wallet-names'). */
-const WNB = true; // LIVE 2 Nov 2026
 const WNK = 'yic-wallet-names';
 function wNames() { try { return JSON.parse(localStorage.getItem(WNK) || '{}') || {}; } catch (e) { return {}; } }
 function wName(a) { return String(wNames()[String(a).toLowerCase()] || ''); }
@@ -595,7 +594,7 @@ body > header{display:none!important}
     const wc = document.getElementById('wc-top'),
       wa = String((window.YIC && window.YIC.D && window.YIC.D.wallet) || '');
     if (wc) {
-      const ok = /^0x[0-9a-f]{6,}$/i.test(wa), nm = ok && WNB ? wName(wa) : '';
+      const ok = /^0x[0-9a-f]{6,}$/i.test(wa), nm = ok ? wName(wa) : '';
       const t = ok ? (nm || wa.slice(0, 6) + '…' + wa.slice(-4)) : 'Connect / change wallet';
       if (wc.textContent !== t) {
         wc.textContent = t;
@@ -604,7 +603,7 @@ body > header{display:none!important}
       }
       // ✎ beside it: name this wallet (LIVE 2 Nov 2026) – the name is kept in this browser only
       let pen = document.getElementById('wc-nm');
-      if (WNB && ok) {
+      if (ok) {
         if (!pen) {
           pen = document.createElement('button');
           pen.id = 'wc-nm';

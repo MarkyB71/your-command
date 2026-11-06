@@ -90,7 +90,6 @@ const facHTML=(t,ai)=>{const bt=FBT[t];if(!bt)return '<div class="pc-fac">🏗 B
   return '<div class="pc-fac no">✗ '+nm+' – none on '+String(an).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(bld?' (1 being built)'.replace('1',bld):pl?' (planned only)':'')+'</div>'}
 /* Still to produce → "Start it" (LIVE 2 Nov 2026, tested on ?beta=1 – Mark): an in-game link to a FREE building of the right kind
    (finished, nothing running), on the rock in use if one is picked. If every one is busy, the link shows a box saying so. */
-const PSB=true; /* LIVE 2 Nov 2026 */
 const freeB=(t,an)=>{const bt=FBT[t];if(!bt)return null;const Y=window.YIC||{},D=Y.D||{},now=Date.now()/1000;let free=null,n=0,soon=0;
   (D.allB||[]).forEach(b=>{const B=b.Building||{};if(B.buildingType!==bt||B.status!==3)return;
     const l=((b.Location&&b.Location.locations)||[]).find(x=>x.label===3),nm=(b.meta&&b.meta.asteroid&&b.meta.asteroid.name)||(l?'Asteroid #'+l.id:'');
@@ -143,10 +142,10 @@ export function drawChain(m){
   const take=(id,qty)=>{if(S.use==null||!Y||id>=1000)return 0;if(pool[id]===undefined)pool[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pool[id],qty);pool[id]-=t;return t};
   /* Covered-from-stock cards can be opened to see how it's made (LIVE 2 Nov 2026, tested on ?beta=1 – Mark 31 Oct bug): opened, the inputs
      below it are shown as if made fresh – they don't use up stock again (CVF counts how deep we are inside one). */
-  const CVB=true;let CVF=0; /* LIVE 2 Nov 2026 */
+  let CVF=0;
   function node(id,qty,path,key){
     if(S.use!=null&&!CVF&&!path.includes(id)){const got=take(id,qty);
-      if(got>0&&got>=qty-1e-9){const cn=(Y.asts[S.use]||{}).name||'',canMake=CVB&&(makers[id]||[]).length&&opts(id,path).length;
+      if(got>0&&got>=qty-1e-9){const cn=(Y.asts[S.use]||{}).name||'',canMake=(makers[id]||[]).length&&opts(id,path).length;
         if(canMake&&S.opened.has(key)){CVF++;let r;try{r=node0(id,qty,path,key)}finally{CVF--}
           const tp=r.querySelector('.pc-n .pc-top');if(tp)tp.insertAdjacentHTML('afterend','<div class="pc-use">✓ Covered from stock on '+esc(cn)+' · showing how it\'s made</div>');
           const nn=r.querySelector('.pc-n');if(nn)nn.classList.add('cov');return r}
@@ -190,8 +189,6 @@ export function drawChain(m){
     document.addEventListener('mouseover',e=>{const t=document.getElementById('pc-tip');if(t&&t.style.display!=='none'&&!e.target.closest('.pc-n'))t.style.display='none'})}
   if(!window.__pcStick){window.__pcStick=1;addEventListener('resize',()=>{const b=document.querySelector('.pc-bar.stick');if(b)stick(b)})}
   
-  const PTP=true;
-  const RT=false; /* DN = top-down tree (test) */
   const fillPs=ps=>{const ALL=[...new Set(Object.keys(makers).concat(Object.keys(users)).map(Number))].sort((a,b)=>N[a].localeCompare(N[b]));
     [['Raw materials',x=>x<=22],['Products',x=>x>22&&x<1000],['Buildings',x=>x>=1000&&x<2000],['Ships',x=>x>=2000]].forEach(([lab,f])=>{const g=el('optgroup');g.label=lab;
       ALL.filter(f).forEach(id=>{const o=el('option');o.value=id;o.textContent=N[id];if(id===S.prod)o.selected=true;g.appendChild(o)});ps.appendChild(g)})};
@@ -258,7 +255,7 @@ export function drawChain(m){
       const fit=()=>{b.firstChild.style.width=w.scrollWidth+'px';b.style.display=w.scrollWidth>w.clientWidth+2?'':'none';b.scrollLeft=w.scrollLeft};
       b._fit=fit;try{new ResizeObserver(fit).observe(w.firstChild||w);new ResizeObserver(fit).observe(w)}catch(e){}}
     b._fit()}
-  /* PTP = "Still to produce" totals (TEST on ?beta=1, community request 2 Nov 2026): walks the WHOLE chain (open or closed),
+  /* "Still to produce" totals (community request, LIVE 2 Nov 2026): walks the WHOLE chain (open or closed),
      with the recipes picked in the dropdowns, and adds up every made product across all branches – e.g. all the
      Aluminium Sheet a Heavy Transport needs, in one number. With "Use my stock on" set, stock is taken off first. */
   function totals(){const need={},via={},pl={};
@@ -276,7 +273,7 @@ export function drawChain(m){
     const own=S.use==null&&!!Y;
     [1,2,3,4,0].forEach(t=>{const g=ids.filter(i=>via[i]===t).sort((a,b)=>N[a].localeCompare(N[b]));if(!g.length)return;
       box.appendChild(el('h4',null,TYPE[t]+' ('+g.length+')'));
-      const an=S.use!=null?((Y&&Y.asts[S.use])||{}).name:ai!==null?((Y&&Y.asts[ai])||{}).name:'',sc=PSB&&Y&&FBT[t]&&window.GL&&window.GL.on&&window.GL.on();
+      const an=S.use!=null?((Y&&Y.asts[S.use])||{}).name:ai!==null?((Y&&Y.asts[ai])||{}).name:'',sc=Y&&FBT[t]&&window.GL&&window.GL.on&&window.GL.on();
       const st=()=>{const f=freeB(t,an);if(!f.n)return '<td class="pc-have none">No '+f.nm+(an?' on '+esc(an):'')+'</td>';
         if(f.free)return '<td>'+window.GL('/building/'+f.free.id,'Open a free '+f.nm+' in the game to start it').replace(' <a','<a')+'</td>';
         return '<td><a href="#" class="yicg pc-bz" data-nm="'+f.nm+'" data-an="'+esc(an||'')+'" data-soon="'+(f.soon==null?'':f.soon)+'">in game ↗</a></td>'};
@@ -307,21 +304,17 @@ export function drawChain(m){
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap'+(RT?' rtl':' dn'));const inner=(RT||true)?el('div','pc-in'):w;inner.appendChild(node(S.prod,S.amt,[],'r'));if(RT||true)w.appendChild(inner);
+    const w=el('div','pc-wrap dn');const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);
     if(S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
     if(S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
         const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();snap();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
       {const up=el('button','pc-up','▲ Up one level');up.title='Show the box above this one';up.addEventListener('click',()=>{snap();S.foc=ks.length>2?ks.slice(0,-1).join('/'):null;S.anchor=null;draw()});tr.appendChild(up)}
       const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}navTop(inner);m.appendChild(w);
-    if(RT)w.scrollLeft=w.scrollWidth-w.clientWidth-(S.fromRight||0);
-    if(RT&&S.focus){const f=w.querySelector('[data-k="'+window.CSS.escape(S.focus)+'"]>.pc-kids');S.focus=null;
-      if(f){const a=f.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.left<b.left)w.scrollLeft-=b.left-a.left+20;S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft}}
-    if(RT)w.addEventListener('scroll',()=>{S.fromRight=w.scrollWidth-w.clientWidth-w.scrollLeft});
     w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')}).join('<br>'):'Open more branches to see them')));
-    if(PTP)m.appendChild(prodList());
+    m.appendChild(prodList());
   }
   if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(document.getElementById('main'))})}
   draw();
