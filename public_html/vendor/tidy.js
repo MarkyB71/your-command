@@ -1,6 +1,6 @@
 /* Storage tidy – Skippy's Awesome Command Deck (Mark, 6 Nov 2026) – TEST ONLY (?beta=1)
    Step 1 of the "move all X to X on X" plan (claude/storage-tidy-plan-2026-11-06.md): rename storage
-   buildings to the "Skippy's X" standard. The page shows exactly what will happen; nothing is sent
+   buildings to the "Skippys X" standard. The page shows exactly what will happen; nothing is sent
    until the player presses Approve AND approves again in their own wallet.
    Only the game's ChangeName system is ever called, only on buildings the wallet's crews control,
    and the connected wallet must be the one the page is showing. No pasted code, no other actions.
@@ -15,11 +15,11 @@
   const PLAN = {
     rock: 'Newark',
     renames: [
-      [40805, 'Skippys Iron', "Skippy's Troilite"],
-      [41334, 'Skippys Raw Metals', "Skippy's Taenite"],
-      [41429, 'Skippys Supply Co Ltd', "Skippy's Steel"],
-      [34498, 'Skippys Propellent Processin', "Skippy's Gases"],
-      [24646, 'Skippys Newark Warehouse', "Skippy's Supplies"],
+      [40805, 'Skippys Iron', "Skippys Troilite"],
+      [41334, 'Skippys Raw Metals', "Skippys Taenite"],
+      [41429, 'Skippys Supply Co Ltd', "Skippys Steel"],
+      [34498, 'Skippys Propellent Processin', "Skippys Gases"],
+      [24646, 'Skippys Newark Warehouse', "Skippys Supplies"],
     ],
   };
   const S = { tick: { 40805: true }, busy: false, msg: '', tx: '' }; // first test: just one rename ticked
@@ -36,7 +36,8 @@
   const nameErr = (s) => {
     if (s.length < 4 || s.length > 28) return 'must be 4 to 28 characters';
     if (!/^(\S+\s)*\S+$/.test(s)) return 'single spaces only, none at the ends';
-    if (!/^[\x20-\x7e]+$/.test(s)) return 'plain characters only';
+    // the contract is stricter than the SDK: "Skippy's Troilite" failed with E6013 name invalid (6 Nov 2026)
+    if (!/^[A-Za-z0-9 ]+$/.test(s)) return 'letters, numbers and spaces only';
     return '';
   };
   const sameAddr = (a, b) => { try { return BigInt(a) === BigInt(b); } catch (e) { return false; } };
