@@ -8,7 +8,7 @@ Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.c
   - **Other players' ships too** – everyone else's ships in flight show as triangles, coloured by your friend / foe tags (friendly teal, neutral yellow, hostile red, untagged orange). Hostile routes are always drawn; hover any ship for its route, owner and arrival. The belt-wide list comes from the Command Deck and updates every 5 minutes.
   - **A tick box for each group** – show or hide friendly, neutral, hostile and untagged ships separately, in Options or in Deck controls on the Command Deck. These switch straight away, no refresh needed.
 
-## 0.6.4 – coming soon
+## 0.6.4 – 6 Nov 2026
 - **Fix:** the crew food bar now counts Dietitians and Food Preparation crewmates (Arvad Specialists get their extra half tier), so it matches the game's own food figure.
 
 ## 0.6.3 – 5 Nov 2026
