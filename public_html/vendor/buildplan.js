@@ -123,7 +123,7 @@ export function drawBuildPlan(m){
   const ucB={},canBadge=k=>{const need=BL[k][1],dd=isShip(k)&&!myFac(5);const sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
     if(!sh.length&&!dd){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
     const E=expand(stk,canMine,sh,ucB),fl=Object.keys(E.fly).filter(x=>vis(E.fly,x)),nf=Object.keys(E.fac).filter(t=>!myFac(t));if(dd&&!nf.includes('5'))nf.push('5');
-    if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(nm).join(', '))+'">✈ Fly some in</em>';
+    if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(k=>{const t=window.YICSRCTXT?window.YICSRCTXT(k,E.fly[k],S.ast):'';return nm(k)+(t?' ('+t.replace(/&#(\d+);/g,(x,n)=>String.fromCharCode(n))+')':'')}).join(', '))+'">✈ Fly some in</em>';
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
     return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
   const chainRows=rows.filter(r=>r.short&&(!r.others.length||makeOK(r)));
@@ -139,7 +139,7 @@ export function drawBuildPlan(m){
     const fc=Object.keys(E.fac).map(t=>'<span class="'+(myFac(t)?'ok':'none')+'">'+(myFac(t)?'✓ ':'✗ ')+esc(PTYPE[t])+'</span>').join(', ');
     const mn=Object.keys(E.mine).sort((x,y)=>kgOf(y,E.mine[y])-kgOf(x,E.mine[x]));
     const how='<div class="a">'+esc(R[0])+' · '+fc+(mn.length?' · mine '+mn.slice(0,3).map(k=>esc(nm(k))).join(', ')+(mn.length>3?' …':''):'')+'</div>';
-    return fl.length?'<span class="part">◐ Partly</span> – fly in '+fl.slice(0,3).map(k=>'<b>'+esc(nm(k))+'</b>').join(', ')+(fl.length>3?' +'+(fl.length-3)+' more':'')+how
+    return fl.length?'<span class="part">◐ Partly</span> – fly in '+fl.slice(0,3).map(k=>{const t=window.YICSRCTXT?window.YICSRCTXT(k,E.fly[k],S.ast):'';return'<b>'+esc(nm(k))+'</b>'+(t?' <span class="a">('+t+')</span>':'')}).join(', ')+(fl.length>3?' +'+(fl.length-3)+' more':'')+how
       :'<span class="ok">✓ Yes</span>'+(Object.keys(E.fac).some(t=>!myFac(t))?' <span class="part">– once you have a '+Object.keys(E.fac).filter(t=>!myFac(t)).map(t=>esc(PTYPE[t])).join(' and ')+' here</span>':'')+how};
   const mineOn=(a,r)=>{const c=a.Celestial||{},sc=(c.scanStatus||0)>=4&&c.abundances;if(sc&&Y.astAbund)return (Y.astAbund(c.abundances)[r]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+r))};
   /* HLP: can rock c make q of k – fully (own stock + mining), or with the missing ingredients flown in from your other rocks? */

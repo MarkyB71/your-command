@@ -131,7 +131,7 @@
       needL.map((p) => '<div class="fc-raw">' + Y.ricon(p, 28) + '<span><b>' + esc(pn(p)) + '</b><br><span class="fc-dim">' +
         (tot[p] ? tot[p].n + ' untouched sample' + (tot[p].n === 1 ? '' : 's') + ' · ' + Y.fq(p, tot[p].kg) : '<span class="fc-bad">no untouched samples</span>') +
         '</span></span></div>').join('') + '</div>' +
-      (rock.ok ? '' : '<div class="fc-note" style="margin:10px 0 0">✈ Fly in: <b>' + esc(rock.part.fly.map(pn).join(', ')) + '</b> – this rock has the Refinery but can\'t make ' + (rock.part.fly.length === 1 ? 'it' : 'them') + '.</div>') +
+      (rock.ok ? '' : '<div class="fc-note" style="margin:10px 0 0">✈ Fly in: ' + rock.part.fly.map((k) => { const t = window.YICSRCTXT ? window.YICSRCTXT(k, 0, rock.id) : ''; return '<b>' + esc(pn(k)) + '</b>' + (t ? ' (' + t + ')' : ''); }).join(', ') + ' – this rock has the Refinery but can\'t make ' + (rock.part.fly.length === 1 ? 'it' : 'them') + '.</div>') +
       '</div>';
 
     // Extractors on this rock

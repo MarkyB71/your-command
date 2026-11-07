@@ -105,10 +105,10 @@ const busyBox=(msg)=>{let n=document.getElementById('pc-busy');if(n)n.remove();n
   const off=e=>{if(!n.contains(e.target)){n.remove();document.removeEventListener('click',off,true)}};setTimeout(()=>document.addEventListener('click',off,true),0)};
 const hm=s=>{s=Math.round(s/60);const h=Math.floor(s/60),m=s%60;return h?h+'h '+m+'m':m+'m'};
 /* warn when a raw is set to "Mine it" but the chosen rock can't mine it (Mark, 29 Oct) */
-const mineHTML=(id,ai,nr)=>{if(ai===null)return '';const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},D=Y.D||{};
+const mineHTML=(id,ai,nr,q)=>{if(ai===null)return '';const Y=window.YIC||{},a=(Y.asts||[])[ai]||{},D=Y.D||{};
   const r=(D.owned||[]).find(x=>x.id===a.id);if(!r)return '';const c=r.Celestial||{};
   const ok=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?(Y.astAbund(c.abundances)[id]||0)>0:!!((Y.SPEC||{})[c.celestialType]&&Y.SPEC[c.celestialType][1].includes(+id));
-  return ok?'':'<div class="pc-fac no">✗ Can\'t mine this on '+String(a.name||'').replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(nr?' – pick a recipe or fly it in':' – fly it in')+'</div>'};
+  return ok?'':'<div class="pc-fac no">✗ Can\'t mine this on '+String(a.name||'').replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';')+(nr?' – pick a recipe or fly it in':' – fly it in')+(()=>{const t=window.YICSRCTXT?window.YICSRCTXT(id,q||0,a.id):'';return t?' <b>('+t+')</b>':''})()+'</div>'};
 const SW=id=>('<div class="pc-sw"><a href="#" data-fid="'+id+'" data-m="from">◂ Made from</a><a href="#" data-fid="'+id+'" data-m="use">Used in ▸</a></div>');
 const tkg=n=>{const a=Math.abs(n);if(a>=1e6){const k=n/1e6;return (Math.abs(k)>=100?Math.round(k):+k.toFixed(2)).toLocaleString()+' kt'}if(a>=1000){const t=n/1000;return (Math.abs(t)>=100?Math.round(t):+t.toFixed(1)).toLocaleString()+' t'}return (a>=1||a===0?Math.round(n):+n.toPrecision(2)).toLocaleString()+' kg'};
 const isB=id=>(id<1000)&&!CNT.has(+id),fu=(id,n)=>{if(!isB(id))return fmt(n);return tkg(n);const v=n/UF[S.unit],a=Math.abs(v);return (a>=1000?Math.round(v):+v.toFixed(a>=100?1:a>=1?2:a>=0.01?3:4)).toLocaleString()+' '+S.unit};
@@ -165,7 +165,7 @@ export function drawChain(m){
       o.forEach(x=>{const op=el('option');op.value=x.i;op.textContent=x.name;if(x===cur)op.selected=true;s.appendChild(op)});
       s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;draw()});c.appendChild(s)};
     if(!all.length||!o.length||mine){const c=el('div','pc-n raw',head(id,qty));if(isRaw&&o.length)sel(c,-1);
-      c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>'+(isRaw?mineHTML(id,ai,o.length):''));
+      c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>'+(isRaw?mineHTML(id,ai,o.length,qty):''));
       br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
     const p=pick,runs=qty/p.out[id],c=el('div','pc-n',head(id,qty));
     if(o.length>1||isRaw)sel(c,p);
@@ -313,7 +313,7 @@ export function drawChain(m){
       const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}navTop(inner);m.appendChild(w);
     w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
-    m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')}).join('<br>'):'Open more branches to see them')));
+    m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);const src=ai!==null&&window.YICSRCTXT&&mineHTML(+k,ai,0)?window.YICSRCTXT(k,v,(Y.asts[ai]||{}).id):'';return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')+(src?' <span class="pc-have part">– '+src+'</span>':'')}).join('<br>'):'Open more branches to see them')));
     m.appendChild(prodList());
   }
   if(as&&!as.dataset.pc){as.dataset.pc=1;as.addEventListener('change',()=>{if(document.getElementById('vH')?.className==='on')drawChain(document.getElementById('main'))})}
