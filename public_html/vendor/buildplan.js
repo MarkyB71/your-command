@@ -27,7 +27,7 @@ function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const 
 /* Shipyard tab (LIVE 31 Oct 2026, tested on ?beta=1 first) – ship parts such as Habitation Modules; whole ships stay in the Construction planner (they are built in the dry dock, type 5) */
 const PTABS=[1,2,3,4];
 /* HLP (?beta=1, 7 Nov 2026, Mark): another rock counts if it can make an item with only some ingredients flown in from your other rocks (e.g. Lead: Troilite there, Sulfur Dioxide from elsewhere) */
-const HLP=/[?&]beta=1/.test(location.search);
+const HLP=true; /* LIVE 7 Nov 2026 */
 let run=0;
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

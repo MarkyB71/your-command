@@ -3,7 +3,6 @@
    window.YICSRC(productId, amount, exceptRockId) → {stock:[{id,name,have}], mine:[{id,name}]}
    window.YICSRCTXT(productId, amount, exceptRockId) → short text, e.g. "mine it on Argathos" ('' when none). */
 (function(){
-  const BETA=/[?&]beta=1/.test(location.search);
   const Y=()=>window.YIC||{};
   const mineOn=(a,r)=>{const c=a.Celestial||{},y=Y();if((c.scanStatus||0)>=4&&c.abundances&&y.astAbund)return(y.astAbund(c.abundances)[r]||0)>0;
     const sp=(y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+r))};
@@ -14,7 +13,7 @@
     const mine=+id<=22?(D.owned||[]).filter(a=>a.id!==except&&mineOn(a,id)).map(a=>({id:a.id,name:(a.Name&&a.Name.name)||('Asteroid #'+a.id)})):[];
     return{stock,mine}};
   /* text: a rock with enough in stock first, then a rock that mines it, then the biggest part stock */
-  window.YICSRCTXT=function(id,q,except){if(!BETA)return'';const s=window.YICSRC(id,q,except),full=s.stock.find(x=>x.have>=q*0.999);
+  window.YICSRCTXT=function(id,q,except){const s=window.YICSRC(id,q,except),full=s.stock.find(x=>x.have>=q*0.999);
     if(full)return'in stock on '+esc(full.name);
     if(s.mine.length)return'mine it on '+esc(s.mine[0].name)+(s.mine.length>1?' (+'+(s.mine.length-1)+' more)':'');
     if(s.stock.length)return'some on '+esc(s.stock[0].name);
