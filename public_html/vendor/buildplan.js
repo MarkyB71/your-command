@@ -154,7 +154,7 @@ export function drawBuildPlan(m){
     if(left<=Math.max(0.5,kg*0.001))return HC[key]={how:(stk0[k]||0)>=q-1e-9?'stock':+k<=22?'mine':'make',R:E.USED[k],fac:Object.keys(E.fac)};
     if(!HLP)return HC[key]=null;
     const tryE=X=>{if(!X.USED[k])return null;const need=[];for(const f of visF(X)){const s2=supFrom(f,X.fly[f],c);if(!s2)return null;need.push({k:f,q:X.fly[f],d:s2.d,h:s2.h})}
-      return{how:'help',R:X.USED[k],fac:Object.keys(X.fac),need:need.sort((x,y)=>kgOf(y.k,y.q)-kgOf(x.k,x.q))}};
+      return{how:'help',R:X.USED[k],fac:Object.keys(X.fac),need:need.sort((x,y)=>kgOf(y.k,y.q)-kgOf(x.k,x.q)),hk:need.reduce((t,n)=>t+kgOf(n.k,n.q),0)}};
     /* the plain way first; if that needs something none of your rocks has, try again favouring raws your other rocks hold or mine */
     return HC[key]=tryE(E)||tryE(expand(stk0,mnF(c),[[k,q]],c.ucA||(c.ucA={}),awFor(c)))};
   const helpTxt=h=>'fly in '+h.need.map(n=>amt(n.k,n.q)+' <b>'+esc(nm(n.k))+'</b> from <b>'+esc(n.d.name)+'</b> ('+(n.h==='stock'?'in stock':'mine it')+')').join(', ');
@@ -172,7 +172,7 @@ export function drawBuildPlan(m){
     const flH=fls.map(sh=>sh.dId===S.ast?'<div class="bp-fl to">✈ On its way here: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' – '+when(sh.arrT)+'</div>':
       '<div class="bp-fl">✈ In flight: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' to <b>'+esc(sh.ast||'?')+'</b> – '+when(sh.arrT)+'</div>').join('');
     /* the one best option, shown on the closed line */
-    let mk=null;if(HLP&&!(srcs[0]&&srcs[0].have>=q)){for(const c of RK){const r=canOn(c,id,q);if(r&&r.how!=='help'){mk={c,r};break}if(r&&!mk)mk={c,r}}}
+    let mk=null;if(HLP&&!(srcs[0]&&srcs[0].have>=q)){for(const c of RK){const r=canOn(c,id,q);if(r&&r.how!=='help'){mk={c,r};break}if(r&&(!mk||r.hk<mk.r.hk))mk={c,r}}} /* a rock that can do it alone, else the one needing least flown in */
     const mkTxt=mk?'⚒ make it on <b>'+esc(mk.c.name)+'</b>'+(mk.r.how==='help'?' – '+helpTxt(mk.r):''):'';
     const here2=fls.find(sh=>sh.dId===S.ast),b=srcs[0];let best;
     if(here2)best='<span class="ok">✈ on its way here on <b>'+esc(here2.name)+'</b>, '+when(here2.arrT)+'</span>';
@@ -195,7 +195,7 @@ export function drawBuildPlan(m){
     C.forEach(c=>{const rk=RK.find(x=>x.id===c.id)||c;c.can={};its.forEach(it=>{const r=canOn(rk,it.k,it.q);if(r)c.can[it.k]=r})});
     let left=its.slice();const pick=[];
     /* first only rocks that can do it on their own; then (HLP) rocks that need some ingredients flown in */
-    for(const ph of [0,1])while(left.length){const ok=(c,it)=>c.can[it.k]&&(ph||c.can[it.k].how!=='help');let b=null,bn=0,bkg=0;C.forEach(c=>{if(pick.includes(c)&&!ph)return;const got=left.filter(it=>ok(c,it));const n=got.length,kg=got.reduce((s,it)=>s+it.kg,0);if(n>bn||(n===bn&&n&&kg>bkg)){b=c;bn=n;bkg=kg}});
+    for(const ph of [0,1])while(left.length){const ok=(c,it)=>c.can[it.k]&&(ph||c.can[it.k].how!=='help');let b=null,bn=0,bkg=0,bhk=Infinity;C.forEach(c=>{if(pick.includes(c)&&!ph)return;const got=left.filter(it=>ok(c,it));const hk=got.reduce((t,it)=>t+(c.can[it.k].hk||0),0);const n=got.length,kg=got.reduce((s,it)=>s+it.kg,0);if(n>bn||(n===bn&&n&&(hk<bhk||(hk===bhk&&kg>bkg)))){b=c;bn=n;bkg=kg;bhk=hk}});
       if(!b)break;const tk=left.filter(it=>ok(b,it));b.take=(b.take||[]).concat(tk);left=left.filter(it=>!ok(b,it));if(!pick.includes(b))pick.push(b)}
     /* HLP: flights to bring the helper ingredients to the rock that makes it */
     const legs={};pick.forEach(c=>c.take.forEach(it=>{const h=c.can[it.k];if(h.how!=='help')return;h.need.forEach(n=>{const key=n.d.id+'>'+c.id;legs[key]=(legs[key]||0)+kgOf(n.k,n.q)})}));
