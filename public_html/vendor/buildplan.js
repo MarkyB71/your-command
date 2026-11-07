@@ -26,6 +26,8 @@ function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const 
   return(MK[prod]||[]).some(([,pt,inp,,out])=>has(pt)&&Object.keys(inp).every(k=>(out&&out[k])||canMk(Y,D,ast,k,seen)))}
 /* Shipyard tab (LIVE 31 Oct 2026, tested on ?beta=1 first) – ship parts such as Habitation Modules; whole ships stay in the Construction planner (they are built in the dry dock, type 5) */
 const PTABS=[1,2,3,4];
+/* HLP (?beta=1, 7 Nov 2026, Mark): another rock counts if it can make an item with only some ingredients flown in from your other rocks (e.g. Lead: Troilite there, Sulfur Dioxide from elsewhere) */
+const HLP=/[?&]beta=1/.test(location.search);
 let run=0;
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -140,6 +142,22 @@ export function drawBuildPlan(m){
     return fl.length?'<span class="part">◐ Partly</span> – fly in '+fl.slice(0,3).map(k=>'<b>'+esc(nm(k))+'</b>').join(', ')+(fl.length>3?' +'+(fl.length-3)+' more':'')+how
       :'<span class="ok">✓ Yes</span>'+(Object.keys(E.fac).some(t=>!myFac(t))?' <span class="part">– once you have a '+Object.keys(E.fac).filter(t=>!myFac(t)).map(t=>esc(PTYPE[t])).join(' and ')+' here</span>':'')+how};
   const mineOn=(a,r)=>{const c=a.Celestial||{},sc=(c.scanStatus||0)>=4&&c.abundances;if(sc&&Y.astAbund)return (Y.astAbund(c.abundances)[r]||0)>0;const sp=(Y.SPEC||{})[c.celestialType];return!!(sp&&sp[1].includes(+r))};
+  /* HLP: can rock c make q of k – fully (own stock + mining), or with the missing ingredients flown in from your other rocks? */
+  const RK=A.filter(a=>a.id!==S.ast).map(a=>({id:a.id,name:a.name,i:a.i,o:(D.owned||[]).find(x=>x.id===a.id)}));
+  const stkOf=c=>c.i===null?{}:(Y.tot[c.i]||{}),mnF=c=>r=>c.o?mineOn(c.o,r):false;
+  const awFor=c=>{if(c.aw)return c.aw;const w={};RK.forEach(d=>{if(d.id===c.id)return;const t=stkOf(d);for(let k=1;k<=22;k++)if((t[k]||0)>=1000||(d.o&&mineOn(d.o,k)))w[k]=1});return c.aw=w};
+  const supFrom=(f,q,c)=>{let d=RK.find(x=>x.id!==c.id&&(stkOf(x)[f]||0)>=q*0.999);if(d)return{d,h:'stock'};
+    if(+f<=22){d=RK.find(x=>x.id!==c.id&&x.o&&mineOn(x.o,f));if(d)return{d,h:'mine'}}return null};
+  const HC={},canOn=(c,k,q)=>{const key=c.id+'|'+k+'|'+q;if(key in HC)return HC[key];const stk0=stkOf(c),kg=kgOf(k,q);
+    const visF=E=>Object.keys(E.fly).filter(f=>isCnt(f)?E.fly[f]>=0.5:kgOf(f,E.fly[f])>=0.5);
+    const E=expand(stk0,mnF(c),[[k,q]],c.uc||(c.uc={}));let left=0;for(const f in E.fly)left+=kgOf(f,E.fly[f]);
+    if(left<=Math.max(0.5,kg*0.001))return HC[key]={how:(stk0[k]||0)>=q-1e-9?'stock':+k<=22?'mine':'make',R:E.USED[k],fac:Object.keys(E.fac)};
+    if(!HLP)return HC[key]=null;
+    const tryE=X=>{if(!X.USED[k])return null;const need=[];for(const f of visF(X)){const s2=supFrom(f,X.fly[f],c);if(!s2)return null;need.push({k:f,q:X.fly[f],d:s2.d,h:s2.h})}
+      return{how:'help',R:X.USED[k],fac:Object.keys(X.fac),need:need.sort((x,y)=>kgOf(y.k,y.q)-kgOf(x.k,x.q))}};
+    /* the plain way first; if that needs something none of your rocks has, try again favouring raws your other rocks hold or mine */
+    return HC[key]=tryE(E)||tryE(expand(stk0,mnF(c),[[k,q]],c.ucA||(c.ucA={}),awFor(c)))};
+  const helpTxt=h=>'fly in '+h.need.map(n=>amt(n.k,n.q)+' <b>'+esc(nm(n.k))+'</b> from <b>'+esc(n.d.name)+'</b> ('+(n.h==='stock'?'in stock':'mine it')+')').join(', ');
   const near=(id,q)=>{const tkT=g=>{const t=g/1e6;return t>=1000?(+(t/1000).toFixed(2)).toLocaleString()+' kt':Math.round(t).toLocaleString()+' t'};
     const shipsAt=aid=>(D.ships||[]).filter(sh=>!sh.fl&&sh.dId===aid&&sh.capM>0).sort((x,y)=>(y.prop>0)-(x.prop>0)||(y.capM-y.useM)-(x.capM-x.useM));
     const shipTxt=sh=>'<b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' ('+esc(sh.type)+', '+tkT(Math.max(0,sh.capM-sh.useM))+' free, '+(sh.prop>0?Math.round(sh.prop).toLocaleString()+' t propellant':'<span class="none">no propellant</span>')+')';
@@ -154,13 +172,18 @@ export function drawBuildPlan(m){
     const flH=fls.map(sh=>sh.dId===S.ast?'<div class="bp-fl to">✈ On its way here: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' – '+when(sh.arrT)+'</div>':
       '<div class="bp-fl">✈ In flight: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' to <b>'+esc(sh.ast||'?')+'</b> – '+when(sh.arrT)+'</div>').join('');
     /* the one best option, shown on the closed line */
+    let mk=null;if(HLP&&!(srcs[0]&&srcs[0].have>=q)){for(const c of RK){const r=canOn(c,id,q);if(r&&r.how!=='help'){mk={c,r};break}if(r&&!mk)mk={c,r}}}
+    const mkTxt=mk?'⚒ make it on <b>'+esc(mk.c.name)+'</b>'+(mk.r.how==='help'?' – '+helpTxt(mk.r):''):'';
     const here2=fls.find(sh=>sh.dId===S.ast),b=srcs[0];let best;
     if(here2)best='<span class="ok">✈ on its way here on <b>'+esc(here2.name)+'</b>, '+when(here2.arrT)+'</span>';
+    else if(b&&b.have>=q)best='<span class="ok">from <b>'+esc(b.a.name)+'</b></span>'+(b.ready.length?' <span class="bp-shb">· 🚀 '+esc(b.ready[0].name)+' ready</span>':' <span class="a">· no ship ready there</span>');
+    else if(HLP&&mnA.length)best='<span class="bp-mn">⛏ mine it on <b>'+esc(mnA[0])+'</b></span>';
+    else if(mk)best='<span class="part">'+mkTxt+'</span>';
     else if(b)best='<span class="'+(b.have>=q?'ok':'part')+'">from <b>'+esc(b.a.name)+'</b>'+(b.have>=q?'':' (has '+amt(id,b.have)+')')+'</span>'+(b.ready.length?' <span class="bp-shb">· 🚀 '+esc(b.ready[0].name)+' ready</span>':' <span class="a">· no ship ready there</span>');
     else if(mnA.length)best='<span class="bp-mn">⛏ mine it on <b>'+esc(mnA[0])+'</b></span>';
     else best='<span class="none">none of your asteroids has it</span>';
-    const more=fls.length+srcs.length+(mn.length?1:0);
-    return{best,more,detail:'<div class="bp-src">'+flH+st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join('')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+'</div>'}};
+    const more=fls.length+srcs.length+(mn.length?1:0)+(mk?1:0);
+    return{best,more,detail:'<div class="bp-src">'+flH+st.map(x=>'<div class="ok">📦 In stock on '+x+'</div>').join('')+(mn.length?'<div class="bp-mn">⛏ Can be mined on '+mn.join(', ')+'</div>':'')+(mk?'<div class="part">'+mkTxt+' <span class="a">('+esc(mk.r.R?mk.r.R[0]:'')+')</span></div>':'')+'</div>'}};
   const flyList=o=>Object.keys(o).filter(k=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5).sort((x,y)=>kgOf(y,o[y])-kgOf(x,o[x])).map(k=>{const n=near(k,o[k]);
     const w='<span class="bp-w">'+amt(k,o[k])+'</span><b class="bp-nm">'+esc(nm(k))+'</b> ';
     return n.more?'<details class="bp-it"><summary>'+w+n.best+'</summary>'+n.detail+'</details>':'<div class="bp-it">'+w+n.best+'</div>'}).join('');
@@ -169,18 +192,17 @@ export function drawBuildPlan(m){
   const planCalc=()=>{
     const its=Object.keys(fly).filter(k=>isCnt(k)?fly[k]>=0.5:kgOf(k,fly[k])>=0.5).map(k=>({k,q:fly[k],kg:kgOf(k,fly[k])}));if(!its.length)return'';
     const seen={},C=[];A.forEach(a=>{if(a.id===S.ast)return;seen[a.id]=1;C.push({id:a.id,name:a.name,i:a.i,o:(D.owned||[]).find(x=>x.id===a.id)})});
-    C.forEach(c=>{const stk0=c.i===null?{}:(Y.tot[c.i]||{}),cm=r=>c.o?mineOn(c.o,r):false,uc={};c.can={};
-      its.forEach(it=>{const E=expand(stk0,cm,[[it.k,it.q]],uc);let left=0;for(const f in E.fly)left+=kgOf(f,E.fly[f]);
-        if(left>Math.max(0.5,it.kg*0.001))return;
-        const how=(stk0[it.k]||0)>=it.q-1e-9?'stock':+it.k<=22?'mine':'make';
-        c.can[it.k]={how,R:E.USED[it.k],fac:Object.keys(E.fac)}})});
+    C.forEach(c=>{const rk=RK.find(x=>x.id===c.id)||c;c.can={};its.forEach(it=>{const r=canOn(rk,it.k,it.q);if(r)c.can[it.k]=r})});
     let left=its.slice();const pick=[];
-    while(left.length){let b=null,bn=0,bkg=0;C.forEach(c=>{if(pick.includes(c))return;const got=left.filter(it=>c.can[it.k]);const n=got.length,kg=got.reduce((s,it)=>s+it.kg,0);if(n>bn||(n===bn&&n&&kg>bkg)){b=c;bn=n;bkg=kg}});
-      if(!b)break;b.take=left.filter(it=>b.can[it.k]);left=left.filter(it=>!b.can[it.k]);pick.push(b)}
+    /* first only rocks that can do it on their own; then (HLP) rocks that need some ingredients flown in */
+    for(const ph of [0,1])while(left.length){const ok=(c,it)=>c.can[it.k]&&(ph||c.can[it.k].how!=='help');let b=null,bn=0,bkg=0;C.forEach(c=>{if(pick.includes(c)&&!ph)return;const got=left.filter(it=>ok(c,it));const n=got.length,kg=got.reduce((s,it)=>s+it.kg,0);if(n>bn||(n===bn&&n&&kg>bkg)){b=c;bn=n;bkg=kg}});
+      if(!b)break;const tk=left.filter(it=>ok(b,it));b.take=(b.take||[]).concat(tk);left=left.filter(it=>!ok(b,it));if(!pick.includes(b))pick.push(b)}
+    /* HLP: flights to bring the helper ingredients to the rock that makes it */
+    const legs={};pick.forEach(c=>c.take.forEach(it=>{const h=c.can[it.k];if(h.how!=='help')return;h.need.forEach(n=>{const key=n.d.id+'>'+c.id;legs[key]=(legs[key]||0)+kgOf(n.k,n.q)})}));
     const trips=kg=>Math.max(1,Math.ceil(kg/2e6)),htr=kg=>Math.max(1,Math.ceil(kg/12e6));
-    const totLT=pick.reduce((s,c)=>s+trips(c.take.reduce((x,it)=>x+it.kg,0)),0),totHT=pick.reduce((s,c)=>s+htr(c.take.reduce((x,it)=>x+it.kg,0)),0);
+    const totLT=pick.reduce((s,c)=>s+trips(c.take.reduce((x,it)=>x+it.kg,0)),0)+Object.values(legs).reduce((s,kg)=>s+trips(kg),0),totHT=pick.reduce((s,c)=>s+htr(c.take.reduce((x,it)=>x+it.kg,0)),0)+Object.values(legs).reduce((s,kg)=>s+htr(kg),0);
     const ready=aid=>(D.ships||[]).filter(sh=>!sh.fl&&sh.dId===aid&&sh.capM>0&&sh.prop>0).sort((x,y)=>(y.capM-y.useM)-(x.capM-x.useM));
-    const howTxt=(c,it)=>{const h=c.can[it.k];if(h.how==='stock')return'<span class="ok">in stock</span>';if(h.how==='mine')return'<span class="bp-mn">mine it there</span>';
+    const howTxt=(c,it)=>{const h=c.can[it.k];if(h.how==='help')return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span><div class="a">– '+helpTxt(h)+'</div>';if(h.how==='stock')return'<span class="ok">in stock</span>';if(h.how==='mine')return'<span class="bp-mn">mine it there</span>';
       return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span>'};
     const posN=pick.filter(c=>!ready(c.id).length).length;
     return'<div class="bp-plan">'+'<div id="bpFirst"></div>'+'<div class="bp-ps"'+' style="display:none"'+'>'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
