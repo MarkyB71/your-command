@@ -83,6 +83,9 @@ body > header{display:none!important}
 #deckbar .dk-sub:empty{padding:0 0 6px}
 #deckbar .dk-sub{align-items:center}
 #deckbar .dk-sub.rfm{position:relative}
+#deckbar #dkrf.glo{color:#d8f7ff!important;font-weight:700;border-color:#8fe3ff!important;box-shadow:0 0 8px rgba(143,227,255,.95),0 0 22px rgba(91,157,255,.75);text-shadow:0 0 8px rgba(143,227,255,.9);animation:playGlow 2.4s ease-in-out infinite}
+#deckbar #dkrf.glo:hover,#deckbar #dkrf.glo:focus-visible{color:#fff!important;animation:none;box-shadow:0 0 14px rgba(200,245,255,1),0 0 40px rgba(91,157,255,1)!important;text-shadow:0 0 10px #fff}
+@media (prefers-reduced-motion:reduce){#deckbar #dkrf.glo{animation:none}}
 #deckbar .dk-sub.rfm #dkrf.mid{position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px!important;padding:6px 16px!important}
 #dktools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;padding-left:10px}
 #dktools > *{margin:0!important}
@@ -581,6 +584,7 @@ body > header{display:none!important}
     const sub = db.querySelector('.dk-sub'), rb = document.getElementById('dkrf');
     if (!sub || !rb) return;
     if (rb.parentNode !== sub) sub.appendChild(rb);
+    rb.classList.add('glo'); // same glow as Play Influence (Mark, 8 Nov 2026)
     sub.classList.add('rfm');
     rb.classList.add('mid');
     const r = rb.getBoundingClientRect(), pgs = sub.querySelectorAll('.pg'), t = document.getElementById('dktools');
