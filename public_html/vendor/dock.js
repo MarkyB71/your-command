@@ -36,7 +36,7 @@
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
   const amt = (p, u) => (bulk(p) ? tonnes(u) : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
 
-  const S = { calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
+  const S = { bs: 30, calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
   function build() {
@@ -496,14 +496,40 @@ ${R.map(route).join('')}
     const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, S.mover];
     return { contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ProcessProductsStart'), hex(data.length), ...data.map(hex)] };
   }
+  // APPROVAL SIZE (go-live item 1, Mark 8 Nov): one failing action cancels the whole approval, so actions go in
+  // batches (15 / 30 / 50 / All, like storage tidy) and are checked against the game data just before sending.
+  const BATCHES = [15, 30, 50, 'All'];
+  function checks(calls) {
+    const errs = [], d = D(), now = Date.now();
+    if (!S.dataAt || now - S.dataAt > 10 * 60000) errs.push('The game data is over 10 minutes old – press ↻ Check the game again first.');
+    const c = S.moverObj;
+    if (!c) errs.push('No crew picked.'); else if (c.busy) errs.push(c.name + ' is busy until ' + c.busy + '.');
+    const byId = (id) => onRock().find((b) => b.id === id);
+    const left = {};
+    (S.batchDel || []).forEach((x) => {
+      const f = byId(x.from), t = byId(x.to);
+      if (!f || !t) { errs.push('A building in the moves is no longer on ' + S.rock + '.'); return; }
+      if (x.from === x.to) errs.push('A move goes from ' + nm(f) + ' to itself.');
+      x.items.forEach(([p, a]) => {
+        const k = x.from + ':' + p; if (left[k] == null) left[k] = (inv(f) || { contents: [] }).contents.filter((q) => q.product === p).reduce((s2, q) => s2 + q.amount, 0);
+        left[k] -= a; if (left[k] < 0) errs.push(nm(f) + ' no longer holds enough ' + pname(p) + '.');
+        if (t.Building.buildingType === TANK && !TANKOK.has(p)) errs.push(nm(t) + ' is a tank farm and can’t take ' + pname(p) + '.');
+      });
+    });
+    (S.batchStart || []).forEach((x) => { if (!freeSlot(x.b)) errs.push(nm(x.b) + ' is no longer free.'); });
+    return [...new Set(errs)];
+  }
   function buildCalls() {
-    const calls = [];
+    const calls = [], n = S.bs === 'All' ? Infinity : (S.bs || 30);
     if (S.feed && S.feedCall) calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(S.feedCall.src), hex(SLOT), hex(S.feedCall.give), '0x1', hex(S.feedCall.crew)] });
+    S.batchDel = []; S.batchStart = [];
     S.calls.forEach((x) => {
+      if (calls.length >= n) return;
       const data = [5, x.from, SLOT, x.items.length, ...x.items.flat(), 5, x.to, SLOT, 1, S.mover];
       calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('SendDelivery'), hex(data.length), ...data.map(hex)] });
+      S.batchDel.push(x);
     });
-    (S.startList || []).forEach((c) => { if (PID[c.r.name]) calls.push(startCall(c)); });
+    (S.startList || []).forEach((c) => { if (calls.length >= n || !PID[c.r.name]) return; calls.push(startCall(c)); S.batchStart.push(c); });
     return calls;
   }
   async function approve() {
@@ -518,6 +544,8 @@ ${R.map(route).join('')}
       if (!sameAddr(a, D().wallet)) throw new Error('That wallet (' + esc(a) + ') is not the one this page is showing. Switch account in your wallet and try again.');
       const calls = buildCalls();
       if (!calls.length) throw new Error('Nothing to send.');
+      const errs = checks(calls);
+      if (errs.length) throw new Error('Checked just before sending – nothing was sent:<br>• ' + errs.map(esc).join('<br>• '));
       say('Waiting for your wallet… check the wallet window and approve (or reject) it there.');
       let res;
       if (typeof w.request === 'function') res = await w.request({ type: 'wallet_addInvokeTransaction', params: { calls } });
@@ -529,7 +557,7 @@ ${R.map(route).join('')}
     } catch (e) {
       const t = String((e && e.message) || e || '');
       S.busy = false; render();
-      say(/reject|cancel|abort|denied|User/i.test(t) ? 'Cancelled in the wallet – nothing was changed.' : 'Not sent: ' + esc(t), true);
+      say(/reject|cancel|abort|denied|User/i.test(t) && !/Checked just before/.test(t) ? 'Cancelled in the wallet – nothing was changed.' : 'Not sent: ' + (/^Checked just before/.test(t) ? t : esc(t)), true);
     }
   }
 
@@ -731,8 +759,9 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       const mine = isOwner();
       const wait = S.sentAt && Date.now() - S.sentAt < 180000;
       const can = mine && !S.busy && !wait && (S.calls.length || (S.feed && S.feedCall) || (S.startList || []).length) && S.mover;
-      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" id="dk-appr"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + nmv + ' deliver' + (nmv === 1 ? 'y' : 'ies') + (S.feed ? ' + feed crew' : '') + ((S.startList || []).length ? ' + start ' + S.startList.length + ' process' + (S.startList.length === 1 ? '' : 'es') : '') + ')'}</button>
-<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – give the game a few minutes to catch up, then press ↻ Check the game again before sending more.</span> ' : ''}${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
+      const tot = (S.feed && S.feedCall ? 1 : 0) + S.calls.length + (S.startList || []).length, per = S.bs === 'All' ? tot : Math.min(tot, S.bs || 30);
+      h += `<div class="card"><h2><span class="n">8</span>Approve</h2>${tot > 15 ? `<div class="row" style="margin-bottom:10px"><span class="src">Actions per approval</span><select id="dk-bs">${BATCHES.map((b) => opt(b, b === 'All' ? 'All (' + tot + ')' : b, S.bs || 30)).join('')}</select><span class="hint" style="margin:0">${tot > per ? 'This approval sends the first ' + per + ' of ' + tot + ' – the rest next time.' : ''} If one action fails, the game cancels the whole approval, so smaller is safer.</span></div>` : ''}<button class="approve" id="dk-appr"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : tot > per ? 'APPROVE IN WALLET (' + per + ' of ' + tot + ' actions)' : 'APPROVE IN WALLET (' + nmv + ' deliver' + (nmv === 1 ? 'y' : 'ies') + (S.feed ? ' + feed crew' : '') + ((S.startList || []).length ? ' + start ' + S.startList.length + ' process' + (S.startList.length === 1 ? '' : 'es') : '') + ')'}</button>
+<div class="hint">${S.dataAt && Date.now() - S.dataAt > 10 * 60000 ? '<span style="color:var(--amber)">Game data is over 10 minutes old – press ↻ Check the game again before approving.</span> ' : ''}${wait ? '<span style="color:var(--amber)">Just sent – give the game a few minutes to catch up, then press ↻ Check the game again before sending more.</span> ' : ''}${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
 <div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
@@ -758,6 +787,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-crew', 'change', (e) => { S.crew = +e.target.value; S.feed = false; render(); });
     on('dk-feed', 'change', (e) => { S.feed = e.target.checked; render(); });
     on('dk-start', 'change', (e) => { S.start = e.target.checked; render(); });
+    on('dk-bs', 'change', (e) => { S.bs = e.target.value === 'All' ? 'All' : +e.target.value; render(); });
     on('dk-appr', 'click', () => { if (!S.busy) approve(); });
     m.querySelectorAll('[data-plan]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); planLoad(a.dataset.plan); render(); }));
     m.querySelectorAll('[data-unplan]').forEach((b) => b.addEventListener('click', () => { plansPut(plansGet().filter((x) => x.k !== b.dataset.unplan)); if (S.rock + '|' + S.proc === b.dataset.unplan) S.proc = -1; render(); }));
@@ -765,7 +795,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-recheck', 'click', (e) => {
       const rf = document.getElementById('rf'), before = D(); e.target.textContent = 'Checking…'; e.target.disabled = true;
       if (rf) rf.click();
-      let n = 0; const t = setInterval(() => { n++; if ((D() && D() !== before) || n > 40) { clearInterval(t); loadDeliveries().then(render); } }, 500);
+      let n = 0; const t = setInterval(() => { n++; if ((D() && D() !== before) || n > 40) { clearInterval(t); S.dataAt = Date.now(); loadDeliveries().then(render); } }, 500);
     });
   }
 
@@ -773,7 +803,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
   function start() {
     build();
     loadRecipes().then(() => {
-      const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; render(); }); } }, 400);
+      const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; S.dataAt = Date.now(); render(); }); } }, 400);
     });
   }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
