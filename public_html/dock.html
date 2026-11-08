@@ -312,8 +312,13 @@ td.num,th.num{text-align:right;white-space:nowrap}
 
   <div class="card">
     <h2><span class="n">6</span>Crew to do the moving</h2>
-    <select><option>Skippys Sales Crew – fed 98% · free distance ×1.5 · ready now</option><option>Skippys Rocket Heads – fed 0% (hungry, slower) · ready now</option><option>Skippys Miners I – busy 40 min</option></select>
+    <select id="crew"><option value="98">Skippys Sales Crew – fed 98% · free distance ×1.5 · ready now</option><option value="0">Skippys Rocket Heads – fed 0% (hungry, slower) · ready now</option><option value="40">Skippys Miners I – fed 40% · busy 40 min</option></select>
     <div class="hint">Must be on this rock. Best fed crew with the best transport bonus is picked for you.</div>
+    <div id="feedbox" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55">
+      <div id="feedwarn" style="color:var(--amber);margin-bottom:6px"></div>
+      <label style="margin:0"><input type="checkbox" id="feed"> <span id="feedtxt"></span></label>
+      <div class="hint">Feeding goes in the same wallet approval, before the moves.</div>
+    </div>
   </div>
 
   <div class="card">

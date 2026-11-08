@@ -39,9 +39,20 @@
     var after=(d.now+add)/d.cap*100;
     document.getElementById('room').innerHTML=after>95?'<span style="color:var(--red)">✗ Not enough room – '+d.name+' would be '+after.toFixed(0)+'% full.</span>':'<span class="ok">✓ Room OK – '+d.name+' will be '+after.toFixed(0)+'% full.</span>';
     document.getElementById('desthint').innerHTML=d.tank?'<span style="color:var(--amber)">Tank farms only take fluids – Iron, Graphite and Calcium can\'t go here.</span>':'Blue = in there now · amber = what this will add.';
-    document.getElementById('appr').textContent='APPROVE IN WALLET ('+nmv+' move'+(nmv===1?'':'s')+')';
+    // Feed a hungry crew (Mark, 8 Nov): offered when the picked crew is under 95% fed; uses ResupplyFood in the same approval
+    var cs=document.getElementById('crew'), fed=+cs.value, cname=cs.options[cs.selectedIndex].text.split(' – ')[0];
+    var fb2=document.getElementById('feedbox'), feed=document.getElementById('feed');
+    if(fed<95){
+      fb2.style.display='';
+      document.getElementById('feedwarn').textContent=fed<50?'⚠ '+cname+' is hungry – moves will be slower.':cname+' is '+fed+'% fed.';
+      var tf=Math.round((100-fed)/100*5*10)/10;
+      document.getElementById('feedtxt').textContent='Feed '+cname+' first: '+t(tf)+' Food from Skippys Burgers';
+    } else { fb2.style.display='none'; feed.checked=false; }
+    var extra=feed.checked?' + feed crew':'';
+    document.getElementById('appr').textContent='APPROVE IN WALLET ('+nmv+' move'+(nmv===1?'':'s')+extra+')';
   }
-  ['runs','dest'].forEach(function(id){document.getElementById(id).addEventListener('input',draw);});
+  ['runs','dest','crew','feed'].forEach(function(id){document.getElementById(id).addEventListener('input',draw);});
+  document.getElementById('feed').addEventListener('change',draw);
   document.getElementById('appr').addEventListener('click',function(){document.getElementById('toast').style.display='block';});
   document.getElementById('back2').addEventListener('click',function(e){e.preventDefault();document.getElementById('reset').click();});
   draw();
