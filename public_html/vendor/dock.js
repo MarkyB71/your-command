@@ -74,7 +74,8 @@
     ok.checked=false; skip.checked=false; ok.disabled=false; skip.disabled=false; go.disabled=true;
     done.style.display='none'; setSign('● INNER DOOR LOCKED');
   });
-  if(remembered()){ ok.checked=true; skip.checked=true; openNow(true); }
+  // Remembered: "I understand" is ticked for them, but they still cycle the airlock every time (Mark, 8 Nov)
+  if(remembered()){ ok.checked=true; skip.checked=true; go.disabled=false; setSign('● READY TO CYCLE','amber'); }
 })();
 
 })();
