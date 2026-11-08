@@ -98,6 +98,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
     <li><a href="#around">Getting around</a></li>
     <li><a href="#bridge">The Bridge</a></li>
     <li><a href="#decks">The decks</a></li>
+    <li><a href="#logistics">Logistics Hub</a></li>
     <li><a href="#extension">The extension</a></li>
     <li><a href="#options">Extension options</a></li>
     <li><a href="#dots">Status dots</a></li>
@@ -234,6 +235,22 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 </div>
 </section>
 
+<section id="logistics">
+<h2>🚚 Logistics Hub</h2>
+<p><b>The one page that can act in the game.</b> Everything else on the Command Deck only reads. The Logistics Hub can send actions from your wallet – but only the ones you approve in your wallet.</p>
+<p>Open it with the amber <b>🚚 Logistics Hub ↗</b> button in the deck tool row. You go through an airlock first, every time, with a warning: tick "I understand" and cycle the airlock. Tick "Remember that I understand" to skip the view out of the window next time (you still go through the airlock).</p>
+<dl class="pages">
+  <dt>What to make</dt><dd>Pick a product (or a process by name – there's a search box). The hub picks a free building that can make it, nearest to your crews, and a storage to gather the inputs in – one with room, close to the building, that already holds the most.</dd>
+  <dt>Inputs and moves</dt><dd>It works out what's needed, what's already there, what's already on its way, and moves the rest from your other storage on the rock – nearest first. Distances and trip times are shown (within 5 km is instant).</dd>
+  <dt>Short on this rock</dt><dd>Anything you don't have shows whether this rock can mine or make it, or where to fly it in from. The hub never flies ships for you.</dd>
+  <dt>Full production plan</dt><dd>Long chains are broken down into stages – mine, then each process in order, using by-products made along the way. Each step says where to send its output.</dd>
+  <dt>Start processes too?</dt><dd>Optional, off unless you tick it. Starts the processes whose inputs are already in place, on free buildings, with room for the output, while the crew's queue stays under the game's 24 hours.</dd>
+  <dt>Approve</dt><dd>Your wallet shows every action before anything happens. Long lists go in batches (15 / 30 / 50 / All). Everything is checked again just before sending – if anything has changed, nothing is sent and you're told why. Each action costs a small game fee (about 1 cent).</dd>
+  <dt>Saved plans</dt><dd>Plans are kept in your browser so you can come back to a long chain – they're always checked against the game as it is now.</dd>
+</dl>
+<p>After sending: finish the deliveries in the game with <b>Finish All Ready Items</b>, then press <b>↻ Check the game again</b>.</p>
+</section>
+
 <section id="extension">
 <h2>The browser extension</h2>
 <p><b>Skippy's Command Deck</b> is a small, free extension for Chrome, Brave and Edge.</p>
@@ -303,7 +320,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <section id="safe">
 <h2>Safety &amp; privacy</h2>
 <ul>
-  <li>The website only <b>reads</b> your wallet address. It never asks you to sign anything and never sends a transaction.</li>
+  <li>The website only <b>reads</b> your wallet address – except the <b>Logistics Hub</b>, the one page that can send game actions. It only sends what you approve in your own wallet, and only for the wallet the page is showing. You go through an airlock warning every time you enter it.</li>
   <li>The extension can only reach two sites: <b>game.influenceth.io</b> and <b>your-command.adalia.academy</b>.</li>
   <li>It never reads, stores or sends your wallet, keys, passwords, game data or browsing.</li>
   <li>The only things it ever fetches are the belt-wide lists of open market orders and (from 0.6.5) ships in flight, and only from the Command Deck itself (for the system map). It sends nothing about you when it does.</li>
