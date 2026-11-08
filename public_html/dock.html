@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loading Dock – Command Deck (test)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --amber:#ffb03b; --amber2:#ff8a1f; --cyan:#8fe3ff; --steel:#2a3140; --steel2:#3a4356;
+  --ink:#dfe7f2; --dim:#8a96aa; --red:#ff4d4d; --green:#3fd68a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#05070c;color:var(--ink);font-family:Rajdhani,system-ui,sans-serif}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px}
+.wrap{display:flex;gap:26px;align-items:center;max-width:1180px;width:100%}
+/* ---------- chamber ---------- */
+.chamber{position:relative;flex:1 1 640px;aspect-ratio:16/11;border-radius:18px;overflow:hidden;
+  background:linear-gradient(#141923,#0b0e15 60%,#10141d);box-shadow:0 0 0 2px #1d2330 inset,0 20px 60px #000a}
+.chamber svg.walls{position:absolute;inset:0;width:100%;height:100%}
+.beacon{position:absolute;top:4.5%;width:7%;aspect-ratio:2/1;border-radius:40px 40px 6px 6px;
+  background:radial-gradient(ellipse at 50% 80%,#ffd27a,var(--amber2) 55%,#5a2a00);box-shadow:0 0 18px var(--amber2);opacity:.55}
+.beacon.l{left:9%}.beacon.r{right:9%}
+.cycling .beacon{animation:flash .5s infinite alternate}
+@keyframes flash{from{opacity:.25;box-shadow:0 0 4px var(--amber2)}to{opacity:1;box-shadow:0 0 40px 10px var(--amber2)}}
+.sweep{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at 50% 0%,#ff9a2a55,transparent 60%)}
+.cycling .sweep{animation:sweep .5s infinite alternate}
+@keyframes sweep{from{opacity:0}to{opacity:1}}
+
+/* door frame + dock behind */
+.frame{position:absolute;left:19%;right:19%;top:15%;bottom:9%;border-radius:22px 22px 8px 8px;overflow:hidden;
+  box-shadow:0 0 0 10px #1a202b,0 0 0 13px #3b4558,0 0 0 22px #141922,0 0 0 24px #000}
+.dock{position:absolute;inset:0;transition:transform 2.4s ease}
+.open .dock{transform:scale(1.08)}
+.dock svg{width:100%;height:100%;display:block}
+.door{position:absolute;top:0;bottom:0;width:50.4%;transition:transform 2.2s cubic-bezier(.7,0,.3,1) .3s;
+  --hole:13%;}
+.door.l{left:0;
+  -webkit-mask:radial-gradient(circle at 100% 42%,transparent 62px,#000 63px);
+          mask:radial-gradient(circle at 100% 42%,transparent 62px,#000 63px);
+  background:
+   radial-gradient(circle at 100% 42%,transparent 62px,#b7c2d3 63px,#5d687c 70px,#2b3240 76px,transparent 77px),
+   repeating-linear-gradient(135deg,var(--amber) 0 18px,#111 18px 36px) right/22px 100% no-repeat,
+   linear-gradient(90deg,#283041,#3a4458 60%,#2d3546);
+}
+.door.r{right:0;
+  -webkit-mask:radial-gradient(circle at 0% 42%,transparent 62px,#000 63px);
+          mask:radial-gradient(circle at 0% 42%,transparent 62px,#000 63px);
+  background:
+   radial-gradient(circle at 0% 42%,transparent 62px,#b7c2d3 63px,#5d687c 70px,#2b3240 76px,transparent 77px),
+   repeating-linear-gradient(45deg,var(--amber) 0 18px,#111 18px 36px) left/22px 100% no-repeat,
+   linear-gradient(270deg,#283041,#3a4458 60%,#2d3546);
+}
+.door::before{content:"";position:absolute;left:12%;right:12%;bottom:8%;height:16%;border-radius:4px;
+  background:repeating-linear-gradient(0deg,#1d2330 0 6px,#323b4d 6px 9px);box-shadow:0 0 0 2px #1a1f2a}
+.door::after{content:"";position:absolute;left:14%;right:14%;top:7%;height:6%;border-radius:3px;
+  background:linear-gradient(#232a37,#3b4558);box-shadow:0 0 0 2px #151a23}
+.door .lbl{position:absolute;top:66%;font-weight:700;letter-spacing:.12em;font-size:clamp(10px,1.4vw,15px);color:#ffcf7a;opacity:.85}
+.door.l .lbl{right:30%}.door.r .lbl{left:30%}
+.open .door.l{transform:translateX(-101%)}
+.open .door.r{transform:translateX(101%)}
+.glass{position:absolute;left:50%;top:42%;width:124px;height:124px;margin:-62px 0 0 -62px;border-radius:50%;
+  pointer-events:none;background:radial-gradient(circle at 35% 30%,#ffffff22,transparent 45%);transition:opacity .4s .3s}
+.open .glass{opacity:0}
+
+/* status sign over the door */
+.sign{position:absolute;left:50%;top:5.5%;transform:translateX(-50%);padding:4px 16px;border-radius:6px;
+  background:#0c0f15;box-shadow:0 0 0 2px #2c3444;font-weight:700;letter-spacing:.18em;font-size:clamp(11px,1.5vw,16px);
+  color:var(--red);text-shadow:0 0 8px currentColor;white-space:nowrap}
+.sign.amber{color:var(--amber)}.sign.green{color:var(--green)}
+
+/* ---------- control panel ---------- */
+.panel{flex:0 0 360px;background:linear-gradient(#141923,#0e121a);border-radius:14px;padding:20px 22px;
+  box-shadow:0 0 0 2px #232a37 inset,0 0 0 1px #000;position:relative;overflow:hidden}
+.panel::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;
+  background:repeating-linear-gradient(45deg,var(--amber) 0 12px,#111 12px 24px)}
+h1{margin:6px 0 2px;font-size:26px;letter-spacing:.14em;color:var(--amber)}
+.sub{color:var(--dim);font-size:15px;margin-bottom:14px;letter-spacing:.05em}
+.warn{border-left:4px solid var(--amber);background:#ffb03b12;padding:10px 12px;border-radius:4px;font-size:17px;line-height:1.3}
+.warn b{color:#ffd28a}
+ul{margin:12px 0 14px;padding-left:20px;font-size:16px;line-height:1.35;color:#cdd6e3}
+li{margin:4px 0}
+label{display:flex;gap:10px;align-items:flex-start;font-size:16px;margin:10px 0;cursor:pointer;line-height:1.25}
+input[type=checkbox]{width:20px;height:20px;margin:0;flex:0 0 auto;accent-color:var(--amber)}
+.btn{display:block;width:100%;margin-top:14px;padding:12px;border:0;border-radius:8px;font:700 18px Rajdhani,sans-serif;
+  letter-spacing:.14em;cursor:pointer;color:#1a1000;background:linear-gradient(#ffc45e,var(--amber2));box-shadow:0 0 18px #ff8a1f55}
+.btn:disabled{cursor:not-allowed;color:#6b7383;background:#232a37;box-shadow:none}
+.back{display:inline-block;margin-top:14px;color:var(--cyan);text-decoration:none;font-size:16px}
+.back:hover{text-decoration:underline}
+.bar{height:8px;border-radius:4px;background:#1d2330;margin-top:12px;overflow:hidden;display:none}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber2),#ffd27a)}
+.cycling .bar{display:block}.cycling .bar i{transition:width 2.6s linear;width:100%}
+.done{display:none;margin-top:12px;color:var(--green);font-size:17px}
+.reset{background:none;border:0;color:var(--dim);font:500 14px Rajdhani,sans-serif;cursor:pointer;margin-top:10px;padding:0;text-decoration:underline}
+.mock{position:absolute;right:12px;bottom:10px;font-size:12px;color:#5c6577;letter-spacing:.1em}
+/* ---------- loading dock page ---------- */
+body.indock{display:block;padding:0}
+.wrap{transition:opacity .6s}
+.wrap.gone{opacity:0}
+#dockpg{display:none;max-width:980px;margin:0 auto;padding:0 18px 40px}
+body.indock #dockpg{display:block;animation:fadein .6s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.stripe{height:10px;background:repeating-linear-gradient(45deg,var(--amber) 0 12px,#111 12px 24px)}
+.dhead{position:sticky;top:0;z-index:5;background:#05070c;padding-top:0}
+.dhead .in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 10px;flex-wrap:wrap}
+.dhead h1{margin:0}
+.live{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.08em;color:#ffd28a;font-size:15px;
+  border:1px solid #ffb03b66;background:#ffb03b14;border-radius:20px;padding:4px 12px}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);animation:flash 1s infinite alternate}
+.card{background:linear-gradient(#141923,#0e121a);border-radius:12px;box-shadow:0 0 0 1px #232a37 inset;padding:14px 18px;margin:14px 0}
+.card h2{margin:0 0 10px;font-size:19px;letter-spacing:.08em;color:var(--ink);display:flex;align-items:center;gap:10px}
+.card h2 .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#ffb03b22;color:var(--amber);font-size:15px;box-shadow:0 0 0 1px #ffb03b66 inset}
+.card.fly{box-shadow:0 0 0 1px #9a6bff66 inset}
+.card.fly h2 .n{background:#9a6bff22;color:#c4a8ff;box-shadow:0 0 0 1px #9a6bff88 inset}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+select,input[type=number]{background:#0b0e14;color:var(--ink);border:1px solid #3a4356;border-radius:6px;padding:7px 10px;font:600 16px Rajdhani,sans-serif;min-width:220px}
+input[type=number]{min-width:0;width:90px}
+.hint{color:var(--dim);font-size:15px;margin-top:6px}
+.cap{flex:1 1 260px}
+.capbar{height:10px;border-radius:5px;background:#1d2330;overflow:hidden;margin-top:4px;position:relative}
+.capbar i{position:absolute;left:0;top:0;bottom:0;background:#4f90ff}
+.capbar b{position:absolute;top:0;bottom:0;background:var(--amber)}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th{text-align:left;color:var(--dim);font-weight:600;padding:6px 8px;border-bottom:1px solid #2a3140;letter-spacing:.04em}
+td{padding:7px 8px;border-bottom:1px solid #1b212c;vertical-align:top}
+td.num,th.num{text-align:right;white-space:nowrap}
+.ok{color:var(--green)}.short{color:#c4a8ff}
+.src{color:#cdd6e3;font-size:15px}
+.mv td:first-child{width:28px}
+.fee{color:var(--dim);font-size:15px;margin-top:8px}
+.approve{display:block;width:100%;padding:14px;border:0;border-radius:10px;font:700 20px Rajdhani,sans-serif;letter-spacing:.12em;cursor:pointer;
+  color:#1a1000;background:linear-gradient(#ffc45e,var(--amber2));box-shadow:0 0 22px #ff8a1f55}
+.mocknote{text-align:center;color:#5c6577;font-size:13px;letter-spacing:.1em;margin-top:18px}
+.toast{display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#3fd68a18;color:var(--green);border:1px solid #3fd68a55}
+@media (max-width:900px){.wrap{flex-direction:column}.panel{flex:none;width:100%}.chamber{width:100%;flex:none}}
+@media (max-width:560px){
+  .door.l{-webkit-mask:radial-gradient(circle at 100% 42%,transparent 38px,#000 39px);mask:radial-gradient(circle at 100% 42%,transparent 38px,#000 39px)}
+  .door.r{-webkit-mask:radial-gradient(circle at 0% 42%,transparent 38px,#000 39px);mask:radial-gradient(circle at 0% 42%,transparent 38px,#000 39px)}
+  .glass{width:76px;height:76px;margin:-38px 0 0 -38px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+
+  <!-- ===== the airlock chamber ===== -->
+  <div class="chamber" id="chamber" aria-label="Airlock with a window through to the loading dock">
+    <svg class="walls" viewBox="0 0 1600 1100" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="wall" x1="0" x2="1"><stop offset="0" stop-color="#0d1118"/><stop offset=".5" stop-color="#1a2130"/><stop offset="1" stop-color="#0d1118"/></linearGradient>
+      </defs>
+      <rect width="1600" height="1100" fill="url(#wall)"/>
+      <!-- side wall panels -->
+      <g fill="none" stroke="#2b3345" stroke-width="3">
+        <path d="M40 160 L230 200 L230 960 L40 1040 Z"/><path d="M1560 160 L1370 200 L1370 960 L1560 1040 Z"/>
+        <path d="M70 260 L200 280 M70 420 L200 430 M70 580 L200 585 M70 740 L200 740 M70 900 L200 895"/>
+        <path d="M1530 260 L1400 280 M1530 420 L1400 430 M1530 580 L1400 585 M1530 740 L1400 740 M1530 900 L1400 895"/>
+      </g>
+      <!-- pressure gauges -->
+      <g transform="translate(135 340)"><circle r="44" fill="#0b0e14" stroke="#4a5568" stroke-width="5"/><path d="M-30 18 A34 34 0 1 1 30 18" fill="none" stroke="#3fd68a" stroke-width="5"/><line x1="0" y1="0" x2="-22" y2="-20" stroke="#ffb03b" stroke-width="4"/><text y="34" text-anchor="middle" fill="#8a96aa" font-size="15" font-family="Rajdhani">kPa</text></g>
+      <g transform="translate(1465 340)"><circle r="44" fill="#0b0e14" stroke="#4a5568" stroke-width="5"/><path d="M-30 18 A34 34 0 1 1 30 18" fill="none" stroke="#3fd68a" stroke-width="5"/><line x1="0" y1="0" x2="24" y2="-18" stroke="#ffb03b" stroke-width="4"/><text y="34" text-anchor="middle" fill="#8a96aa" font-size="15" font-family="Rajdhani">O₂</text></g>
+      <!-- pipes -->
+      <g stroke="#323b4d" stroke-width="16" fill="none" stroke-linecap="round"><path d="M110 520 V900"/><path d="M160 520 V880"/><path d="M1490 520 V900"/><path d="M1440 520 V880"/></g>
+      <g fill="#ffb03b"><rect x="98" y="640" width="24" height="12"/><rect x="1478" y="700" width="24" height="12"/></g>
+      <!-- floor -->
+      <path d="M0 1010 L1600 1010 L1600 1100 L0 1100 Z" fill="#0a0d13"/>
+      <g fill="#ffb03b" opacity=".75"><path d="M300 1030 h1000 v10 h-1000z"/></g>
+      <g fill="#ffb03b22"><path d="M300 1050 L1300 1050 L1360 1100 L240 1100Z"/></g>
+    </svg>
+    <div class="sweep"></div>
+    <div class="beacon l"></div><div class="beacon r"></div>
+    <div class="sign" id="sign">● INNER DOOR LOCKED</div>
+
+    <div class="frame">
+      <!-- the loading dock, seen through the porthole -->
+      <div class="dock">
+        <svg viewBox="0 0 800 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="dkwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a2232"/><stop offset="1" stop-color="#0f1520"/></linearGradient>
+            <linearGradient id="dkfloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232b3a"/><stop offset="1" stop-color="#121722"/></linearGradient>
+            <radialGradient id="lamp" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#ffe2a6" stop-opacity=".55"/><stop offset="1" stop-color="#ffe2a6" stop-opacity="0"/></radialGradient>
+            <linearGradient id="space" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#020308"/><stop offset="1" stop-color="#0a1022"/></linearGradient>
+          </defs>
+          <rect width="800" height="700" fill="url(#dkwall)"/>
+          <!-- big bay door open to space -->
+          <rect x="230" y="70" width="340" height="230" rx="6" fill="url(#space)" stroke="#3a4458" stroke-width="8"/>
+          <g fill="#fff"><circle cx="270" cy="110" r="1.4"/><circle cx="330" cy="160" r="1"/><circle cx="400" cy="100" r="1.6"/><circle cx="520" cy="130" r="1.2"/><circle cx="545" cy="240" r="1"/><circle cx="300" cy="250" r="1.3"/><circle cx="460" cy="200" r=".9"/><circle cx="360" cy="215" r="1"/></g>
+          <ellipse cx="470" cy="290" rx="150" ry="60" fill="#3b3a44"/>
+          <ellipse cx="440" cy="276" rx="22" ry="7" fill="#2c2b33"/><ellipse cx="520" cy="290" rx="14" ry="5" fill="#2c2b33"/>
+          <rect x="230" y="62" width="340" height="12" fill="#2b3345"/>
+          <g fill="#ffb03b"><rect x="230" y="62" width="20" height="12"/><rect x="270" y="62" width="20" height="12"/><rect x="310" y="62" width="20" height="12"/><rect x="350" y="62" width="20" height="12"/><rect x="390" y="62" width="20" height="12"/><rect x="430" y="62" width="20" height="12"/><rect x="470" y="62" width="20" height="12"/><rect x="510" y="62" width="20" height="12"/><rect x="550" y="62" width="20" height="12"/></g>
+          <!-- ceiling lamps -->
+          <g><rect x="90" y="20" width="90" height="10" rx="3" fill="#ffe2a6"/><rect x="620" y="20" width="90" height="10" rx="3" fill="#ffe2a6"/>
+          <path d="M90 30 L180 30 L260 360 L10 360Z" fill="url(#lamp)"/><path d="M620 30 L710 30 L790 360 L540 360Z" fill="url(#lamp)"/></g>
+          <!-- floor -->
+          <path d="M0 330 L800 330 L800 700 L0 700Z" fill="url(#dkfloor)"/>
+          <g stroke="#ffb03b" stroke-width="5" opacity=".7"><path d="M250 330 L120 700"/><path d="M550 330 L680 700"/></g>
+          <g fill="#ffb03b" opacity=".18"><path d="M300 420 h200 v70 h-200z"/></g>
+          <text x="400" y="465" text-anchor="middle" fill="#ffb03b" opacity=".5" font-family="Rajdhani" font-weight="700" font-size="26" letter-spacing="6">STAGING</text>
+          <!-- crates left -->
+          <g>
+            <rect x="40" y="380" width="120" height="100" fill="#3c5a7a" stroke="#1b2738" stroke-width="4"/><path d="M40 380 L160 480 M160 380 L40 480" stroke="#2a4058" stroke-width="5"/>
+            <rect x="60" y="300" width="90" height="80" fill="#7a5a2e" stroke="#2d2010" stroke-width="4"/><path d="M60 330 h90" stroke="#5b4220" stroke-width="5"/>
+            <rect x="170" y="410" width="80" height="70" fill="#4f6b3a" stroke="#1d2a14" stroke-width="4"/>
+          </g>
+          <!-- tank right -->
+          <g>
+            <rect x="600" y="300" width="110" height="180" rx="40" fill="#576274" stroke="#222a36" stroke-width="5"/>
+            <rect x="600" y="360" width="110" height="18" fill="#ffb03b" opacity=".8"/>
+            <rect x="720" y="380" width="70" height="100" fill="#6a3a3a" stroke="#2a1515" stroke-width="4"/>
+          </g>
+          <!-- cargo loader -->
+          <g transform="translate(330 470)">
+            <rect x="0" y="40" width="150" height="60" rx="8" fill="#ffb03b" stroke="#5a3a00" stroke-width="4"/>
+            <rect x="20" y="0" width="70" height="45" rx="6" fill="#2b3345" stroke="#111" stroke-width="3"/>
+            <rect x="28" y="8" width="54" height="24" rx="3" fill="#8fe3ff" opacity=".6"/>
+            <rect x="150" y="-30" width="10" height="130" fill="#3a4458"/><rect x="160" y="80" width="60" height="10" fill="#3a4458"/>
+            <rect x="165" y="30" width="55" height="50" fill="#3c5a7a" stroke="#1b2738" stroke-width="3"/>
+            <circle cx="35" cy="105" r="18" fill="#111" stroke="#444" stroke-width="4"/><circle cx="120" cy="105" r="18" fill="#111" stroke="#444" stroke-width="4"/>
+          </g>
+          <!-- stencil -->
+          <text x="400" y="630" text-anchor="middle" fill="#8fe3ff" opacity=".35" font-family="Rajdhani" font-weight="700" font-size="34" letter-spacing="10">LOADING DOCK</text>
+        </svg>
+      </div>
+      <div class="door l"><span class="lbl">LOADING</span></div>
+      <div class="door r"><span class="lbl">DOCK</span></div>
+      <div class="glass"></div>
+    </div>
+  </div>
+
+  <!-- ===== the control panel ===== -->
+  <div class="panel" id="panel">
+    <h1>AIRLOCK</h1>
+    <div class="sub">Leaving the Command Deck</div>
+    <div class="warn"><b>Past this door, this page acts in the game for you.</b></div>
+    <ul>
+      <li>It moves resources by sending actions from your wallet.</li>
+      <li>Every move is listed first so you can check it.</li>
+      <li>Nothing is sent until you press Approve in your wallet.</li>
+      <li>The game charges a small fee for each action.</li>
+    </ul>
+    <label><input type="checkbox" id="ok"> I understand this page sends game actions from my wallet.</label>
+    <label><input type="checkbox" id="skip"> Don't show the airlock again on this browser.</label>
+    <button class="btn" id="go" disabled>CYCLE AIRLOCK</button>
+    <div class="bar"><i></i></div>
+    <div class="done" id="done">✓ Welcome to the Loading Dock.<br><span style="color:var(--dim);font-size:15px">(Mock-up ends here: the dock page comes next.)</span></div>
+    <a class="back" href="/?beta=1">◂ Back to the Command Deck (read-only)</a><br>
+    <button class="reset" id="reset">Reset mock-up</button>
+    <div class="mock">MOCK-UP</div>
+  </div>
+</div>
+
+<!-- ===== the loading dock page ===== -->
+<div id="dockpg">
+  <div class="dhead">
+    <div class="stripe"></div>
+    <div class="in">
+      <h1>LOADING DOCK</h1>
+      <div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">1</span>Rock</h2>
+    <select id="rock"><option>TRCS Leisure Potato</option><option>Newark</option><option>TRCS CMS</option><option>FOB Jaguar</option><option>Jiayuguan</option></select>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>Stage into</h2>
+    <div class="row">
+      <select id="dest">
+        <option value="w1">Skippys Steel – warehouse</option>
+        <option value="w2">Skippys Supplies – warehouse</option>
+        <option value="t1">Skippys Moonshine – tank farm</option>
+      </select>
+      <div class="cap"><span id="capt" class="src"></span>
+        <div class="capbar"><i id="capnow"></i><b id="capadd"></b></div>
+      </div>
+    </div>
+    <div class="hint" id="desthint">Blue = in there now · amber = what this will add.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span>Building and process</h2>
+    <div class="row">
+      <select><option>Skippys Refinery 3 – refinery (idle)</option><option>Skippys Factory 1 – factory (busy 2 h)</option><option>Skippys Bioreactor 1 – bioreactor (idle)</option><option>Skippys Shipyard – shipyard (idle)</option></select>
+      <select><option>Steel production</option></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">4</span>How many runs</h2>
+    <div class="row"><input type="number" id="runs" min="1" value="10"> <span class="src">× runs</span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">5</span>Inputs needed</h2>
+    <table>
+      <thead><tr><th>Input</th><th class="num">Needed</th><th class="num">Already there</th><th class="num">To move</th><th>From</th></tr></thead>
+      <tbody id="inputs"></tbody>
+    </table>
+  </div>
+
+  <div class="card fly" id="flycard">
+    <h2><span class="n">✈</span>Fly in yourself</h2>
+    <div class="hint" style="margin:0 0 8px">Not enough on this rock. This page does not fly ships – bring these in, then come back.</div>
+    <table><thead><tr><th>Input</th><th class="num">Short by</th><th>Where from</th></tr></thead><tbody id="fly"></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">6</span>Crew to do the moving</h2>
+    <select><option>Skippys Sales Crew – fed 98% · free distance ×1.5 · ready now</option><option>Skippys Rocket Heads – fed 0% (hungry, slower) · ready now</option><option>Skippys Miners I – busy 40 min</option></select>
+    <div class="hint">Must be on this rock. Best fed crew with the best transport bonus is picked for you.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">7</span>Moves to send</h2>
+    <table class="mv"><thead><tr><th></th><th>Resource</th><th class="num">Amount</th><th>From</th><th>To</th></tr></thead><tbody id="moves"></tbody></table>
+    <div class="fee" id="room"></div>
+    <div class="fee">Game fee: about 1 cent per move.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">8</span>Approve</h2>
+    <button class="approve" id="appr">APPROVE IN WALLET</button>
+    <div class="hint">Your wallet will show the moves again. Nothing is sent unless you approve there.</div>
+    <div class="toast" id="toast">Mock-up: nothing was sent.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">9</span>Finish in the game</h2>
+    <div class="src">Each move shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div>
+  </div>
+
+  <div class="mocknote">MOCK-UP · EXAMPLE NUMBERS ONLY · <a href="#" id="back2" style="color:var(--cyan)">back to the airlock</a></div>
+</div>
+
+<div id="betagate" style="display:none;max-width:520px;margin:60px auto;text-align:center;color:#8a96aa;font-size:18px">The Loading Dock is still being built.<br><a href="/" style="color:#8fe3ff">◂ Back to the Command Deck</a></div>
+<script src="vendor/dock.js"></script>
+</body>
+</html>
