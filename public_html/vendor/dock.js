@@ -19,6 +19,8 @@
   const TANKOK = new Set([1, 2, 3, 4, 5, 6, 7, 8, 23, 24, 27, 33, 50, 66, 73, 76, 116, 169, 170, 180, 184, 185, 220]);
   const CAP = { 1: [1.5e12, 75e9], 10: [75e9, 997.5e9] }; // grams, volume
   const FOOD = 129;
+  // the game's process ids by name (@influenceth/sdk 2.8.1 Process.TYPES[].i) – chain.js lists recipes in a different order
+  const PID = {"Water Electrolysis":23,"Water Vacuum-evaporation Desalination":24,"Sabatier Process":25,"Olivine Enhanced Weathering":26,"Bitumen Hydro-cracking":27,"Taenite Electrolytic Refining":28,"Calcite Calcination":29,"Huels Process":30,"Ammonia Carbonation":31,"Salt Sulfidization and Phosphorization":32,"Basic Food Cooking and Packaging":33,"Troilite Centrifugal Froth Flotation":34,"Silica Fusing":35,"Silica Pultrusion":36,"Copper Wire Drawing":37,"Salty Cement Mixing":38,"Salt Selective Crystallization":39,"Naphtha Steam-cracking":40,"Steel Alloying":41,"Silica Carbothermic Reduction":42,"Ostwald Process":43,"Wet Sulfuric Acid Process":44,"Fungal Soilbuilding":45,"Iron Oxide and Silica Carbothermic Reduction":46,"Methane Steam Reforming and Water-gas Shift":47,"Acetylene Oxalic Acid Production":48,"Lead Sulfide Smelting":49,"Tin Sulfide Smelting":50,"Iron Sulfide Roasting":51,"Haber-Bosch Process":52,"Molybdenum Disulfide Roasting":53,"Silica Gas Atomization":54,"Solder Manufacturing":55,"Quartz Filament Drawing and Wrapping":56,"Steel Beam Rolling":57,"Steel Sheet Rolling":58,"Steel Pipe Rolling":59,"Steel Wire Drawing":60,"Propylene Ammoxidation":61,"Propylene Polymerization":62,"Magnesium Chloride Molten Salt Electrolysis":63,"Solvay Process":64,"Boria Hydration":65,"Pyroxene Acid Leaching, Digestion, and Ion Exchange":66,"Apatite Acid Extraction":67,"Hydrogen Combustion":68,"Carbon Monoxide Combustion":69,"Borax Acid Extraction":70,"Nitrogen Cryocooling and Fractional Distillation":71,"Olivine Acid Leaching and Calcining":72,"Anorthite Feldspar Acid Leaching and Carbonation":73,"Sodium Chloralkali Process":74,"Potassium Chloralkali Process":75,"Apatite Acid Re-extraction":76,"Ammonium Carbonate Oxalation":77,"Xenotime Hot Acid Leaching":78,"Merrillite Hot Acid Leaching":79,"Ammonia Catalytic Cracking":80,"Uraninite Acid Leaching, Solvent Extraction, and Precipitation":81,"Coffinite Acid Leaching, Solvent Extraction, and Precipitation":82,"Alumina Forming and Sintering":83,"Austenitic Nichrome Alloying":84,"Copper Wire Insulating":85,"Silicon Czochralski Process and Wafer Slicing":86,"Steel Cable Laying":87,"Acrylonitrile Polymerization":88,"Soybean Growing":89,"Boric Acid Thermal Decomposition":90,"Lithium Carbonate Chlorination":91,"Lithium Sulfate Carbonation":92,"Iron Oxide Direct Reduction":93,"Zinc Oxide Direct Reduction":94,"Nickel Oxide Direct Reduction":95,"Pidgeon Process":96,"Polypropylene Chlorination and Basification":97,"Potato Growing":98,"Rare Earth Sulfates Oxalation and Calcination":99,"Ammonia Chlorination":100,"Hall–Heroult Process":101,"Calcium Chloride Molten Salt Electrolysis":102,"Cement Mixing":103,"Natural Flavorings Growing":104,"Yellowcake Digestion, Solvent Extraction, and Precipitation":105,"Hydrofluoric Acid Cold Electrolysis":106,"Rhabdite Roasting and Acid Extraction":107,"Ferrite Sintering":108,"Diode Doping and Assembly":109,"Ball Valve Machining":110,"Aluminium Beam Rolling":111,"Aluminium Sheet Rolling":112,"Aluminium Pipe Rolling":113,"Polyacrylonitrile Weaving":114,"Cold Gas Thruster Printing":115,"Polyacrylonitrile Oxidation and Carbonization":116,"Aluminium Small Propellant Tank Assembly":117,"Borosilicate Glassmaking":118,"Ball Bearing Machining and Assembly":119,"Large Thrust Bearing Machining and Assembly":120,"Boria Magnesiothermic Reduction":121,"Lithium Chloride Molten Salt Electrolysis":122,"Diepoxy Step Growth Polymerization":123,"Rare Earth Oxides Ion Exchange":124,"Calcium Oxide Aluminothermic Reduction":125,"Sodium Chromate Acidification and Crystallization":126,"Sulfuric Acid Hot Catalytic Reduction":127,"Molybdenum Trioxide Aluminothermic Reduction and Alloying":128,"Uranyl Nitrate Redox and Precipitation":129,"Sodium Tungstate Ion Exchange, Precipitation, and Crystallization":130,"Stainless Steel Alloying":131,"Board Printing":132,"Ferrite-bead Inductor Winding":133,"Core Drill Bit Milling":134,"Core Drill Thruster Assembly":135,"Parabolic Dish Assembly":136,"Photovoltaic Panel Amorphization and Assembly":137,"LiPo Battery Assembly":138,"Neodymium Oxide Chlorination":139,"Sodium Dichromate Hot Sulfur Reduction":141,"Photoresist Epoxy Stoichiometry and Packaging":142,"Ammonium Diuranate Calcination and Hydrogen Reduction":143,"Ammonium Paratungstate Calcination and Hydrogen Reduction":144,"Engine Bell Additive Manufacturing":145,"Steel Truss Construction":146,"Aluminium Hull Plate Construction":147,"Aluminium Truss Construction":148,"Cargo Module Construction":149,"Aluminium Pressure Vessel Construction":150,"Aluminium Propellant Tank Construction":151,"Shuttle Hull Construction":152,"Light Transport Hull Construction":153,"Cargo Ring Construction":154,"Heavy Transport Hull Construction":155,"Tungsten Gas Atomization":156,"Hydrogen Cryocooling and Reactor Consumables Stoichiometry":157,"Stainless Steel Sheet Rolling":158,"Stainless Steel Pipe Rolling":159,"Silicon Wafer CPU Photolithography, Ball Bonding, and Encapsulation":160,"Core Drill Assembly":161,"Neodymium Trichloride Vacuum Calciothermic Reduction":162,"Neodymium Trichloride Molten Salt Electrolysis":163,"Chromia Aluminothermic Reduction":165,"Uranium Dioxide Oxidation":166,"Leached Coffinite Froth Flotation, Solvent Extraction, and Precipitation":167,"Nd:YAG Czochralski Process":168,"Nichrome Alloying":169,"Magnet Sintering and Magnetization":170,"Uranium Tetrafluoride Oxidation":171,"Uranium Hexafluoride Centrifuge Cascade Enrichment":172,"Nd:YAG Laser Assembly":173,"Thin-film Resistor Sputtering and Laser-trimming":174,"HEUF6 Magnesiothermic Reduction and Fine Division":175,"Spirulina and Chlorella Algae Growing":176,"PEDOT Bacteria Culturing":177,"BPA Bacteria Culturing":178,"Potassium Hydroxide Carbonation":179,"Novolak Bacteria Culturing":180,"Ferrochromium Alloying":181,"Potassium Carbonate Oxidation":182,"Rhabdite Slag Acid Leaching":183,"Tantalate-Niobate Liquid-Liquid Extraction and Redox":184,"Carbon Dioxide Ferrocatalysis":185,"Potassium Heptafluorotantalate Sodiothermic Reduction":186,"Rhabdite Carbothermic Reduction":187,"Polymer Tantalum Capacitor Assembly":188,"Surface Mount Device Reel Assembly":189,"Pick-and-place Board Population":190,"Motor Stator Assembly":191,"Motor Rotor Assembly":192,"Brushless Motor Assembly":193,"Landing Leg Assembly":194,"Landing Auger Assembly":195,"Pump Assembly":196,"Antenna Assembly":197,"Fiber Optic Gyroscope Assembly":198,"Star Tracker Assembly":199,"Computer Assembly":200,"Control Moment Gyroscope Assembly":201,"Robotic Arm Assembly":202,"Feldspar Aluminium Hydroxide Calcination":203,"Ferrochromium Roasting and Hot Base Leaching":204,"Beryllium Carbonate Calcination":205,"Beryllia Forming and Sintering":206,"Silicon Wafer CCD Photolithography, Ball Bonding, and Packaging":207,"Heat Exchanger Assembly":208,"Turbopump Assembly":209,"Laser Diode Doping, Amorphization, and Assembly":210,"Separator Centrifuge Assembly":211,"Fuel Make-up Tank Assembly":212,"Neon Make-up Tank Assembly":213,"Lightbulb End Moderators Assembly":214,"Cold Gas Torque Thruster Printing":215,"Fused Quartz Lightbulb Additive/Subtractive Assembly":216,"Reactor Plumbing Assembly Squared":217,"Flow Divider Moderator Assembly":218,"Nuclear Lightbulb Assembly":219,"Reactor Shell Assembly":220,"Closed-cycle Gas Core Nuclear Reactor Engine Assembly":221,"Habitation Module Assembly":222,"Mobility Module Assembly":223,"Fluids Automation Module Assembly":224,"Solids Automation Module Assembly":225,"Terrain Interface Module Assembly":226,"Avionics Module Assembly":227,"Escape Module Assembly":228,"Attitude Control Module Assembly":229,"Power Module Assembly":230,"Thermal Module Assembly":231,"Propulsion Module Assembly":232,"Sulfur Dioxide Plasma Catalysis":233,"Parkes Process":234,"Bicarbonate Solvay Process":235,"Solvay-Hou Process":236,"Bicarbonate Solvay-Hou Process":237,"Sodium Bicarbonate Calcination":238,"Epoxy Stoichiometry and Packaging":239,"PEDOT Algae Growing":240,"BPA Algae Growing":241,"Novolak Algae Growing":242,"Hydrochloric Redox":243,"Hydrofluoric Redox":244,"Methane Combustion":245,"Carbon Monoxide Arc Decomposition":246,"Hydrogen Propellant Unbundling":247,"Sulfur Combustion":248,"Triple Superphosphate Acid Extraction":249,"Shuttle Integration":250,"Light Transport Integration":251,"Heavy Transport Integration":252,"Warehouse Construction":300,"Extractor Construction":301,"Refinery Construction":302,"Bioreactor Construction":303,"Factory Construction":304,"Shipyard Construction":305,"Spaceport Construction":306,"Marketplace Construction":307,"Habitat Construction":308,"Tank Farm Construction":309};
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const Y = () => window.YIC || {};
@@ -189,10 +191,13 @@ ${R.map(route).join('')}
   const rocks = () => [...new Set(allB().filter(isStore).map(rockOf).filter(Boolean))].sort();
   const onRock = () => allB().filter((b) => rockOf(b) === S.rock);
   const procB = () => onRock().filter((b) => BTN[b.Building.buildingType]).sort((a, b) => a.Building.buildingType - b.Building.buildingType || nm(a).localeCompare(nm(b)));
+  // a processor is free only when its status is 0 – a finished one (status 1, time passed) must be collected first
+  const freeSlot = (b) => { const x = (b.Processors || []).find((q) => q.status === 0); return x ? (x.slot || 1) : 0; };
   const busyTxt = (b) => {
     const now = Date.now() / 1000;
+    if (freeSlot(b)) return 'idle';
     const fin = (b.Processors || []).filter((x) => x.status === 1 && x.finishTime > now).map((x) => x.finishTime);
-    if (!fin.length) return 'idle';
+    if (!fin.length) return 'finished – collect it first';
     const s = Math.min(...fin) - now, h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
     return 'busy ' + (h ? h + 'h ' + m + 'm' : Math.max(1, m) + 'm');
   };
@@ -311,6 +316,7 @@ ${R.map(route).join('')}
         incA[d.id] = incA[d.id] || {}; if (incA[d.id][ip] == null) incA[d.id][ip] = incoming(d, ip);
         const oi = Math.min(incA[d.id][ip], left); incA[d.id][ip] -= oi; left -= oi;
         const own = Math.min(avail[d.id][ip] || 0, left); avail[d.id][ip] = (avail[d.id][ip] || 0) - own; left -= own;
+        st.here = st.here || {}; st.here[ip] = (st.here[ip] || 0) + own;
         store.filter((b) => b.id !== d.id).sort((a, b) => (avail[b.id][ip] || 0) - (avail[a.id][ip] || 0)).forEach((b) => {
           if (left <= 0) return; const q = Math.min(avail[b.id][ip] || 0, left); if (q <= 0) return;
           avail[b.id][ip] -= q; left -= q; put(b, d, ip, q, st.r.name);
@@ -444,6 +450,14 @@ ${R.map(route).join('')}
     return a;
   }
   const say = (html, err) => { S.msg = html; S.msgErr = !!err; const e = document.getElementById('dk-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
+  // ProcessProductsStart (@influenceth/sdk 2.8.1, checked with System.getRunSystemCall 8 Nov):
+  //   [processor(5,id), processor_slot, process, target_output, recipes (Fixed: mag = n·2^32, sign 0),
+  //    origin(5,id), origin_slot, destination(5,id), destination_slot, caller_crew(1,id)]  → 15 values
+  function startCall(c) {
+    const mag = BigInt(Math.round(c.runs)) * 4294967296n;
+    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, S.mover];
+    return { contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ProcessProductsStart'), hex(data.length), ...data.map(hex)] };
+  }
   function buildCalls() {
     const calls = [];
     if (S.feed && S.feedCall) calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(S.feedCall.src), hex(SLOT), hex(S.feedCall.give), '0x1', hex(S.feedCall.crew)] });
@@ -451,6 +465,7 @@ ${R.map(route).join('')}
       const data = [5, x.from, SLOT, x.items.length, ...x.items.flat(), 5, x.to, SLOT, 1, S.mover];
       calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('SendDelivery'), hex(data.length), ...data.map(hex)] });
     });
+    (S.startList || []).forEach((c) => { if (PID[c.r.name]) calls.push(startCall(c)); });
     return calls;
   }
   async function approve() {
@@ -632,36 +647,45 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       // Optional: start the processes that are ready, in the same approval (Mark, 8 Nov – a tick box, off by default,
       // so he can see how it works in beta). Ready = every input comes from stock on the rock (moved by step 7),
       // nothing it needs is still to be made or mined. Each needs its own idle building of the right kind.
-      // NOT WIRED: sending is off; the game call (ProcessProductsStart) still has to be checked against the SDK.
+      // WIRED (8 Nov) for Mark's wallet only – see startCall().
       {
         const on = onRock(), used = new Set(), ready = [], wait = [];
-        const idle = (bt) => on.filter((b) => b.Building.buildingType === bt && busyTxt(b) === 'idle' && !used.has(b.id));
+        const idle = (bt) => on.filter((b) => b.Building.buildingType === bt && freeSlot(b) && !used.has(b.id));
         const cand = [];
-        if (PC) PC.steps.forEach((x) => { const full = Object.keys(x.r.inp).every((ip) => (x.use[ip] || 0) >= x.r.inp[ip] * x.runs); cand.push({ r: x.r, runs: x.runs, p: x.p, from: x.dest, to: (x.sendTo || [])[0] || P.dest, full }); });
-        cand.push({ r: rec, runs: S.runs, p: +Object.keys(rec.out)[0], from: P.dest, to: P.dest, full: !P.fly.length, fin: true, bl: P.bl });
+        // can start NOW = every input is already in its input storage (not being moved now, not on its way) and a
+        // processor is free. Steps that only need this approval's moves start next time, after the moves arrive.
+        if (PC) PC.steps.forEach((x) => { const full = Object.keys(x.r.inp).every((ip) => (x.use[ip] || 0) >= x.r.inp[ip] * x.runs);
+          const now = full && Object.keys(x.r.inp).every((ip) => ((x.here || {})[ip] || 0) >= x.r.inp[ip] * x.runs);
+          cand.push({ r: x.r, runs: x.runs, p: x.p, from: x.dest, to: (x.sendTo || [])[0] || P.dest, full, now }); });
+        cand.push({ r: rec, runs: S.runs, p: +Object.keys(rec.out)[0], from: P.dest, to: P.dest, full: !P.fly.length, now: !P.fly.length && P.rows.every((r) => r.there - r.onway >= r.need), fin: true, bl: P.bl });
+        const after = [];
         cand.forEach((c) => {
           if (!c.full) return;
+          if (!c.now) { after.push(c); return; }
+          if (c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) { c.why = 'its output can’t go in a tank farm (' + nm(c.to) + ')'; wait.push(c); return; }
           const bt = FBT[c.r.type];
-          const b = c.fin && busyTxt(c.bl) === 'idle' && !used.has(c.bl.id) ? c.bl : idle(bt)[0];
-          if (b) { used.add(b.id); ready.push(Object.assign(c, { b })); } else wait.push(c);
+          const b = c.fin && freeSlot(c.bl) && !used.has(c.bl.id) ? c.bl : idle(bt)[0];
+          if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); } else wait.push(c);
         });
-        const later = (PC ? PC.steps.length + 1 : 1) - ready.length - wait.length;
+        S.startList = S.start ? ready : [];
+        const later = (PC ? PC.steps.length + 1 : 1) - ready.length - wait.length - after.length;
         h += `<div class="card"><h2><span class="n">7½</span>Start processes too? <span style="font-size:.6em;color:var(--amber);letter-spacing:.1em">OPTIONAL</span></h2>
 <label style="margin:0 0 8px"><input type="checkbox" id="dk-start"${S.start ? ' checked' : ''}> Also start the processes that are ready, in the same approval</label>
-<div class="hint" style="margin-bottom:8px">This ties up your buildings and uses up the stock. Only processes whose inputs will all be in place after the moves can start now – come back for the next stage when they finish.</div>` +
+<div class="hint" style="margin-bottom:8px">This ties up your buildings and uses up the stock. Only processes whose inputs are ALREADY in their storage can start now – the rest start on a later visit, once moves have arrived or earlier steps have finished.</div>` +
           (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div></div></div>`).join('')}</div>`
-            : '<div class="src">Nothing can start yet – every process still needs something made or mined first.</div>') +
-            (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but waiting for a free building: ${wait.map((c) => esc(c.r.name)).join(', ')}.</div>` : '') +
+            : '<div class="src">Nothing can start right now – no process has all its inputs sitting in its storage yet.</div>') +
+            (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but can't start yet: ${wait.map((c) => esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('; ')}.</div>` : '') +
+            (after.length ? `<div class="hint">${after.length} can start next time, once this approval's moves have arrived: ${after.map((c) => esc(c.r.name)).join(', ')}.</div>` : '') +
             (later > 0 ? `<div class="hint">${later} more can start once the steps before them finish.</div>` : '') : '') + '</div>';
         S.nStart = S.start ? ready.length : 0;
       }
       // SENDING (Mark, 8 Nov): switched on for deliveries + feeding ONLY, and ONLY when the page shows Mark's own
-      // wallet (OWNER). Everyone else keeps a switched-off button. Process starts are still not sent.
+      // wallet (OWNER). Everyone else keeps a switched-off button. Process starts are sent too when ticked (8 Nov).
       const mine = isOwner();
       const wait = S.sentAt && Date.now() - S.sentAt < 180000;
-      const can = mine && !S.busy && !wait && (S.calls.length || (S.feed && S.feedCall)) && S.mover;
-      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" id="dk-appr"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + nmv + ' deliver' + (nmv === 1 ? 'y' : 'ies') + (S.feed ? ' + feed crew' : '') + ')'}</button>
-<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – give the game a few minutes to catch up, then press ↻ Check the game again before sending more.</span> ' : ''}${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') + (S.start ? ' <span style="color:var(--amber)">Starting processes is not switched on yet – only the moves' + (S.feed ? ' and feeding' : '') + ' are sent.</span>' : '') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
+      const can = mine && !S.busy && !wait && (S.calls.length || (S.feed && S.feedCall) || (S.startList || []).length) && S.mover;
+      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" id="dk-appr"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + nmv + ' deliver' + (nmv === 1 ? 'y' : 'ies') + (S.feed ? ' + feed crew' : '') + ((S.startList || []).length ? ' + start ' + S.startList.length + ' process' + (S.startList.length === 1 ? '' : 'es') : '') + ')'}</button>
+<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – give the game a few minutes to catch up, then press ↻ Check the game again before sending more.</span> ' : ''}${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
 <div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
