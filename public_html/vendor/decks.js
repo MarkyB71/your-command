@@ -604,12 +604,12 @@ body > header{display:none!important}
     }
     const sub = db.querySelector('.dk-sub');
     if (sub && tray.parentNode !== sub) sub.appendChild(tray);
-    const want = [document.querySelector('[data-srch="2"]'), document.getElementById('play'), document.getElementById('cdx'), document.getElementById('wc-top')];
+    const want = [document.querySelector('[data-srch="2"]'), document.getElementById('play'), document.getElementById('cdx'), document.getElementById('dkhub'), document.getElementById('wc-top')];
     want.forEach((el) => {
       if (el && el.parentNode !== tray) tray.appendChild(el);
     });
     // never two of the same button (one could be made while the row was being redrawn)
-    ['play', 'cdx', 'wc-top'].forEach((id) => {
+    ['play', 'cdx', 'dkhub', 'wc-top'].forEach((id) => {
       const all = document.querySelectorAll('[id="' + id + '"]');
       if (all.length > 1) [...all].slice(1).forEach((x) => x.remove());
     });
