@@ -79,9 +79,21 @@
       airlockSound();
       wrap.classList.add('cycling'); ch.classList.add('cycling'); setSign('● CYCLING…', 'amber');
       setTimeout(() => {
-        wrap.classList.remove('cycling'); ch.classList.remove('cycling'); setSign('● DOOR OPEN', 'green'); ch.classList.add('open'); try { speechSynthesis.cancel(); const v = new SpeechSynthesisUtterance('Entering the Logistics Hub. The centre where all the moves come together.'); v.rate = 0.95; v.pitch = 0.8; v.volume = 0.9; setTimeout(() => { speechSynthesis.cancel(); speechSynthesis.speak(v); }, 80); } catch (e) {} // timed with the doors opening (Mark, 8 Nov). Chrome/Brave drop a speak() made straight after cancel(), hence the short wait
-        setTimeout(() => wrap.classList.add('gone'), 2300);
-        setTimeout(() => { wrap.style.display = 'none'; ov.classList.add('indock'); ov.scrollTop = 0; S.ok = true; render(); }, 2900);
+        // Mark (8 Nov): warning while it cycles → doors open → pause → "Entering the Logistics Hub…" → THEN the next screen
+        wrap.classList.remove('cycling'); ch.classList.remove('cycling'); setSign('● DOOR OPEN', 'green'); ch.classList.add('open');
+        let gone = false;
+        const enter = () => { if (gone) return; gone = true; wrap.classList.add('gone'); setTimeout(() => { wrap.style.display = 'none'; ov.classList.add('indock'); ov.scrollTop = 0; S.ok = true; render(); }, 600); };
+        setTimeout(() => { // doors fully open (they take ~2.5 s)
+          let spoke = false;
+          try {
+            speechSynthesis.cancel();
+            const v = new SpeechSynthesisUtterance('Entering the Logistics Hub. The centre where all the moves come together.'); v.rate = 0.95; v.pitch = 0.8; v.volume = 0.9;
+            v.onstart = () => { spoke = true; }; v.onend = () => setTimeout(enter, 500); v.onerror = () => setTimeout(enter, 300);
+            setTimeout(() => speechSynthesis.speak(v), 80); // Chrome/Brave drop a speak() made straight after cancel()
+          } catch (e) {}
+          setTimeout(() => { if (!spoke) enter(); }, 1500); // no voice in this browser – carry on
+          setTimeout(enter, 9000); // safety net
+        }, 2700);
       }, 2800);
     });
   }
