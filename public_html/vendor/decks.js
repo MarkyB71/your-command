@@ -596,7 +596,7 @@ body > header{display:none!important}
       if (t && rb.parentNode !== t) t.appendChild(rb);
     }
   }
-  if (/[?&]beta=1\b/.test(location.search)) window.addEventListener('resize', () => { const db = document.getElementById('deckbar'); if (db) midRf(db); });
+  window.addEventListener('resize', () => { const db = document.getElementById('deckbar'); if (db) midRf(db); });
   function tools(db) {
     if (!tray) {
       tray = document.createElement('div');
@@ -643,8 +643,8 @@ body > header{display:none!important}
       const rb = document.createElement('button');
       rb.id = 'dkrf';
       rb.type = 'button';
-      // label 'Refresh Game Data' (Mark, 8 Nov 2026) – TEST ONLY on ?beta=1
-      const rfL = /[?&]beta=1\b/.test(location.search) ? '⟳ Refresh Game Data' : '⟳ Refresh';
+      // label 'Refresh Game Data' (Mark, 8 Nov 2026) – LIVE 8 Nov 2026
+      const rfL = '⟳ Refresh Game Data';
       rb.textContent = rfL;
       rb.title = 'Fetch the latest data from the game';
       rb.onclick = () => {
@@ -653,7 +653,7 @@ body > header{display:none!important}
         if (window.YICrefreshNow) {
           if (rb.disabled) return;
           rb.disabled = true;
-          rb.textContent = rfL === '⟳ Refresh' ? '⟳ Refreshing…' : '⟳ Refreshing Game Data…';
+          rb.textContent = '⟳ Refreshing Game Data…';
           Promise.resolve(window.YICrefreshNow())
             .catch(() => {})
             .finally(() => {
@@ -669,9 +669,9 @@ body > header{display:none!important}
       };
       tray.appendChild(rb);
     }
-    // Refresh in the middle of the row, same level (Mark, 8 Nov 2026) – TEST ONLY on ?beta=1.
+    // Refresh in the middle of the row, same level (Mark, 8 Nov 2026) – LIVE 8 Nov 2026 (tested on ?beta=1).
     // If the deck's page buttons or the tools would run under it, it goes back beside the wallet button.
-    if (/[?&]beta=1\b/.test(location.search)) midRf(db);
+    midRf(db);
     // ? Help button after Refresh – opens the help / wiki page in a new tab (LIVE 3 Nov 2026, tested on ?beta=1 – Mark)
     if (!document.getElementById('dkhelp')) {
       const hb = document.createElement('a');
