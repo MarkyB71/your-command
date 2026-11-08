@@ -627,7 +627,7 @@ ${R.map(route).join('')}
     }
     h += '</div>';
     if (sel0) {
-      h += `<div class="card"><h2><span class="n">3</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, (best && b.id === best.id ? '★ ' : '') + nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full' + (bld0 && lotKm(b, bld0) != null ? ' · ' + kmTxt(lotKm(b, bld0)) + ' to ' + nm(bld0) + ' (' + tripTxt(toBld(b)) + ')' : ''), S.dest)).join('')}</select>`;
+      h += `<div class="card"><h2><span class="n">3</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full' + (bld0 && lotKm(b, bld0) != null ? ' · ' + kmTxt(lotKm(b, bld0)) + ' to ' + nm(bld0) + ' (' + tripTxt(toBld(b)) + ')' : ''), S.dest)).join('')}</select>`;
       if (P) h += `<div class="cap"><span class="src">${esc(nm(P.dest))}: ${P.pctNow.toFixed(0)}% full now</span><div class="capbar"><i style="width:${Math.min(100, P.pctNow)}%"></i><b style="left:${Math.min(100, P.pctNow)}%;width:${Math.max(0.6, Math.min(100 - P.pctNow, P.pctAfter - P.pctNow))}%"></b></div></div>`;
       h += '</div>';
       // what the picked storage already holds of each input (Mark, 8 Nov) – one per line, updates when the pick changes
@@ -635,7 +635,7 @@ ${R.map(route).join('')}
         if (d) h += `<div style="margin-top:10px"><div class="src" style="font-weight:600">Already in ${esc(nm(d))}:${GLk('/building/' + d.id, 'Open ' + nm(d) + ' in the game')}</div><ul style="margin:4px 0 6px;padding-left:20px">` +
           Object.keys(sel0.inp).map((p) => { const need = sel0.inp[p] * S.runs, got = holds(d, +p);
             return `<li>${esc(pname(p))} ${got > 0 ? amt(+p, Math.min(got, need)) + ' of ' + amt(+p, need) + (got >= need ? ' <span class="ok">✓</span>' : '') : '<span style="color:var(--dim)">none</span>'}</li>`; }).join('') + '</ul></div>'; }
-      h += best ? `<div class="hint"><span style="color:var(--amber)">★ ${esc(nm(best))}${bld0 && toBld(best) === 0 ? ' is an instant trip to ' + esc(nm(bld0)) + ' and' : bld0 ? ' is ' + kmTxt(lotKm(best, bld0)) + ' from ' + esc(nm(bld0)) + ' and' : ''} holds ${tonnes(bestKg)} of the ${tonnes(needKg)} needed.</span>${S.destSet && S.dest !== best.id ? ' You picked a different one.' : ' Picked for you – you can change it.'}</div>`
+      h += best ? `<div class="hint"><span style="color:var(--amber)">Suggested: ${esc(nm(best))}${bld0 && toBld(best) === 0 ? ' is an instant trip to ' + esc(nm(bld0)) + ' and' : bld0 ? ' is ' + kmTxt(lotKm(best, bld0)) + ' from ' + esc(nm(bld0)) + ' and' : ''} holds ${tonnes(bestKg)} of the ${tonnes(needKg)} needed.</span>${S.destSet && S.dest !== best.id ? ' You picked a different one.' : ' Picked for you – you can change it.'}</div>`
         : '<div class="hint">None of your storage on this rock holds any of these inputs yet.</div>';
       h += `<div class="hint">${P && P.dest.Building.buildingType === TANK ? '<span style="color:var(--amber)">Tank farms only take gases and liquids.</span>' : 'Blue = in there now · amber = what this will add.'}</div></div>`;
     }
@@ -686,8 +686,8 @@ ${R.map(route).join('')}
           const bt = FBT[x.r.type], b = x.bld || bIn(bt), uses = Object.keys(x.use);
           return `<div class="dkp-t">${icon(x.p)}<div><div class="dkp-n">${amt(x.p, x.runs * x.r.out[x.p])} ${esc(pname(x.p))}</div><div class="dkp-s">${esc(x.r.name)}</div>
 <div class="dkp-chips"><span>× ${x.runs.toLocaleString('en-GB')} runs</span><span>${b ? esc(nm(b)) + GLk('/building/' + b.id, 'Open ' + nm(b) + ' in the game') : 'a ' + BTN[bt].toLowerCase()}</span>` +
-            (uses.length ? `<span title="${esc(uses.map((ip) => pname(ip) + ' ' + amt(+ip, x.use[ip]).replace(/<[^>]*>/g, '')).join(', '))} from stock">📦 ${esc(nm(x.dest))}${x.dest.id === x.star ? ' ★' : ''}${b && lotKm(x.dest, b) != null ? ' · ' + kmTxt(lotKm(x.dest, b)) : ''}</span></div>
-<details class="dkp-ch"><summary>stock: ${uses.map((ip) => esc(pname(ip)) + ' ' + amt(+ip, x.use[ip])).join(', ')} · change</summary><select data-sd="${x.r.i}">${onRock().filter(isStore).sort((a2, c2) => nm(a2).localeCompare(nm(c2))).map((sb) => opt(sb.id, (sb.id === x.star ? '★ ' : '') + nm(sb) + ' – ' + fullPct(sb) + '% full', x.dest.id)).join('')}</select></details>${x.bad ? '<div style="color:var(--red)">✗ ' + esc(x.bad) + '</div>' : ''}` : '</div>') +
+            (uses.length ? `<span title="${esc(uses.map((ip) => pname(ip) + ' ' + amt(+ip, x.use[ip]).replace(/<[^>]*>/g, '')).join(', '))} from stock">📦 ${esc(nm(x.dest))}${b && lotKm(x.dest, b) != null ? ' · ' + kmTxt(lotKm(x.dest, b)) : ''}</span></div>
+<details class="dkp-ch"><summary>stock: ${uses.map((ip) => esc(pname(ip)) + ' ' + amt(+ip, x.use[ip])).join(', ')} · change</summary><select data-sd="${x.r.i}">${onRock().filter(isStore).sort((a2, c2) => nm(a2).localeCompare(nm(c2))).map((sb) => opt(sb.id, nm(sb) + ' – ' + fullPct(sb) + '% full', x.dest.id)).join('')}</select></details>${x.bad ? '<div style="color:var(--red)">✗ ' + esc(x.bad) + '</div>' : ''}` : '</div>') +
             sendTo(x.sendTo) + '</div></div>';
         };
         const nDel = CM ? CM.deliveries.length + P.moves.length : P.moves.length;
