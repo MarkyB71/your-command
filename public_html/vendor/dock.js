@@ -724,7 +724,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       // nothing it needs is still to be made or mined. Each needs its own idle building of the right kind.
       // WIRED (8 Nov) for Mark's wallet only – see startCall().
       {
-        const on = onRock(), used = new Set(), ready = [], wait = [];
+        const on = onRock(), used = new Set(), ready = [], wait = [], outAdd = {};
         const idle = (bt) => on.filter((b) => b.Building.buildingType === bt && freeSlot(b) && !used.has(b.id));
         const cand = [];
         // can start NOW = every input is already in its input storage (not being moved now, not on its way) and a
@@ -738,9 +738,18 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
           if (!c.full) return;
           if (!c.now) { after.push(c); return; }
           if (c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) { c.why = 'its output can’t go in a tank farm (' + nm(c.to) + ')'; wait.push(c); return; }
+          // ROOM FOR OUTPUTS (go-live item 2, Mark 8 Nov): the output storage must have room for everything this process
+          // makes (counted in full – a safe over-estimate), on top of this approval's moves and other starts going there
+          { const t = c.to, i = inv(t) || { mass: 0, volume: 0 }, cp = CAP[t.Building.buildingType], a = addTo[t.id] || { g: 0, v: 0 };
+            const og = Object.keys(c.r.out).reduce((x, o) => x + c.r.out[o] * c.runs * grams(+o), 0), ov = Object.keys(c.r.out).reduce((x, o) => x + c.r.out[o] * c.runs * (MV[o] || [1000, 1000])[1], 0);
+            const ig = c.from.id === t.id ? Object.keys(c.r.inp).reduce((x, p2) => x + c.r.inp[p2] * c.runs * grams(+p2), 0) : 0, iv = c.from.id === t.id ? Object.keys(c.r.inp).reduce((x, p2) => x + c.r.inp[p2] * c.runs * (MV[p2] || [1000, 1000])[1], 0) : 0;
+            const og2 = (outAdd[t.id] || [0, 0]);
+            const pg = (i.mass + (i.reservedMass || 0) + a.g + og2[0] + og - ig) / cp[0], pv = (i.volume + (i.reservedVolume || 0) + a.v + og2[1] + ov - iv) / cp[1];
+            if (Math.max(pg, pv) > 0.95) { c.why = 'not enough room in ' + nm(t) + ' for its output (' + Math.round(Math.max(pg, pv) * 100) + '% full afterwards)'; wait.push(c); return; }
+            c.outG = og; c.outV = ov; c.inG = ig; c.inV = iv; }
           const bt = FBT[c.r.type];
           const b = c.fin && freeSlot(c.bl) && !used.has(c.bl.id) ? c.bl : c.bld && freeSlot(c.bld) && !used.has(c.bld.id) ? c.bld : idle(bt)[0];
-          if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); } else wait.push(c);
+          if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); const o2 = outAdd[c.to.id] = outAdd[c.to.id] || [0, 0]; o2[0] += c.outG - c.inG; o2[1] += c.outV - c.inV; } else wait.push(c);
         });
         S.startList = S.start ? ready : [];
         const later = (PC ? PC.steps.length + 1 : 1) - ready.length - wait.length - after.length;
