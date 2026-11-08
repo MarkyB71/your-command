@@ -40,7 +40,7 @@
   function build() {
     if (document.getElementById('dk-ov')) return;
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap'; document.head.appendChild(l);
-    const st = document.createElement('style'); st.textContent = CSS + '#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov .dk-br{color:var(--cyan);text-decoration:none;font-weight:700;letter-spacing:.06em;border:1px solid #8fe3ff66;border-radius:20px;padding:4px 14px}#dk-ov .dk-br:hover{background:#8fe3ff18}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
+    const st = document.createElement('style'); st.textContent = CSS + '#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov a.yicg{color:var(--cyan);font-size:.85em;margin-left:8px;white-space:nowrap}#dk-ov .dk-br{color:var(--cyan);text-decoration:none;font-weight:700;letter-spacing:.06em;border:1px solid #8fe3ff66;border-radius:20px;padding:4px 14px}#dk-ov .dk-br:hover{background:#8fe3ff18}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
     const ov = document.createElement('div'); ov.id = 'dk-ov';
     ov.innerHTML = WRAP + '<div id="dockpg"><div class="dhead"><div class="stripe"></div><div class="in"><h1>LOADING DOCK</h1>' +
       '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div><a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div><div id="dk-main"></div>' +
@@ -151,18 +151,41 @@
   const astId = (name) => ((Y().asts || []).find((a) => a.name === name) || {}).id;
 
   // Can the picked rock mine or make it itself? (Mark, 8 Nov – checked before suggesting a fly-in)
-  // Mine: a raw (id <= 22) the rock has (same test as vendor/sources.js); make: a recipe for it whose building is on the rock.
-  function hereTxt(p) {
-    const y = Y(), d = D() || {}, aid = astId(S.rock), on = onRock();
-    if (p <= 22) {
-      const a = (d.owned || []).find((x) => x.id === aid), c = (a && a.Celestial) || {};
-      let ok = false;
-      try { ok = (c.scanStatus || 0) >= 4 && c.abundances && y.astAbund ? (y.astAbund(c.abundances)[p] || 0) > 0 : !!((y.SPEC || {})[c.celestialType] && y.SPEC[c.celestialType][1].includes(p)); } catch (e) {}
-      if (ok) return on.some((b) => b.Building.buildingType === 2) ? '⛏ mine it here' : '⛏ can be mined here (no extractor yet)';
+  // Mine: a raw (id <= 22) the rock has (same test as vendor/sources.js). Make: a recipe for it whose building is on
+  // the rock – and its own inputs checked one step back: in storage on the rock, or mineable here (Mark, 8 Nov).
+  const GLk = (path, t) => (window.GL ? window.GL(path, t) : '');
+  function canMine(p) {
+    if (p > 22) return false;
+    const y = Y(), d = D() || {}, a = (d.owned || []).find((x) => x.id === astId(S.rock)), c = (a && a.Celestial) || {};
+    try { return (c.scanStatus || 0) >= 4 && c.abundances && y.astAbund ? (y.astAbund(c.abundances)[p] || 0) > 0 : !!((y.SPEC || {})[c.celestialType] && y.SPEC[c.celestialType][1].includes(p)); } catch (e) { return false; }
+  }
+  const rockStock = (p) => onRock().filter(isStore).reduce((t, b) => t + holds(b, p), 0);
+  function hereTxt(p, q) {
+    const on = onRock();
+    if (canMine(p)) {
+      const ex = on.find((b) => b.Building.buildingType === 2);
+      return ex ? '⛏ mine it here' + GLk('/building/' + ex.id, 'Open an extractor in the game') : '⛏ can be mined here (no extractor yet)';
     }
     const types = new Set(on.map((b) => b.Building.buildingType));
-    const r = R.find((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(FBT[x.type]));
-    return r ? '🏭 make it here – ' + esc(r.name) + ' (' + BTN[FBT[r.type]].toLowerCase() + ')' : '';
+    const opts = R.filter((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(FBT[x.type])).map((r) => {
+      const runs = Math.ceil(q / r.out[p]), miss = [], mine = [];
+      Object.keys(r.inp).forEach((ip) => {
+        ip = +ip; const need = r.inp[ip] * runs, have = rockStock(ip);
+        if (have >= need) return;
+        if (canMine(ip)) mine.push(pname(ip)); else miss.push(pname(ip) + ' ' + amt(ip, need - have));
+      });
+      return { r, miss, mine };
+    }).sort((x, z) => x.miss.length - z.miss.length || x.mine.length - z.mine.length);
+    const o = opts[0];
+    if (!o) return '';
+    const bt = FBT[o.r.type], bl = on.filter((b) => b.Building.buildingType === bt).sort((x, z) => (busyTxt(x) !== 'idle') - (busyTxt(z) !== 'idle'))[0];
+    let t = '🏭 make it here – ' + esc(o.r.name) + ' (' + BTN[bt].toLowerCase() + ')' + (bl ? GLk('/building/' + bl.id, 'Open ' + nm(bl) + ' in the game') : '');
+    if (!o.miss.length && !o.mine.length) t += '<br><span class="ok">✓ its inputs are on this rock</span>';
+    else {
+      if (o.mine.length) t += '<br><span style="color:var(--amber)">mine first: ' + o.mine.map(esc).join(', ') + '</span>';
+      if (o.miss.length) t += '<br><span style="color:var(--red)">✗ short of: ' + o.miss.map(esc).join(', ') + '</span>';
+    }
+    return { txt: t, ok: !o.miss.length };
   }
 
   // ---------- the plan ----------
@@ -190,7 +213,7 @@
         addG += q * grams(p); addV += q * (MV[p] || [1000, 1000])[1];
       });
       row.moved = want - left; row.short = left;
-      if (left > 0) fly.push({ p, q: left, here: hereTxt(p), where: (window.YICSRCTXT && window.YICSRCTXT(p, left, astId(S.rock))) || '' });
+      if (left > 0) fly.push({ p, q: left, here: hereTxt(p, left), where: (window.YICSRCTXT && window.YICSRCTXT(p, left, astId(S.rock))) || '' });
       rows.push(row);
     });
     const cap = CAP[dest.Building.buildingType];
@@ -255,7 +278,7 @@
 <select id="dk-proc">${opt(-1, S.by === 'out' ? '— pick what to make —' : '— pick a process —', S.proc)}${procList(procs).map(([i, t]) => opt(i, t, S.proc)).join('')}</select></div>`;
     if (sel0) {
       const bt = FBT[sel0.type];
-      h += able.length ? `<div class="row" style="margin-top:10px"><span class="src">Made in:</span><select id="dk-bld">${able.map((b) => opt(b.id, nm(b) + ' – ' + BTN[bt].toLowerCase() + ' (' + busyTxt(b) + ')', S.bld)).join('')}</select></div>`
+      h += able.length ? `<div class="row" style="margin-top:10px"><span class="src">Made in:</span><select id="dk-bld">${able.map((b) => opt(b.id, nm(b) + ' – ' + BTN[bt].toLowerCase() + ' (' + busyTxt(b) + ')', S.bld)).join('')}</select>${GLk('/building/' + S.bld, 'Open this building in the game')}</div>`
         : `<div class="hint" style="color:var(--red)">✗ This is made in a ${BTN[bt].toLowerCase()}${sel0.type === 5 ? ' (dry dock)' : ''} – you don't have one on ${esc(S.rock)}.</div>`;
     }
     h += '</div>';
@@ -265,7 +288,7 @@
       h += '</div>';
       // what the picked storage already holds of each input (Mark, 8 Nov) – one per line, updates when the pick changes
       { const d = store.find((b) => b.id === S.dest);
-        if (d) h += `<div style="margin-top:10px"><div class="src" style="font-weight:600">Already in ${esc(nm(d))}:</div><ul style="margin:4px 0 6px;padding-left:20px">` +
+        if (d) h += `<div style="margin-top:10px"><div class="src" style="font-weight:600">Already in ${esc(nm(d))}:${GLk('/building/' + d.id, 'Open ' + nm(d) + ' in the game')}</div><ul style="margin:4px 0 6px;padding-left:20px">` +
           Object.keys(sel0.inp).map((p) => { const need = sel0.inp[p] * S.runs, got = holds(d, +p);
             return `<li>${esc(pname(p))} ${got > 0 ? amt(+p, Math.min(got, need)) + ' of ' + amt(+p, need) + (got >= need ? ' <span class="ok">✓</span>' : '') : '<span style="color:var(--dim)">none</span>'}</li>`; }).join('') + '</ul></div>'; }
       h += best ? `<div class="hint"><span style="color:var(--amber)">★ ${esc(nm(best))} already holds the most of these inputs (${tonnes(bestKg)} of ${tonnes(needKg)}).</span>${S.destSet && S.dest !== best.id ? ' You picked a different one.' : ' Picked for you – you can change it.'}</div>`
@@ -284,26 +307,26 @@
           (r.bad ? '<span style="color:var(--red)">✗ ' + r.bad + '</span>' : r.short > 0 ? (r.from.length ? '<br>' : '') + '<span class="short">' + amt(r.p, r.short) + ' short – ' + (((P.fly.find((f) => f.p === r.p) || {}).here) ? 'make or mine here' : 'fly in') + '</span>' : '') +
           '</td></tr>').join('') + '</tbody></table></div>';
       if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
-<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span class="ok">' + f.here + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
+<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
       // crew + feeding
       const c = cl.find((x) => x.id === S.crew);
       h += `<div class="card"><h2><span class="n">6</span>Crew to do the moving</h2>`;
       if (!cl.length) h += '<div class="src" style="color:var(--red)">None of your crews is on this rock – a crew must be on the rock to move goods.</div>';
       else {
-        h += `<select id="dk-crew">${cl.map((x) => opt(x.id, x.name + ' – fed ' + Math.round(x.food * 100) + '%' + (x.fm < 1 ? ' (hungry, slower)' : '') + ' · free distance ×' + x.free.toFixed(2) + (x.busy ? ' · busy until ' + x.busy : ' · ready now'), S.crew)).join('')}</select>
+        h += `<select id="dk-crew">${cl.map((x) => opt(x.id, x.name + ' – fed ' + Math.round(x.food * 100) + '%' + (x.fm < 1 ? ' (hungry, slower)' : '') + ' · free distance ×' + x.free.toFixed(2) + (x.busy ? ' · busy until ' + x.busy : ' · ready now'), S.crew)).join('')}</select>${GLk('/crew/' + S.crew, 'Open this crew in the game')}
 <div class="hint">Must be on this rock. Best fed crew with the best transport bonus is picked for you.</div>`;
         if (c && c.food < 0.95) {
           const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5), need = Math.floor(c.mates * 1000 * yrs);
           const src = onRock().filter(isStore).map((b) => [b, ((inv(b) || { contents: [] }).contents).reduce((s, x) => s + (x.product === FOOD ? x.amount : 0), 0)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
           h += `<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:6px">${c.fm < 1 ? '⚠ ' + esc(c.name) + ' is hungry – moves will be slower.' : esc(c.name) + ' is ' + Math.round(c.food * 100) + '% fed.'}</div>` +
-            (src ? `<label style="margin:0"><input type="checkbox" id="dk-feed"${S.feed ? ' checked' : ''}> Feed ${esc(c.name)} first: ${tonnes(Math.min(need, src[1]))} Food from ${esc(nm(src[0]))}</label><div class="hint">Feeding goes in the same wallet approval, before the moves.</div>`
+            (src ? `<label style="margin:0"><input type="checkbox" id="dk-feed"${S.feed ? ' checked' : ''}> Feed ${esc(c.name)} first: ${tonnes(Math.min(need, src[1]))} Food from ${esc(nm(src[0]))}</label>${GLk('/building/' + src[0].id, 'Open ' + nm(src[0]) + ' in the game')}<div class="hint">Feeding goes in the same wallet approval, before the moves.</div>`
               : '<div class="src">No Food stored on this rock to feed it.</div>') + '</div>';
         } else S.feed = false;
       }
       h += '</div>';
       const nmv = P.moves.length;
       h += `<div class="card"><h2><span class="n">7</span>Moves to send</h2><table class="mv"><thead><tr><th></th><th>From</th><th>Goods</th><th>To</th></tr></thead><tbody>` +
-        (P.moves.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(P.dest))}</td></tr>`).join('') || '<tr><td></td><td colspan="3" class="src">Nothing to move.</td></tr>') +
+        (P.moves.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}${GLk('/building/' + x.b.id, 'Open ' + nm(x.b) + ' in the game')}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(P.dest))}</td></tr>`).join('') || '<tr><td></td><td colspan="3" class="src">Nothing to move.</td></tr>') +
         `</tbody></table><div class="fee">${P.pctAfter > 95 ? '<span style="color:var(--red)">✗ Not enough room – ' + esc(nm(P.dest)) + ' would be ' + P.pctAfter.toFixed(0) + '% full.</span>' : '<span class="ok">✓ Room OK – ' + esc(nm(P.dest)) + ' will be ' + P.pctAfter.toFixed(0) + '% full.</span>'}</div>
 <div class="fee">One delivery per building it comes from. Game fee: about 1 cent per delivery.</div></div>`;
       h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" disabled style="opacity:.5;cursor:not-allowed">APPROVE IN WALLET (${nmv} deliver${nmv === 1 ? 'y' : 'ies'}${S.feed ? ' + feed crew' : ''})</button>
