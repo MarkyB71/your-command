@@ -201,6 +201,35 @@ ${R.map(route).join('')}
     const s = Math.min(...fin) - now, h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
     return 'busy ' + (h ? h + 'h ' + m + 'm' : Math.max(1, m) + 'm');
   };
+  // ---------- distances (Mark, 8 Nov – "distance … will play a big part on huge rocks") ----------
+  // Same maths as @influenceth/sdk 2.8.1 Asteroid.getLotDistance / getLotTravelTime (rules: project doc
+  // claude/game-rules-logistics-2026-11-08.md): lots sit on a golden-angle spiral; radius = 375.142 ÷ id^0.475 km;
+  // a trip is FREE (instant) when km ÷ speed bonus ≤ 5 km × free-distance bonus, else km ÷ (2.5 km per game hour ×
+  // speed bonus); real time = game time ÷ 24 (about 1 real minute per km with no bonuses).
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  const locOf = (e, label) => { const l = ((e && e.Location && e.Location.locations) || []).find((x) => x.label === label); return l ? l.id : 0; };
+  const lotOf = (e) => Math.floor(locOf(e, 4) / 4294967296);
+  const rockAst = () => { const b = onRock().find((x) => locOf(x, 3)); return b ? locOf(b, 3) : 0; };
+  function lotPos(n, i) { const y = 1 - ((i - 1) / (n - 1)) * 2, rr = Math.sqrt(Math.max(0, 1 - y * y)), th = GA * (i - 1); return [rr * Math.cos(th), y, rr * Math.sin(th)]; }
+  function kmBetween(a, b) {
+    const ast = rockAst(); if (!ast || !a || !b) return null; if (a === b) return 0;
+    const r = 375.142 / Math.pow(ast, 0.475), n = Math.floor(4 * Math.PI * r * r);
+    if (a > n || b > n) return null;
+    const A = lotPos(n, a), B = lotPos(n, b), d = Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2]));
+    return r * Math.acos(d);
+  }
+  // real seconds for a trip of k km with a crew's bonuses (c = crew from crews(), or none = no bonuses)
+  function tripSecs(k, c) {
+    if (k == null) return null;
+    const tb = (c && c.speed) || 1, db = (c && c.free) || 1;
+    if (k / tb <= 5 * db) return 0;
+    return Math.ceil(Math.ceil(k / (tb * 2.5 / 3600)) / 24);
+  }
+  const tripTxt = (sec) => sec == null ? '' : sec === 0 ? 'instant' : sec < 3600 ? '~' + Math.max(1, Math.round(sec / 60)) + ' min' : '~' + Math.floor(sec / 3600) + 'h ' + Math.round((sec % 3600) / 60) + 'm';
+  const kmTxt = (k) => k == null ? '' : (k < 10 ? k.toFixed(1) : Math.round(k)) + ' km';
+  const lotKm = (e1, e2) => kmBetween(lotOf(e1), lotOf(e2));
+  const crewLot = (c) => { const r = ((D() && D().crewsRaw) || []).find((x) => x.id === c.id); return r ? lotOf(r) : 0; };
+
   function crews() {
     const d = D(), y = Y(), cm = (d && d.crewmates) || {};
     return ((d && d.crewList) || []).filter((c) => c.ast === S.rock && (c.roster || []).length && !/in flight|in orbit/i.test(c.place || '')).map((c) => {
@@ -209,8 +238,14 @@ ${R.map(route).join('')}
       try { free = y.crewMult(11, ms); speed = y.crewMult(3, ms) * (y.CBNF && y.CBNF[3] ? 1 : y.habEff(c)); } catch (e) {}
       const food = typeof c.food === 'number' ? Math.max(0, Math.min(1, c.food)) : 1;
       const fm = Math.min(1, Math.max(0.25, food / 0.5)); // SDK Crew.getFoodMultiplier, normal rations
-      return { id: c.id, name: c.name, busy: c.busy || '', free: free * fm, rawFree: free, rawSpeed: speed, food, fm, mates: c.roster.length };
+      return { id: c.id, name: c.name, busy: c.busy || '', free: free * fm, speed: speed * fm, rawFree: free, rawSpeed: speed, food, fm, mates: c.roster.length, lot: crewLot(c) };
     }).sort((a, b) => (!!a.busy - !!b.busy) || (b.free - a.free) || (b.rawSpeed - a.rawSpeed));
+  }
+  // the best building of a type on the rock: free first, then nearest to a ready crew
+  function pickBld(bt) {
+    const cl = crews(), rd = cl.filter((c) => !c.busy), use = rd.length ? rd : cl;
+    const ck = (b) => { const ks = use.map((c) => kmBetween(c.lot, lotOf(b))).filter((k) => k != null); return ks.length ? Math.min(...ks) : 1e9; };
+    return onRock().filter((b) => b.Building.buildingType === bt).sort((a, b) => (!freeSlot(a) - !freeSlot(b)) || (ck(a) - ck(b)))[0] || null;
   }
   const astId = (name) => ((Y().asts || []).find((a) => a.name === name) || {}).id;
 
@@ -304,10 +339,13 @@ ${R.map(route).join('')}
     const put = (from, to, ip, q, why) => { const k = from.id + '>' + to.id; (dl[k] = dl[k] || { b: from, to, items: [], why: new Set() }).items.push({ p: ip, a: q }); dl[k].why.add(why);
       add[to.id] = add[to.id] || [0, 0]; add[to.id][0] += q * grams(ip); add[to.id][1] += q * (MV[ip] || [1000, 1000])[1]; };
     C.steps.forEach((st) => {
-      // best storage for this step: holds most of its stock inputs by weight; else the main staging storage
-      let best = null, bk = 0;
-      store.forEach((b) => { const kg = Object.keys(st.use).reduce((t, ip) => okIn(b, +ip) ? t + Math.min(avail[b.id][ip] || 0, st.use[ip]) * grams(+ip) : t, 0); if (kg > bk) { bk = kg; best = b; } });
-      st.star = best ? best.id : P.dest.id;
+      // this step's building: free first, then nearest to a ready crew (distance, Mark 8 Nov)
+      st.bld = pickBld(FBT[st.r.type]);
+      // best storage for this step: an instant trip to its building first, then holds the most of its stock inputs
+      const mv = S.moverObj;
+      const cand = store.map((b) => ({ b, kg: Object.keys(st.use).reduce((t, ip) => okIn(b, +ip) ? t + Math.min(avail[b.id][ip] || 0, st.use[ip]) * grams(+ip) : t, 0), t: st.bld ? (tripSecs(lotKm(b, st.bld), mv) ?? 0) : 0, k: st.bld ? (lotKm(b, st.bld) ?? 0) : 0 }))
+        .filter((x) => x.kg > 0).sort((x, y) => (x.t > 0) - (y.t > 0) || y.kg - x.kg || x.k - y.k);
+      st.star = cand[0] ? cand[0].b.id : P.dest.id;
       const d = byId((S.stepDest || {})[st.r.i]) || byId(st.star);
       st.dest = d;
       Object.keys(st.use).forEach((ip) => {
@@ -317,7 +355,7 @@ ${R.map(route).join('')}
         const oi = Math.min(incA[d.id][ip], left); incA[d.id][ip] -= oi; left -= oi;
         const own = Math.min(avail[d.id][ip] || 0, left); avail[d.id][ip] = (avail[d.id][ip] || 0) - own; left -= own;
         st.here = st.here || {}; st.here[ip] = (st.here[ip] || 0) + own;
-        store.filter((b) => b.id !== d.id).sort((a, b) => (avail[b.id][ip] || 0) - (avail[a.id][ip] || 0)).forEach((b) => {
+        store.filter((b) => b.id !== d.id && (avail[b.id][ip] || 0) > 0).sort((a, b) => ((lotKm(a, d) ?? 1e9) - (lotKm(b, d) ?? 1e9)) || (avail[b.id][ip] || 0) - (avail[a.id][ip] || 0)).forEach((b) => {
           if (left <= 0) return; const q = Math.min(avail[b.id][ip] || 0, left); if (q <= 0) return;
           avail[b.id][ip] -= q; left -= q; put(b, d, ip, q, st.r.name);
         });
@@ -349,7 +387,7 @@ ${R.map(route).join('')}
       const row = { p, need, there, onway, moved: 0, from: [], short: 0, bad: '' };
       if (want > 0 && tankDest && !TANKOK.has(p)) { row.bad = "can't go in a tank farm"; row.short = want; rows.push(row); return; }
       let left = want;
-      store.filter((b) => b.id !== dest.id).map((b) => [b, have(b, p)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).forEach(([b, h]) => {
+      store.filter((b) => b.id !== dest.id).map((b) => [b, have(b, p), lotKm(b, dest) ?? 1e9]).filter((x) => x[1] > 0).sort((a, b) => a[2] - b[2] || b[1] - a[1]).forEach(([b, h]) => {
         if (left <= 0) return;
         const q = Math.min(left, h); left -= q; row.from.push([b, q]);
         (moves[b.id] = moves[b.id] || { b, items: [] }).items.push({ p, a: q });
@@ -510,22 +548,31 @@ ${R.map(route).join('')}
     const procs = R.filter((r) => FBT[r.type]);
     if (!procs.find((r) => r.i === S.proc)) S.proc = -1;
     const sel0 = R[S.proc];
-    const able = sel0 ? pb.filter((b) => b.Building.buildingType === FBT[sel0.type]).sort((a, b) => (busyTxt(a) !== 'idle') - (busyTxt(b) !== 'idle')) : [];
+    // DISTANCE (Mark, 8 Nov): building = free first, then nearest to a ready crew; crew = ready first, then
+    // quickest trip to the building; storage ★ = an instant trip to the building first, then holds the most.
+    const cl0 = crews(), ready = cl0.filter((c) => !c.busy);
+    const crewKm = (b) => { const ks = (ready.length ? ready : cl0).map((c) => kmBetween(c.lot, lotOf(b))).filter((k) => k != null); return ks.length ? Math.min(...ks) : 1e9; };
+    const able = sel0 ? pb.filter((b) => b.Building.buildingType === FBT[sel0.type]).sort((a, b) => (!freeSlot(a) - !freeSlot(b)) || (crewKm(a) - crewKm(b))) : [];
     if (!able.find((b) => b.id === S.bld)) S.bld = able[0] ? able[0].id : 0;
-    // Mark (8 Nov): suggest the storage that already holds the most of the inputs (by weight) – the player can change it
+    const bld0 = able.find((b) => b.id === S.bld);
+    const cl = cl0.slice().sort((a, b) => (!!a.busy - !!b.busy) || ((bld0 ? tripSecs(kmBetween(a.lot, lotOf(bld0)), a) : 0) - (bld0 ? tripSecs(kmBetween(b.lot, lotOf(bld0)), b) : 0)) || (b.free - a.free));
+    if (!cl.find((c) => c.id === S.crew)) S.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
+    const mover = cl.find((c) => c.id === S.crew);
+    S.moverObj = mover;
+    const toBld = (b) => (bld0 ? tripSecs(lotKm(b, bld0), mover) : null);
     let best = null, bestKg = 0, needKg = 0;
     if (sel0) {
       Object.keys(sel0.inp).forEach((p) => { needKg += sel0.inp[p] * S.runs * grams(+p) / 1000; });
-      store.forEach((b) => {
+      const scored = store.map((b) => {
         const tank = b.Building.buildingType === TANK;
         const kg = Object.keys(sel0.inp).reduce((t, p) => (tank && !TANKOK.has(+p)) ? t : t + Math.min(holds(b, +p), sel0.inp[p] * S.runs) * grams(+p) / 1000, 0);
-        if (kg > bestKg) { best = b; bestKg = kg; }
-      });
+        const ok = !tank || Object.keys(sel0.inp).every((p) => TANKOK.has(+p));
+        return { b, kg, ok, t: toBld(b) ?? 0, k: bld0 ? lotKm(b, bld0) ?? 0 : 0 };
+      }).filter((x) => x.ok && x.kg > 0).sort((x, y) => (x.t > 0) - (y.t > 0) || y.kg - x.kg || x.k - y.k);
+      if (scored[0]) { best = scored[0].b; bestKg = scored[0].kg; }
     }
     if (!S.destSet && best) S.dest = best.id;
     if (!store.find((b) => b.id === S.dest)) S.dest = store[0] ? store[0].id : 0;
-    const cl = crews();
-    if (!cl.find((c) => c.id === S.crew)) S.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const P = plan();
     const rec = R[S.proc];
     let CM = null, PC = null;
@@ -538,12 +585,12 @@ ${R.map(route).join('')}
 <select id="dk-proc">${opt(-1, S.by === 'out' ? '— pick what to make —' : '— pick a process —', S.proc)}${procList(procs).map(([i, t]) => opt(i, t, S.proc)).join('')}</select></div>`;
     if (sel0) {
       const bt = FBT[sel0.type];
-      h += able.length ? `<div class="row" style="margin-top:10px"><span class="src">Made in:</span><select id="dk-bld">${able.map((b) => opt(b.id, nm(b) + ' – ' + BTN[bt].toLowerCase() + ' (' + busyTxt(b) + ')', S.bld)).join('')}</select>${GLk('/building/' + S.bld, 'Open this building in the game')}</div>`
+      h += able.length ? `<div class="row" style="margin-top:10px"><span class="src">Made in:</span><select id="dk-bld">${able.map((b) => opt(b.id, nm(b) + ' – ' + BTN[bt].toLowerCase() + ' (' + busyTxt(b) + ')' + (crewKm(b) < 1e9 ? ' · ' + kmTxt(crewKm(b)) + ' from your nearest ready crew' : ''), S.bld)).join('')}</select>${GLk('/building/' + S.bld, 'Open this building in the game')}</div>`
         : `<div class="hint" style="color:var(--red)">✗ This is made in a ${BTN[bt].toLowerCase()}${sel0.type === 5 ? ' (dry dock)' : ''} – you don't have one on ${esc(S.rock)}.</div>`;
     }
     h += '</div>';
     if (sel0) {
-      h += `<div class="card"><h2><span class="n">3</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, (best && b.id === best.id ? '★ ' : '') + nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full', S.dest)).join('')}</select>`;
+      h += `<div class="card"><h2><span class="n">3</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, (best && b.id === best.id ? '★ ' : '') + nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full' + (bld0 && lotKm(b, bld0) != null ? ' · ' + kmTxt(lotKm(b, bld0)) + ' to ' + nm(bld0) + ' (' + tripTxt(toBld(b)) + ')' : ''), S.dest)).join('')}</select>`;
       if (P) h += `<div class="cap"><span class="src">${esc(nm(P.dest))}: ${P.pctNow.toFixed(0)}% full now</span><div class="capbar"><i style="width:${Math.min(100, P.pctNow)}%"></i><b style="left:${Math.min(100, P.pctNow)}%;width:${Math.max(0.6, Math.min(100 - P.pctNow, P.pctAfter - P.pctNow))}%"></b></div></div>`;
       h += '</div>';
       // what the picked storage already holds of each input (Mark, 8 Nov) – one per line, updates when the pick changes
@@ -551,7 +598,7 @@ ${R.map(route).join('')}
         if (d) h += `<div style="margin-top:10px"><div class="src" style="font-weight:600">Already in ${esc(nm(d))}:${GLk('/building/' + d.id, 'Open ' + nm(d) + ' in the game')}</div><ul style="margin:4px 0 6px;padding-left:20px">` +
           Object.keys(sel0.inp).map((p) => { const need = sel0.inp[p] * S.runs, got = holds(d, +p);
             return `<li>${esc(pname(p))} ${got > 0 ? amt(+p, Math.min(got, need)) + ' of ' + amt(+p, need) + (got >= need ? ' <span class="ok">✓</span>' : '') : '<span style="color:var(--dim)">none</span>'}</li>`; }).join('') + '</ul></div>'; }
-      h += best ? `<div class="hint"><span style="color:var(--amber)">★ ${esc(nm(best))} already holds the most of these inputs (${tonnes(bestKg)} of ${tonnes(needKg)}).</span>${S.destSet && S.dest !== best.id ? ' You picked a different one.' : ' Picked for you – you can change it.'}</div>`
+      h += best ? `<div class="hint"><span style="color:var(--amber)">★ ${esc(nm(best))}${bld0 && toBld(best) === 0 ? ' is an instant trip to ' + esc(nm(bld0)) + ' and' : bld0 ? ' is ' + kmTxt(lotKm(best, bld0)) + ' from ' + esc(nm(bld0)) + ' and' : ''} holds ${tonnes(bestKg)} of the ${tonnes(needKg)} needed.</span>${S.destSet && S.dest !== best.id ? ' You picked a different one.' : ' Picked for you – you can change it.'}</div>`
         : '<div class="hint">None of your storage on this rock holds any of these inputs yet.</div>';
       h += `<div class="hint">${P && P.dest.Building.buildingType === TANK ? '<span style="color:var(--amber)">Tank farms only take gases and liquids.</span>' : 'Blue = in there now · amber = what this will add.'}</div></div>`;
     }
@@ -578,7 +625,7 @@ ${R.map(route).join('')}
       if (P.fly.length) {
         const C = chainPlan(P), on = onRock();
         CM = chainMoves(P, C); PC = C;
-        const bIn = (bt) => on.filter((b) => b.Building.buildingType === bt).sort((x, z) => (busyTxt(x) !== 'idle') - (busyTxt(z) !== 'idle'))[0];
+        const bIn = (bt) => pickBld(bt);
         const ex = on.find((b) => b.Building.buildingType === 2);
         // Laid out as stages (Mark, 8 Nov: "a lot to take in – make it more appetising"): a summary strip, then
         // stage 1 = mining, each later stage only needs things from the stages before it (so steps in one stage
@@ -599,10 +646,10 @@ ${R.map(route).join('')}
           if (x.mine) { const m = C.mine[x.mine];
             return `<div class="dkp-t mine">${icon(x.mine)}<div><div class="dkp-n">${amt(x.mine, m.q)} ${esc(pname(x.mine))}</div><div class="dkp-s">⛏ mine it${ex ? GLk('/building/' + ex.id, 'Open an extractor in the game') : ' – <span style="color:var(--amber)">no extractor yet</span>'}</div>${sendTo(m.sendTo)}</div></div>`; }
           if (x.fin) return `<div class="dkp-t fin">${icon(Object.keys(rec.out)[0])}<div><div class="dkp-n">${esc(Object.keys(rec.out).map((q) => pname(q)).join(' + '))}</div><div class="dkp-s">🎯 ${esc(rec.name)}</div><div class="dkp-chips"><span>× ${S.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(P.bl))}${GLk('/building/' + P.bl.id, 'Open ' + nm(P.bl) + ' in the game')}</span><span>📦 ${esc(nm(P.dest))}</span></div></div></div>`;
-          const bt = FBT[x.r.type], b = bIn(bt), uses = Object.keys(x.use);
+          const bt = FBT[x.r.type], b = x.bld || bIn(bt), uses = Object.keys(x.use);
           return `<div class="dkp-t">${icon(x.p)}<div><div class="dkp-n">${amt(x.p, x.runs * x.r.out[x.p])} ${esc(pname(x.p))}</div><div class="dkp-s">${esc(x.r.name)}</div>
 <div class="dkp-chips"><span>× ${x.runs.toLocaleString('en-GB')} runs</span><span>${b ? esc(nm(b)) + GLk('/building/' + b.id, 'Open ' + nm(b) + ' in the game') : 'a ' + BTN[bt].toLowerCase()}</span>` +
-            (uses.length ? `<span title="${esc(uses.map((ip) => pname(ip) + ' ' + amt(+ip, x.use[ip]).replace(/<[^>]*>/g, '')).join(', '))} from stock">📦 ${esc(nm(x.dest))}${x.dest.id === x.star ? ' ★' : ''}</span></div>
+            (uses.length ? `<span title="${esc(uses.map((ip) => pname(ip) + ' ' + amt(+ip, x.use[ip]).replace(/<[^>]*>/g, '')).join(', '))} from stock">📦 ${esc(nm(x.dest))}${x.dest.id === x.star ? ' ★' : ''}${b && lotKm(x.dest, b) != null ? ' · ' + kmTxt(lotKm(x.dest, b)) : ''}</span></div>
 <details class="dkp-ch"><summary>stock: ${uses.map((ip) => esc(pname(ip)) + ' ' + amt(+ip, x.use[ip])).join(', ')} · change</summary><select data-sd="${x.r.i}">${onRock().filter(isStore).sort((a2, c2) => nm(a2).localeCompare(nm(c2))).map((sb) => opt(sb.id, (sb.id === x.star ? '★ ' : '') + nm(sb) + ' – ' + fullPct(sb) + '% full', x.dest.id)).join('')}</select></details>${x.bad ? '<div style="color:var(--red)">✗ ' + esc(x.bad) + '</div>' : ''}` : '</div>') +
             sendTo(x.sendTo) + '</div></div>';
         };
@@ -618,7 +665,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       h += `<div class="card"><h2><span class="n">6</span>Crew to do the moving</h2>`;
       if (!cl.length) h += '<div class="src" style="color:var(--red)">None of your crews is on this rock – a crew must be on the rock to move goods.</div>';
       else {
-        h += `<select id="dk-crew">${cl.map((x) => opt(x.id, x.name + ' – fed ' + Math.round(x.food * 100) + '%' + (x.fm < 1 ? ' (hungry, slower)' : '') + ' · free distance ×' + x.free.toFixed(2) + (x.busy ? ' · busy until ' + x.busy : ' · ready now'), S.crew)).join('')}</select>${GLk('/crew/' + S.crew, 'Open this crew in the game')}
+        h += `<select id="dk-crew">${cl.map((x) => opt(x.id, x.name + ' – fed ' + Math.round(x.food * 100) + '%' + (x.fm < 1 ? ' (hungry, slower)' : '') + ' · free distance ×' + x.free.toFixed(2) + (bld0 && kmBetween(x.lot, lotOf(bld0)) != null ? ' · ' + kmTxt(kmBetween(x.lot, lotOf(bld0))) + ' to ' + nm(bld0) + ' (' + tripTxt(tripSecs(kmBetween(x.lot, lotOf(bld0)), x)) + ')' : '') + (x.busy ? ' · busy until ' + x.busy : ' · ready now'), S.crew)).join('')}</select>${GLk('/crew/' + S.crew, 'Open this crew in the game')}
 <div class="hint">Must be on this rock. Best fed crew with the best transport bonus is picked for you.</div>`;
         S.feedCall = null;
         if (c && c.food < 0.95) {
@@ -640,8 +687,8 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       const room = Object.values(addTo).map((a) => { const i = inv(a.b) || { mass: 0, volume: 0 }, c = CAP[a.b.Building.buildingType];
         const pc = Math.max((i.mass + (i.reservedMass || 0) + a.g) / c[0], (i.volume + (i.reservedVolume || 0) + a.v) / c[1]) * 100;
         return pc > 95 ? '<span style="color:var(--red)">✗ Not enough room – ' + esc(nm(a.b)) + ' would be ' + pc.toFixed(0) + '% full.</span>' : '<span class="ok">✓ ' + esc(nm(a.b)) + ' will be ' + pc.toFixed(0) + '% full.</span>'; });
-      h += `<div class="card"><h2><span class="n">7</span>Moves to send</h2><table class="mv"><thead><tr><th></th><th>From</th><th>Goods</th><th>To</th><th>For</th></tr></thead><tbody>` +
-        (all.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}${GLk('/building/' + x.b.id, 'Open ' + nm(x.b) + ' in the game')}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(x.to))}</td><td class="src" style="color:var(--dim)">${esc(x.why)}</td></tr>`).join('') || '<tr><td></td><td colspan="4" class="src">Nothing to move.</td></tr>') +
+      h += `<div class="card"><h2><span class="n">7</span>Moves to send</h2><table class="mv"><thead><tr><th></th><th>From</th><th>Goods</th><th>To</th><th>Trip</th><th>For</th></tr></thead><tbody>` +
+        (all.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}${GLk('/building/' + x.b.id, 'Open ' + nm(x.b) + ' in the game')}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(x.to))}</td><td class="src" style="white-space:nowrap">${kmTxt(lotKm(x.b, x.to))}<br><span class="${tripSecs(lotKm(x.b, x.to), mover) === 0 ? 'ok' : ''}">${tripTxt(tripSecs(lotKm(x.b, x.to), mover))}</span></td><td class="src" style="color:var(--dim)">${esc(x.why)}</td></tr>`).join('') || '<tr><td></td><td colspan="5" class="src">Nothing to move.</td></tr>') +
         `</tbody></table><div class="fee">${room.join('<br>') || '<span class="ok">✓ Room OK</span>'}</div>
 <div class="fee">${CM ? 'Covers every step of the full production plan. ' : ''}One delivery per building pair. Game fee: about 1 cent per delivery.</div></div>`;
       // Optional: start the processes that are ready, in the same approval (Mark, 8 Nov – a tick box, off by default,
@@ -656,7 +703,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
         // processor is free. Steps that only need this approval's moves start next time, after the moves arrive.
         if (PC) PC.steps.forEach((x) => { const full = Object.keys(x.r.inp).every((ip) => (x.use[ip] || 0) >= x.r.inp[ip] * x.runs);
           const now = full && Object.keys(x.r.inp).every((ip) => ((x.here || {})[ip] || 0) >= x.r.inp[ip] * x.runs);
-          cand.push({ r: x.r, runs: x.runs, p: x.p, from: x.dest, to: (x.sendTo || [])[0] || P.dest, full, now }); });
+          cand.push({ r: x.r, runs: x.runs, p: x.p, from: x.dest, to: (x.sendTo || [])[0] || P.dest, full, now, bld: x.bld }); });
         cand.push({ r: rec, runs: S.runs, p: +Object.keys(rec.out)[0], from: P.dest, to: P.dest, full: !P.fly.length, now: !P.fly.length && P.rows.every((r) => r.there - r.onway >= r.need), fin: true, bl: P.bl });
         const after = [];
         cand.forEach((c) => {
@@ -664,7 +711,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
           if (!c.now) { after.push(c); return; }
           if (c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) { c.why = 'its output can’t go in a tank farm (' + nm(c.to) + ')'; wait.push(c); return; }
           const bt = FBT[c.r.type];
-          const b = c.fin && freeSlot(c.bl) && !used.has(c.bl.id) ? c.bl : idle(bt)[0];
+          const b = c.fin && freeSlot(c.bl) && !used.has(c.bl.id) ? c.bl : c.bld && freeSlot(c.bld) && !used.has(c.bld.id) ? c.bld : idle(bt)[0];
           if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); } else wait.push(c);
         });
         S.startList = S.start ? ready : [];
