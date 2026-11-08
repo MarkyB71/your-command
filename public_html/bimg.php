@@ -10,4 +10,6 @@ $CID = [
 ];
 $t = intval($_GET['t'] ?? 0);
 if (!isset($CID[$t])) img_unavailable(400);
-img_serve(__DIR__ . '/cache/bld_' . $t . '_160.png', IPFS . $CID[$t], 160);
+// ?l=1 – a large copy (1000 px wide) for full-screen use, e.g. the Logistics Hub airlock view (8 Nov 2026)
+$big = !empty($_GET['l']);
+img_serve(__DIR__ . '/cache/bld_' . $t . ($big ? '_1000' : '_160') . '.png', IPFS . $CID[$t], $big ? 1000 : 160);
