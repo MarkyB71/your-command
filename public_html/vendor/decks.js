@@ -82,6 +82,8 @@ body > header{display:none!important}
 #deckbar .dk-sub{display:flex;gap:4px;flex-wrap:wrap;padding:6px 0 8px;border-top:2px solid var(--dcur,#8fe3ff);box-shadow:0 -1px 10px -2px var(--dcur,#8fe3ff)}
 #deckbar .dk-sub:empty{padding:0 0 6px}
 #deckbar .dk-sub{align-items:center}
+#deckbar .dk-sub.rfm{position:relative}
+#deckbar .dk-sub.rfm #dkrf.mid{position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px!important;padding:6px 16px!important}
 #dktools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;padding-left:10px}
 #dktools > *{margin:0!important}
 #dktools button{position:static!important;font-size:12px!important;padding:5px 10px!important;line-height:1.2!important;white-space:nowrap}
@@ -575,6 +577,22 @@ body > header{display:none!important}
   // Search, Connect wallet, Play, Command Deck extension and Download live at the right of the
   // page row (the old header and menu row are hidden on the decks) – Mark, 27 Oct
   let tray = null;
+  function midRf(db) {
+    const sub = db.querySelector('.dk-sub'), rb = document.getElementById('dkrf');
+    if (!sub || !rb) return;
+    if (rb.parentNode !== sub) sub.appendChild(rb);
+    sub.classList.add('rfm');
+    rb.classList.add('mid');
+    const r = rb.getBoundingClientRect(), pgs = sub.querySelectorAll('.pg'), t = document.getElementById('dktools');
+    const last = pgs.length ? pgs[pgs.length - 1].getBoundingClientRect() : null, tr = t ? t.getBoundingClientRect() : null;
+    const hit = window.innerWidth <= 700 || (last && last.right + 8 > r.left) || (tr && tr.width && tr.left < r.right + 8 && tr.top < r.bottom);
+    if (hit) {
+      rb.classList.remove('mid');
+      sub.classList.remove('rfm');
+      if (t && rb.parentNode !== t) t.appendChild(rb);
+    }
+  }
+  if (/[?&]beta=1\b/.test(location.search)) window.addEventListener('resize', () => { const db = document.getElementById('deckbar'); if (db) midRf(db); });
   function tools(db) {
     if (!tray) {
       tray = document.createElement('div');
@@ -645,6 +663,9 @@ body > header{display:none!important}
       };
       tray.appendChild(rb);
     }
+    // Refresh in the middle of the row, same level (Mark, 8 Nov 2026) – TEST ONLY on ?beta=1.
+    // If the deck's page buttons or the tools would run under it, it goes back beside the wallet button.
+    if (/[?&]beta=1\b/.test(location.search)) midRf(db);
     // ? Help button after Refresh – opens the help / wiki page in a new tab (LIVE 3 Nov 2026, tested on ?beta=1 – Mark)
     if (!document.getElementById('dkhelp')) {
       const hb = document.createElement('a');
