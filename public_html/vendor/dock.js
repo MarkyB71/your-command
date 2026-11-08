@@ -83,17 +83,7 @@
         wrap.classList.remove('cycling'); ch.classList.remove('cycling'); setSign('● DOOR OPEN', 'green'); ch.classList.add('open');
         let gone = false;
         const enter = () => { if (gone) return; gone = true; wrap.classList.add('gone'); setTimeout(() => { wrap.style.display = 'none'; viewDeck(ov, () => { ov.classList.add('indock'); ov.scrollTop = 0; S.ok = true; render(); }); }, 600); };
-        setTimeout(() => { // doors fully open (they take ~2.5 s)
-          let spoke = false;
-          try {
-            speechSynthesis.cancel();
-            const v = new SpeechSynthesisUtterance('Entering the Logistics Hub. The centre where all the moves come together.'); v.rate = 0.95; v.pitch = 0.8; v.volume = 0.9;
-            v.onstart = () => { spoke = true; }; v.onend = () => setTimeout(enter, 500); v.onerror = () => setTimeout(enter, 300);
-            setTimeout(() => speechSynthesis.speak(v), 80); // Chrome/Brave drop a speak() made straight after cancel()
-          } catch (e) {}
-          setTimeout(() => { if (!spoke) enter(); }, 1500); // no voice in this browser – carry on
-          setTimeout(enter, 9000); // safety net
-        }, 2700);
+        setTimeout(enter, 2900); // doors fully open (~2.5 s) – then the viewing deck, which speaks the welcome
       }, 2800);
     });
   }
@@ -161,7 +151,19 @@ ${P.map((p) => B(p[0], p[1], p[2])).join('')}
     ov.appendChild(v);
     let fin = false;
     const end = () => { if (fin) return; fin = true; v.classList.add('out'); setTimeout(() => { v.remove(); done(); }, 600); };
-    v.addEventListener('click', end); setTimeout(end, 4500);
+    v.addEventListener('click', end);
+    // Mark (8 Nov): the welcome is spoken over the view. Stay at least 4.5 s, and until the voice has finished.
+    let minDone = false, said = false, spoke = false;
+    const maybe = () => { if (minDone && said) end(); };
+    setTimeout(() => { minDone = true; maybe(); }, 4500);
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance('Entering the Logistics Hub. The centre where all the moves come together.'); u.rate = 0.95; u.pitch = 0.8; u.volume = 0.9;
+      u.onstart = () => { spoke = true; }; u.onend = () => setTimeout(() => { said = true; maybe(); }, 400); u.onerror = () => { said = true; maybe(); };
+      setTimeout(() => speechSynthesis.speak(u), 350); // Chrome/Brave drop a speak() made straight after cancel()
+    } catch (e) { said = true; }
+    setTimeout(() => { if (!spoke) { said = true; maybe(); } }, 2000); // no voice in this browser
+    setTimeout(end, 12000); // safety net
   }
 
   // ---------- data ----------
