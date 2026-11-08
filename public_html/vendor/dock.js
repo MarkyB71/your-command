@@ -188,6 +188,41 @@
     return { txt: t, ok: !o.miss.length };
   }
 
+  // Full production plan on the rock (Mark, 8 Nov): every short input is broken down into the processes
+  // needed to make it here, all the way back – using stock on the rock first, mining what the rock has,
+  // and listing only what's left to fly in. Steps come out in the order to do them (deepest first).
+  function chainPlan(P) {
+    const on = onRock(), types = new Set(on.map((b) => b.Building.buildingType));
+    const pool = {};
+    on.filter(isStore).forEach((b) => ((inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) pool[c.product] = (pool[c.product] || 0) + c.amount; }));
+    P.rows.forEach((r) => { pool[r.p] = Math.max(0, (pool[r.p] || 0) - Math.min(r.need, r.there + r.moved)); });
+    const steps = [], key = {}, fly = {}, mine = {};
+    const recipes = (p) => R.filter((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(FBT[x.type]));
+    function need(p, q, path, depth) {
+      if (q <= 0) return;
+      if (canMine(p)) { mine[p] = (mine[p] || 0) + q; return; }
+      const rs = recipes(p).filter((r) => !Object.keys(r.inp).some((ip) => path.includes(+ip)));
+      if (!rs.length || depth > 8) { fly[p] = (fly[p] || 0) + q; return; }
+      // best recipe: p must be a main output (not a small by-product), then fewest inputs that can't be had here,
+      // then the least input weight per tonne made
+      const share = (r) => { const tot = Object.keys(r.out).reduce((t, o) => t + r.out[o] * grams(+o), 0); return tot ? r.out[p] * grams(p) / tot : 0; };
+      const main = rs.filter((r) => share(r) >= 0.25);
+      const miss = (r) => Object.keys(r.inp).filter((ip) => !(pool[ip] > 0) && !canMine(+ip) && !recipes(+ip).length).length;
+      const cost = (r) => Object.keys(r.inp).reduce((t, ip) => t + r.inp[ip] * grams(+ip), 0) / (r.out[p] * grams(p));
+      const r = (main.length ? main : rs).sort((a, b) => miss(a) - miss(b) || cost(a) - cost(b))[0];
+      const runs = Math.ceil(q / r.out[p]);
+      Object.keys(r.inp).forEach((ip) => {
+        ip = +ip; const n = r.inp[ip] * runs, take = Math.min(pool[ip] || 0, n);
+        pool[ip] = (pool[ip] || 0) - take;
+        need(ip, n - take, path.concat(p), depth + 1);
+      });
+      if (key[r.i]) key[r.i].runs += runs;
+      else { key[r.i] = { r, p, runs }; steps.push(key[r.i]); }
+    }
+    P.fly.forEach((f) => need(f.p, f.q, [], 0));
+    return { steps, fly, mine };
+  }
+
   // ---------- the plan ----------
   function plan() {
     const store = onRock().filter(isStore);
@@ -308,6 +343,21 @@
           '</td></tr>').join('') + '</tbody></table></div>';
       if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
 <table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
+      // full production plan on this rock (Mark, 8 Nov)
+      if (P.fly.length) {
+        const C = chainPlan(P), on = onRock();
+        const bIn = (bt) => on.filter((b) => b.Building.buildingType === bt).sort((x, z) => (busyTxt(x) !== 'idle') - (busyTxt(z) !== 'idle'))[0];
+        const ex = on.find((b) => b.Building.buildingType === 2);
+        let n = 0; const li = [];
+        Object.keys(C.mine).forEach((p) => li.push(`<li><b>${++n}.</b> ⛏ Mine ${amt(+p, C.mine[p])} ${esc(pname(p))}${ex ? GLk('/building/' + ex.id, 'Open an extractor in the game') : ' <span style="color:var(--amber)">(no extractor here yet)</span>'}</li>`));
+        C.steps.forEach((x) => { const bt = FBT[x.r.type], b = bIn(bt);
+          li.push(`<li><b>${++n}.</b> 🏭 Make ${amt(x.p, x.runs * x.r.out[x.p])} ${esc(pname(x.p))} – ${esc(x.r.name)} × ${x.runs.toLocaleString('en-GB')} runs in ${b ? esc(nm(b)) + GLk('/building/' + b.id, 'Open ' + nm(b) + ' in the game') : 'a ' + BTN[bt].toLowerCase()}</li>`); });
+        li.push(`<li><b>${++n}.</b> 🎯 Make ${esc(Object.keys(rec.out).map((q) => pname(q)).join(' + '))} – ${esc(rec.name)} × ${S.runs.toLocaleString('en-GB')} runs in ${esc(nm(P.bl))}${GLk('/building/' + P.bl.id, 'Open ' + nm(P.bl) + ' in the game')}</li>`);
+        const fl = Object.keys(C.fly);
+        h += `<div class="card"><h2><span class="n">🧭</span>Full production plan on ${esc(S.rock)}</h2><div class="hint" style="margin:0 0 8px">Everything that's short, made here step by step – using what's in storage here first. Do the steps in order; this page doesn't start them for you.</div>
+<ul style="list-style:none;padding:0;margin:0;line-height:1.7">${li.join('')}</ul>` +
+          (fl.length ? `<div style="margin-top:10px"><span class="short" style="font-weight:600">✈ Still to fly in (can't mine or make it here):</span><ul style="margin:4px 0 0;padding-left:20px">${fl.map((p) => `<li>${esc(pname(p))} ${amt(+p, C.fly[p])}${window.YICSRCTXT && window.YICSRCTXT(+p, C.fly[p], astId(S.rock)) ? ' – ' + window.YICSRCTXT(+p, C.fly[p], astId(S.rock)) : ''}</li>`).join('')}</ul></div>` : '<div class="hint"><span class="ok">✓ Nothing to fly in – it can all be made here.</span></div>') + '</div>';
+      }
       // crew + feeding
       const c = cl.find((x) => x.id === S.crew);
       h += `<div class="card"><h2><span class="n">6</span>Crew to do the moving</h2>`;
