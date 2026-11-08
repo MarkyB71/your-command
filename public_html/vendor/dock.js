@@ -150,6 +150,21 @@
   }
   const astId = (name) => ((Y().asts || []).find((a) => a.name === name) || {}).id;
 
+  // Can the picked rock mine or make it itself? (Mark, 8 Nov – checked before suggesting a fly-in)
+  // Mine: a raw (id <= 22) the rock has (same test as vendor/sources.js); make: a recipe for it whose building is on the rock.
+  function hereTxt(p) {
+    const y = Y(), d = D() || {}, aid = astId(S.rock), on = onRock();
+    if (p <= 22) {
+      const a = (d.owned || []).find((x) => x.id === aid), c = (a && a.Celestial) || {};
+      let ok = false;
+      try { ok = (c.scanStatus || 0) >= 4 && c.abundances && y.astAbund ? (y.astAbund(c.abundances)[p] || 0) > 0 : !!((y.SPEC || {})[c.celestialType] && y.SPEC[c.celestialType][1].includes(p)); } catch (e) {}
+      if (ok) return on.some((b) => b.Building.buildingType === 2) ? '⛏ mine it here' : '⛏ can be mined here (no extractor yet)';
+    }
+    const types = new Set(on.map((b) => b.Building.buildingType));
+    const r = R.find((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(FBT[x.type]));
+    return r ? '🏭 make it here – ' + esc(r.name) + ' (' + BTN[FBT[r.type]].toLowerCase() + ')' : '';
+  }
+
   // ---------- the plan ----------
   function plan() {
     const store = onRock().filter(isStore);
@@ -175,7 +190,7 @@
         addG += q * grams(p); addV += q * (MV[p] || [1000, 1000])[1];
       });
       row.moved = want - left; row.short = left;
-      if (left > 0) fly.push({ p, q: left, where: (window.YICSRCTXT && window.YICSRCTXT(p, left, astId(S.rock))) || '' });
+      if (left > 0) fly.push({ p, q: left, here: hereTxt(p), where: (window.YICSRCTXT && window.YICSRCTXT(p, left, astId(S.rock))) || '' });
       rows.push(row);
     });
     const cap = CAP[dest.Building.buildingType];
@@ -266,10 +281,10 @@
         P.rows.map((r) => `<tr><td>${esc(pname(r.p))}</td><td class="num">${amt(r.p, r.need)}</td><td class="num">${amt(r.p, r.there)}</td><td class="num">${amt(r.p, r.moved)}</td><td class="src">` +
           (r.need - r.there <= 0 ? '<span class="ok">✓ already there</span>' : '') +
           r.from.map(([b, q]) => esc(nm(b)) + ' (' + amt(r.p, q) + ')').join('<br>') +
-          (r.bad ? '<span style="color:var(--red)">✗ ' + r.bad + '</span>' : r.short > 0 ? (r.from.length ? '<br>' : '') + '<span class="short">' + amt(r.p, r.short) + ' short – fly in</span>' : '') +
+          (r.bad ? '<span style="color:var(--red)">✗ ' + r.bad + '</span>' : r.short > 0 ? (r.from.length ? '<br>' : '') + '<span class="short">' + amt(r.p, r.short) + ' short – ' + (((P.fly.find((f) => f.p === r.p) || {}).here) ? 'make or mine here' : 'fly in') + '</span>' : '') +
           '</td></tr>').join('') + '</tbody></table></div>';
-      if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Fly in yourself</h2><div class="hint" style="margin:0 0 8px">Not enough on this rock. This page does not fly ships – bring these in, then come back.</div>
-<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Where from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
+      if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
+<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span class="ok">' + f.here + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
       // crew + feeding
       const c = cl.find((x) => x.id === S.crew);
       h += `<div class="card"><h2><span class="n">6</span>Crew to do the moving</h2>`;
