@@ -191,9 +191,9 @@
   // or by the game's process name ("Magnet Sintering and Magnetization → Neodymium Magnet")
   const outsOf = (r) => Object.keys(r.out).map((p) => pname(p));
   function procList(procs) {
-    if (S.by === 'proc') return procs.map((r) => [r.i, r.name + ' → ' + outsOf(r).join(', ')]);
+    if (S.by === 'proc') return procs.slice().sort((a, b) => a.name.localeCompare(b.name)).map((r) => [r.i, r.name + ' → ' + outsOf(r).join(', ') + ' (' + BTN[FBT[r.type]].toLowerCase() + ')']);
     const rows = [];
-    procs.forEach((r) => outsOf(r).forEach((o) => rows.push([r.i, o, r.name])));
+    procs.forEach((r) => outsOf(r).forEach((o) => rows.push([r.i, o, r.name + ' (' + BTN[FBT[r.type]].toLowerCase() + ')'])));
     const many = {}; rows.forEach((x) => { many[x[1]] = (many[x[1]] || 0) + 1; });
     return rows.sort((a, b) => a[1].localeCompare(b[1]) || a[2].localeCompare(b[2])).map((x) => [x[0], x[1] + ' – ' + x[2]]);
   }
@@ -209,11 +209,13 @@
     if (!rl.includes(S.rock)) { S.rock = rl[0]; S.dest = 0; S.bld = 0; S.proc = -1; S.crew = 0; }
     const store = onRock().filter(isStore).sort((a, b) => nm(a).localeCompare(nm(b)));
     if (!store.find((b) => b.id === S.dest)) S.dest = store[0] ? store[0].id : 0;
+    // Mark (8 Nov): pick WHAT to make first; the building list then fills with the buildings that can do it (idle first)
     const pb = procB();
-    if (!pb.find((b) => b.id === S.bld)) { S.bld = pb[0] ? pb[0].id : 0; S.proc = -1; }
-    const bl = pb.find((b) => b.id === S.bld);
-    const procs = bl ? R.filter((r) => FBT[r.type] === bl.Building.buildingType).sort((a, b) => a.name.localeCompare(b.name)) : [];
-    if (!procs.find((r) => r.i === S.proc)) S.proc = procs[0] ? procs[0].i : -1;
+    const procs = R.filter((r) => FBT[r.type]);
+    if (!procs.find((r) => r.i === S.proc)) S.proc = -1;
+    const sel0 = R[S.proc];
+    const able = sel0 ? pb.filter((b) => b.Building.buildingType === FBT[sel0.type]).sort((a, b) => (busyTxt(a) !== 'idle') - (busyTxt(b) !== 'idle')) : [];
+    if (!able.find((b) => b.id === S.bld)) S.bld = able[0] ? able[0].id : 0;
     const cl = crews();
     if (!cl.find((c) => c.id === S.crew)) S.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const P = plan();
@@ -224,11 +226,14 @@
     h += `<div class="card"><h2><span class="n">2</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full', S.dest)).join('')}</select>`;
     if (P) h += `<div class="cap"><span class="src">${esc(nm(P.dest))}: ${P.pctNow.toFixed(0)}% full now</span><div class="capbar"><i style="width:${Math.min(100, P.pctNow)}%"></i><b style="left:${Math.min(100, P.pctNow)}%;width:${Math.max(0.6, Math.min(100 - P.pctNow, P.pctAfter - P.pctNow))}%"></b></div></div>`;
     h += `</div><div class="hint">${P && P.dest.Building.buildingType === TANK ? '<span style="color:var(--amber)">Tank farms only take gases and liquids.</span>' : 'Blue = in there now · amber = what this will add.'}</div></div>`;
-    h += `<div class="card"><h2><span class="n">3</span>Building and process</h2>`;
-    if (!pb.length) h += '<div class="src">No refinery, factory, bioreactor or shipyard on this rock.</div>';
-    else h += `<div class="row"><select id="dk-bld">${pb.map((b) => opt(b.id, nm(b) + ' – ' + BTN[b.Building.buildingType].toLowerCase() + ' (' + busyTxt(b) + ')', S.bld)).join('')}</select>
+    h += `<div class="card"><h2><span class="n">3</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
-<select id="dk-proc">${procList(procs).map(([i, t]) => opt(i, t, S.proc)).join('')}</select></div>`;
+<select id="dk-proc">${opt(-1, S.by === 'out' ? '— pick what to make —' : '— pick a process —', S.proc)}${procList(procs).map(([i, t]) => opt(i, t, S.proc)).join('')}</select></div>`;
+    if (sel0) {
+      const bt = FBT[sel0.type];
+      h += able.length ? `<div class="row" style="margin-top:10px"><span class="src">Made in:</span><select id="dk-bld">${able.map((b) => opt(b.id, nm(b) + ' – ' + BTN[bt].toLowerCase() + ' (' + busyTxt(b) + ')', S.bld)).join('')}</select></div>`
+        : `<div class="hint" style="color:var(--red)">✗ This is made in a ${BTN[bt].toLowerCase()}${sel0.type === 5 ? ' (dry dock)' : ''} – you don't have one on ${esc(S.rock)}.</div>`;
+    }
     h += '</div>';
     if (rec) {
       const outs = Object.keys(rec.out).map((p) => amt(+p, rec.out[p] * S.runs) + ' ' + esc(pname(p))).join(' + ');
@@ -272,7 +277,7 @@
     const on = (id, ev, f) => { const e = document.getElementById(id); if (e) e.addEventListener(ev, f); };
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; render(); });
-    on('dk-bld', 'change', (e) => { S.bld = +e.target.value; S.proc = -1; render(); });
+    on('dk-bld', 'change', (e) => { S.bld = +e.target.value; render(); });
     on('dk-proc', 'change', (e) => { S.proc = +e.target.value; render(); });
     on('dk-by', 'change', (e) => { S.by = e.target.value; render(); });
     on('dk-runs', 'change', (e) => { S.runs = Math.max(1, Math.floor(+e.target.value || 1)); render(); });
