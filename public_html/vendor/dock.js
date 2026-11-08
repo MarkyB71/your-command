@@ -147,7 +147,7 @@ ${P.map((p) => B(p[0], p[1], p[2])).join('')}
 ${R.map(route).join('')}
 </svg>
 <img src="shipimg.php?t=3&g=1" alt="" class="dkv-ship s1"><img src="shipimg.php?t=2&g=1" alt="" class="dkv-ship s2"><img src="shipimg.php?t=4&g=1" alt="" class="dkv-ship s3">
-<div class="dkv-glass"></div><div class="dkv-cap"><span>LOGISTICS HUB</span>surface traffic · routes active</div><div class="dkv-skip">click to skip</div></div>
+<div class="dkv-glass"></div><div class="dkv-cap"><span>LOGISTICS HUB</span>live game actions · sent only when you approve</div><div class="dkv-skip">click to skip</div></div>
 `;
     ov.appendChild(v);
     let fin = false;
