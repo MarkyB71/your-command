@@ -598,8 +598,13 @@ ${R.map(route).join('')}
         // room (Mark, 8 Nov: ★ went to a 95%-full warehouse): what still has to come in + the output (inputs leave first)
         const i = inv(b) || { mass: 0, volume: 0 }, cp = CAP[b.Building.buildingType];
         const inG = Object.keys(sel0.inp).reduce((t, p) => t + sel0.inp[p] * S.runs * grams(+p), 0), outG = Object.keys(sel0.out).reduce((t, o) => t + sel0.out[o] * S.runs * grams(+o), 0);
-        const after = (i.mass + (i.reservedMass || 0) + (needKg - kg) * 1000 + Math.max(0, outG - inG)) / cp[0];
-        return { b, kg, ok: ok && after <= 0.95, after, t: toBld(b) ?? 0, k: bld0 ? lotKm(b, bld0) ?? 0 : 0 };
+        // weight AND space – Skippys Oxides was only 9% full by weight but 95% full by space
+        const vol = (o, n) => n * (MV[o] || [1000, 1000])[1];
+        const inV = Object.keys(sel0.inp).reduce((t, p) => t + vol(+p, sel0.inp[p] * S.runs), 0), outV = Object.keys(sel0.out).reduce((t, o) => t + vol(+o, sel0.out[o] * S.runs), 0);
+        const missV = Object.keys(sel0.inp).reduce((t, p) => t + vol(+p, Math.max(0, sel0.inp[p] * S.runs - holds(b, +p))), 0);
+        const after = Math.max((i.mass + (i.reservedMass || 0) + (needKg - kg) * 1000 + Math.max(0, outG - inG)) / cp[0],
+          (i.volume + (i.reservedVolume || 0) + missV + Math.max(0, outV - inV)) / cp[1]);
+        return { b, kg, ok: ok && after <= 0.9 && fullPct(b) < 90, after, t: toBld(b) ?? 0, k: bld0 ? lotKm(b, bld0) ?? 0 : 0 };
       }).filter((x) => x.ok && x.kg > 0).sort((x, y) => (x.t > 0) - (y.t > 0) || y.kg - x.kg || x.k - y.k);
       if (scored[0]) { best = scored[0].b; bestKg = scored[0].kg; }
     }
