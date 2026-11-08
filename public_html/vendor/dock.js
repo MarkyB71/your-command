@@ -40,7 +40,7 @@
   function build() {
     if (document.getElementById('dk-ov')) return;
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap'; document.head.appendChild(l);
-    const st = document.createElement('style'); st.textContent = CSS + '#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov .dkp-sum{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0}#dk-ov .dkp-sum>div{background:#0b0e14;border:1px solid #2a3140;border-radius:10px;padding:8px 14px;color:var(--dim);font-size:.9em;min-width:110px}#dk-ov .dkp-sum b{display:block;font-size:1.7em;color:var(--ink);line-height:1.1}#dk-ov .dkp-sum .good b{color:var(--green)}#dk-ov .dkp-sum .bad b{color:#c4a8ff}#dk-ov .dkp-st{margin:14px 0 4px;border-left:3px solid #ffb03b55;padding-left:12px}#dk-ov .dkp-st.fly{border-left-color:#9a6bff88}#dk-ov .dkp-sh{font-weight:700;letter-spacing:.06em;color:var(--ink);margin-bottom:8px}#dk-ov .dkp-sh span{color:var(--amber);margin-right:10px;text-transform:uppercase;font-size:.85em}#dk-ov .dkp-st.fly .dkp-sh span{color:#c4a8ff}#dk-ov .dkp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}#dk-ov .dkp-t{display:flex;gap:10px;align-items:flex-start;background:#0b0e14;border:1px solid #232a37;border-radius:10px;padding:10px 12px}#dk-ov .dkp-t.mine{border-color:#3fd68a44}#dk-ov .dkp-t.fin{border-color:#ffb03b88;box-shadow:0 0 14px #ff8a1f22}#dk-ov .dkp-ic{width:44px!important;height:44px!important;object-fit:contain;flex:none;border-radius:6px;background:#141923}#dk-ov .dkp-n{font-weight:700;font-size:1.05em}#dk-ov .dkp-s{color:var(--dim);font-size:.88em;line-height:1.25}#dk-ov .dkp-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}#dk-ov .dkp-chips span{background:#1a2030;border-radius:12px;padding:1px 9px;font-size:.82em;color:#cdd6e3}#dk-ov .dkp-to{margin-top:6px;font-size:.85em;color:#cdd6e3}#dk-ov .dkp-to b{color:var(--amber)}#dk-ov .dkp-ch{margin-top:4px;font-size:.82em;color:var(--dim)}#dk-ov .dkp-ch summary{cursor:pointer}#dk-ov .dkp-ch select{margin-top:4px;min-width:0!important;font-size:1em}#dk-ov input[type=search]{background:#0b0e14!important;color:var(--ink)!important;border:1px solid #3a4356!important;border-radius:6px;padding:7px 10px;font:600 1em Rajdhani,sans-serif;width:auto!important}#dk-ov a.yicg{color:var(--cyan);font-size:.85em;margin-left:8px;white-space:nowrap}#dk-ov .dk-br{color:var(--cyan);text-decoration:none;font-weight:700;letter-spacing:.06em;border:1px solid #8fe3ff66;border-radius:20px;padding:4px 14px}#dk-ov .dk-br:hover{background:#8fe3ff18}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
+    const st = document.createElement('style'); st.textContent = CSS + '#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov .dkp-sv{display:flex;flex-direction:column;gap:6px}#dk-ov .dkp-svi{display:flex;align-items:center;gap:8px;background:#0b0e14;border:1px solid #232a37;border-radius:10px;padding:8px 12px}#dk-ov .dkp-svi.on{border-color:#ffb03b88}#dk-ov .dkp-svi a{flex:1;color:var(--ink);text-decoration:none}#dk-ov .dkp-svi a span{display:block;color:var(--dim);font-size:.85em}#dk-ov .dkp-svi button{background:none;border:0;color:var(--dim);cursor:pointer;font-size:1.1em}#dk-ov .dkp-rc{margin-top:10px;background:#0d1d26;border:1px solid #8fe3ff66;color:var(--cyan);border-radius:8px;padding:6px 14px;font:600 1em Rajdhani,sans-serif;cursor:pointer}#dk-ov .dkp-sum{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0}#dk-ov .dkp-sum>div{background:#0b0e14;border:1px solid #2a3140;border-radius:10px;padding:8px 14px;color:var(--dim);font-size:.9em;min-width:110px}#dk-ov .dkp-sum b{display:block;font-size:1.7em;color:var(--ink);line-height:1.1}#dk-ov .dkp-sum .good b{color:var(--green)}#dk-ov .dkp-sum .bad b{color:#c4a8ff}#dk-ov .dkp-st{margin:14px 0 4px;border-left:3px solid #ffb03b55;padding-left:12px}#dk-ov .dkp-st.fly{border-left-color:#9a6bff88}#dk-ov .dkp-sh{font-weight:700;letter-spacing:.06em;color:var(--ink);margin-bottom:8px}#dk-ov .dkp-sh span{color:var(--amber);margin-right:10px;text-transform:uppercase;font-size:.85em}#dk-ov .dkp-st.fly .dkp-sh span{color:#c4a8ff}#dk-ov .dkp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}#dk-ov .dkp-t{display:flex;gap:10px;align-items:flex-start;background:#0b0e14;border:1px solid #232a37;border-radius:10px;padding:10px 12px}#dk-ov .dkp-t.mine{border-color:#3fd68a44}#dk-ov .dkp-t.fin{border-color:#ffb03b88;box-shadow:0 0 14px #ff8a1f22}#dk-ov .dkp-ic{width:44px!important;height:44px!important;object-fit:contain;flex:none;border-radius:6px;background:#141923}#dk-ov .dkp-n{font-weight:700;font-size:1.05em}#dk-ov .dkp-s{color:var(--dim);font-size:.88em;line-height:1.25}#dk-ov .dkp-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}#dk-ov .dkp-chips span{background:#1a2030;border-radius:12px;padding:1px 9px;font-size:.82em;color:#cdd6e3}#dk-ov .dkp-to{margin-top:6px;font-size:.85em;color:#cdd6e3}#dk-ov .dkp-to b{color:var(--amber)}#dk-ov .dkp-ch{margin-top:4px;font-size:.82em;color:var(--dim)}#dk-ov .dkp-ch summary{cursor:pointer}#dk-ov .dkp-ch select{margin-top:4px;min-width:0!important;font-size:1em}#dk-ov input[type=search]{background:#0b0e14!important;color:var(--ink)!important;border:1px solid #3a4356!important;border-radius:6px;padding:7px 10px;font:600 1em Rajdhani,sans-serif;width:auto!important}#dk-ov a.yicg{color:var(--cyan);font-size:.85em;margin-left:8px;white-space:nowrap}#dk-ov .dk-br{color:var(--cyan);text-decoration:none;font-weight:700;letter-spacing:.06em;border:1px solid #8fe3ff66;border-radius:20px;padding:4px 14px}#dk-ov .dk-br:hover{background:#8fe3ff18}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
     const ov = document.createElement('div'); ov.id = 'dk-ov';
     ov.innerHTML = WRAP + '<div id="dockpg"><div class="dhead"><div class="stripe"></div><div class="in"><h1>LOADING DOCK</h1>' +
       '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div><a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div><div id="dk-main"></div>' +
@@ -313,6 +313,32 @@
     return rows.sort((a, b) => a[1].localeCompare(b[1]) || a[2].localeCompare(b[2])).map((x) => [x[0], x[1] + ' – ' + x[2]]);
   }
 
+  // ---------- saved plans (Mark, 8 Nov) ----------
+  // Long chains take many visits, so each plan is saved in THIS browser (localStorage, may be missing – try/catch).
+  // Coming back through the airlock shows "Continue: <product> on <rock>"; the page always works from the game's
+  // current data, so it shows what's finished and what's ready to start now.
+  const PKEY = 'sk_dock_plans';
+  const plansGet = () => { try { const a = JSON.parse(localStorage.getItem(PKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const plansPut = (a) => { try { localStorage.setItem(PKEY, JSON.stringify(a.slice(0, 8))); } catch (e) {} };
+  function planSave() {
+    if (!(S.proc >= 0) || !S.rock || !R || !R[S.proc]) return;
+    const k = S.rock + '|' + S.proc, a = plansGet().filter((x) => x.k !== k);
+    a.unshift({ k, rock: S.rock, proc: S.proc, what: Object.keys(R[S.proc].out).map((q) => pname(q)).join(' + '), runs: S.runs, dest: S.dest, destSet: !!S.destSet, stepDest: S.stepDest || {}, by: S.by, start: !!S.start, when: Date.now() });
+    plansPut(a);
+  }
+  function planLoad(k) {
+    const x = plansGet().find((y) => y.k === k); if (!x) return;
+    Object.assign(S, { rock: x.rock, proc: x.proc, runs: x.runs || 1, dest: x.dest, destSet: x.destSet, stepDest: x.stepDest || {}, by: x.by || 'out', start: !!x.start, bld: 0, crew: 0, feed: false, q: '' });
+  }
+  function planBar() {
+    const a = plansGet(); if (!a.length) return '';
+    const cur = S.rock + '|' + S.proc;
+    const when = (t) => new Date(t).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return `<div class="card dkp-saved"><h2><span class="n">↺</span>Your saved plans</h2><div class="hint" style="margin:0 0 8px">Saved in this browser. Pick one to carry on – it's checked against the game as it is now.</div><div class="dkp-sv">` +
+      a.map((x) => `<div class="dkp-svi${x.k === cur ? ' on' : ''}"><a href="#" data-plan="${esc(x.k)}"><b>${esc(x.what)}</b> on ${esc(x.rock)}<span>× ${(+x.runs).toLocaleString('en-GB')} runs · saved ${when(x.when)}</span></a><button data-unplan="${esc(x.k)}" title="Forget this plan">✕</button></div>`).join('') +
+      `</div><button id="dk-recheck" class="dkp-rc">↻ Check the game again</button></div>`;
+  }
+
   // ---------- page ----------
   const opt = (v, t, cur) => `<option value="${esc(v)}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`;
   function render() {
@@ -348,7 +374,7 @@
     const rec = R[S.proc];
     let CM = null, PC = null;
 
-    let h = '';
+    let h = planBar();
     h += `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
@@ -483,6 +509,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
     m.innerHTML = h;
+    planSave();
     const on = (id, ev, f) => { const e = document.getElementById(id); if (e) e.addEventListener(ev, f); };
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });
@@ -503,6 +530,14 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-crew', 'change', (e) => { S.crew = +e.target.value; S.feed = false; render(); });
     on('dk-feed', 'change', (e) => { S.feed = e.target.checked; render(); });
     on('dk-start', 'change', (e) => { S.start = e.target.checked; render(); });
+    m.querySelectorAll('[data-plan]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); planLoad(a.dataset.plan); render(); }));
+    m.querySelectorAll('[data-unplan]').forEach((b) => b.addEventListener('click', () => { plansPut(plansGet().filter((x) => x.k !== b.dataset.unplan)); if (S.rock + '|' + S.proc === b.dataset.unplan) S.proc = -1; render(); }));
+    // ask the site to fetch fresh game data (its own Refresh link), then redraw with it
+    on('dk-recheck', 'click', (e) => {
+      const rf = document.getElementById('rf'), before = D(); e.target.textContent = 'Checking…'; e.target.disabled = true;
+      if (rf) rf.click();
+      let n = 0; const t = setInterval(() => { n++; if ((D() && D() !== before) || n > 40) { clearInterval(t); render(); } }, 500);
+    });
   }
 
   // ---------- start ----------
