@@ -34,7 +34,7 @@
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
   const amt = (p, u) => (bulk(p) ? tonnes(u) : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
 
-  const S = { by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
+  const S = { calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
   function build() {
@@ -339,6 +339,73 @@
       `</div><button id="dk-recheck" class="dkp-rc">↻ Check the game again</button></div>`;
   }
 
+  // ---------- sending (deliveries + feeding only; same path as vendor/tidy.js) ----------
+  // Calls checked against @influenceth/sdk 2.8.1 System.getRunSystemCall (as tidy.js, used for real on 6 Nov):
+  //   run_system('SendDelivery', [5, fromId, 2, n, (product, amount)×n, 5, toId, 2, 1, crewId])
+  //   run_system('ResupplyFood', [5, buildingId, 2, food, 1, crewId])
+  const DISPATCHER = '0x0422d33a3638dcc4c62e72e1d6942cd31eb643ef596ccac2351e0e21f6cd4bf4';
+  const OWNER = '0x0631acdbf5a79758cbcc84301b387aebfb5c0ec7476aa48a0ceb98662973c5ce'; // Mark's wallet – test only
+  const hex = (n) => '0x' + BigInt(n).toString(16);
+  const short = (t) => '0x' + [...t].map((ch) => ch.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+  const sameAddr = (a, b) => { try { return BigInt(a) === BigInt(b); } catch (e) { return false; } };
+  const isOwner = () => !!(D() && sameAddr(D().wallet, OWNER));
+  function wallets() {
+    const seen = {}, out = [];
+    let keys = ['starknet', 'starknet_argentX', 'starknet_ready', 'starknet_braavos', 'starknet_okxwallet', 'starknet_keplr'];
+    try { keys = keys.concat(Object.getOwnPropertyNames(window)); } catch (e) {}
+    keys.forEach((k) => {
+      if (!/^starknet/.test(k)) return;
+      let w; try { w = window[k]; } catch (e) { return; }
+      if (!w || typeof w !== 'object' || !w.id || !w.name || seen[w.id]) return;
+      if (typeof w.request !== 'function' && typeof w.enable !== 'function') return;
+      seen[w.id] = 1; out.push(w);
+    });
+    return out;
+  }
+  async function account(w) {
+    let a = null;
+    if (typeof w.request === 'function') { try { const r = await w.request({ type: 'wallet_requestAccounts' }); if (Array.isArray(r) && r[0]) a = r[0]; } catch (e) { if (typeof w.enable !== 'function') throw e; } }
+    if (!a && typeof w.enable === 'function') { const r = await w.enable(); if (Array.isArray(r) && r[0]) a = r[0]; }
+    if (!a && w.selectedAddress) a = w.selectedAddress;
+    return a;
+  }
+  const say = (html, err) => { S.msg = html; S.msgErr = !!err; const e = document.getElementById('dk-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
+  function buildCalls() {
+    const calls = [];
+    if (S.feed && S.feedCall) calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(S.feedCall.src), hex(SLOT), hex(S.feedCall.give), '0x1', hex(S.feedCall.crew)] });
+    S.calls.forEach((x) => {
+      const data = [5, x.from, SLOT, x.items.length, ...x.items.flat(), 5, x.to, SLOT, 1, S.mover];
+      calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('SendDelivery'), hex(data.length), ...data.map(hex)] });
+    });
+    return calls;
+  }
+  async function approve() {
+    if (!isOwner()) return;
+    const list = wallets();
+    if (!list.length) return say('No Starknet wallet found in this browser. Open this page in the browser that has your wallet.', true);
+    const w = list[0];
+    S.busy = true; S.msg = ''; render();
+    try {
+      const a = await account(w);
+      if (!a) throw new Error('The wallet did not share an address.');
+      if (!sameAddr(a, D().wallet)) throw new Error('That wallet (' + esc(a) + ') is not the one this page is showing. Switch account in your wallet and try again.');
+      const calls = buildCalls();
+      if (!calls.length) throw new Error('Nothing to send.');
+      say('Waiting for your wallet… check the wallet window and approve (or reject) it there.');
+      let res;
+      if (typeof w.request === 'function') res = await w.request({ type: 'wallet_addInvokeTransaction', params: { calls } });
+      else if (w.account && typeof w.account.execute === 'function') res = await w.account.execute(calls.map((c) => ({ contractAddress: c.contract_address, entrypoint: c.entry_point, calldata: c.calldata })));
+      else throw new Error('This wallet cannot send transactions from a web page.');
+      const h = res && (res.transaction_hash || res.transactionHash);
+      S.busy = false; render();
+      say('✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(String(h).slice(0, 10))}…</a>. ` : '') + 'Finish the deliveries in the game with Finish All Ready Items, then press ↻ Check the game again.');
+    } catch (e) {
+      const t = String((e && e.message) || e || '');
+      S.busy = false; render();
+      say(/reject|cancel|abort|denied|User/i.test(t) ? 'Cancelled in the wallet – nothing was changed.' : 'Not sent: ' + esc(t), true);
+    }
+  }
+
   // ---------- page ----------
   const opt = (v, t, cur) => `<option value="${esc(v)}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`;
   function render() {
@@ -458,9 +525,11 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       else {
         h += `<select id="dk-crew">${cl.map((x) => opt(x.id, x.name + ' – fed ' + Math.round(x.food * 100) + '%' + (x.fm < 1 ? ' (hungry, slower)' : '') + ' · free distance ×' + x.free.toFixed(2) + (x.busy ? ' · busy until ' + x.busy : ' · ready now'), S.crew)).join('')}</select>${GLk('/crew/' + S.crew, 'Open this crew in the game')}
 <div class="hint">Must be on this rock. Best fed crew with the best transport bonus is picked for you.</div>`;
+        S.feedCall = null;
         if (c && c.food < 0.95) {
           const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5), need = Math.floor(c.mates * 1000 * yrs);
           const src = onRock().filter(isStore).map((b) => [b, ((inv(b) || { contents: [] }).contents).reduce((s, x) => s + (x.product === FOOD ? x.amount : 0), 0)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+          if (src) S.feedCall = { src: src[0].id, give: Math.min(need, src[1]), crew: c.id };
           h += `<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:6px">${c.fm < 1 ? '⚠ ' + esc(c.name) + ' is hungry – moves will be slower.' : esc(c.name) + ' is ' + Math.round(c.food * 100) + '% fed.'}</div>` +
             (src ? `<label style="margin:0"><input type="checkbox" id="dk-feed"${S.feed ? ' checked' : ''}> Feed ${esc(c.name)} first: ${tonnes(Math.min(need, src[1]))} Food from ${esc(nm(src[0]))}</label>${GLk('/building/' + src[0].id, 'Open ' + nm(src[0]) + ' in the game')}<div class="hint">Feeding goes in the same wallet approval, before the moves.</div>`
               : '<div class="src">No Food stored on this rock to feed it.</div>') + '</div>';
@@ -469,6 +538,8 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       h += '</div>';
       const all = P.moves.map((x) => ({ b: x.b, to: P.dest, items: x.items, why: rec.name + ' (final)' })).concat(CM ? CM.deliveries.map((x) => ({ b: x.b, to: x.to, items: x.items, why: [...x.why].join(', ') })) : []);
       const nmv = all.length;
+      S.calls = all.map((x) => ({ from: x.b.id, to: x.to.id, items: x.items.map((it) => [it.p, Math.floor(it.a)]).filter((it) => it[1] > 0) })).filter((x) => x.items.length);
+      S.mover = (c && !c.busy) ? c.id : 0;
       // room in every storage that receives goods
       const addTo = {}; all.forEach((x) => { const a = addTo[x.to.id] = addTo[x.to.id] || { b: x.to, g: 0, v: 0 }; x.items.forEach((it) => { a.g += it.a * grams(it.p); a.v += it.a * (MV[it.p] || [1000, 1000])[1]; }); });
       const room = Object.values(addTo).map((a) => { const i = inv(a.b) || { mass: 0, volume: 0 }, c = CAP[a.b.Building.buildingType];
@@ -504,8 +575,13 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
             (later > 0 ? `<div class="hint">${later} more can start once the steps before them finish.</div>` : '') : '') + '</div>';
         S.nStart = S.start ? ready.length : 0;
       }
-      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" disabled style="opacity:.5;cursor:not-allowed">APPROVE IN WALLET (${nmv} deliver${nmv === 1 ? 'y' : 'ies'}${S.feed ? ' + feed crew' : ''}${S.nStart ? ' + start ' + S.nStart + ' process' + (S.nStart === 1 ? '' : 'es') : ''})</button>
-<div class="hint">Test version: sending is switched off, so nothing can be sent yet.</div></div>`;
+      // SENDING (Mark, 8 Nov): switched on for deliveries + feeding ONLY, and ONLY when the page shows Mark's own
+      // wallet (OWNER). Everyone else keeps a switched-off button. Process starts are still not sent.
+      const mine = isOwner();
+      const can = mine && !S.busy && (S.calls.length || (S.feed && S.feedCall)) && S.mover;
+      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" id="dk-appr"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + nmv + ' deliver' + (nmv === 1 ? 'y' : 'ies') + (S.feed ? ' + feed crew' : '') + ')'}</button>
+<div class="hint">${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') + (S.start ? ' <span style="color:var(--amber)">Starting processes is not switched on yet – only the moves' + (S.feed ? ' and feeding' : '') + ' are sent.</span>' : '') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
+<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
     m.innerHTML = h;
@@ -514,7 +590,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });
     on('dk-bld', 'change', (e) => { S.bld = +e.target.value; render(); });
-    on('dk-proc', 'change', (e) => { S.proc = +e.target.value; S.destSet = false; S.stepDest = {}; render(); });
+    on('dk-proc', 'change', (e) => { S.proc = +e.target.value; S.destSet = false; S.stepDest = {}; S.msg = ''; render(); });
     on('dk-by', 'change', (e) => { S.by = e.target.value; render(); });
     document.querySelectorAll('#dk-main select[data-sd]').forEach((el) => el.addEventListener('change', () => { S.stepDest = S.stepDest || {}; S.stepDest[el.dataset.sd] = +el.value; render(); }));
     // search box (Mark, 8 Nov): filters the What-to-make list as you type – no redraw, so typing isn't interrupted
@@ -530,6 +606,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-crew', 'change', (e) => { S.crew = +e.target.value; S.feed = false; render(); });
     on('dk-feed', 'change', (e) => { S.feed = e.target.checked; render(); });
     on('dk-start', 'change', (e) => { S.start = e.target.checked; render(); });
+    on('dk-appr', 'click', () => { if (!S.busy) approve(); });
     m.querySelectorAll('[data-plan]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); planLoad(a.dataset.plan); render(); }));
     m.querySelectorAll('[data-unplan]').forEach((b) => b.addEventListener('click', () => { plansPut(plansGet().filter((x) => x.k !== b.dataset.unplan)); if (S.rock + '|' + S.proc === b.dataset.unplan) S.proc = -1; render(); }));
     // ask the site to fetch fresh game data (its own Refresh link), then redraw with it
