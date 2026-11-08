@@ -34,7 +34,7 @@
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
   const amt = (p, u) => (bulk(p) ? tonnes(u) : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
 
-  const S = { ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
+  const S = { by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
   function build() {
@@ -187,6 +187,17 @@
   // how full a storage building is (the bigger of weight and space, reserved space included)
   const fullPct = (b) => { const i = inv(b) || { mass: 0, volume: 0 }, c = CAP[b.Building.buildingType]; return Math.round(Math.max((i.mass + (i.reservedMass || 0)) / c[0], (i.volume + (i.reservedVolume || 0)) / c[1]) * 100); };
 
+  // process list two ways (Mark, 8 Nov): by what it makes ("Neodymium Magnet – Magnet Sintering and Magnetization")
+  // or by the game's process name ("Magnet Sintering and Magnetization → Neodymium Magnet")
+  const outsOf = (r) => Object.keys(r.out).map((p) => pname(p));
+  function procList(procs) {
+    if (S.by === 'proc') return procs.map((r) => [r.i, r.name + ' → ' + outsOf(r).join(', ')]);
+    const rows = [];
+    procs.forEach((r) => outsOf(r).forEach((o) => rows.push([r.i, o, r.name])));
+    const many = {}; rows.forEach((x) => { many[x[1]] = (many[x[1]] || 0) + 1; });
+    return rows.sort((a, b) => a[1].localeCompare(b[1]) || a[2].localeCompare(b[2])).map((x) => [x[0], x[1] + ' – ' + x[2]]);
+  }
+
   // ---------- page ----------
   const opt = (v, t, cur) => `<option value="${esc(v)}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`;
   function render() {
@@ -216,7 +227,8 @@
     h += `<div class="card"><h2><span class="n">3</span>Building and process</h2>`;
     if (!pb.length) h += '<div class="src">No refinery, factory, bioreactor or shipyard on this rock.</div>';
     else h += `<div class="row"><select id="dk-bld">${pb.map((b) => opt(b.id, nm(b) + ' – ' + BTN[b.Building.buildingType].toLowerCase() + ' (' + busyTxt(b) + ')', S.bld)).join('')}</select>
-<select id="dk-proc">${procs.map((r) => opt(r.i, r.name, S.proc)).join('')}</select></div>`;
+<select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
+<select id="dk-proc">${procList(procs).map(([i, t]) => opt(i, t, S.proc)).join('')}</select></div>`;
     h += '</div>';
     if (rec) {
       const outs = Object.keys(rec.out).map((p) => amt(+p, rec.out[p] * S.runs) + ' ' + esc(pname(p))).join(' + ');
@@ -262,6 +274,7 @@
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; render(); });
     on('dk-bld', 'change', (e) => { S.bld = +e.target.value; S.proc = -1; render(); });
     on('dk-proc', 'change', (e) => { S.proc = +e.target.value; render(); });
+    on('dk-by', 'change', (e) => { S.by = e.target.value; render(); });
     on('dk-runs', 'change', (e) => { S.runs = Math.max(1, Math.floor(+e.target.value || 1)); render(); });
     on('dk-crew', 'change', (e) => { S.crew = +e.target.value; S.feed = false; render(); });
     on('dk-feed', 'change', (e) => { S.feed = e.target.checked; render(); });
