@@ -346,7 +346,7 @@
     if (!cl.find((c) => c.id === S.crew)) S.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const P = plan();
     const rec = R[S.proc];
-    let CM = null;
+    let CM = null, PC = null;
 
     let h = '';
     h += `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
@@ -389,7 +389,7 @@
       // full production plan on this rock (Mark, 8 Nov)
       if (P.fly.length) {
         const C = chainPlan(P), on = onRock();
-        CM = chainMoves(P, C);
+        CM = chainMoves(P, C); PC = C;
         const bIn = (bt) => on.filter((b) => b.Building.buildingType === bt).sort((x, z) => (busyTxt(x) !== 'idle') - (busyTxt(z) !== 'idle'))[0];
         const ex = on.find((b) => b.Building.buildingType === 2);
         // Laid out as stages (Mark, 8 Nov: "a lot to take in – make it more appetising"): a summary strip, then
@@ -452,7 +452,33 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
         (all.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}${GLk('/building/' + x.b.id, 'Open ' + nm(x.b) + ' in the game')}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(x.to))}</td><td class="src" style="color:var(--dim)">${esc(x.why)}</td></tr>`).join('') || '<tr><td></td><td colspan="4" class="src">Nothing to move.</td></tr>') +
         `</tbody></table><div class="fee">${room.join('<br>') || '<span class="ok">✓ Room OK</span>'}</div>
 <div class="fee">${CM ? 'Covers every step of the full production plan. ' : ''}One delivery per building pair. Game fee: about 1 cent per delivery.</div></div>`;
-      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" disabled style="opacity:.5;cursor:not-allowed">APPROVE IN WALLET (${nmv} deliver${nmv === 1 ? 'y' : 'ies'}${S.feed ? ' + feed crew' : ''})</button>
+      // Optional: start the processes that are ready, in the same approval (Mark, 8 Nov – a tick box, off by default,
+      // so he can see how it works in beta). Ready = every input comes from stock on the rock (moved by step 7),
+      // nothing it needs is still to be made or mined. Each needs its own idle building of the right kind.
+      // NOT WIRED: sending is off; the game call (ProcessProductsStart) still has to be checked against the SDK.
+      {
+        const on = onRock(), used = new Set(), ready = [], wait = [];
+        const idle = (bt) => on.filter((b) => b.Building.buildingType === bt && busyTxt(b) === 'idle' && !used.has(b.id));
+        const cand = [];
+        if (PC) PC.steps.forEach((x) => { const full = Object.keys(x.r.inp).every((ip) => (x.use[ip] || 0) >= x.r.inp[ip] * x.runs); cand.push({ r: x.r, runs: x.runs, p: x.p, from: x.dest, to: (x.sendTo || [])[0] || P.dest, full }); });
+        cand.push({ r: rec, runs: S.runs, p: +Object.keys(rec.out)[0], from: P.dest, to: P.dest, full: !P.fly.length, fin: true, bl: P.bl });
+        cand.forEach((c) => {
+          if (!c.full) return;
+          const bt = FBT[c.r.type];
+          const b = c.fin && busyTxt(c.bl) === 'idle' && !used.has(c.bl.id) ? c.bl : idle(bt)[0];
+          if (b) { used.add(b.id); ready.push(Object.assign(c, { b })); } else wait.push(c);
+        });
+        const later = (PC ? PC.steps.length + 1 : 1) - ready.length - wait.length;
+        h += `<div class="card"><h2><span class="n">7½</span>Start processes too? <span style="font-size:.6em;color:var(--amber);letter-spacing:.1em">OPTIONAL</span></h2>
+<label style="margin:0 0 8px"><input type="checkbox" id="dk-start"${S.start ? ' checked' : ''}> Also start the processes that are ready, in the same approval</label>
+<div class="hint" style="margin-bottom:8px">This ties up your buildings and uses up the stock. Only processes whose inputs will all be in place after the moves can start now – come back for the next stage when they finish.</div>` +
+          (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div></div></div>`).join('')}</div>`
+            : '<div class="src">Nothing can start yet – every process still needs something made or mined first.</div>') +
+            (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but waiting for a free building: ${wait.map((c) => esc(c.r.name)).join(', ')}.</div>` : '') +
+            (later > 0 ? `<div class="hint">${later} more can start once the steps before them finish.</div>` : '') : '') + '</div>';
+        S.nStart = S.start ? ready.length : 0;
+      }
+      h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" disabled style="opacity:.5;cursor:not-allowed">APPROVE IN WALLET (${nmv} deliver${nmv === 1 ? 'y' : 'ies'}${S.feed ? ' + feed crew' : ''}${S.nStart ? ' + start ' + S.nStart + ' process' + (S.nStart === 1 ? '' : 'es') : ''})</button>
 <div class="hint">Test version: sending is switched off, so nothing can be sent yet.</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
@@ -476,6 +502,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-runs', 'change', (e) => { S.runs = Math.max(1, Math.floor(+e.target.value || 1)); render(); });
     on('dk-crew', 'change', (e) => { S.crew = +e.target.value; S.feed = false; render(); });
     on('dk-feed', 'change', (e) => { S.feed = e.target.checked; render(); });
+    on('dk-start', 'change', (e) => { S.start = e.target.checked; render(); });
   }
 
   // ---------- start ----------
