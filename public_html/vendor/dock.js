@@ -44,15 +44,21 @@
     const ov = document.createElement('div'); ov.id = 'dk-ov';
     ov.innerHTML = WRAP + '<div id="dockpg"><div class="dhead"><div class="stripe"></div><div class="in"><h1>LOADING DOCK</h1>' +
       '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div><a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div><div id="dk-main"></div>' +
-      '<div class="mocknote">TEST VERSION · SENDING IS SWITCHED OFF · <a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
+      '<div class="mocknote">TEST VERSION · <a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
     document.body.appendChild(ov);
-    // app.js rewrites <head> and <body> while it loads – keep putting the dock back on top
-    const keep = () => { if (!l.isConnected) document.head.appendChild(l); if (!st.isConnected) document.head.appendChild(st); if (!ov.isConnected) document.body.appendChild(ov); document.documentElement.style.overflow = 'hidden'; };
-    const timer = setInterval(keep, 400); keep();
+    // app.js rewrites <head> and <body> while it loads – keep putting the dock back on top (same scroll place)
+    let ovY = 0; ov.addEventListener('scroll', () => { if (ov.isConnected) ovY = ov.scrollTop; }, { passive: true });
+    const keep = () => { if (!l.isConnected) document.head.appendChild(l); if (!st.isConnected) document.head.appendChild(st); if (!ov.isConnected) { document.body.appendChild(ov); ov.scrollTop = ovY; } document.documentElement.style.overflow = 'hidden'; };
+    // Bridge flash fix (Mark, 8 Nov): app.js rewrites <head>/<body> while loading and on Refresh, which removed the
+    // dock until the next 400 ms tick – long enough to see the Bridge. A MutationObserver puts it back straight away,
+    // before the browser paints; the timer stays as a back-up.
+    const mo = new MutationObserver(() => { if (!ov.isConnected || !st.isConnected || !l.isConnected) keep(); });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    const timer = setInterval(keep, 1000); keep();
     // Return to the Bridge (Mark, 8 Nov): close the dock and go to the Bridge – no reload
     ov.addEventListener('click', (e) => {
       const a = e.target.closest('[data-dkback]'); if (!a) return; e.preventDefault();
-      clearInterval(timer); try { speechSynthesis.cancel(); } catch (x) {}
+      clearInterval(timer); mo.disconnect(); try { speechSynthesis.cancel(); } catch (x) {}
       ov.remove(); st.remove(); document.documentElement.style.overflow = '';
       try { history.replaceState(history.state, '', location.pathname + location.search.replace(/[?&]dock=1\b/, '').replace(/^&/, '?') + location.hash); } catch (x) {}
       if (window.YICgoDeck) window.YICgoDeck('bridge'); else location.reload();
