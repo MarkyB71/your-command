@@ -305,7 +305,7 @@ const CSS='<style>body{margin:0;background:#0b0e13;color:#e6ebf2;font:15px/1.5 -
  'input{width:100%;box-sizing:border-box;font:inherit;color:#e6ebf2;background:#131821;border:1px solid #232b38;border-radius:8px;padding:12px}'+
  'button{margin-top:12px;font:inherit;font-weight:600;color:#04121a;background:#5fc3e4;border:0;border-radius:8px;padding:11px 22px;cursor:pointer}'+
  '.err{color:#ff7a7a;min-height:1.5em;margin-top:8px}.foot{color:#5b6677;font-size:12px;margin-top:40px}</style>';
-const FOOT='<div class="foot">A community tool from Adalia Academy. Not an official Influence site. It only reads public game data – except the Logistics Hub, which sends only the game actions you approve in your wallet.</div>';
+const FOOT='<div class="foot">A community tool from Adalia Academy. Game data, pictures and art © Unstoppable Games (Influence), used with credit under CC BY-NC 4.0. Not an official Influence site. It only reads public game data – except the Logistics Hub, which sends only the game actions you approve in your wallet.</div>';
 function askWallet(msg){
  bgW='';
  say(CSS+'<div class="box"><h1>Your <span>Influence</span> Command</h1><p>See everything in your warehouses and tank farms across all your crews and asteroids.</p>'+
@@ -389,7 +389,7 @@ async function load(wallet){
   sub.after(w);
   document.getElementById('chg').onclick=e=>{e.preventDefault();history.replaceState(null,'',location.pathname);askWallet()};
   document.getElementById('rf').onclick=e=>{e.preventDefault();load(wallet)};}
- const f=document.createElement('div');f.style.cssText='color:#5b6677;font-size:12px;padding:0 20px 30px';f.textContent='A community tool from Adalia Academy. Not an official Influence site. It only reads public game data – except the Logistics Hub, which sends only the game actions you approve in your wallet.'+(VER?' · Version '+VER:'');document.body.appendChild(f);
+ const f=document.createElement('div');f.style.cssText='color:#5b6677;font-size:12px;padding:0 20px 30px';f.textContent='A community tool from Adalia Academy. Game data, pictures and art © Unstoppable Games (Influence), used with credit under CC BY-NC 4.0. Not an official Influence site. It only reads public game data – except the Logistics Hub, which sends only the game actions you approve in your wallet.'+(VER?' · Version '+VER:'');document.body.appendChild(f);
 }
 const start=new URLSearchParams(location.search).get('wallet')||getSaved();
 if(start&&okAddr(start)){setSaved(start);load(start)}else askWallet();

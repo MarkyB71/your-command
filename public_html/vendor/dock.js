@@ -60,7 +60,7 @@
     const ov = document.createElement('div'); ov.id = 'dk-ov';
     ov.innerHTML = WRAP + '<div id="dockpg"><div class="dhead"><div class="stripe"></div><div class="in"><h1>LOGISTICS HUB</h1>' +
       '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div><a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div><div id="dk-main"></div>' +
-      '<div class="mocknote"><a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
+      '<div class="mocknote">Game data, pictures and art © Unstoppable Games (Influence), used with credit under CC BY-NC 4.0 · Not an official Influence site · <a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
     // Mark (8 Nov): the airlock window looks out at one of the game's buildings – a different one each time –
     // and opening the doors shows the whole building
     { const pick = [1, 3, 4, 5, 6, 7, 8, 10][Math.floor(Math.random() * 8)], dk = ov.querySelector('.dock');
