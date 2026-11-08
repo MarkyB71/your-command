@@ -63,6 +63,7 @@
     go.addEventListener('click', () => {
       try { if (skip.checked) localStorage.setItem(KEY, '1'); else localStorage.removeItem(KEY); } catch (e) {}
       go.disabled = ok.disabled = skip.disabled = true;
+      airlockSound();
       wrap.classList.add('cycling'); ch.classList.add('cycling'); setSign('● CYCLING…', 'amber');
       setTimeout(() => {
         wrap.classList.remove('cycling'); ch.classList.remove('cycling'); setSign('● DOOR OPEN', 'green'); ch.classList.add('open');
@@ -70,6 +71,32 @@
         setTimeout(() => { wrap.style.display = 'none'; ov.classList.add('indock'); ov.scrollTop = 0; S.ok = true; render(); }, 2900);
       }, 2800);
     });
+  }
+
+  // ---------- airlock sound (made in the browser – no sound files) ----------
+  // Cycling: two-tone alarm beeps + rising pressure hum; doors: clunk, then a long air hiss.
+  function airlockSound() {
+    let A; try { A = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    const t0 = A.currentTime + 0.05, out = A.createGain(); out.gain.value = 0.5; out.connect(A.destination);
+    const tone = (f, a, b, vol, type) => { const o = A.createOscillator(), g = A.createGain(); o.type = type || 'square'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, a); g.gain.linearRampToValueAtTime(vol, a + 0.02); g.gain.setValueAtTime(vol, b - 0.04); g.gain.linearRampToValueAtTime(0, b);
+      o.connect(g); g.connect(out); o.start(a); o.stop(b + 0.05); };
+    for (let k = 0; k < 5; k++) { tone(880, t0 + k * 0.5, t0 + k * 0.5 + 0.22, 0.12); tone(660, t0 + k * 0.5 + 0.25, t0 + k * 0.5 + 0.45, 0.12); }
+    // pressure hum rising while it cycles
+    const h = A.createOscillator(), hg = A.createGain(); h.type = 'sawtooth'; h.frequency.setValueAtTime(55, t0); h.frequency.linearRampToValueAtTime(110, t0 + 2.7);
+    const lp = A.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
+    hg.gain.setValueAtTime(0, t0); hg.gain.linearRampToValueAtTime(0.18, t0 + 1); hg.gain.linearRampToValueAtTime(0, t0 + 2.8);
+    h.connect(lp); lp.connect(hg); hg.connect(out); h.start(t0); h.stop(t0 + 2.9);
+    // door: clunk, then hiss of air while the doors slide
+    const td = t0 + 2.8;
+    const ck = A.createOscillator(), cg = A.createGain(); ck.type = 'sine'; ck.frequency.setValueAtTime(120, td); ck.frequency.exponentialRampToValueAtTime(40, td + 0.25);
+    cg.gain.setValueAtTime(0.6, td); cg.gain.exponentialRampToValueAtTime(0.001, td + 0.3); ck.connect(cg); cg.connect(out); ck.start(td); ck.stop(td + 0.35);
+    const n = A.createBuffer(1, A.sampleRate * 2.6, A.sampleRate), d = n.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const ns = A.createBufferSource(); ns.buffer = n; const bp = A.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.7;
+    bp.frequency.setValueAtTime(5000, td + 0.1); bp.frequency.linearRampToValueAtTime(1500, td + 2.6);
+    const ng = A.createGain(); ng.gain.setValueAtTime(0, td + 0.1); ng.gain.linearRampToValueAtTime(0.35, td + 0.3); ng.gain.linearRampToValueAtTime(0, td + 2.6);
+    ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(td + 0.1); ns.stop(td + 2.7);
+    setTimeout(() => { try { A.close(); } catch (e) {} }, 6500);
   }
 
   // ---------- data ----------
