@@ -97,7 +97,8 @@ const browser = await chromium.launch({ args: ['--host-resolver-rules=MAP * ~NOT
 const tally = { live: 0, cached: 0 };
 const liveCache = new Map();                 // each live answer fetched once per run (gentle on the server)
 
-for (const pass of [{ name: 'as everyone sees it', q: '?wallet=' + WALLET }, { name: 'with ?beta=1 (tests)', q: '?wallet=' + WALLET + '&beta=1' }]) {
+for (const pass of [{ name: 'as everyone sees it', q: '?wallet=' + WALLET }, { name: 'with ?beta=1 (tests)', q: '?wallet=' + WALLET + '&beta=1' },
+  { name: 'Logistics Hub (?beta=1&dock=1)', q: '?wallet=' + WALLET + '&beta=1&dock=1', hub: true }]) {
   console.log('  — ' + pass.name);
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
   const errs = [], missing = new Set(), dataFails = new Set();
@@ -167,6 +168,34 @@ for (const pass of [{ name: 'as everyone sees it', q: '?wallet=' + WALLET }, { n
     return okLoad || 'the site never finished loading (stuck on "Loading…"?)';
   });
   if (loaded) ok('loads in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
+
+  // Logistics Hub (vendor/dock.js, added 8 Nov 2026): airlock → viewing deck → hub, pick a rock and a process.
+  // Nothing is ever sent: there is no wallet in this browser and every other host is blocked.
+  if (pass.hub) {
+    if (loaded) {
+      const a = await step('airlock', async () => { await page.waitForSelector('#dk-ov #ok', { timeout: 30000 }); }, async () =>
+        (await page.evaluate(() => { const o = document.getElementById('dk-ov'); return !!o && o.offsetParent !== null || getComputedStyle(o).position === 'fixed'; })) || 'the airlock never appeared');
+      if (a) ok('airlock shows');
+      const h = await step('into the hub', async () => {
+        await page.evaluate(() => { const ok2 = document.querySelector('#dk-ov #ok'); if (!ok2.checked) ok2.click(); document.querySelector('#dk-ov #go').click(); });
+        for (let t = 0; t < 40; t++) { await wait(500); await page.evaluate(() => { const v = document.querySelector('#dk-ov .dkv'); if (v) v.click(); }); if (await page.evaluate(() => document.getElementById('dk-ov').classList.contains('indock'))) break; }
+      }, async () => (await page.evaluate(() => document.getElementById('dk-ov').classList.contains('indock'))) || 'never got through the airlock into the hub');
+      if (h) ok('airlock cycles into the hub');
+      const r = await step('hub with a process picked', async () => {
+        await page.waitForFunction(() => document.getElementById('dk-rock') || /No warehouses/.test((document.getElementById('dk-main') || {}).innerText || ''), null, { timeout: 30000 });
+        await page.evaluate(() => { const s2 = document.getElementById('dk-proc'); if (!s2) return; const o = [...s2.options].find((x) => x.value !== '-1'); if (o) { s2.value = o.value; s2.dispatchEvent(new Event('change')); } });
+      }, async () => {
+        const t = await page.evaluate(() => (document.getElementById('dk-main') || {}).innerText || '');
+        if (/No warehouses/.test(t)) return true;
+        return /Inputs needed|you don.t have one/.test(t) || 'the hub did not show a plan after picking a process';
+      });
+      if (r) ok('hub works out a plan (nothing sent)');
+    }
+    if (missing.size) bad(pass.name + ': site files not found (404): ' + [...missing].join(', '));
+    if (dataFails.size) warn(pass.name + ': game data problems (not the new code – the live site or the game): ' + [...dataFails].slice(0, 5).join(' | '));
+    await ctx.close();
+    continue;
+  }
 
   // Every deck
   const decks = await page.$$eval('button[data-deck]', b => [...new Set(b.map(x => x.dataset.deck))]).catch(() => []);
