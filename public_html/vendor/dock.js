@@ -198,9 +198,9 @@
     P.rows.forEach((r) => { pool[r.p] = Math.max(0, (pool[r.p] || 0) - Math.min(r.need, r.there + r.moved)); });
     const steps = [], key = {}, fly = {}, mine = {};
     const recipes = (p) => R.filter((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(FBT[x.type]));
-    function need(p, q, path, depth) {
+    function need(p, q, path, depth, to) {
       if (q <= 0) return;
-      if (canMine(p)) { mine[p] = (mine[p] || 0) + q; return; }
+      if (canMine(p)) { (mine[p] = mine[p] || { q: 0, to: new Set() }).q += q; mine[p].to.add(to); return; }
       const rs = recipes(p).filter((r) => !Object.keys(r.inp).some((ip) => path.includes(+ip)));
       if (!rs.length || depth > 8) { fly[p] = (fly[p] || 0) + q; return; }
       // best recipe: p must be a main output (not a small by-product), then fewest inputs that can't be had here,
@@ -211,16 +211,57 @@
       const cost = (r) => Object.keys(r.inp).reduce((t, ip) => t + r.inp[ip] * grams(+ip), 0) / (r.out[p] * grams(p));
       const r = (main.length ? main : rs).sort((a, b) => miss(a) - miss(b) || cost(a) - cost(b))[0];
       const runs = Math.ceil(q / r.out[p]);
+      let st = key[r.i], fresh = false;
+      if (!st) { st = key[r.i] = { r, p, runs: 0, use: {}, to: new Set() }; fresh = true; }
+      st.runs += runs; st.to.add(to);
       Object.keys(r.inp).forEach((ip) => {
         ip = +ip; const n = r.inp[ip] * runs, take = Math.min(pool[ip] || 0, n);
         pool[ip] = (pool[ip] || 0) - take;
-        need(ip, n - take, path.concat(p), depth + 1);
+        if (take > 0) st.use[ip] = (st.use[ip] || 0) + take;
+        need(ip, n - take, path.concat(p), depth + 1, r.i);
       });
-      if (key[r.i]) key[r.i].runs += runs;
-      else { key[r.i] = { r, p, runs }; steps.push(key[r.i]); }
+      if (fresh) steps.push(st);
     }
-    P.fly.forEach((f) => need(f.p, f.q, [], 0));
+    P.fly.forEach((f) => need(f.p, f.q, [], 0, 'final'));
     return { steps, fly, mine };
+  }
+
+  // Move everything for the WHOLE chain (Mark, 8 Nov): each step gets its own storage (★ = holds most of that
+  // step's stock inputs; the player can change it), stock is shared out once across all steps, and every
+  // delivery goes in one list. Things made or mined along the way can't be moved yet – each step says where
+  // to send its output so it lands where the next step needs it.
+  function chainMoves(P, C) {
+    const store = onRock().filter(isStore), byId = (id) => store.find((b) => b.id === id);
+    const avail = {}; store.forEach((b) => { avail[b.id] = {}; ((inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) avail[b.id][c.product] = (avail[b.id][c.product] || 0) + c.amount; }); });
+    // the final step's stock is already spoken for
+    P.rows.forEach((r) => { const a = avail[P.dest.id]; if (a) a[r.p] = Math.max(0, (a[r.p] || 0) - Math.min(r.there, r.need)); r.from.forEach(([b, q]) => { avail[b.id][r.p] -= q; }); });
+    const okIn = (b, ip) => b.Building.buildingType !== TANK || TANKOK.has(ip);
+    const dests = {}, add = {}, dl = {};
+    const put = (from, to, ip, q, why) => { const k = from.id + '>' + to.id; (dl[k] = dl[k] || { b: from, to, items: [], why: new Set() }).items.push({ p: ip, a: q }); dl[k].why.add(why);
+      add[to.id] = add[to.id] || [0, 0]; add[to.id][0] += q * grams(ip); add[to.id][1] += q * (MV[ip] || [1000, 1000])[1]; };
+    C.steps.forEach((st) => {
+      // best storage for this step: holds most of its stock inputs by weight; else the main staging storage
+      let best = null, bk = 0;
+      store.forEach((b) => { const kg = Object.keys(st.use).reduce((t, ip) => okIn(b, +ip) ? t + Math.min(avail[b.id][ip] || 0, st.use[ip]) * grams(+ip) : t, 0); if (kg > bk) { bk = kg; best = b; } });
+      st.star = best ? best.id : P.dest.id;
+      const d = byId((S.stepDest || {})[st.r.i]) || byId(st.star);
+      st.dest = d;
+      Object.keys(st.use).forEach((ip) => {
+        ip = +ip; let left = st.use[ip];
+        if (!okIn(d, ip)) { st.bad = "a tank farm can't take " + pname(ip); return; }
+        const own = Math.min(avail[d.id][ip] || 0, left); avail[d.id][ip] = (avail[d.id][ip] || 0) - own; left -= own;
+        store.filter((b) => b.id !== d.id).sort((a, b) => (avail[b.id][ip] || 0) - (avail[a.id][ip] || 0)).forEach((b) => {
+          if (left <= 0) return; const q = Math.min(avail[b.id][ip] || 0, left); if (q <= 0) return;
+          avail[b.id][ip] -= q; left -= q; put(b, d, ip, q, st.r.name);
+        });
+      });
+    });
+    // where each step's output (and each mined raw) should be sent
+    const keyed = {}; C.steps.forEach((st) => { keyed[st.r.i] = st; });
+    const sendTo = (set) => [...set].map((t) => (t === 'final' ? P.dest : (keyed[t] && keyed[t].dest))).filter(Boolean).filter((b, i, a) => a.indexOf(b) === i);
+    C.steps.forEach((st) => { st.sendTo = sendTo(st.to); });
+    Object.keys(C.mine).forEach((p) => { C.mine[p].sendTo = sendTo(C.mine[p].to); });
+    return { deliveries: Object.values(dl), add, byId };
   }
 
   // ---------- the plan ----------
@@ -305,6 +346,7 @@
     if (!cl.find((c) => c.id === S.crew)) S.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const P = plan();
     const rec = R[S.proc];
+    let CM = null;
 
     let h = '';
     h += `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
@@ -347,15 +389,19 @@
       // full production plan on this rock (Mark, 8 Nov)
       if (P.fly.length) {
         const C = chainPlan(P), on = onRock();
+        CM = chainMoves(P, C);
         const bIn = (bt) => on.filter((b) => b.Building.buildingType === bt).sort((x, z) => (busyTxt(x) !== 'idle') - (busyTxt(z) !== 'idle'))[0];
         const ex = on.find((b) => b.Building.buildingType === 2);
+        const sendLine = (list) => list.length ? `<br><span class="src" style="margin-left:1.6em">→ send the output to <b>${list.map((b) => esc(nm(b))).join(' and ')}</b></span>` : '';
         let n = 0; const li = [];
-        Object.keys(C.mine).forEach((p) => li.push(`<li><b>${++n}.</b> ⛏ Mine ${amt(+p, C.mine[p])} ${esc(pname(p))}${ex ? GLk('/building/' + ex.id, 'Open an extractor in the game') : ' <span style="color:var(--amber)">(no extractor here yet)</span>'}</li>`));
-        C.steps.forEach((x) => { const bt = FBT[x.r.type], b = bIn(bt);
-          li.push(`<li><b>${++n}.</b> 🏭 Make ${amt(x.p, x.runs * x.r.out[x.p])} ${esc(pname(x.p))} – ${esc(x.r.name)} × ${x.runs.toLocaleString('en-GB')} runs in ${b ? esc(nm(b)) + GLk('/building/' + b.id, 'Open ' + nm(b) + ' in the game') : 'a ' + BTN[bt].toLowerCase()}</li>`); });
+        Object.keys(C.mine).forEach((p) => li.push(`<li><b>${++n}.</b> ⛏ Mine ${amt(+p, C.mine[p].q)} ${esc(pname(p))}${ex ? GLk('/building/' + ex.id, 'Open an extractor in the game') : ' <span style="color:var(--amber)">(no extractor here yet)</span>'}${sendLine(C.mine[p].sendTo)}</li>`));
+        C.steps.forEach((x) => { const bt = FBT[x.r.type], b = bIn(bt), uses = Object.keys(x.use);
+          li.push(`<li style="margin-bottom:6px"><b>${++n}.</b> 🏭 Make ${amt(x.p, x.runs * x.r.out[x.p])} ${esc(pname(x.p))} – ${esc(x.r.name)} × ${x.runs.toLocaleString('en-GB')} runs in ${b ? esc(nm(b)) + GLk('/building/' + b.id, 'Open ' + nm(b) + ' in the game') : 'a ' + BTN[bt].toLowerCase()}` +
+            (uses.length ? `<br><span class="src" style="margin-left:1.6em">stock inputs (${uses.map((ip) => esc(pname(ip)) + ' ' + amt(+ip, x.use[ip])).join(', ')}) go to </span><select data-sd="${x.r.i}" style="min-width:0">${onRock().filter(isStore).sort((a, c) => nm(a).localeCompare(nm(c))).map((sb) => opt(sb.id, (sb.id === x.star ? '★ ' : '') + nm(sb) + ' – ' + fullPct(sb) + '% full', x.dest.id)).join('')}</select>${x.bad ? ' <span style="color:var(--red)">✗ ' + esc(x.bad) + '</span>' : ''}` : '<br><span class="src" style="margin-left:1.6em">all its inputs come from the steps above</span>') +
+            sendLine(x.sendTo) + '</li>'); });
         li.push(`<li><b>${++n}.</b> 🎯 Make ${esc(Object.keys(rec.out).map((q) => pname(q)).join(' + '))} – ${esc(rec.name)} × ${S.runs.toLocaleString('en-GB')} runs in ${esc(nm(P.bl))}${GLk('/building/' + P.bl.id, 'Open ' + nm(P.bl) + ' in the game')}</li>`);
         const fl = Object.keys(C.fly);
-        h += `<div class="card"><h2><span class="n">🧭</span>Full production plan on ${esc(S.rock)}</h2><div class="hint" style="margin:0 0 8px">Everything that's short, made here step by step – using what's in storage here first. Do the steps in order; this page doesn't start them for you.</div>
+        h += `<div class="card"><h2><span class="n">🧭</span>Full production plan on ${esc(S.rock)}</h2><div class="hint" style="margin:0 0 8px">Everything that's short, made here step by step – using what's in storage here first. The stock each step needs is moved to its storage (step 7). Things made along the way can't be moved yet – send each step's output where it says. Do the steps in order; this page doesn't start them for you.</div>
 <ul style="list-style:none;padding:0;margin:0;line-height:1.7">${li.join('')}</ul>` +
           (fl.length ? `<div style="margin-top:10px"><span class="short" style="font-weight:600">✈ Still to fly in (can't mine or make it here):</span><ul style="margin:4px 0 0;padding-left:20px">${fl.map((p) => `<li>${esc(pname(p))} ${amt(+p, C.fly[p])}${window.YICSRCTXT && window.YICSRCTXT(+p, C.fly[p], astId(S.rock)) ? ' – ' + window.YICSRCTXT(+p, C.fly[p], astId(S.rock)) : ''}</li>`).join('')}</ul></div>` : '<div class="hint"><span class="ok">✓ Nothing to fly in – it can all be made here.</span></div>') + '</div>';
       }
@@ -375,11 +421,17 @@
         } else S.feed = false;
       }
       h += '</div>';
-      const nmv = P.moves.length;
-      h += `<div class="card"><h2><span class="n">7</span>Moves to send</h2><table class="mv"><thead><tr><th></th><th>From</th><th>Goods</th><th>To</th></tr></thead><tbody>` +
-        (P.moves.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}${GLk('/building/' + x.b.id, 'Open ' + nm(x.b) + ' in the game')}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(P.dest))}</td></tr>`).join('') || '<tr><td></td><td colspan="3" class="src">Nothing to move.</td></tr>') +
-        `</tbody></table><div class="fee">${P.pctAfter > 95 ? '<span style="color:var(--red)">✗ Not enough room – ' + esc(nm(P.dest)) + ' would be ' + P.pctAfter.toFixed(0) + '% full.</span>' : '<span class="ok">✓ Room OK – ' + esc(nm(P.dest)) + ' will be ' + P.pctAfter.toFixed(0) + '% full.</span>'}</div>
-<div class="fee">One delivery per building it comes from. Game fee: about 1 cent per delivery.</div></div>`;
+      const all = P.moves.map((x) => ({ b: x.b, to: P.dest, items: x.items, why: rec.name + ' (final)' })).concat(CM ? CM.deliveries.map((x) => ({ b: x.b, to: x.to, items: x.items, why: [...x.why].join(', ') })) : []);
+      const nmv = all.length;
+      // room in every storage that receives goods
+      const addTo = {}; all.forEach((x) => { const a = addTo[x.to.id] = addTo[x.to.id] || { b: x.to, g: 0, v: 0 }; x.items.forEach((it) => { a.g += it.a * grams(it.p); a.v += it.a * (MV[it.p] || [1000, 1000])[1]; }); });
+      const room = Object.values(addTo).map((a) => { const i = inv(a.b) || { mass: 0, volume: 0 }, c = CAP[a.b.Building.buildingType];
+        const pc = Math.max((i.mass + (i.reservedMass || 0) + a.g) / c[0], (i.volume + (i.reservedVolume || 0) + a.v) / c[1]) * 100;
+        return pc > 95 ? '<span style="color:var(--red)">✗ Not enough room – ' + esc(nm(a.b)) + ' would be ' + pc.toFixed(0) + '% full.</span>' : '<span class="ok">✓ ' + esc(nm(a.b)) + ' will be ' + pc.toFixed(0) + '% full.</span>'; });
+      h += `<div class="card"><h2><span class="n">7</span>Moves to send</h2><table class="mv"><thead><tr><th></th><th>From</th><th>Goods</th><th>To</th><th>For</th></tr></thead><tbody>` +
+        (all.map((x) => `<tr><td><input type="checkbox" checked disabled></td><td class="src">${esc(nm(x.b))}${GLk('/building/' + x.b.id, 'Open ' + nm(x.b) + ' in the game')}</td><td>${x.items.map((it) => esc(pname(it.p)) + ' ' + amt(it.p, it.a)).join('<br>')}</td><td class="src">${esc(nm(x.to))}</td><td class="src" style="color:var(--dim)">${esc(x.why)}</td></tr>`).join('') || '<tr><td></td><td colspan="4" class="src">Nothing to move.</td></tr>') +
+        `</tbody></table><div class="fee">${room.join('<br>') || '<span class="ok">✓ Room OK</span>'}</div>
+<div class="fee">${CM ? 'Covers every step of the full production plan. ' : ''}One delivery per building pair. Game fee: about 1 cent per delivery.</div></div>`;
       h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" disabled style="opacity:.5;cursor:not-allowed">APPROVE IN WALLET (${nmv} deliver${nmv === 1 ? 'y' : 'ies'}${S.feed ? ' + feed crew' : ''})</button>
 <div class="hint">Test version: sending is switched off, so nothing can be sent yet.</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
@@ -389,8 +441,9 @@
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });
     on('dk-bld', 'change', (e) => { S.bld = +e.target.value; render(); });
-    on('dk-proc', 'change', (e) => { S.proc = +e.target.value; S.destSet = false; render(); });
+    on('dk-proc', 'change', (e) => { S.proc = +e.target.value; S.destSet = false; S.stepDest = {}; render(); });
     on('dk-by', 'change', (e) => { S.by = e.target.value; render(); });
+    document.querySelectorAll('#dk-main select[data-sd]').forEach((el) => el.addEventListener('change', () => { S.stepDest = S.stepDest || {}; S.stepDest[el.dataset.sd] = +el.value; render(); }));
     // search box (Mark, 8 Nov): filters the What-to-make list as you type – no redraw, so typing isn't interrupted
     const filt = () => {
       const q = (S.q || '').toLowerCase().trim(), sel = document.getElementById('dk-proc'); if (!sel) return;
