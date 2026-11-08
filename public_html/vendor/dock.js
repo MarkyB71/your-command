@@ -40,16 +40,23 @@
   function build() {
     if (document.getElementById('dk-ov')) return;
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap'; document.head.appendChild(l);
-    const st = document.createElement('style'); st.textContent = CSS + '#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
+    const st = document.createElement('style'); st.textContent = CSS + '#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov .dk-br{color:var(--cyan);text-decoration:none;font-weight:700;letter-spacing:.06em;border:1px solid #8fe3ff66;border-radius:20px;padding:4px 14px}#dk-ov .dk-br:hover{background:#8fe3ff18}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
     const ov = document.createElement('div'); ov.id = 'dk-ov';
     ov.innerHTML = WRAP + '<div id="dockpg"><div class="dhead"><div class="stripe"></div><div class="in"><h1>LOADING DOCK</h1>' +
-      '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div></div></div><div id="dk-main"></div>' +
-      '<div class="mocknote">TEST VERSION · SENDING IS SWITCHED OFF · <a href="#" data-dkback style="color:var(--cyan)">back to the Command Deck</a></div></div>';
+      '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div><a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div><div id="dk-main"></div>' +
+      '<div class="mocknote">TEST VERSION · SENDING IS SWITCHED OFF · <a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
     document.body.appendChild(ov);
     // app.js rewrites <head> and <body> while it loads – keep putting the dock back on top
     const keep = () => { if (!l.isConnected) document.head.appendChild(l); if (!st.isConnected) document.head.appendChild(st); if (!ov.isConnected) document.body.appendChild(ov); document.documentElement.style.overflow = 'hidden'; };
-    keep(); setInterval(keep, 400);
-    ov.addEventListener('click', (e) => { const a = e.target.closest('[data-dkback]'); if (a) { e.preventDefault(); location.href = location.pathname + location.search.replace(/[?&]dock=1\b/, '').replace(/^&/, '?'); } });
+    const timer = setInterval(keep, 400); keep();
+    // Return to the Bridge (Mark, 8 Nov): close the dock and go to the Bridge – no reload
+    ov.addEventListener('click', (e) => {
+      const a = e.target.closest('[data-dkback]'); if (!a) return; e.preventDefault();
+      clearInterval(timer); try { speechSynthesis.cancel(); } catch (x) {}
+      ov.remove(); st.remove(); document.documentElement.style.overflow = '';
+      try { history.replaceState(history.state, '', location.pathname + location.search.replace(/[?&]dock=1\b/, '').replace(/^&/, '?') + location.hash); } catch (x) {}
+      if (window.YICgoDeck) window.YICgoDeck('bridge'); else location.reload();
+    });
     airlock(ov);
   }
   function airlock(ov) {
@@ -81,7 +88,13 @@
     const tone = (f, a, b, vol, type) => { const o = A.createOscillator(), g = A.createGain(); o.type = type || 'square'; o.frequency.value = f;
       g.gain.setValueAtTime(0, a); g.gain.linearRampToValueAtTime(vol, a + 0.02); g.gain.setValueAtTime(vol, b - 0.04); g.gain.linearRampToValueAtTime(0, b);
       o.connect(g); g.connect(out); o.start(a); o.stop(b + 0.05); };
-    for (let k = 0; k < 5; k++) { tone(880, t0 + k * 0.5, t0 + k * 0.5 + 0.22, 0.12); tone(660, t0 + k * 0.5 + 0.25, t0 + k * 0.5 + 0.45, 0.12); }
+    // klaxon: three rising whoops
+    for (let k = 0; k < 3; k++) { const a = t0 + k * 0.9, o = A.createOscillator(), g = A.createGain(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(420, a); o.frequency.linearRampToValueAtTime(820, a + 0.7);
+      g.gain.setValueAtTime(0, a); g.gain.linearRampToValueAtTime(0.13, a + 0.05); g.gain.setValueAtTime(0.13, a + 0.65); g.gain.linearRampToValueAtTime(0, a + 0.75);
+      o.connect(g); g.connect(out); o.start(a); o.stop(a + 0.8); }
+    // spoken warning (the browser's own voice)
+    try { const v = new SpeechSynthesisUtterance('Warning. Airlock cycling. Stand clear of the doors.'); v.rate = 0.95; v.pitch = 0.8; v.volume = 0.9; speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(v), 300); } catch (e) {}
     // pressure hum rising while it cycles
     const h = A.createOscillator(), hg = A.createGain(); h.type = 'sawtooth'; h.frequency.setValueAtTime(55, t0); h.frequency.linearRampToValueAtTime(110, t0 + 2.7);
     const lp = A.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
