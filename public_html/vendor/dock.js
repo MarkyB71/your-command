@@ -194,7 +194,7 @@
   function chainPlan(P) {
     const on = onRock(), types = new Set(on.map((b) => b.Building.buildingType));
     const pool = {};
-    on.filter(isStore).forEach((b) => ((inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) pool[c.product] = (pool[c.product] || 0) + c.amount; }));
+    on.filter(isStore).forEach((b) => { ((inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) pool[c.product] = (pool[c.product] || 0) + c.amount; }); ((S.inc && S.inc[b.id]) || []).forEach((x) => { pool[x[0]] = (pool[x[0]] || 0) + x[1]; }); });
     P.rows.forEach((r) => { pool[r.p] = Math.max(0, (pool[r.p] || 0) - Math.min(r.need, r.there + r.moved)); });
     const steps = [], key = {}, fly = {}, mine = {};
     const recipes = (p) => R.filter((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(FBT[x.type]));
@@ -234,9 +234,9 @@
     const store = onRock().filter(isStore), byId = (id) => store.find((b) => b.id === id);
     const avail = {}; store.forEach((b) => { avail[b.id] = {}; ((inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) avail[b.id][c.product] = (avail[b.id][c.product] || 0) + c.amount; }); });
     // the final step's stock is already spoken for
-    P.rows.forEach((r) => { const a = avail[P.dest.id]; if (a) a[r.p] = Math.max(0, (a[r.p] || 0) - Math.min(r.there, r.need)); r.from.forEach(([b, q]) => { avail[b.id][r.p] -= q; }); });
+    P.rows.forEach((r) => { const a = avail[P.dest.id]; if (a) a[r.p] = Math.max(0, (a[r.p] || 0) - Math.max(0, Math.min(r.there, r.need) - r.onway)); r.from.forEach(([b, q]) => { avail[b.id][r.p] -= q; }); });
     const okIn = (b, ip) => b.Building.buildingType !== TANK || TANKOK.has(ip);
-    const dests = {}, add = {}, dl = {};
+    const dests = {}, add = {}, dl = {}, incA = {};
     const put = (from, to, ip, q, why) => { const k = from.id + '>' + to.id; (dl[k] = dl[k] || { b: from, to, items: [], why: new Set() }).items.push({ p: ip, a: q }); dl[k].why.add(why);
       add[to.id] = add[to.id] || [0, 0]; add[to.id][0] += q * grams(ip); add[to.id][1] += q * (MV[ip] || [1000, 1000])[1]; };
     C.steps.forEach((st) => {
@@ -249,6 +249,8 @@
       Object.keys(st.use).forEach((ip) => {
         ip = +ip; let left = st.use[ip];
         if (!okIn(d, ip)) { st.bad = "a tank farm can't take " + pname(ip); return; }
+        incA[d.id] = incA[d.id] || {}; if (incA[d.id][ip] == null) incA[d.id][ip] = incoming(d, ip);
+        const oi = Math.min(incA[d.id][ip], left); incA[d.id][ip] -= oi; left -= oi;
         const own = Math.min(avail[d.id][ip] || 0, left); avail[d.id][ip] = (avail[d.id][ip] || 0) - own; left -= own;
         store.filter((b) => b.id !== d.id).sort((a, b) => (avail[b.id][ip] || 0) - (avail[a.id][ip] || 0)).forEach((b) => {
           if (left <= 0) return; const q = Math.min(avail[b.id][ip] || 0, left); if (q <= 0) return;
@@ -278,8 +280,8 @@
     let addG = 0, addV = 0;
     Object.keys(rec.inp).forEach((p) => {
       p = +p;
-      const need = rec.inp[p] * S.runs, there = have(dest, p), want = Math.max(0, need - there);
-      const row = { p, need, there, moved: 0, from: [], short: 0, bad: '' };
+      const onway = incoming(dest, p), need = rec.inp[p] * S.runs, there = have(dest, p) + onway, want = Math.max(0, need - there);
+      const row = { p, need, there, onway, moved: 0, from: [], short: 0, bad: '' };
       if (want > 0 && tankDest && !TANKOK.has(p)) { row.bad = "can't go in a tank farm"; row.short = want; rows.push(row); return; }
       let left = want;
       store.filter((b) => b.id !== dest.id).map((b) => [b, have(b, p)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]).forEach(([b, h]) => {
@@ -298,7 +300,20 @@
     return { dest, bl, rec, rows, fly, moves: Object.values(moves), pctNow, pctAfter };
   }
 
-  const holds = (b, p) => ((inv(b) || { contents: [] }).contents.filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0));
+  // Deliveries already on their way (Mark, 8 Nov: the page re-suggested moves he had just sent). From the site's
+  // deliveries.php (sent = status 2, in transit or ready but not yet finished). Goods heading INTO a building count
+  // as already there for that building – but are never moved on from it until they've arrived.
+  const incoming = (b, p) => ((S.inc && S.inc[b.id]) || []).filter((x) => x[0] === p).reduce((t, x) => t + x[1], 0);
+  const holds = (b, p) => ((inv(b) || { contents: [] }).contents.filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0)) + incoming(b, p);
+  async function loadDeliveries() {
+    const d = D(); if (!d || !d.wallet) return;
+    try {
+      const j = await fetch('deliveries.php?wallet=' + encodeURIComponent(d.wallet) + '&t=' + Date.now(), { cache: 'no-store' }).then((r) => r.json());
+      const inc = {}, list = [];
+      (j.transit || []).concat(j.recent || []).forEach((r) => { if (r[1] !== 2 || r[4][0] !== 5) return; (inc[r[4][1]] = inc[r[4][1]] || []).push(...r[5]); list.push(r); });
+      S.inc = inc; S.incList = list; S.incErr = j.err || null;
+    } catch (e) { S.incErr = 'Deliveries on their way could not be loaded.'; }
+  }
   // how full a storage building is (the bigger of weight and space, reserved space included)
   const fullPct = (b) => { const i = inv(b) || { mass: 0, volume: 0 }, c = CAP[b.Building.buildingType]; return Math.round(Math.max((i.mass + (i.reservedMass || 0)) / c[0], (i.volume + (i.reservedVolume || 0)) / c[1]) * 100); };
 
@@ -397,7 +412,7 @@
       else if (w.account && typeof w.account.execute === 'function') res = await w.account.execute(calls.map((c) => ({ contractAddress: c.contract_address, entrypoint: c.entry_point, calldata: c.calldata })));
       else throw new Error('This wallet cannot send transactions from a web page.');
       const h = res && (res.transaction_hash || res.transactionHash);
-      S.busy = false; render();
+      S.sentAt = Date.now(); S.busy = false; render(); setTimeout(() => { loadDeliveries().then(render); }, 150000);
       say('✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(String(h).slice(0, 10))}…</a>. ` : '') + 'Finish the deliveries in the game with Finish All Ready Items, then press ↻ Check the game again.');
     } catch (e) {
       const t = String((e && e.message) || e || '');
@@ -472,11 +487,17 @@
     }
     if (P) {
       h += `<div class="card"><h2><span class="n">5</span>Inputs needed</h2><table><thead><tr><th>Input</th><th class="num">Needed</th><th class="num">Already there</th><th class="num">To move</th><th>From</th></tr></thead><tbody>` +
-        P.rows.map((r) => `<tr><td>${esc(pname(r.p))}</td><td class="num">${amt(r.p, r.need)}</td><td class="num">${amt(r.p, r.there)}</td><td class="num">${amt(r.p, r.moved)}</td><td class="src">` +
+        P.rows.map((r) => `<tr><td>${esc(pname(r.p))}</td><td class="num">${amt(r.p, r.need)}</td><td class="num">${amt(r.p, r.there)}${r.onway > 0 ? '<br><span class="src" style="font-size:.85em">🚚 ' + amt(r.p, r.onway) + ' on its way</span>' : ''}</td><td class="num">${amt(r.p, r.moved)}</td><td class="src">` +
           (r.need - r.there <= 0 ? '<span class="ok">✓ already there</span>' : '') +
           r.from.map(([b, q]) => esc(nm(b)) + ' (' + amt(r.p, q) + ')').join('<br>') +
           (r.bad ? '<span style="color:var(--red)">✗ ' + r.bad + '</span>' : r.short > 0 ? (r.from.length ? '<br>' : '') + '<span class="short">' + amt(r.p, r.short) + ' short – ' + (((P.fly.find((f) => f.p === r.p) || {}).here) ? 'make or mine here' : 'fly in') + '</span>' : '') +
           '</td></tr>').join('') + '</tbody></table></div>';
+      // 🚚 already on its way on this rock (Mark, 8 Nov: "can it show already in transit?")
+      { const ids = new Set(onRock().filter(isStore).map((b) => b.id)), bn = (id) => nm(onRock().find((b) => b.id === id)) || 'Building #' + id, now = Date.now() / 1000;
+        const ow = (S.incList || []).filter((r) => ids.has(r[4][1]));
+        if (ow.length) h += `<div class="card"><h2><span class="n">🚚</span>Already on its way on ${esc(S.rock)}</h2><div class="hint" style="margin:0 0 8px">Deliveries you've sent that haven't been finished yet. They count as already there, so they aren't sent again.</div><table><thead><tr><th>From</th><th>Goods</th><th>To</th><th>Status</th></tr></thead><tbody>` +
+          ow.map((r) => `<tr><td class="src">${esc(r[3][0] === 5 ? bn(r[3][1]) : 'elsewhere')}</td><td>${r[5].map((x) => esc(pname(x[0])) + ' ' + amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(bn(r[4][1]))}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
+          `</tbody></table>${S.incErr ? '<div class="hint" style="color:var(--amber)">' + esc(S.incErr) + '</div>' : ''}</div>`; }
       if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
 <table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
       // full production plan on this rock (Mark, 8 Nov)
@@ -578,9 +599,10 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       // SENDING (Mark, 8 Nov): switched on for deliveries + feeding ONLY, and ONLY when the page shows Mark's own
       // wallet (OWNER). Everyone else keeps a switched-off button. Process starts are still not sent.
       const mine = isOwner();
-      const can = mine && !S.busy && (S.calls.length || (S.feed && S.feedCall)) && S.mover;
+      const wait = S.sentAt && Date.now() - S.sentAt < 180000;
+      const can = mine && !S.busy && !wait && (S.calls.length || (S.feed && S.feedCall)) && S.mover;
       h += `<div class="card"><h2><span class="n">8</span>Approve</h2><button class="approve" id="dk-appr"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + nmv + ' deliver' + (nmv === 1 ? 'y' : 'ies') + (S.feed ? ' + feed crew' : '') + ')'}</button>
-<div class="hint">${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') + (S.start ? ' <span style="color:var(--amber)">Starting processes is not switched on yet – only the moves' + (S.feed ? ' and feeding' : '') + ' are sent.</span>' : '') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
+<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – give the game a few minutes to catch up, then press ↻ Check the game again before sending more.</span> ' : ''}${mine ? (S.mover ? 'Your wallet will show every action first. Nothing is sent unless you approve it there.' : 'Pick a crew that is on this rock and ready.') + (S.start ? ' <span style="color:var(--amber)">Starting processes is not switched on yet – only the moves' + (S.feed ? ' and feeding' : '') + ' are sent.</span>' : '') : 'Test version: sending is switched off, so nothing can be sent yet.'}</div>
 <div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
@@ -613,7 +635,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     on('dk-recheck', 'click', (e) => {
       const rf = document.getElementById('rf'), before = D(); e.target.textContent = 'Checking…'; e.target.disabled = true;
       if (rf) rf.click();
-      let n = 0; const t = setInterval(() => { n++; if ((D() && D() !== before) || n > 40) { clearInterval(t); render(); } }, 500);
+      let n = 0; const t = setInterval(() => { n++; if ((D() && D() !== before) || n > 40) { clearInterval(t); loadDeliveries().then(render); } }, 500);
     });
   }
 
@@ -621,7 +643,7 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
   function start() {
     build();
     loadRecipes().then(() => {
-      const wait = setInterval(() => { if (D() && R) { clearInterval(wait); S.ready = true; render(); } }, 400);
+      const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; render(); }); } }, 400);
     });
   }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
