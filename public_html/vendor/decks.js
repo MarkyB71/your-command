@@ -643,7 +643,9 @@ body > header{display:none!important}
       const rb = document.createElement('button');
       rb.id = 'dkrf';
       rb.type = 'button';
-      rb.textContent = '⟳ Refresh';
+      // label 'Refresh Game Data' (Mark, 8 Nov 2026) – TEST ONLY on ?beta=1
+      const rfL = /[?&]beta=1\b/.test(location.search) ? '⟳ Refresh Game Data' : '⟳ Refresh';
+      rb.textContent = rfL;
       rb.title = 'Fetch the latest data from the game';
       rb.onclick = () => {
         // 29 Oct: quiet refresh – fetch the data and swap it in, no loading screen,
@@ -651,12 +653,12 @@ body > header{display:none!important}
         if (window.YICrefreshNow) {
           if (rb.disabled) return;
           rb.disabled = true;
-          rb.textContent = '⟳ Refreshing…';
+          rb.textContent = rfL === '⟳ Refresh' ? '⟳ Refreshing…' : '⟳ Refreshing Game Data…';
           Promise.resolve(window.YICrefreshNow())
             .catch(() => {})
             .finally(() => {
               rb.disabled = false;
-              rb.textContent = '⟳ Refresh';
+              rb.textContent = rfL;
             });
           return;
         }
