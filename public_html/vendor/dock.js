@@ -184,6 +184,7 @@
     return { dest, bl, rec, rows, fly, moves: Object.values(moves), pctNow, pctAfter };
   }
 
+  const holds = (b, p) => ((inv(b) || { contents: [] }).contents.filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0));
   // how full a storage building is (the bigger of weight and space, reserved space included)
   const fullPct = (b) => { const i = inv(b) || { mass: 0, volume: 0 }, c = CAP[b.Building.buildingType]; return Math.round(Math.max((i.mass + (i.reservedMass || 0)) / c[0], (i.volume + (i.reservedVolume || 0)) / c[1]) * 100); };
 
@@ -208,7 +209,6 @@
     if (!rl.length) { m.innerHTML = '<div class="card"><div class="src">No warehouses or tank farms found for this wallet. Load your wallet on the Command Deck first.</div></div>'; return; }
     if (!rl.includes(S.rock)) { S.rock = rl[0]; S.dest = 0; S.bld = 0; S.proc = -1; S.crew = 0; }
     const store = onRock().filter(isStore).sort((a, b) => nm(a).localeCompare(nm(b)));
-    if (!store.find((b) => b.id === S.dest)) S.dest = store[0] ? store[0].id : 0;
     // Mark (8 Nov): pick WHAT to make first; the building list then fills with the buildings that can do it (idle first)
     const pb = procB();
     const procs = R.filter((r) => FBT[r.type]);
@@ -216,6 +216,18 @@
     const sel0 = R[S.proc];
     const able = sel0 ? pb.filter((b) => b.Building.buildingType === FBT[sel0.type]).sort((a, b) => (busyTxt(a) !== 'idle') - (busyTxt(b) !== 'idle')) : [];
     if (!able.find((b) => b.id === S.bld)) S.bld = able[0] ? able[0].id : 0;
+    // Mark (8 Nov): suggest the storage that already holds the most of the inputs (by weight) – the player can change it
+    let best = null, bestKg = 0, needKg = 0;
+    if (sel0) {
+      Object.keys(sel0.inp).forEach((p) => { needKg += sel0.inp[p] * S.runs * grams(+p) / 1000; });
+      store.forEach((b) => {
+        const tank = b.Building.buildingType === TANK;
+        const kg = Object.keys(sel0.inp).reduce((t, p) => (tank && !TANKOK.has(+p)) ? t : t + Math.min(holds(b, +p), sel0.inp[p] * S.runs) * grams(+p) / 1000, 0);
+        if (kg > bestKg) { best = b; bestKg = kg; }
+      });
+    }
+    if (!S.destSet && best) S.dest = best.id;
+    if (!store.find((b) => b.id === S.dest)) S.dest = store[0] ? store[0].id : 0;
     const cl = crews();
     if (!cl.find((c) => c.id === S.crew)) S.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const P = plan();
@@ -223,10 +235,7 @@
 
     let h = '';
     h += `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
-    h += `<div class="card"><h2><span class="n">2</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full', S.dest)).join('')}</select>`;
-    if (P) h += `<div class="cap"><span class="src">${esc(nm(P.dest))}: ${P.pctNow.toFixed(0)}% full now</span><div class="capbar"><i style="width:${Math.min(100, P.pctNow)}%"></i><b style="left:${Math.min(100, P.pctNow)}%;width:${Math.max(0.6, Math.min(100 - P.pctNow, P.pctAfter - P.pctNow))}%"></b></div></div>`;
-    h += `</div><div class="hint">${P && P.dest.Building.buildingType === TANK ? '<span style="color:var(--amber)">Tank farms only take gases and liquids.</span>' : 'Blue = in there now · amber = what this will add.'}</div></div>`;
-    h += `<div class="card"><h2><span class="n">3</span>What to make</h2><div class="row">
+    h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
 <select id="dk-proc">${opt(-1, S.by === 'out' ? '— pick what to make —' : '— pick a process —', S.proc)}${procList(procs).map(([i, t]) => opt(i, t, S.proc)).join('')}</select></div>`;
     if (sel0) {
@@ -235,6 +244,14 @@
         : `<div class="hint" style="color:var(--red)">✗ This is made in a ${BTN[bt].toLowerCase()}${sel0.type === 5 ? ' (dry dock)' : ''} – you don't have one on ${esc(S.rock)}.</div>`;
     }
     h += '</div>';
+    if (sel0) {
+      h += `<div class="card"><h2><span class="n">3</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, (best && b.id === best.id ? '★ ' : '') + nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full', S.dest)).join('')}</select>`;
+      if (P) h += `<div class="cap"><span class="src">${esc(nm(P.dest))}: ${P.pctNow.toFixed(0)}% full now</span><div class="capbar"><i style="width:${Math.min(100, P.pctNow)}%"></i><b style="left:${Math.min(100, P.pctNow)}%;width:${Math.max(0.6, Math.min(100 - P.pctNow, P.pctAfter - P.pctNow))}%"></b></div></div>`;
+      h += '</div>';
+      h += best ? `<div class="hint"><span style="color:var(--amber)">★ ${esc(nm(best))} already holds the most of these inputs (${tonnes(bestKg)} of ${tonnes(needKg)}).</span>${S.destSet && S.dest !== best.id ? ' You picked a different one.' : ' Picked for you – you can change it.'}</div>`
+        : '<div class="hint">None of your storage on this rock holds any of these inputs yet.</div>';
+      h += `<div class="hint">${P && P.dest.Building.buildingType === TANK ? '<span style="color:var(--amber)">Tank farms only take gases and liquids.</span>' : 'Blue = in there now · amber = what this will add.'}</div></div>`;
+    }
     if (rec) {
       const outs = Object.keys(rec.out).map((p) => amt(+p, rec.out[p] * S.runs) + ' ' + esc(pname(p))).join(' + ');
       h += `<div class="card"><h2><span class="n">4</span>How many runs</h2><div class="row"><input type="number" id="dk-runs" min="1" step="1" value="${S.runs}"> <span class="src">× runs</span></div><div class="hint">Makes ${outs}</div></div>`;
@@ -275,10 +292,10 @@
     }
     m.innerHTML = h;
     const on = (id, ev, f) => { const e = document.getElementById(id); if (e) e.addEventListener(ev, f); };
-    on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
-    on('dk-dest', 'change', (e) => { S.dest = +e.target.value; render(); });
+    on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
+    on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });
     on('dk-bld', 'change', (e) => { S.bld = +e.target.value; render(); });
-    on('dk-proc', 'change', (e) => { S.proc = +e.target.value; render(); });
+    on('dk-proc', 'change', (e) => { S.proc = +e.target.value; S.destSet = false; render(); });
     on('dk-by', 'change', (e) => { S.by = e.target.value; render(); });
     on('dk-runs', 'change', (e) => { S.runs = Math.max(1, Math.floor(+e.target.value || 1)); render(); });
     on('dk-crew', 'change', (e) => { S.crew = +e.target.value; S.feed = false; render(); });
