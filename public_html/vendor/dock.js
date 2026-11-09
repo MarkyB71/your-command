@@ -53,8 +53,8 @@
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
   const amt = (p, u) => (bulk(p) ? tonnes(u) : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
 
-  // Load a ship (Mark, 9 Nov 2026) – TEST ONLY on ?beta=1: vendor/shipload.js fills #dk-ship under "Short on this rock"
-  const SHIPS = /[?&]beta=1\b/.test(location.search);
+  // Load a ship (Mark, 9 Nov 2026) – LIVE 9 Nov 2026: vendor/shipload.js fills #dk-ship under "Short on this rock"
+  const SHIPS = true; // LIVE 9 Nov 2026
   const S = { bs: 30, calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
@@ -599,7 +599,7 @@ ${R.map(route).join('')}
       S.sentAt = Date.now(); S.busy = false; render(); setTimeout(() => { loadDeliveries().then(render); }, 150000);
       say('✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(String(h).slice(0, 10))}…</a>. ` : '') + 'Finish the deliveries in the game with Finish All Ready Items, then press ↻ Check the game again.' +
         // which crew to finish with, with an in-game link (Mark, 9 Nov: hard to find the crew afterwards) – TEST ONLY
-        (/[?&]beta=1\b/.test(location.search) ? crewLink(S.moverObj, esc) : ''));
+        crewLink(S.moverObj, esc));
     } catch (e) {
       const t = String((e && e.message) || e || '');
       S.busy = false; render();
@@ -740,8 +740,8 @@ ${R.map(route).join('')}
             sendTo(x.sendTo) + '</div></div>';
         };
         const nDel = CM ? CM.deliveries.length + P.moves.length : P.moves.length;
-        // Mark (9 Nov): the full plan takes a lot of room – stages folded away behind an arrow (TEST ONLY, ?beta=1)
-        const FOLD = /[?&]beta=1\b/.test(location.search), nBad = C.steps.filter((x) => x.bad).length;
+        // Mark (9 Nov): the full plan takes a lot of room – stages folded away behind an arrow (LIVE 9 Nov 2026)
+        const FOLD = true, nBad = C.steps.filter((x) => x.bad).length;
         h += `<div class="card"><h2><span class="n">🧭</span>Full production plan on ${esc(S.rock)}</h2>
 <div class="dkp-sum"><div><b>${C.steps.length + 1}</b>processes</div>${mined.length ? `<div><b>${mined.length}</b>to mine</div>` : ''}<div><b>${bset.size || 1}</b>building type${(bset.size || 1) === 1 ? '' : 's'}</div><div><b>${nDel}</b>deliveries</div><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length || '✓'}</b>${fl.length ? 'to fly in' : 'all made here'}</div></div>
 ${Object.keys(C.byUsed || {}).length ? `<div class="hint" style="margin:6px 0 0"><span class="ok">♻ Uses by-products made along the way: ${Object.keys(C.byUsed).map((q) => esc(pname(q)) + ' ' + amt(+q, C.byUsed[q])).join(', ')}</span></div>` : ''}<div class="hint" style="margin:6px 0 10px">Work down the stages. Everything in a stage only needs things from the stages above it. Stock on the rock is moved for you (step 7); things you make or mine – send the output where the tile says.</div>

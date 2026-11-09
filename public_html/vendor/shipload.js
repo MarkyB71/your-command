@@ -1,4 +1,4 @@
-/* Load a ship – Logistics Hub, Skippy's Awesome Command Deck – TEST ONLY (?beta=1), 9 Nov 2026 (Mark)
+/* Load a ship – Logistics Hub, Skippy's Awesome Command Deck – LIVE 9 Nov 2026 (Mark; tested on ?beta=1 first)
    Under "✈ Short on this rock" each short item gets a 🚀 Load a ship button. This fills #dk-ship with:
    1. What to send – the item as it is, or its ingredients (one or two steps back), with the size of each load.
       Big finished things (e.g. Habitation Modules) can be a much bigger load than what they're made from, so the
@@ -14,7 +14,7 @@
    System.getRunSystemCall 9 Nov). Uses the hub's own helpers (window.YICDOCK, from vendor/dock.js). */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search) || !/[?&]dock=1\b/.test(location.search)) return;
+  if (!/[?&]dock=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK;
   const CARGO = { 2: 2, 3: 2, 4: 2 }; // ship type → cargo slot (Light Transport, Heavy Transport, Shuttle)
   const SS = { key: '', opt: 0, src: '', picked: null, crew: 0, msg: '', msgErr: false, busy: false, sentAt: 0 };
