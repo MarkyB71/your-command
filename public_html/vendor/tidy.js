@@ -51,6 +51,7 @@
   const S = {
     rock: '', step: 1, prefix: null, data: null, loading: false,
     style: { store: 'job', 2: 'num', 3: 'keep', 4: 'keep', 5: 'keep', 6: 'keep', 7: 'keep', 8: 'keep', 9: 'keep' },
+    g: {}, gOpen: true,
     edit: {}, rtick: {}, groups: null, leave: {}, mover: null, bs: 30, mtick: {}, sent: {}, busy: false, msg: '', msgErr: false,
   };
 
@@ -322,6 +323,19 @@
 #st-msg.err{border-color:#ff564d;color:#ffb3ae}
 #st-wrap .st-bar{display:inline-block;width:70px;height:7px;border-radius:4px;background:#1d2734;vertical-align:middle;margin-right:6px;overflow:hidden}
 #st-wrap .st-bar i{display:block;height:100%;background:#57ff65}
+#st-wrap .st-guide{border:1px solid #2b5a72;border-radius:12px;padding:12px 16px;margin:10px 0 16px;background:#0d141d}
+#st-wrap .st-guide h4{margin:0 0 6px;color:#ffd24a;font-size:16px}
+#st-wrap .st-q{margin:12px 0}
+#st-wrap .st-tip{color:#8b9ab0;font-size:13px;margin:4px 0}
+#st-wrap .st-sug{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:10px;background:#3a2a00;color:#ffd24a;font-size:11px}
+#st-wrap .st-pvs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:8px}
+#st-wrap .st-pv{border:1px solid #2b3a4c;border-radius:10px;padding:10px 12px;background:#131821;display:flex;flex-direction:column;gap:4px}
+#st-wrap .st-pv.on{border-color:#8fe3ff;box-shadow:0 0 10px rgba(143,227,255,.25)}
+#st-wrap .st-pvh{font-weight:700;color:#e6ebf2}
+#st-wrap .st-pvr{font-size:13px;color:#b7c3d4}
+#st-wrap .st-pvr b{color:#ffd24a}
+#st-wrap .st-pv button{margin-top:auto;align-self:flex-start;padding:7px 14px;border-radius:8px;border:1px solid #2b5a72;background:#0d1d26;color:#e6ebf2;cursor:pointer}
+#st-wrap .st-pv button.on,#st-wrap .st-q .st-w button.on{border-color:#8fe3ff;color:#8fe3ff}
 #st-wrap a{color:#8fe3ff}`;
     document.head.appendChild(s);
   }
@@ -365,6 +379,51 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
 <button class="st-next" data-step="2">Next: names →</button>`;
   }
 
+
+  // ---------- step 2 helper: "Help me choose" (Mark, 9 Nov 2026) ----------
+  // A few questions, each with a hint worked out from the player's own buildings and a suggested answer,
+  // then side-by-side previews of their own storage in each style. Nothing is forced: every answer can be
+  // changed, skipped, or overridden in the full list below.
+  function gStats() {
+    const on = onRock(), store = on.filter(isStore);
+    let filled = 0, single = 0;
+    store.forEach((b) => {
+      const i = inv(b), w = ((i && i.contents) || []).filter((c) => c.amount > 0).map((c) => c.amount * (MV[c.product] || [1000])[0]);
+      const tot = w.reduce((a, x) => a + x, 0); if (!tot) return;
+      filled++; if (Math.max(...w) / tot >= 0.7) single++;
+    });
+    const pre = guessPrefix();
+    const withPre = pre ? on.filter((b) => nm(b).split(' ')[0] === pre).length : 0;
+    const other = on.filter((b) => b.Building.buildingType >= 2 && b.Building.buildingType <= 6);
+    const unnamed = other.filter((b) => !nm(b)).length;
+    return { store: store.length, filled, single, pre, withPre, on: on.length, other: other.length, unnamed };
+  }
+  function gPreview(style) {
+    const keep = S.style.store, ed = S.edit; S.style.store = style; S.edit = {};
+    const rows = suggestions().rows.filter((x) => x.type === WAREHOUSE || x.type === TANK);
+    S.style.store = keep; S.edit = ed;
+    const ch = rows.filter((x) => x.to !== x.now);
+    return `${ch.slice(0, 6).map((x) => `<div class="st-pvr"><span>${esc(x.now || '(no name)')}</span> → <b>${esc(x.to)}</b></div>`).join('') || '<div class="st-pvr">No changes – names stay as they are.</div>'}${ch.length > 6 ? `<div class="st-pvr" style="color:#8b9ab0">…and ${ch.length - 6} more</div>` : ''}`;
+  }
+  function guide() {
+    const st = gStats();
+    if (!S.gOpen) return `<div class="st-w"><button id="st-gopen">💡 Help me choose names</button></div>`;
+    const sugStore = st.filled && st.single / st.filled >= 0.6 ? 'main' : 'job';
+    const btn = (q, v, t, sug) => `<button data-gq="${q}" data-gv="${v}"${S.g[q] === v ? ' class="on"' : ''}>${esc(t)}${sug ? ' <span class="st-sug">suggested</span>' : ''}</button>`;
+    const pv = (v, t, tip) => `<div class="st-pv${S.style.store === v ? ' on' : ''}"><div class="st-pvh">${esc(t)}${v === sugStore ? ' <span class="st-sug">suggested</span>' : ''}</div><div class="st-tip">${esc(tip)}</div>${gPreview(v)}<button data-gq="store" data-gv="${v}"${S.g.store === v ? ' class="on"' : ''}>Use this</button></div>`;
+    return `<div class="st-guide"><h4>💡 Help me choose <span style="color:#8b9ab0;font-weight:400">– optional, you decide</span></h4>
+<div class="st-q"><b>1. How do you like to keep your storage?</b>
+<p class="st-tip">${st.filled ? `${st.single} of your ${st.filled} storage buildings with stock on ${esc(S.rock)} hold mostly one thing. ` : ''}${sugStore === 'main' ? 'Naming by the main thing inside would match how you already store.' : 'Your storage is mixed, so naming by job may fit better.'}</p>
+<div class="st-pvs">${pv('job', 'By job', 'Things used together sit together, e.g. ' + P('Metals') + ' – fewer moves when you make something.')}${pv('main', 'By the main thing inside', 'Easy to find a product at a glance, e.g. ' + P('Pyroxene') + '.')}${pv('keep', 'Keep my names', 'Nothing changes for storage.')}</div></div>
+<div class="st-q"><b>2. Your own word at the front of every name?</b>
+<p class="st-tip">${st.pre ? `${st.withPre} of your ${st.on} buildings here already start with "${esc(st.pre)}". ` : ''}A prefix makes your buildings easy to spot among other players' on a shared rock.</p>
+<div class="st-w">${btn('pre', 'yes', st.pre ? 'Yes – "' + st.pre + '"' : 'Yes – I\'ll type one below', !!st.pre)}${btn('pre', 'no', 'No prefix', !st.pre)}</div></div>
+<div class="st-q"><b>3. Rename extractors, refineries and factories too?</b>
+<p class="st-tip">${st.other ? `You have ${st.other} of them here${st.unnamed ? `, ${st.unnamed} with no name` : ''}. ` : 'You have none here. '}Spaceports, marketplaces and habitats are never changed unless you pick it yourself below.</p>
+<div class="st-w">${btn('other', 'all', 'Yes – numbered (' + P('Refinery 1') + ')', st.unnamed > 0)}${btn('other', 'store', 'No – storage only', !st.unnamed)}</div></div>
+<div class="st-w"><button id="st-gdone">Done – show me the list ↓</button><button id="st-gskip">Skip – keep all my names</button></div></div>`;
+  }
+
   function step2() {
     const { rows, order } = renamePlan();
     const types = [...new Set(onRock().map((b) => b.Building.buildingType))].filter((t) => t !== WAREHOUSE && t !== TANK).sort((a, b) => a - b);
@@ -375,6 +434,7 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
     const changed = rows.filter((x) => x.change);
     const ready = order.length;
     return `<h3>Step 2: names</h3>
+${guide()}
 <div class="st-opt">
 <label for="st-prefix">Your prefix</label><div><input type="text" id="st-prefix" maxlength="14" value="${esc(S.prefix)}" placeholder="e.g. Skippys – or leave empty"> <span style="color:#8b9ab0;font-size:13px">goes in front of every new name</span></div>
 <label>Warehouses &amp; tank farms</label>${sel('st-s-store', [['job', 'By job (' + P('Rocks') + ', ' + P('Oxides 2') + ')'], ['main', 'By the main thing inside (' + P('Pyroxene') + ')'], ['keep', 'Keep current names']], S.style.store)}
@@ -459,6 +519,16 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     qa('[data-step]').forEach((b) => b.addEventListener('click', () => { S.step = +b.dataset.step; S.msg = ''; page(m); scrollTo(0, 0); }));
     qa('[data-rock]').forEach((b) => b.addEventListener('click', () => { if (S.busy) return; S.rock = b.dataset.rock; S.edit = {}; S.rtick = {}; S.groups = null; S.leave = {}; S.mover = null; S.mtick = {}; S.mtinit = false; S.sent = {}; S.msg = ''; page(m); }));
     const rl = q('#st-reload'); if (rl) rl.addEventListener('click', () => { if (!S.loading) reload(m); });
+    qa('[data-gq]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.gq, v = b.dataset.gv; S.g[k] = v; S.edit = {};
+      if (k === 'store') { S.style.store = v; S.groups = null; }
+      if (k === 'pre') S.prefix = v === 'yes' ? (S.prefix || guessPrefix()) : '';
+      if (k === 'other') [2, 3, 4, 5, 6].forEach((t) => { S.style[t] = v === 'all' ? 'num' : 'keep'; });
+      page(m);
+    }));
+    const go = q('#st-gopen'); if (go) go.addEventListener('click', () => { S.gOpen = true; page(m); });
+    const gd = q('#st-gdone'); if (gd) gd.addEventListener('click', () => { S.gOpen = false; page(m); const o = m.querySelector('.st-opt'); if (o) o.scrollIntoView({ behavior: 'smooth' }); });
+    const gs = q('#st-gskip'); if (gs) gs.addEventListener('click', () => { Object.keys(S.style).forEach((k) => { S.style[k] = 'keep'; }); S.g = { store: 'keep', other: 'store' }; S.edit = {}; S.gOpen = false; page(m); });
     const pf = q('#st-prefix');
     if (pf) pf.addEventListener('change', () => { S.prefix = pf.value.replace(/[^A-Za-z0-9 ]/g, '').trim(); S.edit = {}; page(m); });
     qa('select[id^="st-s-"]').forEach((s) => s.addEventListener('change', () => { S.style[s.id.slice(5)] = s.value; S.edit = {}; S.groups = null; page(m); }));
