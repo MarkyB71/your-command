@@ -953,6 +953,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
   // for vendor/shipload.js (test only) – the hub's own helpers, so both work the same way
   if (SHIPS) window.YICDOCK = { S, D, esc, nm, inv, isStore, rockOf, allB, pname, amt, grams, bulk, tonnes, astId, lotOf, kmBetween, tripSecs, tripTxt, kmTxt, crews, crewReady,
     holds: (b, p) => holds(b, p), recipes: () => R || [], mv: () => MV, render: () => render(), loadDeliveries: () => loadDeliveries(), wallets, account, sameAddr, isOwner, hex, short, DISPATCHER, SLOT, TANK, BTN, FBT,
-    canMine, onRock, procB, freeSlot, busyTxt, rocks, procSecs, incoming, GLk, TANKOK };
+    canMine, onRock, procB, freeSlot, busyTxt, rocks, procSecs, incoming, GLk, TANKOK,
+    approve: () => approve(), PID, BATCHES };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
