@@ -565,8 +565,8 @@ ${R.map(route).join('')}
     const byId = (id) => onRock().find((b) => b.id === id);
     const left = {};
     (S.batchDel || []).forEach((x) => {
-      const f = byId(x.from), t = byId(x.to);
-      if (!f || !t) { errs.push('A building in the moves is no longer on ' + S.rock + '.'); return; }
+      const f = (S.srcRock ? allB().find((b) => b.id === x.from) : byId(x.from)), t = x.ship ? { Building: { buildingType: 0 } } : byId(x.to);
+      if (!f || !t) { errs.push('A building in the moves is no longer on ' + (S.srcRock || S.rock) + '.'); return; }
       if (x.from === x.to) errs.push('A move goes from ' + nm(f) + ' to itself.');
       x.items.forEach(([p, a]) => {
         const k = x.from + ':' + p; if (left[k] == null) left[k] = (inv(f) || { contents: [] }).contents.filter((q) => q.product === p).reduce((s2, q) => s2 + q.amount, 0);
@@ -584,7 +584,8 @@ ${R.map(route).join('')}
     S.batchDel = []; S.batchStart = [];
     S.calls.forEach((x) => {
       if (calls.length >= n) return;
-      const data = [5, x.from, SLOT, x.items.length, ...x.items.flat(), 5, x.to, SLOT, 1, S.mover];
+      // x.ship: into a ship's cargo hold (Cargo bay, Mark 9 Nov – test only): [6, shipId, cargo slot] (SDK 2.8.1, as shipload.js)
+      const data = [5, x.from, SLOT, x.items.length, ...x.items.flat(), ...(x.ship ? [6, x.to, x.slot || 2] : [5, x.to, SLOT]), 1, S.mover];
       calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('SendDelivery'), hex(data.length), ...data.map(hex)] });
       S.batchDel.push(x);
     });
@@ -637,7 +638,7 @@ ${R.map(route).join('')}
     if (!m || !S.ok) return;
     if (!S.ready) { m.innerHTML = '<div class="card"><div class="src">Loading your command…</div></div>'; return; }
     // Logistics Bridge (Mark, 9 Nov – TEST ONLY, vendor/hubbridge.js): consoles + viewscreen; the tool is drawn ON the viewscreen
-    S.feedCalls = null; // only Production (prodplan.js) sets this, each time it draws
+    S.feedCalls = null; S.srcRock = null; // only Production / Cargo bay (prodplan.js) set these, each time they draw
     const LB = window.YICHUBBRIDGE;
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
     // new Production screen (Mark, 9 Nov – TEST ONLY, vendor/prodplan.js): rock → what to make + amount → what you need → processes

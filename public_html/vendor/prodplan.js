@@ -265,6 +265,121 @@
       `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
     return h;
   }
+  // ---------- Cargo bay: which rock has it, which ship, flight times, how many trips (Mark, 9 Nov) ----------
+  // "I'd just like to know what rock has the resources, are there ships with enough space, if not the best ship to send
+  // there to collect, showing flight times and how many flights will be needed. Shuttles are not any good for transporting."
+  // Flight times: the site's own route maths (vendor/travel.js, same as the Travel page – quickest trip leaving now,
+  // 1 game day = 1 real hour), the ship's propellant now, no crew engine bonus. Light / Heavy Transports only.
+  const C = { src: '', ship: 0, fl: {}, key: '', busy: false };
+  const SHIPT = { 2: 'Light Transport', 3: 'Heavy Transport' };
+  let TR = null;
+  function cargoPanel(el, items) {
+    const k = K(), esc = k.esc, S = k.S, d = k.D() || {}, dest = S.rock;
+    const g = (p) => k.grams(+p), v = (p) => (k.mv()[p] || [1000, 1000])[1];
+    const stores = (r) => k.allB().filter((b) => k.isStore(b) && k.rockOf(b) === r);
+    const have = (b, p) => ((k.inv(b) || { contents: [] }).contents || []).filter((c) => c.product === +p).reduce((t, c) => t + c.amount, 0);
+    const rockHas = (r, p) => stores(r).reduce((t, b) => t + have(b, p), 0);
+    const totG = Object.keys(items).reduce((t, p) => t + items[p] * g(p), 0) || 1;
+    // 1. which of your rocks has it (share of the load by weight)
+    const rocks = [...new Set(k.allB().filter(k.isStore).map(k.rockOf).filter(Boolean))].filter((r) => r !== dest).map((r) => {
+      const got = {}; let gg = 0;
+      Object.keys(items).forEach((p) => { const n = Math.min(items[p], rockHas(r, p)); if (n > 0) { got[p] = n; gg += n * g(p); } });
+      return { r, got, share: gg / totG };
+    }).filter((x) => x.share > 0).sort((a, b) => b.share - a.share);
+    if (!rocks.find((x) => x.r === C.src)) C.src = rocks[0] ? rocks[0].r : '';
+    const R0 = rocks.find((x) => x.r === C.src);
+    let h = `<div class="card"><h2><span class="n">🚀</span>Bring it to ${esc(dest)}</h2><div class="hint" style="margin:0 0 8px">This only <b>loads</b> a ship. You fly it to ${esc(dest)} and unload it yourself in the game.</div>`;
+    if (!rocks.length) {
+      el.innerHTML = h + `<div class="src" style="color:var(--amber)">None of your other rocks has any of it.</div>` + (window.YICSRCTXT ? Object.keys(items).map((p) => `<div class="src">${esc(k.pname(+p))} ${k.amt(+p, items[p])}: ${window.YICSRCTXT(+p, items[p], k.astId(dest)) || '–'}</div>`).join('') : '') + '</div>';
+      return;
+    }
+    h += `<div class="src" style="margin:4px 0"><b>1 · Which rock has it</b></div><table><thead><tr><th></th><th>Rock</th><th class="num">Has</th><th>Short</th></tr></thead><tbody>` +
+      rocks.map((x) => { const sh = Object.keys(items).filter((p) => (x.got[p] || 0) < items[p]); return `<tr><td><input type="radio" name="pp-src" value="${esc(x.r)}"${x.r === C.src ? ' checked' : ''}></td><td>${esc(x.r)}</td><td class="num"><b class="${x.share >= 0.999 ? 'ok' : ''}">${x.share >= 0.999 ? 100 : Math.min(99, Math.round(x.share * 100))}%</b></td><td class="src">${sh.length ? sh.map((p) => esc(k.pname(+p))).slice(0, 4).join(', ') + (sh.length > 4 ? '…' : '') : '<span class="ok">✓ all of it</span>'}</td></tr>`; }).join('') + '</tbody></table>';
+    // the load from that rock
+    const load = R0.got, LG = Object.keys(load).reduce((t, p) => t + load[p] * g(p), 0), LV = Object.keys(load).reduce((t, p) => t + load[p] * v(p), 0);
+    h += `<div class="hint">Load from ${esc(C.src)}: <b>${k.tonnes(LG / 1000)}</b> · ${Math.round(LV / 1e6).toLocaleString('en-GB')} m³.</div>`;
+    // 2. ships – Light and Heavy Transports only
+    const orbit = (id) => ((d.owned || []).find((a) => a.id === id) || {}).Orbit;
+    const astName = (id) => ((d.owned || []).find((a) => a.id === id) || {}).Name ? d.owned.find((a) => a.id === id).Name.name : (id ? 'Asteroid #' + id : '?');
+    const srcAst = k.astId(C.src), dstAst = k.astId(dest);
+    const ships = (d.ships || []).filter((s) => SHIPT[s.st] && s.capM).map((s) => {
+      const at = s.sst === 'd' && s.dId === srcAst;
+      const trips = Math.max(1, Math.ceil(Math.max(LG / (s.capM * 0.995), LV / (s.capV * 0.995))));
+      const fitsNow = at && LG <= (s.capM - s.useM) * 0.995 && LV <= (s.capV - s.useV) * 0.995;
+      return { s, at, trips, fitsNow, f: C.fl[s.id] };
+    });
+    const shuttles = (d.ships || []).filter((s) => s.st === 4).length;
+    const tot = (x) => (x.f && x.f.ok ? x.f.toSrc + x.trips * x.f.leg + (x.trips - 1) * x.f.back : 1e9);
+    ships.sort((a, b) => (b.fitsNow - a.fitsNow) || tot(a) - tot(b) || (b.at - a.at) || b.s.capM - a.s.capM);
+    if (!ships.find((x) => x.s.id === C.ship)) C.ship = ships[0] ? ships[0].s.id : 0;
+    const hrsTxt = (x) => (x == null ? '…' : x === 0 ? '–' : x < 48 ? x + ' h' : (x / 24).toFixed(1) + ' days');
+    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Ship</b></div>` + (ships.length ? `<table><thead><tr><th></th><th>Ship</th><th>Where it is</th><th class="num">Flight to ${esc(C.src)}</th><th class="num">${esc(C.src)} → ${esc(dest)}</th><th class="num">Trips</th><th class="num">All done in</th></tr></thead><tbody>` +
+      ships.map((x, i) => { const f = x.f; const done = f && f.ok ? tot(x) : null;
+        return `<tr><td><input type="radio" name="pp-ship" value="${x.s.id}"${x.s.id === C.ship ? ' checked' : ''}></td><td><b>${esc(x.s.name)}</b> <span class="src">${SHIPT[x.s.st]}</span>${i === 0 && f && f.ok ? ' <span class="ok">★ best</span>' : ''}</td>` +
+          `<td class="src">${x.at ? '<span class="ok">at ' + esc(C.src) + '</span>' + (x.fitsNow ? ' · room for it all' : ' · room for ' + Math.round(Math.min(1, Math.min((x.s.capM - x.s.useM) / Math.max(1, LG), (x.s.capV - x.s.useV) / Math.max(1, LV))) * 100) + '%') : esc(x.s.sst === 'f' ? 'flying to ' + astName(x.s.dId) : (x.s.sst === 'o' ? 'in orbit at ' : 'at ') + astName(x.s.dId))}</td>` +
+          `<td class="num">${x.at ? '<span class="ok">here</span>' : f ? (f.ok ? hrsTxt(f.toSrc) : '<span style="color:var(--red)">' + esc(f.why) + '</span>') : '…'}</td><td class="num">${f ? (f.ok ? hrsTxt(f.leg) : '') : '…'}</td><td class="num">${x.trips}</td><td class="num">${done == null ? '…' : '<b>' + hrsTxt(done) + '</b>'}</td></tr>`; }).join('') + '</tbody></table>' +
+      `<div class="hint">Trips = how many full loads it takes. All done in = flight to ${esc(C.src)} + each trip to ${esc(dest)} + the flights back between trips. Quickest route leaving now with the propellant it has; no crew engine bonus.${shuttles ? ' Shuttles are left out – too small for cargo.' : ''}</div>`
+      : '<div class="src" style="color:var(--amber)">You have no Light or Heavy Transports.</div>');
+    // 3. load it (only a ship that's already docked at the source rock)
+    const pick = ships.find((x) => x.s.id === C.ship);
+    S.calls = []; S.startList = []; S.feed = false; S.srcRock = C.src;
+    if (pick && pick.at) {
+      const cl = k.crews(C.src);
+      if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
+      S.moverObj = cl.find((c) => c.id === S.mover);
+      // fill the free space of this ship (first trip), each item from the nearest storage on that rock
+      let fg = (pick.s.capM - pick.s.useM) * 0.995, fv = (pick.s.capV - pick.s.useV) * 0.995; const mv = {};
+      Object.keys(load).sort((a, b) => load[b] * v(b) - load[a] * v(a)).forEach((p) => {
+        let n = Math.min(load[p], Math.floor(fg / g(p)), Math.floor(fv / v(p))); if (n <= 0) return;
+        fg -= n * g(p); fv -= n * v(p);
+        stores(C.src).map((b) => [b, have(b, p), k.kmBetween(k.lotOf(b), pick.s.lot, srcAst) ?? 1e9]).filter((z) => z[1] > 0).sort((a, b) => a[2] - b[2]).forEach(([b, hv]) => {
+          if (n <= 0) return; const q = Math.min(n, hv); n -= q; (mv[b.id] = mv[b.id] || { from: b.id, to: pick.s.id, ship: true, slot: 2, b, items: [] }).items.push([+p, q]);
+        });
+      });
+      S.calls = Object.values(mv).map((x) => ({ from: x.from, to: x.to, ship: true, slot: 2, items: x.items }));
+      h += `<div class="src" style="margin:12px 0 4px"><b>3 · Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}</b></div>` +
+        (S.calls.length ? `<table><tbody>${Object.values(mv).map((x) => `<tr><td>${esc(k.nm(x.b))}</td><td>${x.items.map(([p, a]) => esc(k.pname(p)) + ' ' + k.amt(p, a)).join('<br>')}</td></tr>`).join('')}</tbody></table>` : '<div class="src" style="color:var(--amber)">No room left in this ship.</div>') +
+        (cl.length ? `<div class="row" style="margin-top:8px"><span class="src">Moved by</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--red)">No crew on ${esc(C.src)} to do the loading.</div>`) +
+        `<button class="approve" id="pp-cgo" style="margin-top:12px"${S.calls.length && cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (load ' + S.calls.length + ' move' + (S.calls.length === 1 ? '' : 's') + ')'}</button>` +
+        `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`;
+    } else if (pick) h += `<div class="src" style="margin-top:12px;color:var(--amber)">Fly ${esc(pick.s.name)} to ${esc(C.src)} in the game first${pick.f && pick.f.ok ? ' (about ' + hrsTxt(pick.f.toSrc) + ')' : ''}, then come back here to load it.</div>`;
+    el.innerHTML = h + '</div>';
+    el.querySelectorAll('input[name="pp-src"]').forEach((r) => r.addEventListener('change', () => { C.src = r.value; C.ship = 0; C.fl = {}; C.key = ''; k.render(); }));
+    el.querySelectorAll('input[name="pp-ship"]').forEach((r) => r.addEventListener('change', () => { C.ship = +r.value; k.render(); }));
+    const cc = el.querySelector('#pp-ccrew'); if (cc) cc.addEventListener('change', () => { S.mover = +cc.value; k.render(); });
+    const go = el.querySelector('#pp-cgo'); if (go) go.addEventListener('click', () => k.approve());
+    // flight times, worked out after drawing (they take a moment), then drawn again
+    const key = C.src + '>' + dest + '|' + Math.round(LG);
+    if (C.key === key || C.busy) return;
+    C.key = key; C.busy = true;
+    const load0 = TR ? Promise.resolve(TR) : import('./travel.js').then((T) => (TR = T));
+    load0.then(async (T) => {
+      const dep = (Date.now() / 1000 - 1609459200) / 3600, oS = orbit(srcAst), oD = orbit(dstAst);
+      for (const x of ships) {
+        const s = x.s, out = { ok: false, why: '' };
+        try {
+          if (!oS || !oD) { out.why = 'route unknown'; }
+          else {
+            const pk = (s.prop || 0) * 1000;
+            const leg = await T.fastest(oS, oD, dep, T.maxDeltaV(s.st, s.sv, 1, Math.min(LG, s.capM) / 1000, pk));
+            const back = await T.fastest(oD, oS, dep, T.maxDeltaV(s.st, s.sv, 1, 0, pk));
+            let toSrc = 0;
+            if (!x.at) {
+              const now = Date.now() / 1000, wait = s.sst === 'f' && s.arrT > now ? Math.ceil((s.arrT - now) / 3600) : 0;
+              const oF = orbit(s.dId);
+              if (s.dId === srcAst) toSrc = wait;
+              else { const f = oF ? await T.fastest(oF, oS, dep + wait, T.maxDeltaV(s.st, s.sv, 1, s.useM / 1000, pk)) : null; toSrc = f ? wait + f.tof : null; }
+            }
+            if (!leg || toSrc == null) out.why = 'out of range';
+            else Object.assign(out, { ok: true, toSrc, leg: leg.tof, back: back ? back.tof : leg.tof });
+          }
+        } catch (e) { out.why = 'route unknown'; }
+        C.fl[s.id] = out;
+      }
+      C.busy = false;
+      if (C.key === key) k.render();
+    }).catch(() => { C.busy = false; });
+  }
   function render(m, mode) {
     const k = K();
     const cargo = mode === 'ship'; // Cargo bay (Mark, 9 Nov): same steps 1–3 on the rock to make it on, then load a ship with what's left to fly in
@@ -367,7 +482,7 @@
     const k = K(), S = k.S;
     m.innerHTML = h;
     const sh = m.querySelector('#pp-ship');
-    if (sh && window.YICSHIP && P.shipItems) window.YICSHIP.render(sh, { items: P.shipItems, what: k.pname(P.p), runs: 1, label: (k.bulk(P.p) ? k.amt(P.p, P.shipQty || 0) + ' ' : (P.shipQty || 0).toLocaleString('en-GB') + ' × ') + k.pname(P.p) });
+    if (sh && P.shipItems) cargoPanel(sh, P.shipItems);
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     on('pp-rock', 'change', (e) => { S.rock = e.target.value; P.moverSet = false; P.runner = 0; k.render(); });
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
