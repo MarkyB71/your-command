@@ -356,7 +356,10 @@
       });
       S.calls = Object.keys(mv).map((id) => ({ from: +id, to: pick.s.id, ship: true, slot: 2, items: mv[id].items }));
       const lg = S.calls.reduce((t, c) => t + c.items.reduce((u, [p, a]) => u + a * g(p), 0), 0);
-      h += `<div class="src" style="margin-top:8px">Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}: <b>${k.tonnes(lg / 1000)}</b> in ${S.calls.length} move${S.calls.length === 1 ? '' : 's'}.</div>` +
+      // what will be loaded, shown before the wallet asks (Mark, 9 Nov): storage → ship, item by item
+      h += `<div class="src" style="margin-top:8px">Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}: <b>${k.tonnes(lg / 1000)}</b> in ${S.calls.length} move${S.calls.length === 1 ? '' : 's'}:</div>` +
+        `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🚀 ${esc(pick.s.name)}` +
+          mv[id].items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>').join('') + '</div>' +
         (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Moved by</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--red)">No crew on ${esc(C.src)} to do the loading.</div>`) +
         `<button class="approve" id="pp-cgo" style="margin-top:10px"${S.calls.length && cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (load ' + esc(pick.s.name) + ')'}</button>` +
         `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`;
