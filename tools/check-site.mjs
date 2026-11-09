@@ -98,7 +98,7 @@ const tally = { live: 0, cached: 0 };
 const liveCache = new Map();                 // each live answer fetched once per run (gentle on the server)
 
 for (const pass of [{ name: 'as everyone sees it', q: '?wallet=' + WALLET }, { name: 'with ?beta=1 (tests)', q: '?wallet=' + WALLET + '&beta=1' },
-  { name: 'Logistics Hub (?beta=1&dock=1)', q: '?wallet=' + WALLET + '&beta=1&dock=1', hub: true }]) {
+  { name: 'Logistics Hub (dock=1)', q: '?wallet=' + WALLET + '&dock=1', hub: true }]) {
   console.log('  — ' + pass.name);
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
   const errs = [], missing = new Set(), dataFails = new Set();
@@ -181,15 +181,32 @@ for (const pass of [{ name: 'as everyone sees it', q: '?wallet=' + WALLET }, { n
         for (let t = 0; t < 40; t++) { await wait(500); await page.evaluate(() => { const v = document.querySelector('#dk-ov .dkv'); if (v) v.click(); }); if (await page.evaluate(() => document.getElementById('dk-ov').classList.contains('indock'))) break; }
       }, async () => (await page.evaluate(() => document.getElementById('dk-ov').classList.contains('indock'))) || 'never got through the airlock into the hub');
       if (h) ok('airlock cycles into the hub');
-      const r = await step('hub with a process picked', async () => {
-        await page.waitForFunction(() => document.getElementById('dk-rock') || /No warehouses/.test((document.getElementById('dk-main') || {}).innerText || ''), null, { timeout: 30000 });
-        await page.evaluate(() => { const s2 = document.getElementById('dk-proc'); if (!s2) return; const o = [...s2.options].find((x) => x.value !== '-1'); if (o) { s2.value = o.value; s2.dispatchEvent(new Event('change')); } });
+      // Logistics Bridge (9 Nov 2026): consoles + viewscreen. Production: search, pick a product → "What you need".
+      const r = await step('Production plan', async () => {
+        await page.waitForFunction(() => document.querySelector('#dk-ov .lb-deck [data-lb="make"]') || /No warehouses/.test((document.getElementById('dk-main') || {}).innerText || ''), null, { timeout: 30000 });
+        await page.evaluate(() => { const b = document.querySelector('#dk-ov .lb-deck [data-lb="make"]'); if (b) b.click(); });
+        await page.waitForFunction(() => document.getElementById('pp-find') || /No warehouses/.test((document.getElementById('dk-main') || {}).innerText || ''), null, { timeout: 30000 });
+        await page.evaluate(() => { const f = document.getElementById('pp-find'); if (!f) return; f.value = 'steel'; f.dispatchEvent(new Event('input')); });
+        await wait(500);
+        await page.evaluate(() => { const c = document.querySelector('[data-pp]'); if (c) c.click(); });
+        await wait(1500);
       }, async () => {
         const t = await page.evaluate(() => (document.getElementById('dk-main') || {}).innerText || '');
         if (/No warehouses/.test(t)) return true;
-        return /Inputs needed|you don.t have one/.test(t) || 'the hub did not show a plan after picking a process';
+        return /What you need|can.t be made on/.test(t) || 'Production did not show a plan after picking a product';
       });
-      if (r) ok('hub works out a plan (nothing sent)');
+      if (r) ok('Production works out a plan (nothing sent)');
+      const r2 = await step('Cargo bay and Galley', async () => {
+        await page.evaluate(() => { const b = document.querySelector('#dk-ov .lb-deck [data-lb="ship"]'); if (b) b.click(); });
+        await wait(1500);
+        await page.evaluate(() => { const b = document.querySelector('#dk-ov .lb-deck [data-lb="feed"]'); if (b) b.click(); });
+        await wait(800);
+      }, async () => {
+        const t = await page.evaluate(() => (document.getElementById('dk-main') || {}).innerText || '');
+        if (/No warehouses/.test(t)) return true;
+        return /Crews to feed|No crews found/.test(t) || 'the Galley did not open';
+      });
+      if (r2) ok('Cargo bay and Galley open');
     }
     if (missing.size) bad(pass.name + ': site files not found (404): ' + [...missing].join(', '));
     if (dataFails.size) warn(pass.name + ': game data problems (not the new code – the live site or the game): ' + [...dataFails].slice(0, 5).join(' | '));
