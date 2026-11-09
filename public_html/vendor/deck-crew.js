@@ -41,6 +41,17 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 .cq-card .crewcard{margin:0!important;box-shadow:0 0 18px -6px #3fd68a}
 /* Crew Quarters: no crews list under the lockers (Mark, 27 Oct) */
 #deckroom[data-deck="crew"]:not(.scr) + #main{display:none!important}
+/* TEST (?beta=1, Mark 9 Nov): Galley-style crew cards with bigger crewmate pictures; click = all its members */
+.cqg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;max-height:clamp(260px,46vh,560px);overflow:auto;padding:2px 2px 10px;scrollbar-color:#24382d transparent}
+.cqg-c{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid #2c3d35;border-radius:10px;background:#0e1512;transition:border-color .15s,box-shadow .15s}
+.cqg-c:hover,.cqg-c:focus-visible{border-color:${COL};box-shadow:0 0 14px -4px ${COL}}
+.cqg-h{display:flex;align-items:center;gap:8px;font:700 14px system-ui,sans-serif;color:#e6ebf2}
+.cqg-h .cq-led{position:static;margin-left:auto}
+.cqg-s{font:12px/1.35 system-ui,sans-serif;color:#8fa79a}
+.cqg-f{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.cqg-f img{width:38px;height:48px;object-fit:cover;object-position:50% 0;border-radius:5px;border:2px solid;background:#000}
+.cq-mem h3{margin:0 0 10px;font:700 16px system-ui,sans-serif;color:#c8f5dc}
+.cq-mem .cq-more{all:unset;cursor:pointer;margin-left:10px;color:${COL};font:600 12px system-ui,sans-serif;text-decoration:underline}
 @media (max-width:700px){.cq-lk{flex-basis:138px;width:138px!important;max-width:138px!important}.cq-read{display:none}}
 @media (prefers-reduced-motion:reduce){.cq-lk{transition:none}.cq-lk:hover{transform:none}.cq-led.hot{animation:none}}
 `;
@@ -83,6 +94,31 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
       '<span class="cq-lb">' + esc(where) + '</span>' +
       '<span class="cq-ft"><span class="cq-st" style="color:' + (busy ? '#ffab3d' : COL) + '">' + (busy ? 'Busy · ' + left(ready - now) : 'Ready') + '</span><span class="cq-hd"></span></span>' +
       '</button>';
+  }
+
+  const BETA = /[?&]beta=1\b/.test(location.search);
+  function card(c, raw, Y) {
+    const esc = Y.esc, cms = Y.D.crewmates || {}, now = Date.now() / 1000;
+    const ready = raw && raw.Crew && raw.Crew.readyAt, busy = ready && ready > now;
+    const hungry = c.food != null && c.food < 0.5, pct = Math.round((c.food || 0) * 100);
+    const led = hungry ? '#ff6b6b' : busy ? '#ffab3d' : COL;
+    const fcol = c.food == null ? '#5b6677' : c.food >= 0.65 ? COL : c.food >= 0.5 ? '#ffab3d' : '#ff6b6b';
+    const where = c.place && /^Aboard|^In flight/.test(c.place) ? c.place.split(' · ')[0] : c.ast || c.place || '–';
+    const faces = c.roster.map((id) => '<img data-face="' + id + '" src="cimg.php?id=' + id + '&s=1" alt="" loading="lazy" title="' + esc((c.mn && c.mn[id]) || 'Crewmate #' + id) + '" style="border-color:' + (CLASS_COL[(cms[id] || {}).class] || '#6b7a90') + '">').join('');
+    return '<button type="button" class="cqg-c" data-crew="' + esc(c.id) + '"><span class="cqg-h">' + esc(c.name) + '<i class="cq-led' + (hungry ? ' hot' : '') + '" style="--led:' + led + '"></i></span>' +
+      '<span class="cqg-s">' + esc(where) + ' · ' + (busy ? '<span style="color:#ffab3d">busy ' + left(ready - now) + '</span>' : '<span style="color:' + COL + '">ready</span>') + '</span>' +
+      '<span class="cqg-s">Food ' + (c.food == null ? '–' : pct + '%') + (hungry ? ' · hungry' : '') + '</span><span class="cq-bar"><i style="width:' + pct + '%;background:' + fcol + '"></i></span>' +
+      '<span class="cqg-f">' + faces + '</span></button>';
+  }
+  // all the crew's members on the viewscreen: big pictures, name, class, traits (Mark, 9 Nov)
+  function openMembers(id, el) {
+    const Y = window.YIC, c = ((Y.D && Y.D.crewList) || []).find((x) => String(x.id) === String(id));
+    if (!c) return;
+    let one = el.querySelector('.cq-one');
+    if (!one) { one = document.createElement('div'); one.className = 'cq-one'; el.appendChild(one); }
+    one.innerHTML = '<button type="button" class="cq-back">◂ All crews</button><div class="cq-mem"><h3>' + Y.esc(c.name) + ' <span style="font-weight:400;color:#8fa79a;font-size:13px">· ' + c.roster.length + ' crewmate' + (c.roster.length === 1 ? '' : 's') + ' · ' + Y.esc(c.place || c.ast || '') + '</span><button type="button" class="cq-more" data-full="' + Y.esc(c.id) + '">Full crew details ▸</button></h3>' + (Y.crewTraits ? Y.crewTraits(c) : '') + '</div>';
+    el.classList.add('cq-showone');
+    if (Y.fillFacesIn) Y.fillFacesIn(one);
   }
 
   // Show that crew's card on the viewscreen in place of the lockers (Mark, 27 Oct)
@@ -133,7 +169,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
       '<div class="cq-plate">CREW QUARTERS</div>' +
       '<div class="cq-read"><b>' + crews.length + '</b> crews · <b>' + mates + '</b> crewmates · ' +
       '<b style="color:#ffab3d">' + busyN + '</b> busy' + (hungryN ? ' · <b style="color:#ff6b6b">' + hungryN + '</b> hungry' : '') + '</div>' +
-      (crews.length ? '<div class="cq-row">' + crews.map((c) => locker(c, raw[c.id], Y)).join('') + '</div>' : '<div class="cq-none">No crews yet</div>') +
+      (crews.length ? (BETA ? '<div class="cq-row cqg">' + crews.map((c) => card(c, raw[c.id], Y)).join('') + '</div>' : '<div class="cq-row">' + crews.map((c) => locker(c, raw[c.id], Y)).join('') + '</div>') : '<div class="cq-none">No crews yet</div>') +
       '<div class="cq-bench"></div>';
     el.addEventListener('click', (e) => {
       if (e.target.closest('.cq-back')) {
@@ -142,8 +178,10 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
         if (one) one.remove();
         return;
       }
+      const full = e.target.closest('[data-full]');
+      if (full) { openCrew(full.dataset.full, el); return; }
       const t = e.target.closest('[data-crew]');
-      if (t) openCrew(t.dataset.crew, el);
+      if (t) (BETA ? openMembers : openCrew)(t.dataset.crew, el);
     });
     if (Y.fillFacesIn) Y.fillFacesIn(el);
   }
