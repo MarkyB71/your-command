@@ -156,14 +156,17 @@
       });
       const m0 = by[a][0][4];
       return { name: (mk[m0] && mk[m0].ast) || ('Asteroid #' + a), got, cost, c: g / tot,
-        mkts: [...new Set(by[a].map((o) => (mk[o[4]] && mk[o[4]].name) || ('Marketplace #' + o[4])))] };
+        mkts: [...new Set(by[a].filter((o) => got[o[0]]).map((o) => o[4]))] };
     }).sort((x, y) => (y.name === k.S.rock) - (x.name === k.S.rock) || y.c - x.c || x.cost - y.cost).slice(0, 8);
+    // in-game link to the marketplace: through the Game Links extension when it's there (moves the open game tab), otherwise a plain link
+    const link = (id) => (window.GL && window.GL.on() ? window.GL('/building/' + id, 'Open this marketplace in the game')
+      : ' <a href="https://game.influenceth.io/building/' + id + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="Open this marketplace in the game">in game ↗</a>');
     const sway = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? (v / 1e3).toFixed(1) + 'k' : Math.round(v).toLocaleString('en-GB')) + ' SWAY';
     let h = '<div class="src" style="margin:12px 0 4px"><b>🛒 Or buy it on the belt</b> – marketplaces selling this load, best cover first. Buying and flying stay with you in the game.</div>';
     if (!rows.length) return h + '<div class="src" style="color:var(--amber)">Nobody on the belt is selling any of it right now.</div>';
     h += '<table><thead><tr><th>Asteroid</th><th>Of the load</th><th>For sale there</th><th>Cost</th></tr></thead><tbody>' + rows.map((r) => {
       const left = Object.keys(items).filter((p) => (r.got[p] || 0) < items[p]);
-      return `<tr><td><b>${esc(r.name)}</b>${r.name === k.S.rock ? ' <span class="sl-tag">on this rock – no flight</span>' : ''}<div class="src">${r.mkts.slice(0, 2).map(esc).join(', ')}${r.mkts.length > 2 ? ' +' + (r.mkts.length - 2) : ''}</div></td>
+      return `<tr><td><b>${esc(r.name)}</b>${r.name === k.S.rock ? ' <span class="sl-tag">on this rock – no flight</span>' : ''}<div class="src">${r.mkts.slice(0, 4).map((id) => esc((mk[id] && mk[id].name) || ('Marketplace #' + id)) + link(id)).join('<br>')}${r.mkts.length > 4 ? '<br>+ ' + (r.mkts.length - 4) + ' more' : ''}</div></td>
 <td>${r.c >= 0.999 ? '<span class="ok">✓ all</span>' : Math.round(r.c * 100) + '%'}</td>
 <td class="src">${Object.keys(r.got).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, r.got[p])).join('<br>')}${left.length && r.c < 0.999 ? '<br><span style="color:var(--amber)">short: ' + left.map((p) => esc(k.pname(+p))).slice(0, 3).join(', ') + (left.length > 3 ? ' +' + (left.length - 3) : '') + '</span>' : ''}</td>
 <td>${sway(r.cost)}</td></tr>`;
