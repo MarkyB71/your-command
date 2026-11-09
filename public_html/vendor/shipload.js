@@ -304,6 +304,7 @@ ${F.moves.length > 30 ? '<div class="hint">The first 30 moves go in this approva
       else if (w.account && typeof w.account.execute === 'function') res = await w.account.execute(cs.map((c) => ({ contractAddress: c.contract_address, entrypoint: c.entry_point, calldata: c.calldata })));
       else throw new Error('This wallet cannot send transactions from a web page.');
       const hsh = res && (res.transaction_hash || res.transactionHash);
+      if (k.rememberCrew) k.rememberCrew(list.map((mv) => [mv.b.id, mv.ship.id]), SS.crew);
       SS.sentAt = Date.now(); SS.busy = false;
       SS.msg = '✓ Sent to the game. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'Finish the moves in the game with Finish All Ready Items – then the ship is yours to fly to ' + k.esc(k.S.rock) + '.' +
         crewLink(k.crews(SS.src).find((c) => c.id === SS.crew), k.esc); // Mark, 9 Nov: which crew to finish with
