@@ -187,22 +187,33 @@
     });
     S.calls = moves.map((x) => ({ from: x.from, to: x.to, items: x.items }));
     S.startList = P.start ? ready : [];
-    S.feed = false;
-    const tot = S.calls.length + S.startList.length;
+    // feed the crew first (Mark, 9 Nov) – same amount and source as the hub's crew step: a year's food at most,
+    // from the biggest Food stock on this rock; goes first in the same approval (dock.js buildCalls)
+    S.feedCall = null;
+    let feedH = '';
+    if (crew && crew.food < 0.95) {
+      const yrs = Math.min(1, crew.food >= 0.5 ? 1 - crew.food : (0.75 - crew.food) / 0.5), need = Math.floor(crew.mates * 1000 * yrs);
+      const src = k.onRock().filter(k.isStore).map((b) => [b, ((k.inv(b) || { contents: [] }).contents || []).reduce((t, c) => t + (c.product === 129 ? c.amount : 0), 0)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+      if (src && need > 0) S.feedCall = { src: src[0].id, give: Math.min(need, src[1]), crew: crew.id };
+      feedH = `<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:6px">${crew.fm < 1 ? '⚠ ' + esc(crew.name) + ' is hungry – moves and starts will be slower.' : esc(crew.name) + ' is ' + Math.round(crew.food * 100) + '% fed.'}</div>` +
+        (S.feedCall ? `<label style="margin:0"><input type="checkbox" id="pp-feed"${P.feed ? ' checked' : ''}> Feed ${esc(crew.name)} first: ${k.tonnes(S.feedCall.give)} Food from ${esc(k.nm(src[0]))}</label><div class="hint">Feeding goes in the same wallet approval, before the moves.</div>` : '<div class="src">No Food stored on this rock to feed it.</div>') + '</div>';
+    }
+    S.feed = !!(P.feed && S.feedCall);
+    const tot = S.calls.length + S.startList.length + (S.feed ? 1 : 0);
     let h = `<div class="card"><h2><span class="n">6</span>Moves into ${esc(k.nm(mat))} (${moves.length})</h2>` +
       (moves.length ? `<table><thead><tr><th>From</th><th>Goods</th><th class="num">Trip</th></tr></thead><tbody>${moves.map((x) => { const d = km(x.b, mat); return `<tr><td>${esc(k.nm(x.b))}</td><td>${x.items.map(([p, a]) => esc(k.pname(p)) + ' ' + k.amt(p, a)).join('<br>')}</td><td class="num">${d == null ? '' : k.kmTxt(d) + ' · ' + k.tripTxt(k.tripSecs(d, crew))}</td></tr>`; }).join('')}</tbody></table>`
         : '<div class="src"><span class="ok">✓ Nothing to move</span> – what the plan takes from storage is already there (or on its way).</div>') +
       (short.length ? `<div class="hint" style="color:var(--amber)">Not enough on this rock yet: ${short.map((p) => esc(k.pname(p))).join(', ')}.</div>` : '') +
       (Object.keys(W.mine).length ? `<div class="hint">⛏ Mine into ${esc(k.nm(mat))}: ${Object.keys(W.mine).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, W.mine[p])).join(', ')}.</div>` : '') +
       (Object.keys(W.fly).length ? `<div class="hint">✈ Fly or buy into ${esc(k.nm(mat))}: ${Object.keys(W.fly).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, W.fly[p])).join(', ')} – the 🚀 Cargo bay can load a ship for it.</div>` : '') + '</div>';
-    h += `<div class="card"><h2><span class="n">7</span>Crew</h2>` + (cl.length ? `<select id="pp-crew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)} – fed ${Math.round(c.food * 100)}%${c.fm < 1 ? ' (hungry, slower)' : ''}${c.busy ? ' · busy until ' + esc(c.busy) : ' · ready now'}</option>`).join('')}</select><div class="hint">Must be on this rock. Moves and starts are done by this crew.</div>`
+    h += `<div class="card"><h2><span class="n">7</span>Crew</h2>` + (cl.length ? `<select id="pp-crew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)} – fed ${Math.round(c.food * 100)}%${c.fm < 1 ? ' (hungry, slower)' : ''}${c.busy ? ' · busy until ' + esc(c.busy) : ' · ready now'}</option>`).join('')}</select><div class="hint">Must be on this rock. Moves and starts are done by this crew.</div>` + feedH
       : '<div class="src" style="color:var(--red)">None of your crews is on this rock – a crew must be on the rock to move goods or start processes.</div>') + '</div>';
     h += `<div class="card"><h2><span class="n">8</span>Start processes</h2>` +
       `<label style="margin:0 0 8px"><input type="checkbox" id="pp-start"${P.start ? ' checked' : ''}> Start the ones that are ready in the same approval (${ready.length})</label>` +
       `<table><tbody>${ready.map((c) => `<tr><td>${c.i + 1}</td><td>▶ ${esc(c.r.name)}</td><td>${esc(k.nm(c.b))}</td><td class="ok">ready now</td></tr>`).join('')}${wait.map(([i, st, why]) => `<tr><td>${i + 1}</td><td class="src">⏳ ${esc(st.r.name)}</td><td></td><td class="src">${esc(why)}</td></tr>`).join('')}</tbody></table>` +
       '<div class="hint">A process can only start once its inputs are in the materials warehouse – moves have to be finished in the game first. The rest wait their turn.</div></div>';
     const can = !S.busy && tot && crew;
-    h += `<div class="card"><h2><span class="n">9</span>Approve</h2><button class="approve" id="pp-go"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + S.calls.length + ' move' + (S.calls.length === 1 ? '' : 's') + (S.startList.length ? ' + start ' + S.startList.length : '') + ')'}</button>` +
+    h += `<div class="card"><h2><span class="n">9</span>Approve</h2><button class="approve" id="pp-go"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + (S.feed ? 'feed crew + ' : '') + S.calls.length + ' move' + (S.calls.length === 1 ? '' : 's') + (S.startList.length ? ' + start ' + S.startList.length : '') + ')'}</button>` +
       `<div class="hint">If one action fails, the game cancels the whole approval – nothing is changed.${tot > 30 ? ' This approval sends the first 30; the rest next time.' : ''}</div>` +
       `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
     return h;
@@ -296,7 +307,8 @@
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
-    on('pp-crew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
+    on('pp-crew', 'change', (e) => { S.mover = +e.target.value; P.feed = false; k.render(); });
+    on('pp-feed', 'change', (e) => { P.feed = e.target.checked; k.render(); });
     on('pp-start', 'change', (e) => { P.start = e.target.checked; k.render(); });
     on('pp-go', 'click', () => k.approve());
     m.querySelectorAll('[data-for]').forEach((b) => b.addEventListener('click', () => { P.for = b.dataset.for; k.render(); }));
