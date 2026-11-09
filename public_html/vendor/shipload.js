@@ -132,6 +132,45 @@
     return { loads, moves: Object.values(moves), left, short };
   }
 
+  // 🛒 Markets around the belt (Mark, 9 Nov): for the chosen "What to send", which asteroids' marketplaces
+  // sell it – per asteroid, cheapest listings first: how much of the load is for sale there and what it costs
+  // (price + the market's taker fee). Read-only – buying stays in the game. Your own listings are left out.
+  function belt(items) {
+    const k = K(), esc = k.esc, B = window.BELTDATA && window.BELTDATA.get(() => { if (host) render(host, cur); });
+    if (!B) return '<div class="src">🛒 Loading the belt markets…</div>';
+    if (B.err) { window.BELTDATA.data = null; return '<div class="src">🛒 Could not load the belt markets just now.</div>'; }
+    const mk = B.markets || {}, mine = new Set(Object.keys((window.YIC && window.YIC.D && window.YIC.D.crewN) || {}).map(Number));
+    const fee = (id) => { const x = mk[id] && mk[id].ex; return x ? (x.takerFee || 0) / 10000 : 0; };
+    const by = {};
+    (B.orders || []).forEach((o) => {
+      if (o[1] !== 2 || o[2] <= 0 || o[3] <= 0 || mine.has(o[6]) || !items[o[0]]) return;
+      (by[o[5]] = by[o[5]] || []).push(o);
+    });
+    const tot = loadG(items) || 1;
+    const rows = Object.keys(by).map((a) => {
+      const got = {}; let cost = 0, g = 0;
+      by[a].sort((x, y) => x[3] * (1 + fee(x[4])) - y[3] * (1 + fee(y[4]))).forEach((o) => {
+        const p = o[0], n = Math.min(o[2], items[p] - (got[p] || 0));
+        if (n <= 0) return;
+        got[p] = (got[p] || 0) + n; cost += n * o[3] / 1e6 * (1 + fee(o[4])); g += n * k.grams(p);
+      });
+      const m0 = by[a][0][4];
+      return { name: (mk[m0] && mk[m0].ast) || ('Asteroid #' + a), got, cost, c: g / tot,
+        mkts: [...new Set(by[a].map((o) => (mk[o[4]] && mk[o[4]].name) || ('Marketplace #' + o[4])))] };
+    }).sort((x, y) => (y.name === k.S.rock) - (x.name === k.S.rock) || y.c - x.c || x.cost - y.cost).slice(0, 8);
+    const sway = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? (v / 1e3).toFixed(1) + 'k' : Math.round(v).toLocaleString('en-GB')) + ' SWAY';
+    let h = '<div class="src" style="margin:12px 0 4px"><b>🛒 Or buy it on the belt</b> – marketplaces selling this load, best cover first. Buying and flying stay with you in the game.</div>';
+    if (!rows.length) return h + '<div class="src" style="color:var(--amber)">Nobody on the belt is selling any of it right now.</div>';
+    h += '<table><thead><tr><th>Asteroid</th><th>Of the load</th><th>For sale there</th><th>Cost</th></tr></thead><tbody>' + rows.map((r) => {
+      const left = Object.keys(items).filter((p) => (r.got[p] || 0) < items[p]);
+      return `<tr><td><b>${esc(r.name)}</b>${r.name === k.S.rock ? ' <span class="sl-tag">on this rock – no flight</span>' : ''}<div class="src">${r.mkts.slice(0, 2).map(esc).join(', ')}${r.mkts.length > 2 ? ' +' + (r.mkts.length - 2) : ''}</div></td>
+<td>${r.c >= 0.999 ? '<span class="ok">✓ all</span>' : Math.round(r.c * 100) + '%'}</td>
+<td class="src">${Object.keys(r.got).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, r.got[p])).join('<br>')}${left.length && r.c < 0.999 ? '<br><span style="color:var(--amber)">short: ' + left.map((p) => esc(k.pname(+p))).slice(0, 3).join(', ') + (left.length > 3 ? ' +' + (left.length - 3) : '') + '</span>' : ''}</td>
+<td>${sway(r.cost)}</td></tr>`;
+    }).join('') + '</tbody></table><div class="hint">Prices include the market fee. Flight times and propellant: Trade Deck › Where to buy.</div>';
+    return h;
+  }
+
   function render(el, pick) {
     host = el; cur = pick;
     const k = K();
@@ -162,6 +201,7 @@ ${o.recs.length ? `<div class="sm" style="margin-top:4px">Then make it on ${esc(
     });
     h += '</div>';
     const O = opts[SS.opt];
+    h += belt(O.items);
     if (!rocks.length) { el.innerHTML = h + '<div class="src">You have no storage on another rock to load from.</div></div>'; wire(el); return; }
     if (!rocks.includes(SS.src)) SS.src = rocks.map((r) => [r, cover(r, O.items), shipsFor(r).some((x) => x.ok)]).sort((a, b) => b[1] - a[1] || b[2] - a[2])[0][0];
     h += `<div class="src" style="margin:12px 0 4px"><b>2 · Load it on</b></div><select id="sl-src">${rocks.map((r) => [r, cover(r, O.items), shipsFor(r).filter((x) => x.ok).length]).sort((a, b) => b[1] - a[1] || b[2] - a[2]).map(([r, c, n]) => `<option value="${esc(r)}"${r === SS.src ? ' selected' : ''}>${esc(r)} – ${Math.round(c * 100)}% in stock · ${n ? n + ' ship' + (n === 1 ? '' : 's') + ' ready' : 'no ship ready'}</option>`).join('')}</select>`;
@@ -276,5 +316,5 @@ ${F.moves.length > 30 ? '<div class="hint">The first 30 moves go in this approva
     }
   }
 
-  window.YICSHIP = { render, _test: { options, fill, shipsFor, calls: (l) => calls(l), SS } };
+  window.YICSHIP = { render, _test: { options, fill, shipsFor, belt, calls: (l) => calls(l), SS } };
 })();
