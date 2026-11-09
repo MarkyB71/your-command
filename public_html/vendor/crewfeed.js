@@ -79,14 +79,14 @@
   const ticked = (r) => !!r.give && !S.sent[r.id] && (r.id in S.pick ? S.pick[r.id] : !r.busy);
 
   // ---------- Logistics Hub: 🍽 Feed crews mode (vendor/dock.js calls YICFEED.render) ----------
-  const CSS = '#dk-ov .cf-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}' +
+  const CSS = '#dk-ov .cf-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}' +
     '#dk-ov .cf-c{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:#0b0e14;border:1px solid #232a37;border-radius:10px;padding:10px 12px}' +
     '#dk-ov .cf-c.on{border-color:#ffb03b88;box-shadow:0 0 14px #ff8a1f22}#dk-ov .cf-c.no{cursor:default;opacity:.5}' +
     '#dk-ov .cf-tk{flex:none;width:1.2em;height:1.2em;margin-top:.15em;border:2px solid #3a4356;border-radius:4px;text-align:center;line-height:1em;font-weight:900;color:#1a1000}' +
     '#dk-ov .cf-c.on .cf-tk{background:var(--amber);border-color:var(--amber)}' +
     '#dk-ov .cf-n{font-weight:700;font-size:1.05em}#dk-ov .cf-s{color:var(--dim);font-size:.88em;line-height:1.3}' +
     '#dk-ov .cf-f{height:6px;border-radius:3px;background:#1d2330;overflow:hidden;margin:4px 0}#dk-ov .cf-f i{display:block;height:100%}' +
-    '#dk-ov .cf-faces{display:flex;gap:3px;margin-top:5px}#dk-ov .cf-faces img{width:20px;height:25px;object-fit:cover;object-position:50% 0;border-radius:3px;border:1.5px solid;background:#000}' +
+    '#dk-ov .cf-faces{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}#dk-ov .cf-faces img{width:38px;height:48px;object-fit:cover;object-position:50% 0;border-radius:5px;border:2px solid;background:#000}' +
     '#dk-ov .cf-do{margin-top:4px;font-size:.88em}#dk-ov .cf-btn{background:#0d1d26;border:1px solid #8fe3ff66;color:var(--cyan);border-radius:8px;padding:6px 14px;font:600 1em Rajdhani,sans-serif;cursor:pointer}';
 
   function render(el) {
@@ -99,7 +99,8 @@
     const card = (r) => {
       const c = r.c, on = ticked(r), can = r.give && !S.sent[r.id];
       const pct = Math.round((c.food || 0) * 100), col = c.food == null ? '#5b6677' : c.food >= 0.65 ? '#3fd68a' : c.food >= 0.5 ? '#ffb03b' : '#ff4d4d';
-      const faces = c.roster.map((id) => `<img src="cimg.php?id=${esc(id)}&s=1" alt="" loading="lazy" style="border-color:${CLASS_COL[(cms[id] || {}).class] || '#6b7a90'}">`).join('');
+      // data-face: the site's faces.js draws the real crewmate art (as the Crew Quarters lockers) – Mark, 9 Nov
+      const faces = c.roster.map((id) => `<img data-face="${esc(id)}" src="cimg.php?id=${esc(id)}&s=1" alt="" loading="lazy" title="${esc((c.mn && c.mn[id]) || 'Crewmate #' + id)}" style="border-color:${CLASS_COL[(cms[id] || {}).class] || '#6b7a90'}">`).join('');
       const what = S.sent[r.id] ? '<span class="ok">Fed ✓</span>'
         : r.give ? `Feed <b>${tonnes(r.give)}</b> from ${esc(nm(r.src))}${r.busy ? ' · <span style="color:var(--amber)">busy</span>' : ''}`
           : esc(r.why === 'full' ? 'Fed enough' : r.why);
