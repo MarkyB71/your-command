@@ -645,8 +645,11 @@ ${R.map(route).join('')}
     const rec = R[S.proc];
     let CM = null, PC = null;
 
+    // Two modes at the top (Mark, 9 Nov – test only): make on this rock (as before) or load a ship on another rock for it
+    const shipMode = SHIPS && S.mode === 'ship';
     let h = planBar();
-    h += `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
+    if (SHIPS) h += `<div class="card"><div class="row" style="gap:8px"><button class="dk-shipbtn${shipMode ? '' : ' on'}" data-mode="make">🏭 Make on this rock</button><button class="dk-shipbtn${shipMode ? ' on' : ''}" data-mode="ship">🚀 Load a ship</button></div><div class="hint" style="margin:8px 0 0">${shipMode ? 'Pick the rock to make it on and what to make – then load a ship on one of your other rocks with what it needs.' : 'Move stock around this rock and start the processes.'}</div></div>`;
+    h += `<div class="card"><h2><span class="n">1</span>${shipMode ? 'Rock to make it on' : 'Rock'}</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
 <input type="search" id="dk-q" placeholder="🔍 Search…" value="${esc(S.q || '')}" style="min-width:200px">
@@ -657,7 +660,7 @@ ${R.map(route).join('')}
         : `<div class="hint" style="color:var(--red)">✗ This is made in a ${BTN[bt].toLowerCase()}${sel0.type === 5 ? ' (dry dock)' : ''} – you don't have one on ${esc(S.rock)}.</div>`;
     }
     h += '</div>';
-    if (sel0) {
+    if (sel0 && !shipMode) {
       h += `<div class="card"><h2><span class="n">3</span>Stage into</h2><div class="row"><select id="dk-dest">${store.map((b) => opt(b.id, nm(b) + ' – ' + (b.Building.buildingType === TANK ? 'tank farm' : 'warehouse') + ' – ' + fullPct(b) + '% full' + (bld0 && lotKm(b, bld0) != null ? ' · ' + kmTxt(lotKm(b, bld0)) + ' to ' + nm(bld0) + ' (' + tripTxt(toBld(b)) + ')' : ''), S.dest)).join('')}</select>`;
       if (P) h += `<div class="cap"><span class="src">${esc(nm(P.dest))}: ${P.pctNow.toFixed(0)}% full now</span><div class="capbar"><i style="width:${Math.min(100, P.pctNow)}%"></i><b style="left:${Math.min(100, P.pctNow)}%;width:${Math.max(0.6, Math.min(100 - P.pctNow, P.pctAfter - P.pctNow))}%"></b></div></div>`;
       h += '</div>';
@@ -672,9 +675,9 @@ ${R.map(route).join('')}
     }
     if (rec) {
       const outs = Object.keys(rec.out).map((p) => amt(+p, rec.out[p] * S.runs) + ' ' + esc(pname(p))).join(' + ');
-      h += `<div class="card"><h2><span class="n">4</span>How many runs</h2><div class="row"><input type="number" id="dk-runs" min="1" step="1" value="${S.runs}"> <span class="src">× runs</span></div><div class="hint">Makes ${outs}</div></div>`;
+      h += `<div class="card"><h2><span class="n">${shipMode ? 3 : 4}</span>How many runs</h2><div class="row"><input type="number" id="dk-runs" min="1" step="1" value="${S.runs}"> <span class="src">× runs</span></div><div class="hint">Makes ${outs}</div></div>`;
     }
-    if (P) {
+    if (P && !shipMode) {
       h += `<div class="card"><h2><span class="n">5</span>Inputs needed</h2><table><thead><tr><th>Input</th><th class="num">Needed</th><th class="num">Already there</th><th class="num">To move</th><th>From</th></tr></thead><tbody>` +
         P.rows.map((r) => `<tr><td>${esc(pname(r.p))}</td><td class="num">${amt(r.p, r.need)}</td><td class="num">${amt(r.p, r.there)}${r.onway > 0 ? '<br><span class="src" style="font-size:.85em">🚚 ' + amt(r.p, r.onway) + ' on its way</span>' : ''}</td><td class="num">${amt(r.p, r.moved)}</td><td class="src">` +
           (r.need - r.there <= 0 ? '<span class="ok">✓ already there</span>' : '') +
@@ -821,10 +824,19 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
 <div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
       h += `<div class="card"><h2><span class="n">9</span>Finish in the game</h2><div class="src">Each delivery shows up for the crew as a ready Surface Transfer. Use "Finish All Ready Items" in the game.</div></div>`;
     }
+    // ship mode: what's short on the rock (all its storage, counting deliveries on their way) goes on the ship
+    let shipNeed = null;
+    if (shipMode && rec) {
+      shipNeed = {};
+      Object.keys(rec.inp).forEach((p) => { const need = rec.inp[p] * S.runs - rockStock(+p); if (need > 0) shipNeed[p] = Math.ceil(need); });
+      h += Object.keys(shipNeed).length ? '<div id="dk-ship"></div>' : `<div class="card"><div class="src"><span class="ok">✓ Everything it needs is already on ${esc(S.rock)}</span> – switch to 🏭 Make on this rock.</div></div>`;
+    }
     m.innerHTML = h;
     planSave();
     m.querySelectorAll('[data-ship]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.ship; S.ship = S.ship && S.ship.p === p ? null : { p, q: +b.dataset.shipq }; render(); if (S.ship) { const e = document.getElementById('dk-ship'); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
-    if (SHIPS && window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) { if (S.ship && !(P && P.fly.find((f) => f.p === S.ship.p))) S.ship = null; window.YICSHIP.render(e, S.ship); } }
+    m.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; S.ship = null; render(); }));
+    if (shipMode && window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) window.YICSHIP.render(e, { items: shipNeed, what: rec.name, runs: S.runs }); }
+    else if (SHIPS && window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) { if (S.ship && !(P && P.fly.find((f) => f.p === S.ship.p))) S.ship = null; window.YICSHIP.render(e, S.ship); } }
     const on = (id, ev, f) => { const e = document.getElementById(id); if (e) e.addEventListener(ev, f); };
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });

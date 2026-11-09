@@ -60,15 +60,17 @@
     });
     return changed ? out : null;
   }
-  function options(p, q) {
-    const k = K(), first = {}; first[p] = k.bulk(p) ? Math.ceil(q) : Math.ceil(q);
-    const opts = [{ t: 'As it is', items: first, recs: [] }];
+  function options(pick) {
+    const first = {};
+    if (pick.items) Object.keys(pick.items).forEach((p) => { first[p] = Math.ceil(pick.items[p]); }); else first[pick.p] = Math.ceil(pick.q);
+    const L = pick.items ? ['The inputs', 'One step back', 'Two steps back'] : ['As it is', 'Its ingredients', 'Two steps back'];
+    const opts = [{ t: L[0], items: first, recs: [] }];
     let items = first, recs = new Set();
     for (let d = 1; d <= 2; d++) {
       const used = new Set(recs), nx = stepBack(items, used);
       if (!nx) break;
       recs = used; items = nx;
-      opts.push({ t: d === 1 ? 'Its ingredients' : 'Two steps back', items: nx, recs: [...used] });
+      opts.push({ t: L[d], items: nx, recs: [...used] });
     }
     return opts;
   }
@@ -134,8 +136,8 @@
     host = el; cur = pick;
     const k = K();
     if (!k || !pick) { el.innerHTML = ''; return; }
-    const key = k.S.rock + '|' + pick.p;
-    const esc = k.esc, opts = options(pick.p, pick.q), rocks = otherRocks();
+    const key = k.S.rock + '|' + (pick.items ? JSON.stringify(pick.items) : pick.p);
+    const esc = k.esc, opts = options(pick), rocks = otherRocks();
     // first look: the option best in stock on one of your other rocks, then the smallest load (the player can change it)
     if (SS.key !== key) {
       SS.key = key; SS.src = ''; SS.picked = null; SS.msg = '';
@@ -144,7 +146,7 @@
     }
     if (SS.opt >= opts.length) SS.opt = 0;
     const destTypes = new Set(k.allB().filter((b) => k.rockOf(b) === k.S.rock).map((b) => b.Building.buildingType));
-    let h = `<div class="card"><h2><span class="n">🚀</span>Load a ship with ${esc(k.pname(pick.p))} for ${esc(k.S.rock)}</h2>
+    let h = `<div class="card"><h2><span class="n">🚀</span>Load a ship ${pick.items ? 'for ' + esc(pick.what) + ' × ' + (+pick.runs).toLocaleString('en-GB') + (+pick.runs === 1 ? ' run' : ' runs') + ' on ' + esc(k.S.rock) : 'with ' + esc(k.pname(pick.p)) + ' for ' + esc(k.S.rock)}</h2>
 <div class="hint" style="margin:0 0 8px">This only <b>loads</b> the ship. You fly it to ${esc(k.S.rock)} and unload it yourself in the game.</div>
 <div class="src" style="margin-bottom:4px"><b>1 · What to send</b> – pick one. Sending what it's made from can be a smaller load.</div><div class="sl-opts">`;
     const smallest = opts.reduce((b, o, i) => (loadV(o.items) < loadV(opts[b].items) ? i : b), 0);
@@ -161,8 +163,8 @@ ${o.recs.length ? `<div class="sm" style="margin-top:4px">Then make it on ${esc(
     h += '</div>';
     const O = opts[SS.opt];
     if (!rocks.length) { el.innerHTML = h + '<div class="src">You have no storage on another rock to load from.</div></div>'; wire(el); return; }
-    if (!rocks.includes(SS.src)) SS.src = rocks.map((r) => [r, cover(r, O.items)]).sort((a, b) => b[1] - a[1])[0][0];
-    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Load it on</b></div><select id="sl-src">${rocks.map((r) => `<option value="${esc(r)}"${r === SS.src ? ' selected' : ''}>${esc(r)} – ${Math.round(cover(r, O.items) * 100)}% in stock</option>`).join('')}</select>`;
+    if (!rocks.includes(SS.src)) SS.src = rocks.map((r) => [r, cover(r, O.items), shipsFor(r).some((x) => x.ok)]).sort((a, b) => b[1] - a[1] || b[2] - a[2])[0][0];
+    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Load it on</b></div><select id="sl-src">${rocks.map((r) => [r, cover(r, O.items), shipsFor(r).filter((x) => x.ok).length]).sort((a, b) => b[1] - a[1] || b[2] - a[2]).map(([r, c, n]) => `<option value="${esc(r)}"${r === SS.src ? ' selected' : ''}>${esc(r)} – ${Math.round(c * 100)}% in stock · ${n ? n + ' ship' + (n === 1 ? '' : 's') + ' ready' : 'no ship ready'}</option>`).join('')}</select>`;
 
     // 3 ships
     const sl = shipsFor(SS.src);
