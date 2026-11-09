@@ -367,7 +367,7 @@
     const k = K(), S = k.S;
     m.innerHTML = h;
     const sh = m.querySelector('#pp-ship');
-    if (sh && window.YICSHIP && P.shipItems) window.YICSHIP.render(sh, { items: P.shipItems, what: k.pname(P.p), runs: 1, label: k.amt(P.p, P.shipQty || 0) + ' ' + k.pname(P.p) });
+    if (sh && window.YICSHIP && P.shipItems) window.YICSHIP.render(sh, { items: P.shipItems, what: k.pname(P.p), runs: 1, label: (k.bulk(P.p) ? k.amt(P.p, P.shipQty || 0) + ' ' : (P.shipQty || 0).toLocaleString('en-GB') + ' × ') + k.pname(P.p) });
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     on('pp-rock', 'change', (e) => { S.rock = e.target.value; P.moverSet = false; P.runner = 0; k.render(); });
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });

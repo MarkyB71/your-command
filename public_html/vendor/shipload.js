@@ -64,7 +64,9 @@
   function options(pick) {
     const first = {};
     if (pick.items) Object.keys(pick.items).forEach((p) => { first[p] = Math.ceil(pick.items[p]); }); else first[pick.p] = Math.ceil(pick.q);
-    const L = pick.items ? ['The inputs', 'One step back', 'Two steps back'] : ['As it is', 'Its ingredients', 'Two steps back'];
+    // clearer names when it comes from the Cargo bay's worked-out list (Mark, 9 Nov: "not sure about this section")
+    const L = pick.label ? ['What ' + K().S.rock + ' is missing', 'What those are made from', 'One step further back']
+      : pick.items ? ['The inputs', 'One step back', 'Two steps back'] : ['As it is', 'Its ingredients', 'Two steps back'];
     const opts = [{ t: L[0], items: first, recs: [] }];
     let items = first, recs = new Set();
     for (let d = 1; d <= 2; d++) {
@@ -197,7 +199,7 @@
     h += `<select id="sl-opt">${opts.map((o, i) => {
       const best = rocks.map((r) => [r, cover(r, o.items)]).sort((x, y) => y[1] - x[1])[0];
       const noB = o.recs.some((r) => !destTypes.has(k.FBT[r.type]));
-      return `<option value="${i}"${SS.opt === i ? ' selected' : ''}>${esc(o.t)} – ${m3(loadV(o.items))} · ${k.tonnes(loadG(o.items) / 1000)}${best ? ' – ' + Math.round(best[1] * 100) + '% on ' + esc(best[0]) : ''}${noB ? ' – ⚠ needs a building there' : ''}</option>`;
+      return `<option value="${i}"${SS.opt === i ? ' selected' : ''}>${esc(o.t)} – ${m3(loadV(o.items))} · ${k.tonnes(loadG(o.items) / 1000)}${best ? ' – ' + Math.round(best[1] * 100) + '% in stock on ' + esc(best[0]) : ''}${noB ? ' – ⚠ needs a building there' : ''}</option>`;
     }).join('')}</select>`;
     const O = opts[SS.opt];
     h += '<details style="margin-top:10px"><summary class="src" style="cursor:pointer">🛒 Or buy it on the belt</summary>' + belt(O.items) + '</details>';
