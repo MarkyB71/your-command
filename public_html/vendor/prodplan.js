@@ -317,7 +317,13 @@
     });
     let h = `<div class="card"><h2><span class="n">🚀</span>Fly it in to ${esc(dest)}</h2>`;
     if (!pk.length) { el.innerHTML = h + '<div class="src" style="color:var(--amber)">None of your other rocks has any of it in stock – it all has to be bought or mined.</div></div>'; return; }
-    h += `<div class="src" style="font-size:1.1em;margin-bottom:8px">You need to fly in from <b>${pk.length} rock${pk.length === 1 ? '' : 's'}</b>${short.length ? ` · <span class="short">${short.length} item${short.length === 1 ? '' : 's'} not on any of your rocks</span> – buy or mine` : ''}.</div>`;
+    // short = not ENOUGH in stock on your other rocks (Mark, 9 Nov: "3 items not on any of your rocks? That can't be right"
+    // – they were partly in stock). Says how much is short and which of your rocks has the buildings to make it.
+    const R = k.recipes(), types = {};
+    k.allB().forEach((b) => { const r = k.rockOf(b); if (r && r !== dest) (types[r] = types[r] || new Set()).add(b.Building.buildingType); });
+    const makers = (p) => Object.keys(types).filter((r) => R.some((x) => x.out[p] && !/Unbundling/.test(x.name) && types[r].has(k.FBT[x.type])));
+    h += `<div class="src" style="font-size:1.1em;margin-bottom:8px">You need to fly in from <b>${pk.length} rock${pk.length === 1 ? '' : 's'}</b>.</div>` +
+      (short.length ? `<div class="src" style="margin-bottom:10px"><span class="short">Not enough in stock on your rocks:</span>` + short.map((p) => { const mk = makers(+p); return `<div style="margin-top:3px">• <b>${esc(k.pname(+p))}</b> – short by ${k.amt(+p, left[p])}${mk.length ? ' · <span class="ok">can be made on ' + mk.map(esc).join(', ') + '</span>' : ' · buy it or mine it'}</div>`; }).join('') + '</div>' : '');
     h += pk.map((x) => {
       const b = x.best, sel = x.r === C.src;
       const shipLine = !b ? `<span style="color:var(--amber)">${shipsTxt || 'No ship can get there.'}</span>`
