@@ -41,7 +41,10 @@
       if (path.length > 8) return [k.grams(p) / 1000, 0];
       const rs = here(p).filter((r) => !Object.keys(r.inp).some((ip) => path.includes(+ip)));
       if (!rs.length) return [k.grams(p) / 1000, 0];
-      const best = rs.map((r) => recipeEst(r, p, path.concat(p))).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
+      let best = rs.map((r) => recipeEst(r, p, path.concat(p))).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
+      // making it must not mean flying in more than 5× what the item itself weighs (Mark, 9 Nov: 53 trips of Troilite for one
+      // Solids Automation Module – Silver / Tin are tiny by-products of Lead / Troilite processing). Then just fly it in.
+      if (best[0] > 5 * k.grams(p) / 1000) best = [k.grams(p) / 1000, 0];
       if (!path.length || path.length < 3) memo[p] = best;
       return best;
     }
@@ -70,7 +73,10 @@
       const main = rs.filter((r) => share(r) >= 0.25);
       const cost = (r) => Object.keys(r.inp).reduce((t, ip) => t + r.inp[ip] * k.grams(+ip), 0) / (r.out[p] * k.grams(p));
       const sc = (r) => recipeEst(r, p, path.concat(p));
-      const r = (main.length ? main : rs).map((x) => [x, sc(x)]).sort((a, b) => a[1][0] - b[1][0] || a[1][1] - b[1][1] || cost(a[0]) - cost(b[0]))[0][0];
+      const best = (main.length ? main : rs).map((x) => [x, sc(x)]).sort((a, b) => a[1][0] - b[1][0] || a[1][1] - b[1][1] || cost(a[0]) - cost(b[0]))[0];
+      // over 5× its own weight to fly in what making it needs (e.g. Silver from tons of Lead) → fly the item in instead
+      if (!top && best[1][0] > 5 * k.grams(p) / 1000) { fly[p] = (fly[p] || 0) + q; return; }
+      const r = best[0];
       const runs = Math.ceil(q / r.out[p]);
       let st = key[r.i], fresh = false;
       if (!st) { st = key[r.i] = { r, p, runs: 0 }; fresh = true; }
