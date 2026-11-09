@@ -99,7 +99,7 @@
       const a = e.target.closest('[data-dkback]'); if (!a) return; e.preventDefault();
       clearInterval(timer); mo.disconnect(); try { speechSynthesis.cancel(); } catch (x) {}
       ov.remove(); st.remove(); document.documentElement.style.overflow = '';
-      try { history.replaceState(history.state, '', location.pathname + location.search.replace(/[?&]dock=1\b/, '').replace(/^&/, '?') + location.hash); } catch (x) {}
+      try { history.replaceState(history.state, '', location.pathname + location.search.replace(/[?&](dock|feed)=1\b/g, '').replace(/^&/, '?') + location.hash); } catch (x) {}
       linkLoop(); // bring the Logistics Hub button back (Mark, 9 Nov: it was missing after returning to the Bridge)
       if (window.YICgoDeck) window.YICgoDeck('bridge'); else location.reload();
     });
@@ -623,10 +623,24 @@ ${R.map(route).join('')}
 
   // ---------- page ----------
   const opt = (v, t, cur) => `<option value="${esc(v)}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`;
+  // Mode buttons at the top. 🍽 Feed crews (Mark, 9 Nov – TEST ONLY, vendor/crewfeed.js) – game actions stay in the hub
+  function modeBar(mode) {
+    const b = (k, t) => `<button class="dk-shipbtn${mode === k ? ' on' : ''}" data-mode="${k}">${t}</button>`;
+    const hint = mode === 'ship' ? 'Pick the rock to make it on and what to make – then load a ship on one of your other rocks with what it needs.'
+      : mode === 'feed' ? 'Feed your crews from the Food stored on their own rocks – untick any that don’t need it.'
+        : 'Move stock around this rock and start the processes.';
+    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Make on this rock')}${b('ship', '🚀 Load a ship')}${window.YICFEED ? b('feed', '🍽 Feed crews') : ''}</div><div class="hint" style="margin:8px 0 0">${hint}</div></div>`;
+  }
   function render() {
     const m = document.getElementById('dk-main');
     if (!m || !S.ok) return;
     if (!S.ready) { m.innerHTML = '<div class="card"><div class="src">Loading your command…</div></div>'; return; }
+    if (S.mode === 'feed' && window.YICFEED) {
+      m.innerHTML = modeBar('feed') + '<div id="dk-feedpg"></div>';
+      m.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; S.ship = null; render(); }));
+      window.YICFEED.render(document.getElementById('dk-feedpg'));
+      return;
+    }
     const rl = rocks();
     if (!rl.length) { m.innerHTML = '<div class="card"><div class="src">No warehouses or tank farms found for this wallet. Load your wallet on the Command Deck first.</div></div>'; return; }
     if (!rl.includes(S.rock)) { S.rock = rl[0]; S.dest = 0; S.bld = 0; S.proc = -1; S.crew = 0; }
@@ -677,7 +691,7 @@ ${R.map(route).join('')}
     // Two modes at the top (Mark, 9 Nov – test only): make on this rock (as before) or load a ship on another rock for it
     const shipMode = SHIPS && S.mode === 'ship';
     let h = planBar();
-    if (SHIPS) h += `<div class="card"><div class="row" style="gap:8px"><button class="dk-shipbtn${shipMode ? '' : ' on'}" data-mode="make">🏭 Make on this rock</button><button class="dk-shipbtn${shipMode ? ' on' : ''}" data-mode="ship">🚀 Load a ship</button></div><div class="hint" style="margin:8px 0 0">${shipMode ? 'Pick the rock to make it on and what to make – then load a ship on one of your other rocks with what it needs.' : 'Move stock around this rock and start the processes.'}</div></div>`;
+    if (SHIPS) h += modeBar(shipMode ? 'ship' : 'make');
     h += `<div class="card"><h2><span class="n">1</span>${shipMode ? 'Rock to make it on' : 'Rock'}</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
@@ -925,6 +939,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
 
   // ---------- start ----------
   function start() {
+    if (/[?&]feed=1\b/.test(location.search)) S.mode = 'feed'; // from Crew Quarters' "Feed crews" button
     build();
     loadRecipes().then(() => {
       const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; S.dataAt = Date.now(); render(); }); } }, 400);
