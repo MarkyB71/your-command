@@ -45,7 +45,9 @@ const CSS_G=`.cp-title{color:#9be8bf}
 .cp-mate .c{color:var(--cc,#9be8bf)}
 .cp-mate.sel{outline-color:#3fd68a}
 .cp-pool{background:#0b110e;border-color:#24382d}
-.cp-job{background:#0b110e;border-color:#24382d}`;
+.cp-job{background:#0b110e;border-color:#24382d}
+.cp-top{position:sticky;top:0;z-index:4;background:#0a100d;padding:2px 0 4px;margin:0 0 6px;border-bottom:1px solid #2c3d35;box-shadow:0 8px 14px -8px #000}
+.cp-top .note{padding-top:0}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc0=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
@@ -101,8 +103,9 @@ export function drawCrewPlan(m){
 
   function draw(){
     m.innerHTML='';
-    m.appendChild(el('h2','cp-title','Crew planner'));
-    m.appendChild(el('div','note','Drag a crewmate onto another crew (or click a crewmate, then click a crew) to see how the bonuses change. Gold border = changed. This is a planner only – nothing changes in the game. In Influence, crewmates can only swap between crews in the same place.'));
+    const top=el('div','cp-top');m.appendChild(top); /* title, help, bar and spare bench stay put while the crews scroll (Mark, 9 Nov – beta) */
+    top.appendChild(el('h2','cp-title','Crew planner'));
+    top.appendChild(el('div','note','Drag a crewmate onto another crew (or click a crewmate, then click a crew) to see how the bonuses change. Gold border = changed. This is a planner only – nothing changes in the game. In Influence, crewmates can only swap between crews in the same place.'));
     const bar=el('div','cp-bar'),js=el('select'),qs=el('input'),rs=el('button',null,'Reset all');
     js.innerHTML='<option value="">All bonuses</option>'+CBJ.map(([a,n])=>'<option value="'+a+'"'+(String(a)===S.job?' selected':'')+'>'+esc(n)+'</option>').join('');
     js.addEventListener('change',()=>{S.job=js.value;draw()});
@@ -111,13 +114,13 @@ export function drawCrewPlan(m){
     const l1=el('label',null,'Show ');l1.appendChild(js);[l1,qs,rs].forEach(x=>bar.appendChild(x));
     {const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
       bb.addEventListener('click',()=>{S.best=!S.best;draw()});bar.appendChild(bb)}
-    m.appendChild(bar);
+    top.appendChild(bar);
     if(S.best){drawBest();return}
 
     const pool=el('div','cp-pool','<h3>Spare bench – drop crewmates here to take them out of a crew</h3>'),ps=el('div','cp-slots');
     S.plan[POOL].forEach(id=>{const s=el('div','cp-slot');s.appendChild(mateEl(id,POOL));ps.appendChild(s)});
     if(!S.plan[POOL].length)ps.appendChild(el('div','cp-slot','Empty'));
-    pool.appendChild(ps);dropZone(pool,POOL);m.appendChild(pool);
+    pool.appendChild(ps);dropZone(pool,POOL);top.appendChild(pool);
 
     const g=el('div','cp-grid'),q=S.q.trim().toLowerCase();
     crews.forEach((c,i)=>{
