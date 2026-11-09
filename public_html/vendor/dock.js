@@ -71,6 +71,19 @@
     { const pick = [1, 3, 4, 5, 6, 7, 8, 10][Math.floor(Math.random() * 8)], dk = ov.querySelector('.dock');
       if (dk) dk.innerHTML = `<img src="bimg.php?t=${pick}&l=1" alt="" class="dk-bview">`; }
     document.body.appendChild(ov);
+    // Hub header pinned to the top (Mark, 9 Nov: it scrolled away in Brave) – fixed, not sticky, lined up with the
+    // page column and the page pushed down by its height, so it stays put in every browser.
+    const pin = () => {
+      if (!/[?&]beta=1\b/.test(location.search)) return; // TEST ONLY until Mark says go live
+      const pg = ov.querySelector('#dockpg'), hd = ov.querySelector('.dhead');
+      if (!pg || !hd || !ov.classList.contains('indock')) { if (hd) hd.style.position = ''; if (pg) pg.style.paddingTop = ''; return; }
+      const r = pg.getBoundingClientRect(), cs = getComputedStyle(pg);
+      Object.assign(hd.style, { position: 'fixed', top: '0', left: (r.left + parseFloat(cs.paddingLeft)) + 'px', width: (pg.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) + 'px' });
+      pg.style.paddingTop = hd.offsetHeight + 'px';
+    };
+    try { new ResizeObserver(pin).observe(ov); } catch (x) {}
+    window.addEventListener('resize', pin);
+    new MutationObserver(pin).observe(ov, { attributes: true, attributeFilter: ['class'] });
     // app.js rewrites <head> and <body> while it loads – keep putting the dock back on top (same scroll place)
     let ovY = 0; ov.addEventListener('scroll', () => { if (ov.isConnected) ovY = ov.scrollTop; }, { passive: true });
     const keep = () => { if (!l.isConnected) document.head.appendChild(l); if (!st.isConnected) document.head.appendChild(st); if (!ov.isConnected) { document.body.appendChild(ov); ov.scrollTop = ovY; } document.documentElement.style.overflow = 'hidden'; };
