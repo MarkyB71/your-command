@@ -843,7 +843,11 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
             if (mv && Math.max(qEnd, Date.now() / 1000) + add - Date.now() / 1000 > 86400) { c.why = (mv.name || 'the crew') + "'s queue would go past the game's 24-hour limit"; wait.push(c); return; }
             qEnd = Math.max(qEnd, Date.now() / 1000) + add;
           }
-          if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); const o2 = outAdd[c.to.id] = outAdd[c.to.id] || [0, 0]; o2[0] += c.outG - c.inG; o2[1] += c.outV - c.inV; } else wait.push(c);
+          if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); const o2 = outAdd[c.to.id] = outAdd[c.to.id] || [0, 0]; o2[0] += c.outG - c.inG; o2[1] += c.outV - c.inV; } else {
+            // Mark (9 Nov): say WHY there's no building – none on the rock, all busy, or the free ones already used by this approval (TEST ONLY ?beta=1)
+            if (OUTFIX) { const kind = BTN[bt] || 'building', all = on.filter((x) => x.Building.buildingType === bt && x.Building.status === 3);
+              c.why = !all.length ? 'no ' + kind + ' on ' + S.rock : all.some((x) => freeSlot(x)) ? 'the free ' + kind + ' is already taken by another process in this approval' : 'every ' + kind + ' on ' + S.rock + ' is busy'; }
+            wait.push(c); }
         });
         S.startList = S.start ? ready : [];
         const later = (PC ? PC.steps.length + 1 : 1) - ready.length - wait.length - after.length;
