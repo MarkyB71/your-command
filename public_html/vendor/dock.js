@@ -31,6 +31,7 @@
   const SLOT = 2, WAREHOUSE = 1, TANK = 10;
   const BTN = { 3: 'Refinery', 4: 'Bioreactor', 5: 'Factory', 6: 'Shipyard' };
   const FBT = { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 }; // recipe type -> building type (chain.js)
+  const OUTFIX = /[?&]beta=1\b/.test(location.search); // output storage that can take solids – TEST ONLY (Mark, 9 Nov 2026)
   const TANKOK = new Set([1, 2, 3, 4, 5, 6, 7, 8, 23, 24, 27, 33, 50, 66, 73, 76, 116, 169, 170, 180, 184, 185, 220]);
   const CAP = { 1: [1.5e12, 75e9], 10: [75e9, 997.5e9] }; // grams, volume
   const FOOD = 129;
@@ -813,6 +814,18 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
         cand.forEach((c) => {
           if (!c.full) return;
           if (!c.now) { after.push(c); return; }
+          // Mark (9 Nov): processes that make a solid (Magnesium, Boric Acid, Ammonium Chloride, Nitric Acid…) were stuck
+          // because their output was going to the tank farm where the next step's inputs wait. One output storage takes ALL
+          // of a process's outputs, so pick the nearest storage that can take them all and has room (TEST ONLY ?beta=1)
+          if (OUTFIX && c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) {
+            const pb = c.fin ? c.bl : c.bld || c.from, tank = c.to;
+            const roomFor = (t) => { const i = inv(t) || { mass: 0, volume: 0 }, cp = CAP[t.Building.buildingType], a = addTo[t.id] || { g: 0, v: 0 }, o2 = outAdd[t.id] || [0, 0];
+              const og = Object.keys(c.r.out).reduce((x, o) => x + c.r.out[o] * c.runs * grams(+o), 0), ov = Object.keys(c.r.out).reduce((x, o) => x + c.r.out[o] * c.runs * (MV[o] || [1000, 1000])[1], 0);
+              return Math.max((i.mass + (i.reservedMass || 0) + a.g + o2[0] + og) / cp[0], (i.volume + (i.reservedVolume || 0) + a.v + o2[1] + ov) / cp[1]) <= 0.95; };
+            const alt = on.filter((b) => isStore(b) && Object.keys(c.r.out).every((o) => b.Building.buildingType !== TANK || TANKOK.has(+o)) && roomFor(b))
+              .sort((x, y) => (pb ? (lotKm(x, pb) ?? 1e9) - (lotKm(y, pb) ?? 1e9) : 0))[0];
+            if (alt) { c.to = alt; c.moved = 'output to ' + nm(alt) + ' – ' + nm(tank) + ' is a tank farm and can’t take ' + Object.keys(c.r.out).filter((o) => !TANKOK.has(+o)).map((o) => pname(+o)).join(', '); }
+          }
           if (c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) { c.why = 'its output can’t go in a tank farm (' + nm(c.to) + ')'; wait.push(c); return; }
           // ROOM FOR OUTPUTS (go-live item 2, Mark 8 Nov): the output storage must have room for everything this process
           // makes (counted in full – a safe over-estimate), on top of this approval's moves and other starts going there
@@ -838,7 +851,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
 <label style="margin:0 0 8px"><input type="checkbox" id="dk-start"${S.start ? ' checked' : ''}> Also start the processes that are ready, in the same approval</label>
 <div class="hint" style="margin-bottom:8px">This ties up your buildings and uses up the stock. Only processes whose inputs are ALREADY in their storage can start now – the rest start on a later visit, once moves have arrived or earlier steps have finished.</div>` +
           (S.start && ready.length && S.moverObj ? `<div class="hint" style="margin-bottom:8px">${esc(S.moverObj.name)} will be busy until about ${new Date(qEnd * 1000).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} (the game allows up to 24 hours of queued jobs).</div>` : '') +
-          (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div></div></div>`).join('')}</div>`
+          (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div>${c.moved ? `<div class="dkp-ch">${esc(c.moved)}</div>` : ''}</div></div>`).join('')}</div>`
             : '<div class="src">Nothing can start right now – no process has all its inputs sitting in its storage yet.</div>') +
             (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but can't start yet: ${wait.map((c) => esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('; ')}.</div>` : '') +
             (after.length ? `<div class="hint">${after.length} can start next time, once this approval's moves have arrived: ${after.map((c) => esc(c.r.name)).join(', ')}.</div>` : '') +
