@@ -551,7 +551,7 @@ ${R.map(route).join('')}
   //    origin(5,id), origin_slot, destination(5,id), destination_slot, caller_crew(1,id)]  → 15 values
   function startCall(c) {
     const mag = BigInt(Math.round(c.runs)) * 4294967296n;
-    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, S.mover];
+    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, c.crew || S.mover]; // c.crew: Production's process crew (Mark, 9 Nov – test only)
     return { contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ProcessProductsStart'), hex(data.length), ...data.map(hex)] };
   }
   // APPROVAL SIZE (go-live item 1, Mark 8 Nov): one failing action cancels the whole approval, so actions go in
@@ -579,7 +579,8 @@ ${R.map(route).join('')}
   }
   function buildCalls() {
     const calls = [], n = S.bs === 'All' ? Infinity : (S.bs || 30);
-    if (S.feed && S.feedCall) calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(S.feedCall.src), hex(SLOT), hex(S.feedCall.give), '0x1', hex(S.feedCall.crew)] });
+    // S.feedCalls: Production can feed both its crews (Mark, 9 Nov – test only); otherwise the one S.feedCall
+    (S.feedCalls || (S.feed && S.feedCall ? [S.feedCall] : [])).forEach((f) => calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(f.src), hex(SLOT), hex(f.give), '0x1', hex(f.crew)] }));
     S.batchDel = []; S.batchStart = [];
     S.calls.forEach((x) => {
       if (calls.length >= n) return;
@@ -636,6 +637,7 @@ ${R.map(route).join('')}
     if (!m || !S.ok) return;
     if (!S.ready) { m.innerHTML = '<div class="card"><div class="src">Loading your command…</div></div>'; return; }
     // Logistics Bridge (Mark, 9 Nov – TEST ONLY, vendor/hubbridge.js): consoles + viewscreen; the tool is drawn ON the viewscreen
+    S.feedCalls = null; // only Production (prodplan.js) sets this, each time it draws
     const LB = window.YICHUBBRIDGE;
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
     // new Production screen (Mark, 9 Nov – TEST ONLY, vendor/prodplan.js): rock → what to make + amount → what you need → processes
