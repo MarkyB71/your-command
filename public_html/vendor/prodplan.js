@@ -442,7 +442,7 @@
           `<div class="dkp-sum"><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length}</b>to fly in or buy</div><div><b>${mi.length}</b>to mine here</div><div class="good"><b>${st.length}</b>from storage</div><div><b>${W.steps.length}</b>processes</div></div>` +
           (W.haveTarget ? `<div class="hint">You already have ${k.amt(P.p, W.haveTarget)} of ${esc(k.pname(P.p))} on this rock – this plan makes ${k.amt(P.p, qty)} more.</div>` : '') +
           // the inputs list folds away if the player wants (Mark, 9 Nov) – remembered while the page is open
-          `<details id="pp-inputs" class="dkp-fold"${P.inClosed ? '' : ' open'}><summary>Inputs (${prods.length})</summary><table style="margin-top:4px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table></details>` +
+          `<details id="pp-inputs" class="dkp-fold"${P.inOpen ? ' open' : ''}><summary>Inputs (${prods.length})</summary><table style="margin-top:4px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table></details>` +
           `<div class="hint">Worked back from ${k.amt(P.p, qty)} ${esc(k.pname(P.p))}: stock and by-products are used first, then anything this rock can mine, then anything its buildings can make. Only what’s left needs flying in or buying.</div></div>`;
 
         if (cargo) {
@@ -499,7 +499,7 @@
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
-    on('pp-inputs', 'toggle', (e) => { P.inClosed = !e.target.open; });
+    on('pp-inputs', 'toggle', (e) => { P.inOpen = e.target.open; });
     on('pp-crew', 'change', (e) => { S.mover = +e.target.value; P.moverSet = true; P.feed.m = false; k.render(); });
     m.querySelectorAll('[data-feed]').forEach((e) => e.addEventListener('change', () => { P.feed[e.dataset.feed] = e.checked; k.render(); }));
     on('pp-run', 'change', (e) => { P.runner = +e.target.value; P.feed.r = false; k.render(); });
