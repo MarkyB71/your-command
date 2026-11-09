@@ -280,24 +280,30 @@
     const have = (b, p) => ((k.inv(b) || { contents: [] }).contents || []).filter((c) => c.product === +p).reduce((t, c) => t + c.amount, 0);
     const rockHas = (r, p) => stores(r).reduce((t, b) => t + have(b, p), 0);
     const totG = Object.keys(items).reduce((t, p) => t + items[p] * g(p), 0) || 1;
-    // 1. which of your rocks has it (share of the load by weight)
-    const rocks = [...new Set(k.allB().filter(k.isStore).map(k.rockOf).filter(Boolean))].filter((r) => r !== dest).map((r) => {
+    // 1. ONE combined plan (Mark, 9 Nov: "does this mean i need to collect from all 5 rocks?"): take each item from the
+    // rock with the most of the whole load first, then the next… Only rocks that add something are listed; what no rock
+    // has is listed to buy or mine. The ship part below works on one pick-up rock at a time.
+    const all = [...new Set(k.allB().filter(k.isStore).map(k.rockOf).filter(Boolean))].filter((r) => r !== dest);
+    const share = (r) => Object.keys(items).reduce((t, p) => t + Math.min(items[p], rockHas(r, p)) * g(p), 0) / totG;
+    const left = Object.assign({}, items), rocks = [];
+    all.sort((a, b) => share(b) - share(a)).forEach((r) => {
       const got = {}; let gg = 0;
-      Object.keys(items).forEach((p) => { const n = Math.min(items[p], rockHas(r, p)); if (n > 0) { got[p] = n; gg += n * g(p); } });
-      return { r, got, share: gg / totG };
-    }).filter((x) => x.share > 0).sort((a, b) => b.share - a.share);
+      Object.keys(left).forEach((p) => { const n = Math.min(left[p], rockHas(r, p)); if (n > 0) { got[p] = n; left[p] -= n; gg += n * g(p); } });
+      if (gg > 0) rocks.push({ r, got, share: gg / totG });
+    });
+    const rest = Object.keys(left).filter((p) => left[p] > 0);
+    const restShare = rest.reduce((t, p) => t + left[p] * g(p), 0) / totG;
     if (!rocks.find((x) => x.r === C.src)) C.src = rocks[0] ? rocks[0].r : '';
     const R0 = rocks.find((x) => x.r === C.src);
     let h = `<div class="card"><h2><span class="n">🚀</span>Bring it to ${esc(dest)}</h2><div class="hint" style="margin:0 0 8px">This only <b>loads</b> a ship. You fly it to ${esc(dest)} and unload it yourself in the game.</div>`;
-    if (!rocks.length) {
-      el.innerHTML = h + `<div class="src" style="color:var(--amber)">None of your other rocks has any of it.</div>` + (window.YICSRCTXT ? Object.keys(items).map((p) => `<div class="src">${esc(k.pname(+p))} ${k.amt(+p, items[p])}: ${window.YICSRCTXT(+p, items[p], k.astId(dest)) || '–'}</div>`).join('') : '') + '</div>';
-      return;
-    }
-    h += `<div class="src" style="margin:4px 0"><b>1 · Which rock has it</b></div><table><thead><tr><th></th><th>Rock</th><th class="num">Has</th><th>Short</th></tr></thead><tbody>` +
-      rocks.map((x) => { const sh = Object.keys(items).filter((p) => (x.got[p] || 0) < items[p]); return `<tr><td><input type="radio" name="pp-src" value="${esc(x.r)}"${x.r === C.src ? ' checked' : ''}></td><td>${esc(x.r)}</td><td class="num"><b class="${x.share >= 0.999 ? 'ok' : ''}">${x.share >= 0.999 ? 100 : Math.min(99, Math.round(x.share * 100))}%</b></td><td class="src">${sh.length ? sh.map((p) => esc(k.pname(+p))).slice(0, 4).join(', ') + (sh.length > 4 ? '…' : '') : '<span class="ok">✓ all of it</span>'}</td></tr>`; }).join('') + '</tbody></table>';
-    // the load from that rock
+    const restH = rest.length ? `<details class="dkp-fold" style="margin-top:8px"><summary>🛒 Left to buy or mine – ${rest.length} item${rest.length === 1 ? '' : 's'} · ${restShare < 0.01 ? "under 1" : Math.round(restShare * 100)}% of the load</summary><table><tbody>${rest.map((p) => `<tr><td>${esc(k.pname(+p))}</td><td class="num">${k.amt(+p, left[p])}</td><td class="src">${window.YICSRCTXT ? window.YICSRCTXT(+p, left[p], k.astId(dest)) || '–' : ''}</td></tr>`).join('')}</tbody></table></details>` : '';
+    if (!rocks.length) { el.innerHTML = h + '<div class="src" style="color:var(--amber)">None of your other rocks has any of it in stock.</div>' + restH + '</div>'; return; }
+    h += `<div class="src" style="margin:4px 0"><b>1 · Collect from</b></div><table><thead><tr><th></th><th>Rock</th><th class="num">Share</th><th>What to take from there</th></tr></thead><tbody>` +
+      rocks.map((x) => `<tr><td><input type="radio" name="pp-src" value="${esc(x.r)}"${x.r === C.src ? ' checked' : ''}></td><td>${esc(x.r)}</td><td class="num"><b>${Math.max(1, Math.round(x.share * 100))}%</b></td><td class="src">${Object.keys(x.got).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, x.got[p])).join(', ')}</td></tr>`).join('') + '</tbody></table>' +
+      `<div class="hint">${rocks.length === 1 ? 'Everything in stock comes from one rock.' : rocks.length + ' pick-ups – each item comes from one rock only, the one with the most of the load first.'}${rest.length ? '' : ' <span class="ok">✓ Nothing left to buy.</span>'} Pick a rock to plan its ship below.</div>` + restH;
+    // the load from the picked rock
     const load = R0.got, LG = Object.keys(load).reduce((t, p) => t + load[p] * g(p), 0), LV = Object.keys(load).reduce((t, p) => t + load[p] * v(p), 0);
-    h += `<div class="hint">Load from ${esc(C.src)}: <b>${k.tonnes(LG / 1000)}</b> · ${Math.round(LV / 1e6).toLocaleString('en-GB')} m³.</div>`;
+    h += `<div class="hint">Pick-up at ${esc(C.src)}: <b>${k.tonnes(LG / 1000)}</b> · ${Math.round(LV / 1e6).toLocaleString('en-GB')} m³.</div>`;
     // 2. ships – Light and Heavy Transports only
     const orbit = (id) => ((d.owned || []).find((a) => a.id === id) || {}).Orbit;
     const astName = (id) => ((d.owned || []).find((a) => a.id === id) || {}).Name ? d.owned.find((a) => a.id === id).Name.name : (id ? 'Asteroid #' + id : '?');
