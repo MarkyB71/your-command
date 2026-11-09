@@ -98,11 +98,16 @@
     S.loading = false; S.sent = {}; S.mtick = {}; page(m);
   }
   // most common first word of the player's building names – a starting prefix ("Skippys")
+  // "Skippy" is Mark's game character – only his own wallet may use it as a prefix or at the start of a name (Mark, 9 Nov 2026)
+  const MARK = 0x0631acdbf5a79758cbcc84301b387aebfb5c0ec7476aa48a0ceb98662973c5cen;
+  const isMark = () => { try { return !!(D() && D().wallet) && BigInt(D().wallet) === MARK; } catch (e) { return false; } };
+  const reserved = (t) => !isMark() && /^skipp?y/i.test(String(t || '').trim());
+  const RESV = 'Skippy is the site owner\u2019s game character \u2013 please use your own word';
   const guessPrefix = () => {
     const c = {};
     allB().forEach((b) => { const w = nm(b).split(' ')[0]; if (w && w.length > 2 && /^[A-Za-z0-9]+$/.test(w)) c[w] = (c[w] || 0) + 1; });
     const best = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
-    return best && best[1] >= 3 ? best[0] : '';
+    return best && best[1] >= 3 && !reserved(best[0]) ? best[0] : '';
   };
   const P = (s) => ((S.prefix || '').trim() ? S.prefix.trim() + ' ' + s : s);
 
@@ -197,7 +202,7 @@
     rows.forEach((x) => {
       x.crew = x.b.Control && x.b.Control.controller && x.b.Control.controller.id;
       x.crewName = crewName(x.crew);
-      x.err = x.to === x.now ? '' : nameErr(x.to);
+      x.err = x.to === x.now ? '' : reserved(x.to) ? 'Skippy is taken – use your own word' : nameErr(x.to);
       x.change = x.to !== x.now;
     });
     const held = {};
@@ -436,7 +441,7 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
     return `<h3>Step 2: names</h3>
 ${guide()}
 <div class="st-opt">
-<label for="st-prefix">Your prefix</label><div><input type="text" id="st-prefix" maxlength="14" value="${esc(S.prefix)}" placeholder="e.g. Skippys – or leave empty"> <span style="color:#8b9ab0;font-size:13px">goes in front of every new name</span></div>
+<label for="st-prefix">Your prefix</label><div><input type="text" id="st-prefix" maxlength="14" value="${esc(S.prefix)}" placeholder="e.g. your name – or leave empty"> <span style="color:${S.preWarn ? '#ff8a82' : '#8b9ab0'};font-size:13px">${S.preWarn ? RESV + '.' : 'goes in front of every new name'}</span></div>
 <label>Warehouses &amp; tank farms</label>${sel('st-s-store', [['job', 'By job (' + P('Rocks') + ', ' + P('Oxides 2') + ')'], ['main', 'By the main thing inside (' + P('Pyroxene') + ')'], ['keep', 'Keep current names']], S.style.store)}
 ${types.map((t) => `<label>${BT[t]}s${pub[t] ? ' <span style="color:#8b9ab0;font-size:12px">(other players see these)</span>' : ''}</label>${sel('st-s-' + t, optFor(t), S.style[t])}`).join('')}
 </div>
@@ -530,7 +535,7 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     const gd = q('#st-gdone'); if (gd) gd.addEventListener('click', () => { S.gOpen = false; page(m); const o = m.querySelector('.st-opt'); if (o) o.scrollIntoView({ behavior: 'smooth' }); });
     const gs = q('#st-gskip'); if (gs) gs.addEventListener('click', () => { Object.keys(S.style).forEach((k) => { S.style[k] = 'keep'; }); S.g = { store: 'keep', other: 'store' }; S.edit = {}; S.gOpen = false; page(m); });
     const pf = q('#st-prefix');
-    if (pf) pf.addEventListener('change', () => { S.prefix = pf.value.replace(/[^A-Za-z0-9 ]/g, '').trim(); S.edit = {}; page(m); });
+    if (pf) pf.addEventListener('change', () => { const v = pf.value.replace(/[^A-Za-z0-9 ]/g, '').trim(); S.preWarn = reserved(v); S.prefix = S.preWarn ? '' : v; S.edit = {}; page(m); });
     qa('select[id^="st-s-"]').forEach((s) => s.addEventListener('change', () => { S.style[s.id.slice(5)] = s.value; S.edit = {}; S.groups = null; page(m); }));
     qa('input[data-ed]').forEach((i) => i.addEventListener('change', () => { S.edit[i.dataset.ed] = i.value.trim(); page(m); }));
     qa('input[data-rt]').forEach((c) => c.addEventListener('change', () => { S.rtick[c.dataset.rt] = c.checked; page(m); }));
