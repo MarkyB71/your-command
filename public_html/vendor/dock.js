@@ -461,7 +461,12 @@ ${R.map(route).join('')}
     try {
       const j = await fetch('deliveries.php?wallet=' + encodeURIComponent(d.wallet) + '&t=' + Date.now(), { cache: 'no-store' }).then((r) => r.json());
       const inc = {}, list = [];
-      (j.transit || []).concat(j.recent || []).forEach((r) => { if (r[1] !== 2 || r[4][0] !== 5) return; (inc[r[4][1]] = inc[r[4][1]] || []).push(...r[5]); list.push(r); });
+      // Mark (9 Nov): every row said "ready" though only a couple needed finishing – the list was taking the 7-day
+      // list of FINISHED deliveries (status 2 = complete). Not finished yet = status 4 (sent: on its way, or ready
+      // to finish) plus anything still arriving. Finished ones are already in the storage, so no longer counted twice. (TEST ONLY, ?beta=1)
+      const NEWDEL = /[?&]beta=1\b/.test(location.search);
+      const src = NEWDEL ? (j.pending || []).filter((r) => r[1] === 4).concat(j.transit || []) : (j.transit || []).concat(j.recent || []);
+      src.forEach((r) => { if ((NEWDEL ? ![2, 4].includes(r[1]) : r[1] !== 2) || r[4][0] !== 5) return; (inc[r[4][1]] = inc[r[4][1]] || []).push(...r[5]); list.push(r); });
       S.inc = inc; S.incList = list; S.incErr = j.err || null;
     } catch (e) { S.incErr = 'Deliveries on their way could not be loaded.'; }
   }
