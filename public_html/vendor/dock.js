@@ -378,7 +378,7 @@ ${R.map(route).join('')}
     // the final step's stock is already spoken for
     P.rows.forEach((r) => { const a = avail[P.dest.id]; if (a) a[r.p] = Math.max(0, (a[r.p] || 0) - Math.max(0, Math.min(r.there, r.need) - r.onway)); r.from.forEach(([b, q]) => { avail[b.id][r.p] -= q; }); });
     const okIn = (b, ip) => b.Building.buildingType !== TANK || TANKOK.has(ip);
-    const TANKFIX = /[?&]beta=1\b/.test(location.search);
+    const TANKFIX = true; // LIVE 9 Nov 2026
     const dests = {}, add = {}, dl = {}, incA = {};
     const put = (from, to, ip, q, why) => { const k = from.id + '>' + to.id; (dl[k] = dl[k] || { b: from, to, items: [], why: new Set() }).items.push({ p: ip, a: q }); dl[k].why.add(why);
       add[to.id] = add[to.id] || [0, 0]; add[to.id][0] += q * grams(ip); add[to.id][1] += q * (MV[ip] || [1000, 1000])[1]; };
@@ -391,7 +391,7 @@ ${R.map(route).join('')}
       const cand = store.map((b) => ({ b, kg: Object.keys(st.use).reduce((t, ip) => okIn(b, +ip) ? t + Math.min(avail[b.id][ip] || 0, st.use[ip]) * grams(+ip) : t, 0), t: st.bld ? (tripSecs(lotKm(b, st.bld), mv) ?? 0) : 0, k: st.bld ? (lotKm(b, st.bld) ?? 0) : 0 }))
         .filter((x) => x.kg > 0 && (!TANKFIX || takesAll(x.b))).sort((x, y) => (x.t > 0) - (y.t > 0) || y.kg - x.kg || x.k - y.k);
       // Mark (9 Nov): a tank farm was picked for Boric Acid although it can't take Hydrochloric Acid – only storage
-      // that can take ALL of the step's inputs is picked; if none holds any, the nearest one that can (TEST ONLY, ?beta=1)
+      // that can take ALL of the step's inputs is picked; if none holds any, the nearest one that can (LIVE 9 Nov 2026)
       const fit = TANKFIX && !cand[0] ? store.filter(takesAll).sort((x, y) => (st.bld ? (lotKm(x, st.bld) ?? 1e9) - (lotKm(y, st.bld) ?? 1e9) : 0))[0] : null;
       st.star = cand[0] ? cand[0].b.id : fit ? fit.id : P.dest.id;
       const d = byId((S.stepDest || {})[st.r.i]) || byId(st.star);

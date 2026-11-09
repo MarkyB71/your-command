@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 9 Nov 2026 – Logistics Hub fix: each step's storage must take all its inputs – no more tank farm picked when an input can't go in one (e.g. Hydrochloric Acid for Boric Acid).
+
 ## 9 Nov 2026 – New in the Logistics Hub: 🚀 Load a ship – bring what you need from your other rocks. Choose to send the inputs or what they're made from, which rock, which ships (the load is split across them) and which crew moves it; it only loads the ship, you fly and unload it. 🛒 Or buy it on the belt shows the marketplaces selling the load, with cost and in game ↗ links. Also: the full production plan's stages fold away behind Show the stages, and after sending it names the crew to finish with (with an in game ↗ link). Help page updated.
 
 ## 9 Nov 2026 – Logistics Hub: the header (LOGISTICS HUB, the wallet warning and Return to the Bridge) now stays pinned at the top of the screen when you scroll.
