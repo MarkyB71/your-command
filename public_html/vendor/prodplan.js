@@ -4,13 +4,21 @@
    5 don't show the whole chain, just what's needed · 6 list the processes to run · 7 pick where materials come
    from and where outputs go · 8 work through the chain in order, using by-products · 9 list the moves, option to
    start the processes · 10 keep the order and show finished / next lined up.
-   THIS FILE: steps 1–6 (nothing is sent). Steps 7–10 come next and reuse the hub's moves + starts.
+   THIS FILE: steps 1–7 (nothing is sent). Steps 8–10 come next and reuse the hub's moves + starts.
    Uses the hub's helpers (window.YICDOCK from vendor/dock.js); drawn on the viewscreen by vendor/hubbridge.js. */
 (function () {
   'use strict';
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
   const K = () => window.YICDOCK;
-  const P = { p: 0, q: 100, unit: 't', find: '', use: '', n: 1 };
+  const P = { p: 0, q: 100, unit: 't', find: '', use: '', n: 1, for: '' };
+  // Where things go (Mark, 9 Nov): a materials warehouse (inputs gathered here, in-between products land here so the
+  // next process finds them), and the finished product goes to the store for what it's for – Stock, Market or Building –
+  // or to a tank farm when it's all fluid. Warehouses take anything; tank farms only fluids (SDK Inventory.TYPES 10 / 19).
+  // The stores are remembered per rock in this browser.
+  const SKEY = 'sk_prod_stores';
+  const FOR = [['stock', 'Stock'], ['market', 'Market'], ['build', 'Building']];
+  function storesGet() { try { return JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) { return {}; } }
+  function storesPut(o) { try { localStorage.setItem(SKEY, JSON.stringify(o)); } catch (e) {} }
 
   const UNITS = { kg: 1, t: 1000, kt: 1e6 };
   const hrs = (s) => (s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 * 2 ? (s / 3600).toFixed(1).replace(/\.0$/, '') + ' h' : (s / 86400).toFixed(1).replace(/\.0$/, '') + ' days');
@@ -98,6 +106,22 @@
     const tot = x.per * Math.max(1, Math.floor(+P.n || 1));
     if (k.bulk(P.p)) { P.unit = tot >= 1e6 ? 'kt' : tot >= 1000 ? 't' : 'kg'; P.q = +(tot / UNITS[P.unit]).toFixed(3); } else P.q = tot;
   }
+  function stores(W) {
+    const k = K(), rock = k.S.rock, on = k.onRock();
+    const wh = on.filter((b) => b.Building.buildingType === 1).sort((a, b) => k.nm(a).localeCompare(k.nm(b)));
+    const tf = on.filter((b) => b.Building.buildingType === k.TANK).sort((a, b) => k.nm(a).localeCompare(k.nm(b)));
+    const full = (b) => { const i = k.inv(b) || { mass: 0, volume: 0 }, c = b.Building.buildingType === k.TANK ? [75e9, 997.5e9] : [1.5e12, 75e9]; return Math.round(Math.max((i.mass + (i.reservedMass || 0)) / c[0], (i.volume + (i.reservedVolume || 0)) / c[1]) * 100); };
+    const roomy = wh.slice().sort((a, b) => full(a) - full(b))[0];
+    const guess = (re) => (wh.find((b) => re.test(k.nm(b))) || {}).id;
+    const saved = storesGet()[rock] || {};
+    const ok = (id, list) => list.some((b) => b.id === id);
+    const pick = (key, re, list, dflt) => (ok(saved[key], list) ? saved[key] : (re && guess(re)) || dflt);
+    // materials: the warehouse already holding the most of what the plan takes from storage (fewest moves), else the roomiest
+    const holdsKg = (b) => Object.keys((W && W.stock) || {}).reduce((t, p) => t + Math.min(k.holds(b, +p), W.stock[p]) * k.grams(+p), 0);
+    const most = wh.map((b) => [b, holdsKg(b)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+    const mat = pick('mat', /material|input|stag|process/i, wh, (most || [roomy])[0] && (most || [roomy])[0].id);
+    return { wh, tf, full, mat, stock: pick('stock', /stock|store/i, wh, mat), market: pick('market', /market|distrib|sell|trade|export/i, wh, mat), build: pick('build', /build|construct|site/i, wh, mat), tank: ok(saved.tank, tf) ? saved.tank : '' };
+  }
   function render(m) {
     const k = K();
     if (!k) return;
@@ -149,16 +173,33 @@
           `<table style="margin-top:8px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table>` +
           `<div class="hint">Worked back from ${k.amt(P.p, qty)} ${esc(k.pname(P.p))}: stock and by-products are used first, then anything this rock can mine, then anything its buildings can make. Only what’s left needs flying in or buying.</div></div>`;
 
+        // where each process's outputs go
+        const ST = stores(W), byId = (id) => ST.wh.concat(ST.tf).find((b) => b.id === +id);
+        const pf = P.for || (P.use ? 'build' : 'stock');
+        const fin = W.steps[W.steps.length - 1];
+        const fluid = (r) => Object.keys(r.out).every((o) => k.TANKOK.has(+o));
+        W.steps.forEach((s) => { s.to = s === fin ? (ST.tank && fluid(s.r) ? byId(ST.tank) : byId(ST[pf])) : byId(ST.mat); });
         // step 6: the processes to run, in order
         const blds = (bt) => k.onRock().filter((b) => b.Building.buildingType === bt);
-        h += `<div class="card"><h2><span class="n">4</span>Processes to run (${W.steps.length}), in order</h2><table><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Building</th><th class="num">Time</th></tr></thead><tbody>` +
+        h += `<div class="card"><h2><span class="n">4</span>Processes to run (${W.steps.length}), in order</h2><table><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Building</th><th>Outputs go to</th><th class="num">Time</th></tr></thead><tbody>` +
           W.steps.map((s, i) => {
             const bt = k.FBT[s.r.type], bs = blds(bt), free = bs.filter((b) => k.freeSlot(b)).length;
             return `<tr><td>${i + 1}</td><td>${esc(s.r.name)}</td><td>${esc(k.pname(s.p))} ${k.amt(s.p, s.r.out[s.p] * s.runs)}</td><td class="num">${s.runs.toLocaleString('en-GB')}</td>` +
-              `<td>${esc(k.BTN[bt])} <span class="${free ? 'ok' : 'src'}">· ${free} of ${bs.length} free</span></td><td class="num">${hrs(k.procSecs(s.r.name, s.runs) || 0)}</td></tr>`;
+              `<td>${esc(k.BTN[bt])} <span class="${free ? 'ok' : 'src'}">· ${free} of ${bs.length} free</span></td><td>${s.to ? esc(k.nm(s.to)) : '<span style="color:var(--red)">no storage</span>'}</td><td class="num">${hrs(k.procSecs(s.r.name, s.runs) || 0)}</td></tr>`;
           }).join('') + '</tbody></table>' +
           '<div class="hint">Earlier steps make what later steps need. Times are without crew or building bonuses.</div></div>';
-        h += '<div class="card"><div class="src" style="color:var(--amber)">Next to build: pick where materials come from and where outputs go, the moves, starting the processes, and tracking them.</div></div>';
+        // step 7: where things go
+        const sel = (key, list, none) => `<select data-st="${key}">${none ? `<option value="">${none}</option>` : ''}${list.map((b) => `<option value="${b.id}"${b.id === ST[key] ? ' selected' : ''}>${esc(k.nm(b))} · ${ST.full(b)}% full</option>`).join('')}</select>`;
+        h += `<div class="card"><h2><span class="n">5</span>Where things go</h2>
+<div class="row"><span class="src">What it's for</span>${FOR.map(([v, t]) => `<button type="button" class="dk-shipbtn${pf === v ? ' on' : ''}" data-for="${v}">${t}</button>`).join('')}</div>
+<table style="margin-top:10px"><tbody>
+<tr><td>📦 Materials warehouse</td><td>${sel('mat', ST.wh)}</td><td class="src">Everything the processes use is gathered here; in-between products land here too.</td></tr>
+<tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td><td class="src">Finished goods made for stock.</td></tr>
+<tr><td>🛒 Market store</td><td>${sel('market', ST.wh)}</td><td class="src">Finished goods made to sell.</td></tr>
+<tr><td>🏗 Building store</td><td>${sel('build', ST.wh)}</td><td class="src">Finished goods for your own building.</td></tr>
+<tr><td>🛢 Tank farm</td><td>${ST.tf.length ? sel('tank', ST.tf, '— don’t use one —') : '<span class="src">none on this rock</span>'}</td><td class="src">Finished goods that are all fluid (e.g. Hydrogen Propellant).</td></tr>
+</tbody></table><div class="hint">Remembered for ${esc(S.rock)} in this browser.</div></div>`;
+        h += '<div class="card"><div class="src" style="color:var(--amber)">Next to build: the moves, starting the processes, and tracking them.</div></div>';
       }
     }
     m.innerHTML = h;
@@ -167,6 +208,8 @@
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
+    m.querySelectorAll('[data-for]').forEach((b) => b.addEventListener('click', () => { P.for = b.dataset.for; k.render(); }));
+    m.querySelectorAll('select[data-st]').forEach((e) => e.addEventListener('change', () => { const all = storesGet(), r = (all[S.rock] = all[S.rock] || {}); r[e.dataset.st] = e.value ? +e.value : ''; storesPut(all); k.render(); }));
     m.querySelectorAll('[data-pp]').forEach((b) => b.addEventListener('click', () => { P.p = +b.dataset.pp; P.use = ''; P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; k.render(); }));
     on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });
     on('pp-n', 'change', (e) => { P.n = e.target.value; fillFor(); k.render(); });
