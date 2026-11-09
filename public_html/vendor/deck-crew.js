@@ -118,7 +118,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
     let one = el.querySelector('.cq-one');
     if (!one) { one = document.createElement('div'); one.className = 'cq-one'; el.appendChild(one); }
     one.scrollTop = 0;
-    one.innerHTML = '<button type="button" class="cq-back">◂ All crews</button><div class="cq-mem"><h3>' + Y.esc(c.name) + ' <span style="font-weight:400;color:#8fa79a;font-size:13px">· ' + c.roster.length + ' crewmate' + (c.roster.length === 1 ? '' : 's') + ' · ' + Y.esc(c.place || c.ast || '') + '</span><button type="button" class="cq-more" data-full="' + Y.esc(c.id) + '">Full crew details ▸</button></h3>' + (Y.crewTraits ? Y.crewTraits(c) : '') + '<button type="button" class="cq-back" style="position:static;margin-top:12px">◂ All crews</button></div>';
+    one.innerHTML = '<button type="button" class="cq-back">◂ All crews</button><div class="cq-mem"><h3>' + Y.esc(c.name) + ' <span style="font-weight:400;color:#8fa79a;font-size:13px">· ' + c.roster.length + ' crewmate' + (c.roster.length === 1 ? '' : 's') + ' · ' + Y.esc(c.place || c.ast || '') + '</span><button type="button" class="cq-more" data-full="' + Y.esc(c.id) + '">Full crew details ▸</button></h3>' + (Y.crewTraits ? Y.crewTraits(c) : '') + '</div>';
     el.classList.add('cq-showone');
     if (Y.fillFacesIn) Y.fillFacesIn(one);
   }
