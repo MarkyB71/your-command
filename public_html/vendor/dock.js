@@ -632,11 +632,14 @@ ${R.map(route).join('')}
     return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Make on this rock')}${b('ship', '🚀 Load a ship')}${window.YICFEED ? b('feed', '🍽 Feed crews') : ''}</div><div class="hint" style="margin:8px 0 0">${hint}</div></div>`;
   }
   function render() {
-    const m = document.getElementById('dk-main');
+    let m = document.getElementById('dk-main');
     if (!m || !S.ok) return;
     if (!S.ready) { m.innerHTML = '<div class="card"><div class="src">Loading your command…</div></div>'; return; }
+    // Logistics Bridge (Mark, 9 Nov – TEST ONLY, vendor/hubbridge.js): consoles + viewscreen; the tool is drawn ON the viewscreen
+    const LB = window.YICHUBBRIDGE;
+    if (LB) { m = LB.screen(m, S, render); if (!m) return; }
     if (S.mode === 'feed' && window.YICFEED) {
-      m.innerHTML = modeBar('feed') + '<div id="dk-feedpg"></div>';
+      m.innerHTML = (LB ? '' : modeBar('feed')) + '<div id="dk-feedpg"></div>';
       m.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; S.ship = null; render(); }));
       window.YICFEED.render(document.getElementById('dk-feedpg'));
       return;
@@ -691,7 +694,7 @@ ${R.map(route).join('')}
     // Two modes at the top (Mark, 9 Nov – test only): make on this rock (as before) or load a ship on another rock for it
     const shipMode = SHIPS && S.mode === 'ship';
     let h = planBar();
-    if (SHIPS) h += modeBar(shipMode ? 'ship' : 'make');
+    if (SHIPS && !LB) h += modeBar(shipMode ? 'ship' : 'make');
     h += `<div class="card"><h2><span class="n">1</span>${shipMode ? 'Rock to make it on' : 'Rock'}</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>

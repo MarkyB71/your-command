@@ -186,5 +186,5 @@
     }
   }
 
-  window.YICFEED = { render };
+  window.YICFEED = { render, count: () => plan().filter((r) => r.give && !S.sent[r.id]).length };
 })();
