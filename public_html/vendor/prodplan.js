@@ -313,12 +313,12 @@
     ships.sort((a, b) => (b.fitsNow - a.fitsNow) || tot(a) - tot(b) || (b.at - a.at) || b.s.capM - a.s.capM);
     if (!ships.find((x) => x.s.id === C.ship)) C.ship = ships[0] ? ships[0].s.id : 0;
     const hrsTxt = (x) => (x == null ? '…' : x === 0 ? '–' : x < 48 ? x + ' h' : (x / 24).toFixed(1) + ' days');
-    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Ship</b></div>` + (ships.length ? `<table><thead><tr><th></th><th>Ship</th><th>Where it is</th><th class="num">Flight to ${esc(C.src)}</th><th class="num">${esc(C.src)} → ${esc(dest)}</th><th class="num">Trips</th><th class="num">All done in</th></tr></thead><tbody>` +
+    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Ship</b></div>` + (ships.length ? `<table><thead><tr><th></th><th>Ship</th><th>Where it is</th><th class="num">Flight to ${esc(C.src)} to pick up</th><th class="num">Loaded trip to ${esc(dest)}</th><th class="num">Trips</th><th class="num">All done in</th></tr></thead><tbody>` +
       ships.map((x, i) => { const f = x.f; const done = f && f.ok ? tot(x) : null;
         return `<tr><td><input type="radio" name="pp-ship" value="${x.s.id}"${x.s.id === C.ship ? ' checked' : ''}></td><td><b>${esc(x.s.name)}</b> <span class="src">${SHIPT[x.s.st]}</span>${i === 0 && f && f.ok ? ' <span class="ok">★ best</span>' : ''}</td>` +
           `<td class="src">${x.at ? '<span class="ok">at ' + esc(C.src) + '</span>' + (x.fitsNow ? ' · room for it all' : ' · room for ' + Math.round(Math.min(1, Math.min((x.s.capM - x.s.useM) / Math.max(1, LG), (x.s.capV - x.s.useV) / Math.max(1, LV))) * 100) + '%') : esc(x.s.sst === 'f' ? 'flying to ' + astName(x.s.dId) : (x.s.sst === 'o' ? 'in orbit at ' : 'at ') + astName(x.s.dId))}</td>` +
-          `<td class="num">${x.at ? '<span class="ok">here</span>' : f ? (f.ok ? hrsTxt(f.toSrc) : '<span style="color:var(--red)">' + esc(f.why) + '</span>') : '…'}</td><td class="num">${f ? (f.ok ? hrsTxt(f.leg) : '') : '…'}</td><td class="num">${x.trips}</td><td class="num">${done == null ? '…' : '<b>' + hrsTxt(done) + '</b>'}</td></tr>`; }).join('') + '</tbody></table>' +
-      `<div class="hint">Trips = how many full loads it takes. All done in = flight to ${esc(C.src)} + each trip to ${esc(dest)} + the flights back between trips. Quickest route leaving now with the propellant it has; no crew engine bonus.${shuttles ? ' Shuttles are left out – too small for cargo.' : ''}</div>`
+          `<td class="num">${x.at ? '<span class="ok">here</span>' : f ? (f.ok ? hrsTxt(f.toSrc) + (f.refuel ? ' <span style="color:var(--amber)">refuel first</span>' : '') : '<span style="color:var(--red)">' + esc(f.why) + '</span>') : '…'}</td><td class="num">${f ? (f.ok ? hrsTxt(f.leg) : '') : '…'}</td><td class="num">${x.trips}</td><td class="num">${done == null ? (f ? '–' : '…') : '<b>' + hrsTxt(done) + '</b>'}</td></tr>`; }).join('') + '</tbody></table>' +
+      `<div class="hint">Trips = how many full loads it takes. All done in = flight to ${esc(C.src)} + each trip to ${esc(dest)} + the flights back between trips. Quickest route leaving now: the flight to ${esc(C.src)} with the propellant it has now (“refuel first” if that’s not enough), the loaded trips and flights back with a full tank. No crew engine bonus.${shuttles ? ' Shuttles are left out – too small for cargo.' : ''}</div>`
       : '<div class="src" style="color:var(--amber)">You have no Light or Heavy Transports.</div>');
     // 3. load it (only a ship that's already docked at the source rock)
     const pick = ships.find((x) => x.s.id === C.ship);
@@ -360,17 +360,28 @@
         try {
           if (!oS || !oD) { out.why = 'route unknown'; }
           else {
-            const pk = (s.prop || 0) * 1000;
-            const leg = await T.fastest(oS, oD, dep, T.maxDeltaV(s.st, s.sv, 1, Math.min(LG, s.capM) / 1000, pk));
-            const back = await T.fastest(oD, oS, dep, T.maxDeltaV(s.st, s.sv, 1, 0, pk));
+            // Mark (9 Nov) saw every ship "out of range": it used the propellant each ship has NOW for every leg.
+            // Now: the flight to the pick-up rock uses what it has now (or a full tank – "refuel first"); the loaded
+            // trip and the flight back use a full tank (refuelled at the rock). Still too far = "too far even when full".
+            const pk = (s.prop || 0) * 1000, full = (T.SHIPS[s.st] || [0, 0, 0])[2] / 1000;
+            const cargoKg = Math.min(LG, s.capM) / 1000;
+            const leg = await T.fastest(oS, oD, dep, T.maxDeltaV(s.st, s.sv, 1, cargoKg, full));
+            const back = await T.fastest(oD, oS, dep, T.maxDeltaV(s.st, s.sv, 1, 0, full));
             let toSrc = 0;
             if (!x.at) {
               const now = Date.now() / 1000, wait = s.sst === 'f' && s.arrT > now ? Math.ceil((s.arrT - now) / 3600) : 0;
               const oF = orbit(s.dId);
               if (s.dId === srcAst) toSrc = wait;
-              else { const f = oF ? await T.fastest(oF, oS, dep + wait, T.maxDeltaV(s.st, s.sv, 1, s.useM / 1000, pk)) : null; toSrc = f ? wait + f.tof : null; }
+              else if (!oF) { toSrc = null; out.why = 'not at one of your rocks'; }
+              else {
+                let f = await T.fastest(oF, oS, dep + wait, T.maxDeltaV(s.st, s.sv, 1, s.useM / 1000, pk));
+                if (!f) { f = await T.fastest(oF, oS, dep + wait, T.maxDeltaV(s.st, s.sv, 1, s.useM / 1000, full)); if (f) out.refuel = true; }
+                toSrc = f ? wait + f.tof : null;
+                if (!f) out.why = 'can’t reach ' + C.src;
+              }
             }
-            if (!leg || toSrc == null) out.why = 'out of range';
+            if (toSrc == null) { /* why already set */ }
+            else if (!leg) out.why = 'too far with this load';
             else Object.assign(out, { ok: true, toSrc, leg: leg.tof, back: back ? back.tof : leg.tof });
           }
         } catch (e) { out.why = 'route unknown'; }
