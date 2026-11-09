@@ -230,9 +230,34 @@
 <div class="row" style="margin-top:12px"><span class="src" style="min-width:150px">⚙ Runs the processes</span><select id="pp-run">${byP.map((c) => copt(c, P.runner, (x) => esc(k.BTN[mainBt]).toLowerCase() + ' speed ×' + pBonus(x).toFixed(2))).join('')}</select></div>${feedR}
 <div class="hint">Both must be on this rock. Best picked for you: moves by the total trip time of these moves (free distance and speed, Logistician included), processes by ${esc(k.BTN[mainBt]).toLowerCase()} speed (most of this plan's time). Can be the same crew.</div>`
       : '<div class="src" style="color:var(--red)">None of your crews is on this rock – a crew must be on the rock to move goods or start processes.</div>') + '</div>';
+    // TIMES (Mark, 9 Nov): duration with the process crew's speed bonus for that building type, and an estimated finish:
+    // a process starts once the earlier processes that make its inputs have finished (moves taken as quick) and a
+    // building of its type is free (busy ones counted from when they finish). Real time = game time ÷ 24.
+    const now = Date.now() / 1000;
+    const bonusFor = (bt) => { let m = 1; try { m = y.crewMult(ABIL[bt], roster(runner || {}).map((id) => cm[id]).filter(Boolean)); } catch (e) {} return Math.max(0.1, m * ((runner && runner.fm) || 1)); };
+    const bFree = {}; k.onRock().filter((b) => k.BTN[b.Building.buildingType]).forEach((b) => {
+      const fin = (b.Processors || []).filter((x) => x.status === 1).map((x) => x.finishTime || now);
+      bFree[b.id] = k.freeSlot(b) ? now : Math.max(now, fin.length ? Math.min(...fin) : now);
+    });
+    const T = [];
+    W.steps.forEach((st, i) => {
+      const bt = k.FBT[st.r.type], dur = Math.ceil((k.procSecs(st.r.name, st.runs) || 0) / bonusFor(bt));
+      let dep = now; W.steps.slice(0, i).forEach((e, j) => { if (Object.keys(st.r.inp).some((ip) => e.r.out[ip])) dep = Math.max(dep, T[j].fin); });
+      const rd = ready.find((c) => c.i === i);
+      const bid = rd ? rd.b.id : (Object.keys(bFree).filter((id) => k.onRock().find((b) => b.id === +id).Building.buildingType === bt).sort((a, b) => bFree[a] - bFree[b])[0]);
+      const start = Math.max(dep, bid ? bFree[bid] : dep);
+      if (bid) bFree[bid] = start + dur;
+      T[i] = { dur, start, fin: start + dur };
+    });
+    const when = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const tcells = (i) => `<td class="num">${hrs(T[i].dur)}</td><td class="num">${when(T[i].fin)}</td>`;
     h += `<div class="card"><h2><span class="n">8</span>Start processes</h2>` +
       `<label style="margin:0 0 8px"><input type="checkbox" id="pp-start"${P.start ? ' checked' : ''}> Start the ones that are ready in the same approval (${ready.length})</label>` +
-      `<table><tbody>${ready.map((c) => `<tr><td>${c.i + 1}</td><td>▶ ${esc(c.r.name)}</td><td>${esc(k.nm(c.b))}</td><td class="ok">ready now</td></tr>`).join('')}${wait.map(([i, st, why]) => `<tr><td>${i + 1}</td><td class="src">⏳ ${esc(st.r.name)}</td><td></td><td class="src">${esc(why)}</td></tr>`).join('')}</tbody></table>` +
+      `<table><thead><tr><th>#</th><th>Process</th><th>Building</th><th>Status</th><th class="num">Takes</th><th class="num">Finishes about</th></tr></thead><tbody>` +
+      W.steps.map((st, i) => { const c = ready.find((x) => x.i === i), w = wait.find((x) => x[0] === i);
+        return c ? `<tr><td>${i + 1}</td><td>▶ ${esc(c.r.name)}</td><td>${esc(k.nm(c.b))}</td><td class="ok">ready now</td>${tcells(i)}</tr>`
+          : `<tr><td>${i + 1}</td><td class="src">⏳ ${esc(st.r.name)}</td><td></td><td class="src">${esc(w ? w[2] : '')}</td>${tcells(i)}</tr>`; }).join('') + '</tbody></table>' +
+      `<div class="hint">All done about <b>${when(Math.max(...T.map((x) => x.fin)))}</b>. Times use ${runner ? esc(runner.name) + '’s' : 'no'} speed bonus, without building bonuses; moves still to finish in the game can add to it.</div>` +
       '<div class="hint">A process can only start once its inputs are in the materials warehouse – moves have to be finished in the game first. The rest wait their turn.</div></div>';
     const can = !S.busy && tot && crew;
     h += `<div class="card"><h2><span class="n">9</span>Approve</h2><button class="approve" id="pp-go"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (' + (feeds.length ? 'feed ' + feeds.length + ' crew' + (feeds.length > 1 ? 's' : '') + ' + ' : '') + S.calls.length + ' move' + (S.calls.length === 1 ? '' : 's') + (S.startList.length ? ' + start ' + S.startList.length : '') + ')'}</button>` +
