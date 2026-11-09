@@ -31,6 +31,21 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-job summary{cursor:pointer;font-size:15px}.cp-job table{width:100%;margin-top:8px;font-size:14px;border-collapse:collapse}.cp-job td{padding:4px 6px;border-top:1px solid #1a2230}.cp-job .num{text-align:right}
 .cp-pool h3{margin:0 0 6px;font-size:15px;color:#8b9ab0;font-weight:600}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
+/* TEST (?beta=1, Mark 9 Nov): same look as the new Crew Quarters cards / Galley – green, crewmate pictures with class colours */
+const CPBETA=/[?&]beta=1\b/.test(location.search);
+const CCOL={1:'#884fff',2:'#e0282e',3:'#ff8c1a',4:'#ffd94f',5:'#4f90ff'};
+const CSS_G=`.cp-title{color:#9be8bf}
+.cp-crew{background:#0e1512;border-color:#2c3d35;transition:border-color .15s,box-shadow .15s}
+.cp-crew:hover{border-color:#3fd68a;box-shadow:0 0 14px -4px #3fd68a}
+.cp-crew.drop{border-color:#3fd68a;box-shadow:0 0 0 2px rgba(63,214,138,.4)}
+.cp-nm{color:#e6ebf2;font-size:15px}
+.cp-slot{border-color:#24382d;color:#3d5a4b}
+.cp-mate{background:#060a08;border-color:#22302a}
+.cp-mate img{border:2px solid var(--cc,#6b7a90);box-sizing:border-box;border-radius:5px}
+.cp-mate .c{color:var(--cc,#9be8bf)}
+.cp-mate.sel{outline-color:#3fd68a}
+.cp-pool{background:#0b110e;border-color:#24382d}
+.cp-job{background:#0b110e;border-color:#24382d}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc0=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
@@ -41,7 +56,7 @@ const store=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
 export function drawCrewPlan(m){
-  if(!document.getElementById('cp-css')){const st=el('style');st.id='cp-css';st.textContent=CSS;document.head.appendChild(st)}
+  if(!document.getElementById('cp-css')){const st=el('style');st.id='cp-css';st.textContent=CSS+(CPBETA?CSS_G:'');document.head.appendChild(st)}
   const Y=window.YIC;let D;try{D=Y&&Y.D}catch(e){D=null}
   if(!D||!D.crewList){m.innerHTML='<div class="note">Crew data is still loading. Try again in a moment.</div>';return}
   const crewMult=Y.crewMult,CBJ=Y.CBJ,CBNF=Y.CBNF,habEff=Y.habEff,CMC=Y.CMC,cm=D.crewmates||{};
@@ -63,6 +78,7 @@ export function drawCrewPlan(m){
   function mateEl(id,k){
     const x=cm[id]||{},e=el('div','cp-mate'+(home[id]!=+k?' moved':'')+(S.sel===id?' sel':''),
       '<img src="cimg.php?id='+id+'&s=1" data-face="'+id+'" alt="" loading="lazy"><div class="n" title="'+esc(names[id]||('#'+id))+'">'+esc(names[id]||('#'+id))+'</div><div class="c">'+esc(CMC[x.class]||'')+'</div>');
+    if(CPBETA)e.style.setProperty('--cc',CCOL[x.class]||'#6b7a90');
     e.draggable=true;e.title=(names[id]||'Crewmate #'+id)+(home[id]!=+k&&home[id]!=null?' · from '+crews[home[id]].name:'');
     e.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',String(id));e.classList.add('dragging')});
     e.addEventListener('dragend',()=>e.classList.remove('dragging'));
