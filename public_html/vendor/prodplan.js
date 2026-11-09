@@ -174,12 +174,16 @@
     const tByType = {}; W.steps.forEach((st) => { const bt = k.FBT[st.r.type]; tByType[bt] = (tByType[bt] || 0) + (k.procSecs(st.r.name, st.runs) || 1); });
     const mainBt = +(Object.keys(tByType).sort((a, b) => tByType[b] - tByType[a])[0] || 3);
     const pBonus = (c) => { let m = 1; try { m = y.crewMult(ABIL[mainBt], roster(c).map((id) => cm[id]).filter(Boolean)); } catch (e) {} return m * c.fm; };
-    if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
+    const { moves, short } = calcMoves(W, ST, mat);
+    // moves crew (Mark, 9 Nov): ranked by the real trip times of THIS plan's moves – free distance and speed
+    // (Logistician +5% surface transport speed is in the speed bonus) both count; ready crews first
+    const moveSecs = (c) => moves.reduce((t, x) => t + (k.tripSecs(km(x.b, mat), c) || 0), 0);
+    const byM = cl.slice().sort((a, b) => (!!a.busy - !!b.busy) || moveSecs(a) - moveSecs(b) || b.free - a.free || b.speed - a.speed);
+    if (!P.moverSet || !cl.find((c) => c.id === S.mover)) S.mover = (byM[0] || {}).id || 0;
     const byP = cl.slice().sort((a, b) => (!!a.busy - !!b.busy) || pBonus(b) - pBonus(a));
     if (!cl.find((c) => c.id === P.runner)) P.runner = (byP[0] || {}).id || 0;
     const crew = cl.find((c) => c.id === S.mover), runner = cl.find((c) => c.id === P.runner);
     S.moverObj = crew;
-    const { moves, short } = calcMoves(W, ST, mat);
     // starts: in order, each process whose inputs are ALREADY in the materials warehouse (deliveries have to be
     // finished first) and that has a free building of its type
     const pool = {}; ((k.inv(mat) || { contents: [] }).contents || []).forEach((c) => { pool[c.product] = (pool[c.product] || 0) + c.amount; });
@@ -222,9 +226,9 @@
       (Object.keys(W.fly).length ? `<div class="hint">✈ Fly or buy into ${esc(k.nm(mat))}: ${Object.keys(W.fly).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, W.fly[p])).join(', ')} – the 🚀 Cargo bay can load a ship for it.</div>` : '') + '</div>';
     const copt = (c, sel, extra) => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${esc(c.name)} – ${extra(c)} · fed ${Math.round(c.food * 100)}%${c.fm < 1 ? ' (hungry)' : ''}${c.busy ? ' · busy until ' + esc(c.busy) : ' · ready now'}</option>`;
     h += `<div class="card"><h2><span class="n">7</span>Crews</h2>` + (cl.length
-      ? `<div class="row"><span class="src" style="min-width:150px">🚚 Does the moves</span><select id="pp-crew">${cl.map((c) => copt(c, S.mover, (x) => 'free distance ×' + x.free.toFixed(2))).join('')}</select></div>${feedM}
+      ? `<div class="row"><span class="src" style="min-width:150px">🚚 Does the moves</span><select id="pp-crew">${byM.map((c) => copt(c, S.mover, (x) => (moves.length ? 'moves ' + (moveSecs(x) ? k.tripTxt(moveSecs(x)) : 'instant') + ' · ' : '') + 'free distance ×' + x.free.toFixed(2) + ' · speed ×' + x.speed.toFixed(2))).join('')}</select></div>${feedM}
 <div class="row" style="margin-top:12px"><span class="src" style="min-width:150px">⚙ Runs the processes</span><select id="pp-run">${byP.map((c) => copt(c, P.runner, (x) => esc(k.BTN[mainBt]).toLowerCase() + ' speed ×' + pBonus(x).toFixed(2))).join('')}</select></div>${feedR}
-<div class="hint">Both must be on this rock. Best picked for you: moves by free transport distance, processes by ${esc(k.BTN[mainBt]).toLowerCase()} speed (most of this plan's time). Can be the same crew.</div>`
+<div class="hint">Both must be on this rock. Best picked for you: moves by the total trip time of these moves (free distance and speed, Logistician included), processes by ${esc(k.BTN[mainBt]).toLowerCase()} speed (most of this plan's time). Can be the same crew.</div>`
       : '<div class="src" style="color:var(--red)">None of your crews is on this rock – a crew must be on the rock to move goods or start processes.</div>') + '</div>';
     h += `<div class="card"><h2><span class="n">8</span>Start processes</h2>` +
       `<label style="margin:0 0 8px"><input type="checkbox" id="pp-start"${P.start ? ' checked' : ''}> Start the ones that are ready in the same approval (${ready.length})</label>` +
@@ -321,11 +325,11 @@
     }
     m.innerHTML = h;
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
-    on('pp-rock', 'change', (e) => { S.rock = e.target.value; k.render(); });
+    on('pp-rock', 'change', (e) => { S.rock = e.target.value; P.moverSet = false; P.runner = 0; k.render(); });
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
-    on('pp-crew', 'change', (e) => { S.mover = +e.target.value; P.feed.m = false; k.render(); });
+    on('pp-crew', 'change', (e) => { S.mover = +e.target.value; P.moverSet = true; P.feed.m = false; k.render(); });
     m.querySelectorAll('[data-feed]').forEach((e) => e.addEventListener('change', () => { P.feed[e.dataset.feed] = e.checked; k.render(); }));
     on('pp-run', 'change', (e) => { P.runner = +e.target.value; P.feed.r = false; k.render(); });
     on('pp-start', 'change', (e) => { P.start = e.target.checked; k.render(); });
