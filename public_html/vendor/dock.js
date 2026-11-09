@@ -105,10 +105,10 @@
     });
     airlock(ov);
   }
-  // SECRET AIRLOCK BYPASS (Mark, 9 Nov – TEST ONLY ?beta=1): the kPa gauge on the left wall is really a knob. Click it
+  // SECRET AIRLOCK BYPASS (Mark, 9 Nov – LIVE 9 Nov 2026): the kPa gauge on the left wall is really a knob. Click it
   // to turn it – next time the hub opens straight in, no airlock. Nothing shows it's clickable; Mark tells players who ask.
   // To get the airlock back: double-click LOGISTICS HUB at the top of the hub. Saved only in this browser (localStorage).
-  const BYKEY = 'sk_airlock_bypass', BYBETA = /[?&]beta=1\b/.test(location.search);
+  const BYKEY = 'sk_airlock_bypass', BYBETA = true; // LIVE 9 Nov 2026 (tested on ?beta=1 – Mark)
   const bypassOn = () => { try { return BYBETA && localStorage.getItem(BYKEY) === '1'; } catch (e) { return false; } };
   function knob(ov, setSign) {
     const g = ov.querySelector('g[transform="translate(135 340)"]');
