@@ -356,7 +356,9 @@ body.dk-flight #main th{color:#c4adff}
     const win = document.querySelector('#deckhero[data-deck="flight"] .fh-win');
     if (!win || !s) return;
     const Y = window.YIC,
-      esc = (Y && Y.esc) || ((x) => String(x));
+      esc = (Y && Y.esc) || (/[?&]beta=1\b/.test(location.search)
+        ? ((x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]))
+        : ((x) => String(x)));
     let o = win.querySelector('.fh-ship');
     if (o) o.remove();
     const crew = (Y && Y.D && Y.D.crewN && Y.D.crewN[s.crewId]) || '';
