@@ -21,6 +21,8 @@
 #dk-ov .lb-scr{position:relative;height:clamp(380px,60vh,900px);overflow:auto;padding:30px 2.5% 14px;clip-path:polygon(2% 0,98% 0,100% 6%,100% 100%,0 100%,0 6%);background:repeating-linear-gradient(0deg,rgba(255,176,59,.025) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#1d150b,#07060a 75%);scrollbar-color:#5a4020 transparent}
 #dk-ov .lb-scr .card{background:rgba(20,16,10,.85)!important;box-shadow:0 0 0 1px #3a2c18 inset!important}
 #dk-ov .lb-scr td{color:var(--ink)}
+#dk-ov .lb-scr .dk-shipbtn{padding:4px 10px;border-radius:7px;border:1px solid #6b4e24;background:#140e06;color:#ffd28a;font:600 14px system-ui,sans-serif;cursor:pointer}
+#dk-ov .lb-scr .dk-shipbtn.on{background:#ffb03b;border-color:#ffb03b;color:#1a1000}
 #dk-ov .lb-deck{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,.8fr) repeat(3,minmax(0,1fr));gap:10px;align-items:end;padding:20px 4% 0;perspective:1100px}
 #dk-ov .lb-st{all:unset;box-sizing:border-box;cursor:pointer;display:block;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
 #dk-ov .lb-st:hover,#dk-ov .lb-st:focus-visible,#dk-ov .lb-st.on{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}

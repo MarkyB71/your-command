@@ -125,16 +125,9 @@
   // ---------- steps 8–9: moves into the materials warehouse, crew, start what can start, approve ----------
   // Sent through the hub's own approve() (vendor/dock.js – same checks, batches and wallet path as before):
   // S.calls = deliveries, S.startList = process starts.
-  function movesHTML(W, ST, byId) {
-    const k = K(), esc = k.esc, S = k.S, mat = byId(ST.mat);
-    if (!mat) return '<div class="card"><div class="src" style="color:var(--red)">Pick a materials warehouse first.</div></div>';
-    const stores = ST.wh.concat(ST.tf);
-    const km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b));
-    const cl = k.crews();
-    if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
-    const crew = cl.find((c) => c.id === S.mover);
-    S.moverObj = crew;
-    // moves: what the plan takes from storage, gathered into the materials warehouse (nearest storage first)
+  // moves: what the plan takes from storage, gathered into the materials warehouse (nearest storage first)
+  function calcMoves(W, ST, mat) {
+    const k = K(), stores = ST.wh.concat(ST.tf), km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b));
     const have = (b, p) => ((k.inv(b) || { contents: [] }).contents || []).filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0);
     const dl = {}, short = [];
     Object.keys(W.stock).forEach((p) => {
@@ -145,7 +138,38 @@
       });
       if (left > 0) short.push(p);
     });
-    const moves = Object.values(dl);
+    return { moves: Object.values(dl), short };
+  }
+  // how full each storage will be once the whole plan is done (Mark, 9 Nov): moves in/out, mined + flown-in goods
+  // into the materials warehouse, every input used from it, in-between outputs back into it, finished goods to their store.
+  // End state, by weight or space (whichever is fuller); by-products counted in full.
+  function fullAfter(W, ST, byId) {
+    const k = K(), MV = k.mv(), mat = byId(ST.mat), d = {};
+    const add = (b, p, n) => { if (!b || !n) return; const v = MV[p] || [1000, 1000]; const x = (d[b.id] = d[b.id] || [0, 0]); x[0] += n * v[0]; x[1] += n * v[1]; };
+    if (mat) {
+      calcMoves(W, ST, mat).moves.forEach((mv) => mv.items.forEach(([p, a]) => { add(mv.b, p, -a); add(mat, p, a); }));
+      Object.keys(W.mine).forEach((p) => add(mat, +p, W.mine[p]));
+      Object.keys(W.fly).forEach((p) => add(mat, +p, W.fly[p]));
+    }
+    W.steps.forEach((st) => {
+      Object.keys(st.r.inp).forEach((ip) => add(mat, +ip, -st.r.inp[ip] * st.runs));
+      Object.keys(st.r.out).forEach((o) => add(st.to, +o, st.r.out[o] * st.runs));
+    });
+    return (b) => {
+      if (!b) return null;
+      const i = k.inv(b) || { mass: 0, volume: 0 }, c = b.Building.buildingType === k.TANK ? [75e9, 997.5e9] : [1.5e12, 75e9], x = d[b.id] || [0, 0];
+      return Math.max(0, Math.round(Math.max((i.mass + (i.reservedMass || 0) + x[0]) / c[0], (i.volume + (i.reservedVolume || 0) + x[1]) / c[1]) * 100));
+    };
+  }
+  function movesHTML(W, ST, byId) {
+    const k = K(), esc = k.esc, S = k.S, mat = byId(ST.mat);
+    if (!mat) return '<div class="card"><div class="src" style="color:var(--red)">Pick a materials warehouse first.</div></div>';
+    const km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b));
+    const cl = k.crews();
+    if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
+    const crew = cl.find((c) => c.id === S.mover);
+    S.moverObj = crew;
+    const { moves, short } = calcMoves(W, ST, mat);
     // starts: in order, each process whose inputs are ALREADY in the materials warehouse (deliveries have to be
     // finished first) and that has a free building of its type
     const pool = {}; ((k.inv(mat) || { contents: [] }).contents || []).forEach((c) => { pool[c.product] = (pool[c.product] || 0) + c.amount; });
@@ -250,16 +274,19 @@
           }).join('') + '</tbody></table>' +
           '<div class="hint">Earlier steps make what later steps need. Times are without crew or building bonuses.</div></div>';
         // step 7: where things go
+        const after = fullAfter(W, ST, byId);
+        const pc = (n) => `<b style="color:${n > 100 ? '#ff4d4d' : n >= 90 ? '#ff6b6b' : n >= 75 ? '#ffb03b' : '#3fd68a'}">${n}%</b>`;
+        const aft = (key) => { const b = byId(ST[key]); if (!b) return '<td></td>'; const a = after(b), n = ST.full(b); return `<td class="num" style="white-space:nowrap">${n}% → ${pc(a)}${a > 100 ? ' <span style="color:#ff4d4d">won’t fit</span>' : ''}</td>`; };
         const sel = (key, list, none) => `<select data-st="${key}">${none ? `<option value="">${none}</option>` : ''}${list.map((b) => `<option value="${b.id}"${b.id === ST[key] ? ' selected' : ''}>${esc(k.nm(b))} · ${ST.full(b)}% full</option>`).join('')}</select>`;
         h += `<div class="card"><h2><span class="n">5</span>Where things go</h2>
 <div class="row"><span class="src">What it's for</span>${FOR.map(([v, t]) => `<button type="button" class="dk-shipbtn${pf === v ? ' on' : ''}" data-for="${v}">${t}</button>`).join('')}</div>
 <table style="margin-top:10px"><tbody>
-<tr><td>📦 Materials warehouse</td><td>${sel('mat', ST.wh)}</td><td class="src">Everything the processes use is gathered here; in-between products land here too.</td></tr>
-<tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td><td class="src">Finished goods made for stock.</td></tr>
-<tr><td>🛒 Market store</td><td>${sel('market', ST.wh)}</td><td class="src">Finished goods made to sell.</td></tr>
-<tr><td>🏗 Building store</td><td>${sel('build', ST.wh)}</td><td class="src">Finished goods for your own building.</td></tr>
-<tr><td>🛢 Tank farm</td><td>${ST.tf.length ? sel('tank', ST.tf, '— don’t use one —') : '<span class="src">none on this rock</span>'}</td><td class="src">Finished goods that are all fluid (e.g. Hydrogen Propellant).</td></tr>
-</tbody></table><div class="hint">Remembered for ${esc(S.rock)} in this browser.</div></div>`;
+<tr><td>📦 Materials warehouse</td><td>${sel('mat', ST.wh)}</td>${aft('mat')}<td class="src">Everything the processes use is gathered here; in-between products land here too.</td></tr>
+<tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td>${aft('stock')}<td class="src">Finished goods made for stock.</td></tr>
+<tr><td>🛒 Market store</td><td>${sel('market', ST.wh)}</td>${aft('market')}<td class="src">Finished goods made to sell.</td></tr>
+<tr><td>🏗 Building store</td><td>${sel('build', ST.wh)}</td>${aft('build')}<td class="src">Finished goods for your own building.</td></tr>
+<tr><td>🛢 Tank farm</td><td>${ST.tf.length ? sel('tank', ST.tf, '— don’t use one —') : '<span class="src">none on this rock</span>'}</td>${aft('tank')}<td class="src">Finished goods that are all fluid (e.g. Hydrogen Propellant).</td></tr>
+</tbody></table><div class="hint">Full now → full when the plan is done: <span style="color:#3fd68a">green</span> under 75%, <span style="color:#ffb03b">amber</span> 75–89%, <span style="color:#ff6b6b">red</span> 90% or more. Remembered for ${esc(S.rock)} in this browser.</div></div>`;
         h += movesHTML(W, ST, byId);
       }
     }
