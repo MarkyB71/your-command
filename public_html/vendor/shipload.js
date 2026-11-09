@@ -259,6 +259,7 @@ ${F.moves.length > 30 ? '<div class="hint">The first 30 moves go in this approva
     const g = el.querySelector('#sl-go'); if (g) g.addEventListener('click', () => { if (!SS.busy) send(); });
   }
 
+  const crewLink = (c, esc) => c ? ' Finish them with <b>' + esc(c.name) + '</b>' + (window.GL && window.GL.on() ? window.GL('/crew/' + c.id, 'Open this crew in the game') : ' <a href="https://game.influenceth.io/crew/' + c.id + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="Open this crew in the game">in game ↗</a>') + '.' : '';
   const say = (html, err) => { SS.msg = html; SS.msgErr = !!err; const e = document.getElementById('sl-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
 
   function calls(list) {
@@ -309,7 +310,8 @@ ${F.moves.length > 30 ? '<div class="hint">The first 30 moves go in this approva
       else throw new Error('This wallet cannot send transactions from a web page.');
       const hsh = res && (res.transaction_hash || res.transactionHash);
       SS.sentAt = Date.now(); SS.busy = false;
-      SS.msg = '✓ Sent to the game. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'Finish the moves in the game with Finish All Ready Items – then the ship is yours to fly to ' + k.esc(k.S.rock) + '.';
+      SS.msg = '✓ Sent to the game. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'Finish the moves in the game with Finish All Ready Items – then the ship is yours to fly to ' + k.esc(k.S.rock) + '.' +
+        crewLink(k.crews(SS.src).find((c) => c.id === SS.crew), k.esc); // Mark, 9 Nov: which crew to finish with
       SS.msgErr = false; render(host, cur);
       setTimeout(() => { k.loadDeliveries().then(k.render); }, 150000);
     } catch (e) {

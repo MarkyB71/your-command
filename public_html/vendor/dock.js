@@ -530,6 +530,7 @@ ${R.map(route).join('')}
     if (!a && w.selectedAddress) a = w.selectedAddress;
     return a;
   }
+  const crewLink = (c, esc) => c ? ' Finish them with <b>' + esc(c.name) + '</b>' + (window.GL && window.GL.on() ? window.GL('/crew/' + c.id, 'Open this crew in the game') : ' <a href="https://game.influenceth.io/crew/' + c.id + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="Open this crew in the game">in game ↗</a>') + '.' : '';
   const say = (html, err) => { S.msg = html; S.msgErr = !!err; const e = document.getElementById('dk-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
   // ProcessProductsStart (@influenceth/sdk 2.8.1, checked with System.getRunSystemCall 8 Nov):
   //   [processor(5,id), processor_slot, process, target_output, recipes (Fixed: mag = n·2^32, sign 0),
@@ -596,7 +597,9 @@ ${R.map(route).join('')}
       else throw new Error('This wallet cannot send transactions from a web page.');
       const h = res && (res.transaction_hash || res.transactionHash);
       S.sentAt = Date.now(); S.busy = false; render(); setTimeout(() => { loadDeliveries().then(render); }, 150000);
-      say('✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(String(h).slice(0, 10))}…</a>. ` : '') + 'Finish the deliveries in the game with Finish All Ready Items, then press ↻ Check the game again.');
+      say('✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(String(h).slice(0, 10))}…</a>. ` : '') + 'Finish the deliveries in the game with Finish All Ready Items, then press ↻ Check the game again.' +
+        // which crew to finish with, with an in-game link (Mark, 9 Nov: hard to find the crew afterwards) – TEST ONLY
+        (/[?&]beta=1\b/.test(location.search) ? crewLink(S.moverObj, esc) : ''));
     } catch (e) {
       const t = String((e && e.message) || e || '');
       S.busy = false; render();
