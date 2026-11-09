@@ -35,6 +35,7 @@
     '#dk-ov .sl-bar{height:6px;border-radius:3px;background:#ffffff14;overflow:hidden;margin-top:4px;width:220px;max-width:100%}' +
     '#dk-ov .sl-bar i{display:block;height:100%;background:var(--cyan)}';
   document.head.appendChild(css);
+  const keepCss = () => { if (!css.isConnected) document.head.appendChild(css); };
 
   const vol = (p) => ((K().mv()[p] || [1000, 1000])[1]); // cm³ per unit
   const m3 = (cm3) => { const v = cm3 / 1e6; return (v >= 100 ? Math.round(v).toLocaleString('en-GB') : (+v.toFixed(v >= 10 ? 1 : 2)).toLocaleString('en-GB')) + ' m³'; };
@@ -162,7 +163,7 @@
     const link = (id) => (window.GL && window.GL.on() ? window.GL('/building/' + id, 'Open this marketplace in the game')
       : ' <a href="https://game.influenceth.io/building/' + id + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="Open this marketplace in the game">in game ↗</a>');
     const sway = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? (v / 1e3).toFixed(1) + 'k' : Math.round(v).toLocaleString('en-GB')) + ' SWAY';
-    let h = '<div class="src" style="margin:12px 0 4px"><b>🛒 Or buy it on the belt</b> – marketplaces selling this load, best cover first. Buying and flying stay with you in the game.</div>';
+    let h = '<div class="src" style="margin:6px 0 4px">Marketplaces selling this load, best cover first.</div>';
     if (!rows.length) return h + '<div class="src" style="color:var(--amber)">Nobody on the belt is selling any of it right now.</div>';
     h += '<table><thead><tr><th>Asteroid</th><th>Of the load</th><th>For sale there</th><th>Cost</th></tr></thead><tbody>' + rows.map((r) => {
       const left = Object.keys(items).filter((p) => (r.got[p] || 0) < items[p]);
@@ -175,6 +176,7 @@
   }
 
   function render(el, pick) {
+    keepCss();
     host = el; cur = pick;
     const k = K();
     if (!k || !pick) { el.innerHTML = ''; return; }
@@ -190,29 +192,23 @@
     const destTypes = new Set(k.allB().filter((b) => k.rockOf(b) === k.S.rock).map((b) => b.Building.buildingType));
     let h = `<div class="card"><h2><span class="n">🚀</span>Load a ship ${pick.items ? 'for ' + esc(pick.what) + ' × ' + (+pick.runs).toLocaleString('en-GB') + (+pick.runs === 1 ? ' run' : ' runs') + ' on ' + esc(k.S.rock) : 'with ' + esc(k.pname(pick.p)) + ' for ' + esc(k.S.rock)}</h2>
 <div class="hint" style="margin:0 0 8px">This only <b>loads</b> the ship. You fly it to ${esc(k.S.rock)} and unload it yourself in the game.</div>
-<div class="src" style="margin-bottom:4px"><b>1 · What to send</b> – pick one. Sending what it's made from can be a smaller load.</div><div class="sl-opts">`;
-    const smallest = opts.reduce((b, o, i) => (loadV(o.items) < loadV(opts[b].items) ? i : b), 0);
-    opts.forEach((o, i) => {
-      const best = rocks.map((r) => [r, cover(r, o.items)]).sort((a, b) => b[1] - a[1])[0];
-      const noB = o.recs.filter((r) => !destTypes.has(k.FBT[r.type])).map((r) => k.BTN[k.FBT[r.type]] || 'building');
-      const list = Object.keys(o.items).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, o.items[p]));
-      h += `<div class="sl-opt${SS.opt === i ? ' on' : ''}" data-slopt="${i}"><h3>${SS.opt === i ? '◉' : '○'} ${esc(o.t)}${i === smallest && opts.length > 1 ? '<span class="sl-tag">smallest load</span>' : ''}</h3>
-<div class="big">${m3(loadV(o.items))} · ${k.tonnes(loadG(o.items) / 1000)}</div>
-<div class="sm">${list.slice(0, 6).join('<br>')}${list.length > 6 ? '<br>+ ' + (list.length - 6) + ' more' : ''}</div>
-<div class="sm" style="margin-top:4px">${best ? (best[1] >= 0.999 ? '<span class="ok">✓ all in stock on ' + esc(best[0]) + '</span>' : best[1] > 0 ? Math.round(best[1] * 100) + '% in stock on ' + esc(best[0]) : '<span style="color:var(--red)">✗ not in stock on your other rocks</span>') : ''}</div>
-${o.recs.length ? `<div class="sm" style="margin-top:4px">Then make it on ${esc(k.S.rock)}: ${[...new Set(o.recs.map((r) => esc(r.name)))].slice(0, 4).join(', ')}${noB.length ? '<br><span style="color:var(--amber)">⚠ needs a ' + esc([...new Set(noB)].join(', ').toLowerCase()) + ' there – none on ' + esc(k.S.rock) + '</span>' : ''}</div>` : ''}</div>`;
-    });
-    h += '</div>';
+<div class="src" style="margin-bottom:4px"><b>1 · What to send</b></div>`;
+    // Mark (9 Nov): too much on screen – one drop-down, the item list only for the one picked
+    h += `<select id="sl-opt">${opts.map((o, i) => {
+      const best = rocks.map((r) => [r, cover(r, o.items)]).sort((x, y) => y[1] - x[1])[0];
+      const noB = o.recs.some((r) => !destTypes.has(k.FBT[r.type]));
+      return `<option value="${i}"${SS.opt === i ? ' selected' : ''}>${esc(o.t)} – ${m3(loadV(o.items))} · ${k.tonnes(loadG(o.items) / 1000)}${best ? ' – ' + Math.round(best[1] * 100) + '% on ' + esc(best[0]) : ''}${noB ? ' – ⚠ needs a building there' : ''}</option>`;
+    }).join('')}</select>`;
     const O = opts[SS.opt];
-    h += belt(O.items);
+    h += '<details style="margin-top:10px"><summary class="src" style="cursor:pointer">🛒 Or buy it on the belt</summary>' + belt(O.items) + '</details>';
     if (!rocks.length) { el.innerHTML = h + '<div class="src">You have no storage on another rock to load from.</div></div>'; wire(el); return; }
     if (!rocks.includes(SS.src)) SS.src = rocks.map((r) => [r, cover(r, O.items), shipsFor(r).some((x) => x.ok)]).sort((a, b) => b[1] - a[1] || b[2] - a[2])[0][0];
-    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Load it on</b></div><select id="sl-src">${rocks.map((r) => [r, cover(r, O.items), shipsFor(r).filter((x) => x.ok).length]).sort((a, b) => b[1] - a[1] || b[2] - a[2]).map(([r, c, n]) => `<option value="${esc(r)}"${r === SS.src ? ' selected' : ''}>${esc(r)} – ${Math.round(c * 100)}% in stock · ${n ? n + ' ship' + (n === 1 ? '' : 's') + ' ready' : 'no ship ready'}</option>`).join('')}</select>`;
+    h += `<div class="src" style="margin:12px 0 4px"><b>2 · From</b></div><select id="sl-src">${rocks.map((r) => [r, cover(r, O.items), shipsFor(r).filter((x) => x.ok).length]).sort((a, b) => b[1] - a[1] || b[2] - a[2]).map(([r, c, n]) => `<option value="${esc(r)}"${r === SS.src ? ' selected' : ''}>${esc(r)} – ${Math.round(c * 100)}% in stock · ${n ? n + ' ship' + (n === 1 ? '' : 's') + ' ready' : 'no ship ready'}</option>`).join('')}</select>`;
 
     // 3 ships
     const sl = shipsFor(SS.src);
     if (!SS.picked) SS.picked = new Set(sl.filter((x) => x.ok).map((x) => x.s.id));
-    h += `<div class="src" style="margin:12px 0 4px"><b>3 · Ships on or heading to ${esc(SS.src)}</b> – tick the ones to load. The load is split across them.</div>`;
+    h += `<div class="src" style="margin:12px 0 4px"><b>3 · Into ship</b></div>`;
     if (!sl.length) h += `<div class="src" style="color:var(--amber)">None of your cargo ships are on ${esc(SS.src)} or on their way there.</div>`;
     else h += '<div>' + sl.map((x) => {
       const pf = Math.min(1, Math.max(x.s.useM / x.s.capM, x.s.useV / x.s.capV));
@@ -224,7 +220,6 @@ ${o.recs.length ? `<div class="sm" style="margin-top:4px">Then make it on ${esc(
     const F = fill(SS.src, O.items, ships);
     SS.F = F;
     if (ships.length) {
-      h += F.loads.map((L) => `<div class="hint" style="margin-top:6px">→ <b>${esc(L.x.s.name)}</b>: ${Object.keys(L.items).filter((p) => L.items[p] > 0).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, L.items[p])).join(', ')}</div>`).join('');
       const lo = Object.keys(F.left), sh = Object.keys(F.short);
       if (lo.length) h += `<div class="hint" style="color:var(--amber)">Won't fit in the ticked ships: ${lo.map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, F.left[p])).join(', ')} – tick another ship or send it on a second trip.</div>`;
       if (sh.length) h += `<div class="hint" style="color:var(--amber)">Not in stock on ${esc(SS.src)}: ${sh.map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, F.short[p])).join(', ')}.</div>`;
@@ -234,9 +229,9 @@ ${o.recs.length ? `<div class="sm" style="margin-top:4px">Then make it on ${esc(
     const cl = k.crews(SS.src);
     if (!cl.find((c) => c.id === SS.crew)) SS.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const crew = cl.find((c) => c.id === SS.crew);
-    h += `<div class="src" style="margin:12px 0 4px"><b>4 · Crew on ${esc(SS.src)} to do the moves</b></div>`;
+    h += `<div class="src" style="margin:12px 0 4px"><b>4 · Moved by</b></div>`;
     h += cl.length ? `<select id="sl-crew">${cl.map((c) => `<option value="${c.id}"${c.id === SS.crew ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(SS.src)} – a crew there has to send the moves.</div>`;
-    if (F.moves.length) h += `<table style="margin-top:8px"><thead><tr><th>From</th><th>Goods</th><th>To ship</th><th>Trip</th></tr></thead><tbody>${F.moves.map((mv) => `<tr><td class="src">${esc(k.nm(mv.b))}</td><td>${Object.keys(mv.items).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, mv.items[p])).join('<br>')}</td><td class="src">${esc(mv.ship.name)}</td><td class="src">${mv.km < 1e9 ? k.kmTxt(mv.km) + ' · ' + k.tripTxt(k.tripSecs(mv.km, crew)) : ''}</td></tr>`).join('')}</tbody></table>`;
+    if (F.moves.length) h += `<table style="margin-top:8px"><thead><tr><th>From</th><th>Goods</th><th>To ship</th></tr></thead><tbody>${F.moves.map((mv) => `<tr><td class="src">${esc(k.nm(mv.b))}</td><td>${Object.keys(mv.items).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, mv.items[p])).join('<br>')}</td><td class="src">${esc(mv.ship.name)}</td></tr>`).join('')}</tbody></table>`;
 
     // approve
     const wait = SS.sentAt && Date.now() - SS.sentAt < 180000;
@@ -244,7 +239,7 @@ ${o.recs.length ? `<div class="sm" style="margin-top:4px">Then make it on ${esc(
     const can = k.isOwner() && !SS.busy && !wait && F.moves.length && crew;
     h += `<div style="margin-top:12px"><button id="sl-go" class="dkp-rc" style="border-color:var(--amber);color:#ffd28a"${can ? '' : ' disabled'}>🚀 Approve – load ${n} move${n === 1 ? '' : 's'} into ${F.loads.length > 1 ? F.loads.length + ' ships' : 'the ship'}</button></div>
 ${F.moves.length > 30 ? '<div class="hint">The first 30 moves go in this approval – press again for the rest.</div>' : ''}
-<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – wait a moment, then ↻ Check the game again.</span> ' : ''}Nothing is sent until you approve it in your wallet. Then finish the moves in the game ("Finish All Ready Items") and fly the ship yourself.</div>
+<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – wait a moment, then ↻ Check the game again.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>
 <div id="sl-msg" class="hint" style="display:${SS.msg ? 'block' : 'none'};margin-top:8px;padding:10px 12px;border-radius:8px;border:1px solid ${SS.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${SS.msgErr ? '#ffb3ae' : 'var(--ink)'}">${SS.msg || ''}</div></div>`;
     el.innerHTML = h;
     wire(el);
@@ -252,7 +247,7 @@ ${F.moves.length > 30 ? '<div class="hint">The first 30 moves go in this approva
 
   function wire(el) {
     const again = () => render(host, cur);
-    el.querySelectorAll('[data-slopt]').forEach((d) => d.addEventListener('click', () => { SS.opt = +d.dataset.slopt; SS.src = ''; SS.msg = ''; again(); }));
+    const o = el.querySelector('#sl-opt'); if (o) o.addEventListener('change', () => { SS.opt = +o.value; SS.src = ''; SS.msg = ''; again(); });
     const s = el.querySelector('#sl-src'); if (s) s.addEventListener('change', () => { SS.src = s.value; SS.picked = null; SS.crew = 0; SS.msg = ''; again(); });
     el.querySelectorAll('[data-slship]').forEach((c) => c.addEventListener('change', () => { const id = +c.dataset.slship; if (c.checked) SS.picked.add(id); else SS.picked.delete(id); again(); }));
     const c = el.querySelector('#sl-crew'); if (c) c.addEventListener('change', () => { SS.crew = +c.value; again(); });
