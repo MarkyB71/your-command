@@ -108,14 +108,18 @@
     const canHere = (p) => k.recipes().some((r) => r.out[p] && !/Unbundling/.test(r.name) && types.has(k.FBT[r.type]));
     const prods = products();
     const f = P.find.trim().toLowerCase();
-    const shown = prods.filter((p) => !f || k.pname(p).toLowerCase().includes(f) || p === P.p);
+    const hit = (p) => !f || k.pname(p).toLowerCase().includes(f);
+    // a new search clears the old pick if it no longer matches (Mark, 9 Nov: "it remembers the first search")
+    if (P.p && !hit(P.p)) { P.p = 0; P.use = ''; }
+    const shown = prods.filter(hit);
     const bulk = P.p ? k.bulk(P.p) : true;
     const qty = P.p ? Math.max(0, bulk ? Math.round((+P.q || 0) * UNITS[P.unit]) : Math.ceil(+P.q || 0)) : 0;
 
     let h = `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <input type="search" id="pp-find" placeholder="🔍 Search…" value="${esc(P.find)}">
-<select id="pp-p" style="flex:1 1 320px"><option value="0">— pick what to make —</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
+<select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
+      (f && !P.p ? `<div class="dkp-chips" style="margin-top:8px">${shown.slice(0, 24).map((p) => `<button type="button" data-pp="${p}" class="dk-shipbtn" style="cursor:pointer">${esc(k.pname(p))}</button>`).join('') || '<span class="src">Nothing matches.</span>'}</div>` : '') +
       (P.p ? `<div class="row" style="margin-top:10px"><span class="src">How much</span><input type="number" id="pp-q" min="0" step="any" value="${esc(P.q)}">` +
         (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') + '</div>' + forHTML() : '') + '</div>';
 
@@ -163,6 +167,7 @@
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
+    m.querySelectorAll('[data-pp]').forEach((b) => b.addEventListener('click', () => { P.p = +b.dataset.pp; P.use = ''; P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; k.render(); }));
     on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });
     on('pp-n', 'change', (e) => { P.n = e.target.value; fillFor(); k.render(); });
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
