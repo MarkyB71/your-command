@@ -178,14 +178,18 @@ body > header{display:none!important}
   // props and colour. The deck's own piece (window.YICDECKHERO[id](el)) goes on the viewscreen;
   // the consoles are the deck's pages. The bridge draws its own scene in pages/workload.js.
   window.YICDECKHERO = window.YICDECKHERO || {};
+  function CQBETA0() { return /[?&]beta=1\b/.test(location.search); }
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
-    C: 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
+    C: CQBETA0() ? 'All your crews' : 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
     E: 'Who can mine what', LL: 'Who leases which lots', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
   const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
+  // TEST (?beta=1, Mark 9 Nov): Crew Quarters shows crew cards instead of lockers, and its Crews console opens them
+  const CQBETA = /[?&]beta=1\b/.test(location.search);
+  if (CQBETA) PIECE.crew = 'All crews';
   const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
   const ROOM_CSS = `
 #deckroom{position:relative;margin:14px 16px 0;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
@@ -413,6 +417,7 @@ body > header{display:none!important}
           return markRoom(room);
         }
         const t = e.target.closest('.dkr-st');
+        if (t && CQBETA && d.id === 'crew' && t.dataset.pg === 'C') { touched(); return window.YICgoDeck('crew'); }
         if (t) {
           touched();
           scr = true;
