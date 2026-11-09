@@ -292,15 +292,18 @@
       if (gg > 0) rocks.push({ r, got, share: gg / totG });
     });
     const rest = Object.keys(left).filter((p) => left[p] > 0);
-    const restShare = rest.reduce((t, p) => t + left[p] * g(p), 0) / totG;
     if (!rocks.find((x) => x.r === C.src)) C.src = rocks[0] ? rocks[0].r : '';
     const R0 = rocks.find((x) => x.r === C.src);
     let h = `<div class="card"><h2><span class="n">🚀</span>Bring it to ${esc(dest)}</h2><div class="hint" style="margin:0 0 8px">This only <b>loads</b> a ship. You fly it to ${esc(dest)} and unload it yourself in the game.</div>`;
-    const restH = rest.length ? `<details class="dkp-fold" style="margin-top:8px"><summary>🛒 Left to buy or mine – ${rest.length} item${rest.length === 1 ? '' : 's'} · ${restShare < 0.01 ? "under 1" : Math.round(restShare * 100)}% of the load</summary><table><tbody>${rest.map((p) => `<tr><td>${esc(k.pname(+p))}</td><td class="num">${k.amt(+p, left[p])}</td><td class="src">${window.YICSRCTXT ? window.YICSRCTXT(+p, left[p], k.astId(dest)) || '–' : ''}</td></tr>`).join('')}</tbody></table></details>` : '';
-    if (!rocks.length) { el.innerHTML = h + '<div class="src" style="color:var(--amber)">None of your other rocks has any of it in stock.</div>' + restH + '</div>'; return; }
-    h += `<div class="src" style="margin:4px 0"><b>1 · Collect from</b></div><table><thead><tr><th></th><th>Rock</th><th class="num">Share</th><th>What to take from there</th></tr></thead><tbody>` +
-      rocks.map((x) => `<tr><td><input type="radio" name="pp-src" value="${esc(x.r)}"${x.r === C.src ? ' checked' : ''}></td><td>${esc(x.r)}</td><td class="num"><b>${Math.max(1, Math.round(x.share * 100))}%</b></td><td class="src">${Object.keys(x.got).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, x.got[p])).join(', ')}</td></tr>`).join('') + '</tbody></table>' +
-      `<div class="hint">${rocks.length === 1 ? 'Everything in stock comes from one rock.' : rocks.length + ' pick-ups – each item comes from one rock only, the one with the most of the load first.'}${rest.length ? '' : ' <span class="ok">✓ Nothing left to buy.</span>'} Pick a rock to plan its ship below.</div>` + restH;
+    if (!rocks.length) { el.innerHTML = h + '<div class="src" style="color:var(--amber)">None of your other rocks has any of it in stock – it all has to be bought or mined.</div></div>'; return; }
+    // one line per material (Mark, 9 Nov: "it's the locating the materials (amounts) that i'm finding confusing")
+    const from = {}; rocks.forEach((x) => Object.keys(x.got).forEach((p) => { (from[p] = from[p] || []).push([x.r, x.got[p]]); }));
+    const mats = Object.keys(items).sort((a, b) => items[b] * g(b) - items[a] * g(a));
+    h += `<div class="src" style="margin:4px 0"><b>1 · Where to get it</b></div><table><thead><tr><th>Material</th><th class="num">Need</th><th>Take from</th><th>Still short</th></tr></thead><tbody>` +
+      mats.map((p) => `<tr><td>${esc(k.pname(+p))}</td><td class="num">${k.amt(+p, items[p])}</td><td>${(from[p] || []).map(([r, n]) => k.amt(+p, n) + ' from <b>' + esc(r) + '</b>').join('<br>') || '<span class="src">–</span>'}</td>` +
+        `<td>${left[p] > 0 ? '<span class="short">' + k.amt(+p, left[p]) + '</span> <span class="src">buy or mine</span>' + (window.YICSRCTXT ? '<div class="hint" style="margin:2px 0 0">' + (window.YICSRCTXT(+p, left[p], k.astId(dest)) || '') + '</div>' : '') : '<span class="ok">✓</span>'}</td></tr>`).join('') + '</tbody></table>' +
+      `<div class="src" style="margin:12px 0 4px"><b>2 · Pick-ups</b> <span class="hint">– pick one to plan its ship</span></div><div class="row" style="gap:8px">` +
+      rocks.map((x) => { const kg = Object.keys(x.got).reduce((t, p) => t + x.got[p] * g(p), 0) / 1000; return `<button type="button" class="dk-shipbtn${x.r === C.src ? ' on' : ''}" data-src="${esc(x.r)}">${esc(x.r)} · ${k.tonnes(kg)}</button>`; }).join('') + '</div>';
     // the load from the picked rock
     const load = R0.got, LG = Object.keys(load).reduce((t, p) => t + load[p] * g(p), 0), LV = Object.keys(load).reduce((t, p) => t + load[p] * v(p), 0);
     h += `<div class="hint">Pick-up at ${esc(C.src)}: <b>${k.tonnes(LG / 1000)}</b> · ${Math.round(LV / 1e6).toLocaleString('en-GB')} m³.</div>`;
@@ -319,7 +322,7 @@
     ships.sort((a, b) => (b.fitsNow - a.fitsNow) || tot(a) - tot(b) || (b.at - a.at) || b.s.capM - a.s.capM);
     if (!ships.find((x) => x.s.id === C.ship)) C.ship = ships[0] ? ships[0].s.id : 0;
     const hrsTxt = (x) => (x == null ? '…' : x === 0 ? '–' : x < 48 ? x + ' h' : (x / 24).toFixed(1) + ' days');
-    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Ship</b></div>` + (ships.length ? `<table><thead><tr><th></th><th>Ship</th><th>Where it is</th><th class="num">Flight to ${esc(C.src)} to pick up</th><th class="num">Loaded trip to ${esc(dest)}</th><th class="num">Trips</th><th class="num">All done in</th></tr></thead><tbody>` +
+    h += `<div class="src" style="margin:12px 0 4px"><b>3 · Ship</b></div>` + (ships.length ? `<table><thead><tr><th></th><th>Ship</th><th>Where it is</th><th class="num">Flight to ${esc(C.src)} to pick up</th><th class="num">Loaded trip to ${esc(dest)}</th><th class="num">Trips</th><th class="num">All done in</th></tr></thead><tbody>` +
       ships.map((x, i) => { const f = x.f; const done = f && f.ok ? tot(x) : null;
         return `<tr><td><input type="radio" name="pp-ship" value="${x.s.id}"${x.s.id === C.ship ? ' checked' : ''}></td><td><b>${esc(x.s.name)}</b> <span class="src">${SHIPT[x.s.st]}</span>${i === 0 && f && f.ok ? ' <span class="ok">★ best</span>' : ''}</td>` +
           `<td class="src">${x.at ? '<span class="ok">at ' + esc(C.src) + '</span>' + (x.fitsNow ? ' · room for it all' : ' · room for ' + Math.round(Math.min(1, Math.min((x.s.capM - x.s.useM) / Math.max(1, LG), (x.s.capV - x.s.useV) / Math.max(1, LV))) * 100) + '%') : esc(x.s.sst === 'f' ? 'flying to ' + astName(x.s.dId) : (x.s.sst === 'o' ? 'in orbit at ' : 'at ') + astName(x.s.dId))}</td>` +
@@ -343,14 +346,14 @@
         });
       });
       S.calls = Object.values(mv).map((x) => ({ from: x.from, to: x.to, ship: true, slot: 2, items: x.items }));
-      h += `<div class="src" style="margin:12px 0 4px"><b>3 · Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}</b></div>` +
+      h += `<div class="src" style="margin:12px 0 4px"><b>4 · Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}</b></div>` +
         (S.calls.length ? `<table><tbody>${Object.values(mv).map((x) => `<tr><td>${esc(k.nm(x.b))}</td><td>${x.items.map(([p, a]) => esc(k.pname(p)) + ' ' + k.amt(p, a)).join('<br>')}</td></tr>`).join('')}</tbody></table>` : '<div class="src" style="color:var(--amber)">No room left in this ship.</div>') +
         (cl.length ? `<div class="row" style="margin-top:8px"><span class="src">Moved by</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--red)">No crew on ${esc(C.src)} to do the loading.</div>`) +
         `<button class="approve" id="pp-cgo" style="margin-top:12px"${S.calls.length && cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (load ' + S.calls.length + ' move' + (S.calls.length === 1 ? '' : 's') + ')'}</button>` +
         `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`;
     } else if (pick) h += `<div class="src" style="margin-top:12px;color:var(--amber)">Fly ${esc(pick.s.name)} to ${esc(C.src)} in the game first${pick.f && pick.f.ok ? ' (about ' + hrsTxt(pick.f.toSrc) + ')' : ''}, then come back here to load it.</div>`;
     el.innerHTML = h + '</div>';
-    el.querySelectorAll('input[name="pp-src"]').forEach((r) => r.addEventListener('change', () => { C.src = r.value; C.ship = 0; C.fl = {}; C.key = ''; k.render(); }));
+    el.querySelectorAll('[data-src]').forEach((r) => r.addEventListener('click', () => { C.src = r.dataset.src; C.ship = 0; C.fl = {}; C.key = ''; k.render(); }));
     el.querySelectorAll('input[name="pp-ship"]').forEach((r) => r.addEventListener('change', () => { C.ship = +r.value; k.render(); }));
     const cc = el.querySelector('#pp-ccrew'); if (cc) cc.addEventListener('change', () => { S.mover = +cc.value; k.render(); });
     const go = el.querySelector('#pp-cgo'); if (go) go.addEventListener('click', () => k.approve());
