@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 9 Nov 2026 – Logistics Hub: the header (LOGISTICS HUB, the wallet warning and Return to the Bridge) now stays pinned at the top of the screen when you scroll.
+
 ## 8 Nov 2026 – New: 🚚 Logistics Hub – the one page that can act in the game (button in the deck tool row, through an airlock warning every time). Pick what to make on a rock: it picks a free building near your crews and a storage with room, works out the inputs (what's there, on its way, short, or can be mined/made here), lays out the full production plan in stages using by-products, and moves the stock – nearest first, with distances and trip times. Optional: start the processes that are ready. Nothing happens unless you approve it in your own wallet; long lists go in batches and everything is re-checked just before sending. Plans are saved in your browser. Help and Safety pages updated.
 
 ## 7 Nov 2026 – Planners: Fewest flights and Fly in now count a rock that can make something with some ingredients flown in from your other rocks (no more wrong "Not available", e.g. Lead), picking the rock that needs least flown in. Everywhere a page says fly it in (SkippyChain, building tiles, Make it here?) it now says where from – in stock on, or mine it on, one of your rocks. Old Fuel check and Daily Grind files removed.

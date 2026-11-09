@@ -74,7 +74,6 @@
     // Hub header pinned to the top (Mark, 9 Nov: it scrolled away in Brave) – fixed, not sticky, lined up with the
     // page column and the page pushed down by its height, so it stays put in every browser.
     const pin = () => {
-      if (!/[?&]beta=1\b/.test(location.search)) return; // TEST ONLY until Mark says go live
       const pg = ov.querySelector('#dockpg'), hd = ov.querySelector('.dhead');
       if (!pg || !hd || !ov.classList.contains('indock')) { if (hd) hd.style.position = ''; if (pg) pg.style.paddingTop = ''; return; }
       const r = pg.getBoundingClientRect(), cs = getComputedStyle(pg);
