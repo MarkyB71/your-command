@@ -638,6 +638,8 @@ ${R.map(route).join('')}
     // Logistics Bridge (Mark, 9 Nov – TEST ONLY, vendor/hubbridge.js): consoles + viewscreen; the tool is drawn ON the viewscreen
     const LB = window.YICHUBBRIDGE;
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
+    // new Production screen (Mark, 9 Nov – TEST ONLY, vendor/prodplan.js): rock → what to make + amount → what you need → processes
+    if (LB && window.YICPROD && S.mode !== 'ship' && S.mode !== 'feed') { window.YICPROD.render(m); return; }
     if (S.mode === 'feed' && window.YICFEED) {
       m.innerHTML = (LB ? '' : modeBar('feed')) + '<div id="dk-feedpg"></div>';
       m.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; S.ship = null; render(); }));
@@ -950,6 +952,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
   }
   // for vendor/shipload.js (test only) – the hub's own helpers, so both work the same way
   if (SHIPS) window.YICDOCK = { S, D, esc, nm, inv, isStore, rockOf, allB, pname, amt, grams, bulk, tonnes, astId, lotOf, kmBetween, tripSecs, tripTxt, kmTxt, crews, crewReady,
-    holds: (b, p) => holds(b, p), recipes: () => R || [], mv: () => MV, render: () => render(), loadDeliveries: () => loadDeliveries(), wallets, account, sameAddr, isOwner, hex, short, DISPATCHER, SLOT, TANK, BTN, FBT };
+    holds: (b, p) => holds(b, p), recipes: () => R || [], mv: () => MV, render: () => render(), loadDeliveries: () => loadDeliveries(), wallets, account, sameAddr, isOwner, hex, short, DISPATCHER, SLOT, TANK, BTN, FBT,
+    canMine, onRock, procB, freeSlot, busyTxt, rocks, procSecs, incoming, GLk, TANKOK };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
