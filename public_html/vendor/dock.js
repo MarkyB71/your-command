@@ -105,10 +105,35 @@
     });
     airlock(ov);
   }
+  // SECRET AIRLOCK BYPASS (Mark, 9 Nov – TEST ONLY ?beta=1): the kPa gauge on the left wall is really a knob. Click it
+  // to turn it – next time the hub opens straight in, no airlock. Nothing shows it's clickable; Mark tells players who ask.
+  // To get the airlock back: double-click LOGISTICS HUB at the top of the hub. Saved only in this browser (localStorage).
+  const BYKEY = 'sk_airlock_bypass', BYBETA = /[?&]beta=1\b/.test(location.search);
+  const bypassOn = () => { try { return BYBETA && localStorage.getItem(BYKEY) === '1'; } catch (e) { return false; } };
+  function knob(ov, setSign) {
+    const g = ov.querySelector('g[transform="translate(135 340)"]');
+    if (!g || !BYBETA) return;
+    const needle = g.querySelector('line');
+    const show = () => { if (needle) { needle.style.transformOrigin = '0 0'; needle.style.transition = 'transform .5s'; needle.style.transform = bypassOn() ? 'rotate(95deg)' : ''; } };
+    show();
+    g.style.pointerEvents = 'all';
+    g.addEventListener('click', () => {
+      try { if (bypassOn()) localStorage.removeItem(BYKEY); else localStorage.setItem(BYKEY, '1'); } catch (e) {}
+      show();
+      try { const A = new (window.AudioContext || window.webkitAudioContext)(), o = A.createOscillator(), gn = A.createGain(); o.type = 'square'; o.frequency.value = 180; gn.gain.setValueAtTime(0.15, A.currentTime); gn.gain.exponentialRampToValueAtTime(0.001, A.currentTime + 0.08); o.connect(gn); gn.connect(A.destination); o.start(); o.stop(A.currentTime + 0.09); } catch (e) {}
+      setSign(bypassOn() ? '● BYPASS ENGAGED – NEXT TIME STRAIGHT IN' : '● BYPASS OFF', bypassOn() ? 'green' : 'amber');
+    });
+  }
   function airlock(ov) {
     const q = (s) => ov.querySelector(s);
     const ok = q('#ok'), skip = q('#skip'), go = q('#go'), sign = q('#sign'), wrap = q('#wrap'), ch = q('#chamber'), KEY = 'sk_airlock_skip';
     const setSign = (t, c) => { sign.textContent = t; sign.className = 'sign' + (c ? ' ' + c : ''); };
+    knob(ov, setSign);
+    // bypass turned on: straight into the hub (the wallet still asks before anything is sent)
+    if (bypassOn()) { wrap.style.display = 'none'; ov.classList.add('indock'); ov.scrollTop = 0; S.ok = true; render(); }
+    // double-click LOGISTICS HUB: airlock back on
+    const t = ov.querySelector('.dhead h1');
+    if (t) t.addEventListener('dblclick', () => { try { localStorage.removeItem(BYKEY); } catch (e) {} t.textContent = 'LOGISTICS HUB · AIRLOCK BACK ON'; setTimeout(() => { t.textContent = 'LOGISTICS HUB'; }, 2500); });
     ok.addEventListener('change', () => { go.disabled = !ok.checked; setSign(ok.checked ? '● READY TO CYCLE' : '● INNER DOOR LOCKED', ok.checked ? 'amber' : ''); });
     // Remembered: "I understand" is ticked for them, but they still cycle the airlock every time (Mark, 8 Nov)
     let rem = false; try { rem = localStorage.getItem(KEY) === '1'; } catch (e) {}
