@@ -10,7 +10,7 @@
   'use strict';
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
   const K = () => window.YICDOCK;
-  const P = { p: 0, q: 100, unit: 't', find: '' };
+  const P = { p: 0, q: 100, unit: 't', find: '', use: '', n: 1 };
 
   const UNITS = { kg: 1, t: 1000, kt: 1e6 };
   const hrs = (s) => (s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 * 2 ? (s / 3600).toFixed(1).replace(/\.0$/, '') + ' h' : (s / 86400).toFixed(1).replace(/\.0$/, '') + ' days');
@@ -82,6 +82,22 @@
     k.recipes().forEach((r) => { if (/Unbundling/.test(r.name)) return; Object.keys(r.out).forEach((o) => { seen[o] = 1; }); });
     return Object.keys(seen).map(Number).sort((a, b) => k.pname(a).localeCompare(k.pname(b)));
   }
+  // "What's it for?" (Mark, 9 Nov – like the Construction planner): pick a building or ship and how many,
+  // and the amount is filled in from the game's building recipe (window.YICBL from vendor/buildplan.js)
+  const uses = (p) => Object.entries(window.YICBL || {}).filter(([, v]) => v[1][p]).map(([key, v]) => ({ key, name: v[0], per: v[1][p] }));
+  function forHTML() {
+    const k = K(), esc = k.esc, u = uses(P.p);
+    if (!u.length) return '';
+    return `<div class="row" style="margin-top:10px"><span class="src">What's it for?</span><select id="pp-use" style="min-width:220px"><option value="">— my own amount —</option>${u.map((x) => `<option value="${esc(x.key)}"${x.key === P.use ? ' selected' : ''}>${esc(x.name)} – ${k.bulk(P.p) ? k.amt(P.p, x.per) : x.per.toLocaleString("en-GB")} each</option>`).join('')}</select>` +
+      (P.use ? `<span class="src">How many</span><input type="number" id="pp-n" min="1" step="1" value="${esc(P.n)}">` : '') + '</div>' +
+      (P.use ? '<div class="hint">Amount filled in from the game’s building recipe – change it above if you want extra.</div>' : '');
+  }
+  function fillFor() {
+    const k = K(), x = uses(P.p).find((y) => y.key === P.use);
+    if (!x) return;
+    const tot = x.per * Math.max(1, Math.floor(+P.n || 1));
+    if (k.bulk(P.p)) { P.unit = tot >= 1e6 ? 'kt' : tot >= 1000 ? 't' : 'kg'; P.q = +(tot / UNITS[P.unit]).toFixed(3); } else P.q = tot;
+  }
   function render(m) {
     const k = K();
     if (!k) return;
@@ -101,7 +117,7 @@
 <input type="search" id="pp-find" placeholder="🔍 Search…" value="${esc(P.find)}">
 <select id="pp-p" style="flex:1 1 320px"><option value="0">— pick what to make —</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
       (P.p ? `<div class="row" style="margin-top:10px"><span class="src">How much</span><input type="number" id="pp-q" min="0" step="any" value="${esc(P.q)}">` +
-        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') + '</div>' : '') + '</div>';
+        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') + '</div>' + forHTML() : '') + '</div>';
 
     if (P.p && qty > 0) {
       const W = work(P.p, qty);
@@ -144,9 +160,11 @@
     m.innerHTML = h;
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     on('pp-rock', 'change', (e) => { S.rock = e.target.value; k.render(); });
-    on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
+    on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
+    on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });
+    on('pp-n', 'change', (e) => { P.n = e.target.value; fillFor(); k.render(); });
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
   }
 
