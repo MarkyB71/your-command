@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 9 Nov 2026 – Logistics Hub is now the Logistics Bridge: a viewscreen with consoles, like the Bridge in orange. 🏭 Production (rock, what to make and how much – weight or count, "What's it for?" from building recipes – what you need worked back through the chain, processes in order, where things go with how full afterwards, moves, two crews picked for you with the option to feed them, start processes with finish times). 🚀 Cargo bay (how many rocks to fly in from, the ship there or the nearest one, trips, flight times, and exactly what will be loaded). 🍽 Galley (feed your crews – tick the ones to feed). Crew Quarters: crew cards with crewmate pictures – click a crew to see all its members; 🍽 Feed crews opens the hub. Crew planner: new green look, top part stays put while scrolling. Help page updated.
+
 ## 9 Nov 2026 – Logistics Hub, Start processes too?: a process that makes a solid (e.g. Magnesium, Boric Acid, Nitric Acid) no longer gets stuck when its output would have gone to a tank farm – the nearest storage that can take it is used. Processes that can't start yet are listed one per line with the reason (e.g. every Refinery on the rock is busy). Help page updated.
 
 ## 9 Nov 2026 – Logistics Hub: ↻ Check the game again is now in the pinned header (no scrolling up). Already on its way only lists deliveries not yet finished (it was counting finished ones too), and each has an in game ↗ link to the building it's going to instead of a crew column. Flight deck: ship panel text is always cleaned (security check). Help page updated.

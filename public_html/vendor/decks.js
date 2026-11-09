@@ -178,7 +178,7 @@ body > header{display:none!important}
   // props and colour. The deck's own piece (window.YICDECKHERO[id](el)) goes on the viewscreen;
   // the consoles are the deck's pages. The bridge draws its own scene in pages/workload.js.
   window.YICDECKHERO = window.YICDECKHERO || {};
-  function CQBETA0() { return /[?&]beta=1\b/.test(location.search); }
+  function CQBETA0() { return true; } // crew cards LIVE 9 Nov 2026
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: CQBETA0() ? 'All your crews' : 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
@@ -187,8 +187,8 @@ body > header{display:none!important}
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
   const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
-  // TEST (?beta=1, Mark 9 Nov): Crew Quarters shows crew cards instead of lockers, and its Crews console opens them
-  const CQBETA = /[?&]beta=1\b/.test(location.search);
+  // LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): Crew Quarters shows crew cards instead of lockers, and its Crews console opens them
+  const CQBETA = true;
   if (CQBETA) PIECE.crew = 'All crews';
   const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
   const ROOM_CSS = `

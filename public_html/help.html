@@ -191,8 +191,8 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <h3>👥 Crew Quarters</h3>
 <p class="sub">Your crews and crewmates</p>
 <dl class="pages">
-  <dt>Crews</dt><dd>Who is on duty, where, and how their food is holding up.</dd>
-  <dt>Crew planner</dt><dd>Try swapping crewmates between crews to see the best line-up.</dd>
+  <dt>Crews</dt><dd>A card for every crew: where it is, ready or busy, a food bar and its crewmates' pictures (class colours, name on hover). Click a crew to see all its members – picture, class and traits – with <b>Full crew details ▸</b> for the old crew card. <b>◂ All crews</b> or Escape takes you back. The <b>🍽 Feed crews</b> button opens the Logistics Hub.</dd>
+  <dt>Crew planner</dt><dd>Try swapping crewmates between crews to see the best line-up. The controls and spare bench stay at the top while the crews scroll.</dd>
 </dl>
 </div>
 
@@ -239,28 +239,33 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <h2>🚚 Logistics Hub</h2>
 <p><b>The one page that can act in the game.</b> Everything else on the Command Deck only reads. The Logistics Hub can send actions from your wallet – but only the ones you approve in your wallet.</p>
 <p>Open it with the amber <b>🚚 Logistics Hub ↗</b> button in the deck tool row. You go through an airlock first, every time, with a warning: tick "I understand" and cycle the airlock. Tick "Remember that I understand" to skip the view out of the window next time (you still go through the airlock).</p>
+<h3>The Logistics Bridge</h3>
+<p>Inside, the hub is laid out like the Bridge, in orange: a viewscreen across the top and consoles below. Pick a console and its tool opens on the viewscreen.</p>
 <dl class="pages">
-  <dt>What to make</dt><dd>Pick a product (or a process by name – there's a search box). The hub picks a free building that can make it, nearest to your crews, and a storage to gather the inputs in – one with room, close to the building, that already holds the most.</dd>
-  <dt>Inputs and moves</dt><dd>It works out what's needed, what's already there, what's already on its way, and moves the rest from your other storage on the rock – nearest first. Distances and trip times are shown (within 5 km is instant).</dd>
-  <dt>Short on this rock</dt><dd>Anything you don't have shows whether this rock can mine or make it, or where to fly it in from. The hub never flies ships for you.</dd>
-  <dt>Full production plan</dt><dd>Long chains are broken down into stages – mine, then each process in order, using by-products made along the way. Each step says where to send its output. The stages are folded away – press <b>Show the stages</b> to open them (a red ✗ count shows if something needs fixing).</dd>
-  <dt>Start processes too?</dt><dd>Optional, off unless you tick it. Starts the processes whose inputs are already in place, on free buildings, with room for the output, while the crew's queue stays under the game's 24 hours. A process that makes something a tank farm can't hold sends its output to the nearest storage that can. Anything that can't start yet is listed one per line with the reason – for example every Refinery on the rock is busy.</dd>
-  <dt>Approve</dt><dd>Your wallet shows every action before anything happens. Long lists go in batches (15 / 30 / 50 / All). Everything is checked again just before sending – if anything has changed, nothing is sent and you're told why. Each action costs a small game fee (about 1 cent).</dd>
-  <dt>Saved plans</dt><dd>Plans are kept in your browser so you can come back to a long chain – they're always checked against the game as it is now.</dd>
-  <dt>Already on its way</dt><dd>Deliveries you've sent that aren't finished yet count as already there, so they aren't sent twice. Each one has an <b>in game ↗</b> link to the building it's going to – any crew can finish it.</dd>
-  <dt>↻ Check the game again</dt><dd>In the pinned header at the top – fetches fresh game data without scrolling back up.</dd>
+  <dt>📦 What needs doing (the chair)</dt><dd>Crews that could be fed, idle buildings, ships docked and deliveries on their way.</dd>
+  <dt>🏭 Production</dt><dd>Make something on a rock (below).</dd>
+  <dt>🚀 Cargo bay</dt><dd>Bring what a rock is missing in by ship (below).</dd>
+  <dt>🍽 Galley</dt><dd>Feed your crews: a card per crew with its crewmates and food; every crew that can be fed is ticked – click a card to untick it. Each is fed from the biggest Food stock on its own rock, up to a year's food. Busy crews start unticked.</dd>
+  <dt>🚚 Deliveries</dt><dd>How many deliveries are on their way – finish them in the game.</dd>
+  <dt>🗄 Storage</dt><dd>Storage tidy moves in here later.</dd>
 </dl>
-<p>After sending: the message says which crew did the moves, with an <b>in game ↗</b> link to it. Finish the deliveries in the game with <b>Finish All Ready Items</b>, then press <b>↻ Check the game again</b>.</p>
-<h3>🚀 Load a ship</h3>
-<p>Switch to <b>🚀 Load a ship</b> at the top of the hub to bring what you need from your other rocks. Pick the rock to make it on and what to make, then:</p>
+<h3>🏭 Production</h3>
 <dl class="pages">
-  <dt>What to send</dt><dd>The inputs as they are, or what they're made from (one or two steps back) – sometimes a much smaller load. You choose.</dd>
-  <dt>From</dt><dd>Your other rocks, best stocked first, with how many ships are ready there.</dd>
-  <dt>Into ship</dt><dd>Your cargo ships on that rock or on their way there. Tick one or more – the load is split across them. Ships still in flight can be loaded once they're down.</dd>
-  <dt>Moved by</dt><dd>A crew on that rock does the moves into the ship.</dd>
-  <dt>🛒 Or buy it on the belt</dt><dd>Open it to see the marketplaces selling the load – how much of it each asteroid has, the cost with the market fee, and an <b>in game ↗</b> link to each marketplace. Buying stays with you in the game.</dd>
+  <dt>1 Rock · 2 What to make</dt><dd>Search and pick the product, and how much – a weight (kg / t / kt) for bulk goods, a count for things like modules. <b>What's it for?</b> fills in the amount from a building or ship recipe, e.g. Solids Automation Modules for 2 Factories.</dd>
+  <dt>3 What you need</dt><dd>Worked back through the chain only as far as the amount needs: what comes from storage, by-products, mining, and what has to be flown in or bought. The <b>Inputs</b> list is folded – click to open it. An in-between item that would need more than 5× its own weight flown in to make is flown in instead.</dd>
+  <dt>4 Processes to run</dt><dd>In order, inputs first – building type, free count, where the outputs go and the time.</dd>
+  <dt>5 Where things go</dt><dd>What it's for (Stock / Market / Building), the materials warehouse (inputs gathered and in-between products land here), stock, market and building stores and an optional tank farm for all-fluid goods – remembered per rock. Each shows how full it is now → when the plan is done (green / amber / red).</dd>
+  <dt>6 Moves · 7 Crews</dt><dd>Moves into the materials warehouse, nearest storage first. Two crews are picked: the quickest for these moves and the fastest for the processes – either can be fed first.</dd>
+  <dt>8 Start processes · 9 Approve</dt><dd>Start the ones whose inputs are already there, with each process's time and finish, and when it's all done. Approve once in your wallet.</dd>
 </dl>
-<p>It only <b>loads</b> the ship. You fly it and unload it yourself in the game.</p>
+<h3>🚀 Cargo bay</h3>
+<p>Steps 1–3 as Production, on the rock you want to make it on. Then:</p>
+<dl class="pages">
+  <dt>Fly it in</dt><dd>How many rocks you need to fly in from (quickest first), and anything not in stock enough – how much is short and which of your rocks can make it.</dd>
+  <dt>A card per rock</dt><dd>What it supplies, the flight time, the ship that's there or the nearest one (and how far away), how many trips, and when it'd all be done. Light and Heavy Transports only. <b>Details – by material</b> is folded.</dd>
+  <dt>Load</dt><dd>When the ship is at that rock: exactly what goes into it (storage → ship, item, amount), the crew there, then approve. Otherwise it tells you which ship to fly there.</dd>
+</dl>
+<p>Every tool: your wallet shows each action before anything happens, and everything is checked again just before sending. It only <b>loads</b> ships – you fly and unload them yourself. After moves, finish them in the game with <b>Finish All Ready Items</b>, then press <b>↻ Check the game again</b>.</p>
 </section>
 
 <section id="extension">

@@ -551,7 +551,7 @@ ${R.map(route).join('')}
   //    origin(5,id), origin_slot, destination(5,id), destination_slot, caller_crew(1,id)]  → 15 values
   function startCall(c) {
     const mag = BigInt(Math.round(c.runs)) * 4294967296n;
-    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, c.crew || S.mover]; // c.crew: Production's process crew (Mark, 9 Nov – test only)
+    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, c.crew || S.mover]; // c.crew: Production's process crew (Mark, 9 Nov – LIVE 9 Nov)
     return { contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ProcessProductsStart'), hex(data.length), ...data.map(hex)] };
   }
   // APPROVAL SIZE (go-live item 1, Mark 8 Nov): one failing action cancels the whole approval, so actions go in
@@ -579,12 +579,12 @@ ${R.map(route).join('')}
   }
   function buildCalls() {
     const calls = [], n = S.bs === 'All' ? Infinity : (S.bs || 30);
-    // S.feedCalls: Production can feed both its crews (Mark, 9 Nov – test only); otherwise the one S.feedCall
+    // S.feedCalls: Production can feed both its crews (Mark, 9 Nov – LIVE 9 Nov); otherwise the one S.feedCall
     (S.feedCalls || (S.feed && S.feedCall ? [S.feedCall] : [])).forEach((f) => calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ResupplyFood'), '0x6', '0x5', hex(f.src), hex(SLOT), hex(f.give), '0x1', hex(f.crew)] }));
     S.batchDel = []; S.batchStart = [];
     S.calls.forEach((x) => {
       if (calls.length >= n) return;
-      // x.ship: into a ship's cargo hold (Cargo bay, Mark 9 Nov – test only): [6, shipId, cargo slot] (SDK 2.8.1, as shipload.js)
+      // x.ship: into a ship's cargo hold (Cargo bay, Mark 9 Nov – LIVE 9 Nov): [6, shipId, cargo slot] (SDK 2.8.1, as shipload.js)
       const data = [5, x.from, SLOT, x.items.length, ...x.items.flat(), ...(x.ship ? [6, x.to, x.slot || 2] : [5, x.to, SLOT]), 1, S.mover];
       calls.push({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('SendDelivery'), hex(data.length), ...data.map(hex)] });
       S.batchDel.push(x);
@@ -625,7 +625,7 @@ ${R.map(route).join('')}
 
   // ---------- page ----------
   const opt = (v, t, cur) => `<option value="${esc(v)}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`;
-  // Mode buttons at the top. 🍽 Feed crews (Mark, 9 Nov – TEST ONLY, vendor/crewfeed.js) – game actions stay in the hub
+  // Mode buttons at the top. 🍽 Feed crews (Mark, 9 Nov – LIVE 9 Nov, vendor/crewfeed.js) – game actions stay in the hub
   function modeBar(mode) {
     const b = (k, t) => `<button class="dk-shipbtn${mode === k ? ' on' : ''}" data-mode="${k}">${t}</button>`;
     const hint = mode === 'ship' ? 'Pick the rock to make it on and what to make – then load a ship on one of your other rocks with what it needs.'
@@ -637,7 +637,7 @@ ${R.map(route).join('')}
     let m = document.getElementById('dk-main');
     if (!m || !S.ok) return;
     if (!S.ready) { m.innerHTML = '<div class="card"><div class="src">Loading your command…</div></div>'; return; }
-    // Logistics Bridge (Mark, 9 Nov – TEST ONLY, vendor/hubbridge.js): consoles + viewscreen; the tool is drawn ON the viewscreen
+    // Logistics Bridge (Mark, 9 Nov – LIVE 9 Nov, vendor/hubbridge.js): consoles + viewscreen; the tool is drawn ON the viewscreen
     S.feedCalls = null; S.srcRock = null; // only Production / Cargo bay (prodplan.js) set these, each time they draw
     const LB = window.YICHUBBRIDGE;
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
@@ -696,7 +696,7 @@ ${R.map(route).join('')}
     const rec = R[S.proc];
     let CM = null, PC = null;
 
-    // Two modes at the top (Mark, 9 Nov – test only): make on this rock (as before) or load a ship on another rock for it
+    // Two modes at the top (Mark, 9 Nov – LIVE 9 Nov): make on this rock (as before) or load a ship on another rock for it
     const shipMode = SHIPS && S.mode === 'ship';
     let h = planBar();
     if (SHIPS && !LB) h += modeBar(shipMode ? 'ship' : 'make');

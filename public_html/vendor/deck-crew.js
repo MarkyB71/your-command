@@ -41,7 +41,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 .cq-card .crewcard{margin:0!important;box-shadow:0 0 18px -6px #3fd68a}
 /* Crew Quarters: no crews list under the lockers (Mark, 27 Oct) */
 #deckroom[data-deck="crew"]:not(.scr) + #main{display:none!important}
-/* TEST (?beta=1, Mark 9 Nov): Galley-style crew cards with bigger crewmate pictures; click = all its members */
+/* LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): Galley-style crew cards with bigger crewmate pictures; click = all its members */
 .cqg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;max-height:clamp(260px,46vh,560px);overflow:auto;padding:2px 2px 10px;scrollbar-color:#24382d transparent}
 .cqg-c{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid #2c3d35;border-radius:10px;background:#0e1512;transition:border-color .15s,box-shadow .15s}
 .cqg-c:hover,.cqg-c:focus-visible{border-color:${COL};box-shadow:0 0 14px -4px ${COL}}
@@ -97,7 +97,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
       '</button>';
   }
 
-  const BETA = /[?&]beta=1\b/.test(location.search);
+  const BETA = true; // crew cards LIVE 9 Nov 2026 (were test only)
   function card(c, raw, Y) {
     const esc = Y.esc, cms = Y.D.crewmates || {}, now = Date.now() / 1000;
     const ready = raw && raw.Crew && raw.Crew.readyAt, busy = ready && ready > now;

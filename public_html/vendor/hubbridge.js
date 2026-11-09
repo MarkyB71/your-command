@@ -1,4 +1,4 @@
-/* Logistics Bridge – the Logistics Hub's main screen – TEST ONLY (?beta=1) (Mark, 9 Nov 2026)
+/* Logistics Bridge – the Logistics Hub's main screen – LIVE 9 Nov 2026 (Mark, tested on ?beta=1 first)
    Mark: "keep the main site style but with the orange look that defines the hub and game interaction",
    "the same layout as the bridge", keep the hazard stripes, tools open ON the viewscreen
    ("if we can get it to fit … move it to underneath if it does not work").
@@ -8,7 +8,6 @@
    element that the hub then draws the chosen tool into. Mode 'home' = the chair's "what needs doing" list. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const OR = '#ffb03b';
   const CSS = `

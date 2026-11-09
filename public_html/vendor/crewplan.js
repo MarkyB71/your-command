@@ -31,8 +31,8 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-job summary{cursor:pointer;font-size:15px}.cp-job table{width:100%;margin-top:8px;font-size:14px;border-collapse:collapse}.cp-job td{padding:4px 6px;border-top:1px solid #1a2230}.cp-job .num{text-align:right}
 .cp-pool h3{margin:0 0 6px;font-size:15px;color:#8b9ab0;font-weight:600}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
-/* TEST (?beta=1, Mark 9 Nov): same look as the new Crew Quarters cards / Galley – green, crewmate pictures with class colours */
-const CPBETA=/[?&]beta=1\b/.test(location.search);
+/* LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): same look as the new Crew Quarters cards / Galley – green, crewmate pictures with class colours */
+const CPBETA=true; /* LIVE 9 Nov 2026 */
 const CCOL={1:'#884fff',2:'#e0282e',3:'#ff8c1a',4:'#ffd94f',5:'#4f90ff'};
 const CSS_G=`.cp-title{color:#9be8bf}
 .cp-crew{background:#0e1512;border-color:#2c3d35;transition:border-color .15s,box-shadow .15s}

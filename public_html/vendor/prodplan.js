@@ -1,4 +1,4 @@
-/* Production – Logistics Bridge – TEST ONLY (?beta=1) (Mark, 9 Nov 2026)
+/* Production – Logistics Bridge – LIVE 9 Nov 2026 (Mark tested a real load and process start on ?beta=1)
    Mark's list: 1 select rock · 2 pick what to make (weight for bulk, count for things like modules) ·
    3 show what you need (stock, mine, fly in / buy) · 4 work the chain back as far as needed for the amount ·
    5 don't show the whole chain, just what's needed · 6 list the processes to run · 7 pick where materials come
@@ -8,7 +8,6 @@
    Uses the hub's helpers (window.YICDOCK from vendor/dock.js); drawn on the viewscreen by vendor/hubbridge.js. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return; // test only
   const K = () => window.YICDOCK;
   const P = { p: 0, q: 100, unit: 't', find: '', use: '', n: 1, for: '', runner: 0, feed: {} };
   // Where things go (Mark, 9 Nov): a materials warehouse (inputs gathered here, in-between products land here so the

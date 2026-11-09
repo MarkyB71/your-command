@@ -1,4 +1,4 @@
-/* Feed crews – Logistics Hub – TEST ONLY (?beta=1) (Mark, 9 Nov 2026)
+/* Feed crews – Logistics Hub – LIVE 9 Nov 2026 (Mark tested a real feed on ?beta=1)
    "A button to feed all the crew but also let you select ones you don't think need feeding."
    Mark: game actions stay in the Logistics Hub, not on the main site. So:
    - Crew Quarters gets a "🍽 Feed crews" button that opens the hub (?dock=1&feed=1) – it sends nothing itself.
@@ -12,7 +12,6 @@
    Busy crews start unticked – not yet known whether the game lets a busy crew be fed. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const DISPATCHER = '0x0422d33a3638dcc4c62e72e1d6942cd31eb643ef596ccac2351e0e21f6cd4bf4';
   const SLOT = 2, FOOD = 129, WAREHOUSE = 1, TANK = 10;
