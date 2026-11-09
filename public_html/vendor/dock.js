@@ -53,6 +53,8 @@
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
   const amt = (p, u) => (bulk(p) ? tonnes(u) : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
 
+  // Load a ship (Mark, 9 Nov 2026) – TEST ONLY on ?beta=1: vendor/shipload.js fills #dk-ship under "Short on this rock"
+  const SHIPS = /[?&]beta=1\b/.test(location.search);
   const S = { bs: 30, calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
@@ -229,8 +231,8 @@ ${R.map(route).join('')}
   const lotOf = (e) => Math.floor(locOf(e, 4) / 4294967296);
   const rockAst = () => { const b = onRock().find((x) => locOf(x, 3)); return b ? locOf(b, 3) : 0; };
   function lotPos(n, i) { const y = 1 - ((i - 1) / (n - 1)) * 2, rr = Math.sqrt(Math.max(0, 1 - y * y)), th = GA * (i - 1); return [rr * Math.cos(th), y, rr * Math.sin(th)]; }
-  function kmBetween(a, b) {
-    const ast = rockAst(); if (!ast || !a || !b) return null; if (a === b) return 0;
+  function kmBetween(a, b, ast0) {
+    const ast = ast0 || rockAst(); if (!ast || !a || !b) return null; if (a === b) return 0;
     const r = 375.142 / Math.pow(ast, 0.475), n = Math.floor(4 * Math.PI * r * r);
     if (a > n || b > n) return null;
     const A = lotPos(n, a), B = lotPos(n, b), d = Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2]));
@@ -248,9 +250,9 @@ ${R.map(route).join('')}
   const lotKm = (e1, e2) => kmBetween(lotOf(e1), lotOf(e2));
   const crewLot = (c) => { const r = ((D() && D().crewsRaw) || []).find((x) => x.id === c.id); return r ? lotOf(r) : 0; };
 
-  function crews() {
+  function crews(rock) {
     const d = D(), y = Y(), cm = (d && d.crewmates) || {};
-    return ((d && d.crewList) || []).filter((c) => c.ast === S.rock && (c.roster || []).length && !/in flight|in orbit/i.test(c.place || '')).map((c) => {
+    return ((d && d.crewList) || []).filter((c) => c.ast === (rock || S.rock) && (c.roster || []).length && !/in flight|in orbit/i.test(c.place || '')).map((c) => {
       const ms = c.roster.map((id) => cm[id]).filter(Boolean);
       let free = 1, speed = 1;
       try { free = y.crewMult(11, ms); speed = y.crewMult(3, ms) * (y.CBNF && y.CBNF[3] ? 1 : y.habEff(c)); } catch (e) {}
@@ -686,7 +688,7 @@ ${R.map(route).join('')}
           ow.map((r) => `<tr><td class="src">${esc(r[3][0] === 5 ? bn(r[3][1]) : 'elsewhere')}</td><td>${r[5].map((x) => esc(pname(x[0])) + ' ' + amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(bn(r[4][1]))}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
           `</tbody></table>${S.incErr ? '<div class="hint" style="color:var(--amber)">' + esc(S.incErr) + '</div>' : ''}</div>`; }
       if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
-<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th></tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td></tr>`).join('')}</tbody></table></div>`;
+<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th>${SHIPS ? '<th></th>' : ''}</tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td>${SHIPS ? `<td><button class="dk-shipbtn${S.ship && S.ship.p === f.p ? ' on' : ''}" data-ship="${f.p}" data-shipq="${f.q}">🚀 Load a ship</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` + (SHIPS ? '<div id="dk-ship"></div>' : '');
       // full production plan on this rock (Mark, 8 Nov)
       if (P.fly.length) {
         const C = chainPlan(P), on = onRock();
@@ -821,6 +823,8 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
     }
     m.innerHTML = h;
     planSave();
+    m.querySelectorAll('[data-ship]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.ship; S.ship = S.ship && S.ship.p === p ? null : { p, q: +b.dataset.shipq }; render(); if (S.ship) { const e = document.getElementById('dk-ship'); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
+    if (SHIPS && window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) { if (S.ship && !(P && P.fly.find((f) => f.p === S.ship.p))) S.ship = null; window.YICSHIP.render(e, S.ship); } }
     const on = (id, ev, f) => { const e = document.getElementById(id); if (e) e.addEventListener(ev, f); };
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });
@@ -860,5 +864,8 @@ ${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i
       const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; S.dataAt = Date.now(); render(); }); } }, 400);
     });
   }
+  // for vendor/shipload.js (test only) – the hub's own helpers, so both work the same way
+  if (SHIPS) window.YICDOCK = { S, D, esc, nm, inv, isStore, rockOf, allB, pname, amt, grams, bulk, tonnes, astId, lotOf, kmBetween, tripSecs, tripTxt, kmTxt, crews, crewReady,
+    holds: (b, p) => holds(b, p), recipes: () => R || [], mv: () => MV, render: () => render(), loadDeliveries: () => loadDeliveries(), wallets, account, sameAddr, isOwner, hex, short, DISPATCHER, SLOT, TANK, BTN, FBT };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
