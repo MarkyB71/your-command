@@ -543,8 +543,17 @@ ${R.map(route).join('')}
   const rememberCrew = (pairs, crewId) => { if (!crewId) return; try { const m = delCrewAll(), now = Date.now(); Object.keys(m).forEach((k) => { if (now - m[k][1] > 7 * 86400000) delete m[k]; }); pairs.forEach(([a, b]) => { m[a + '>' + b] = [crewId, now]; }); localStorage.setItem(DCK, JSON.stringify(m)); } catch (x) {} };
   const crewTag = (id) => { if (!id) return ''; const n = ((D() || {}).crewN || {})[id] || ('Crew #' + id);
     return esc(n) + (window.GL && window.GL.on() ? window.GL('/crew/' + id, 'Open this crew in the game') : ' <a href="https://game.influenceth.io/crew/' + id + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="Open this crew in the game">in game ↗</a>'); };
-  const finishCrew = (r) => { const m = delCrewAll()[r[3][1] + '>' + r[4][1]]; if (m) return m[0];
-    const b = r[4][0] === 5 ? allB().find((x) => x.id === r[4][1]) : null; return (b && b.Control && b.Control.controller && b.Control.controller.id) || 0; };
+  // Mark (9 Nov): not the crew in charge of the building – it may have flown off. The crew that SENT it, from the
+  // delivery's own activity log (delcrew.php, kept on the server); the hub's own remembered crew shows straight away.
+  const DC = {}; let dcBusy = false;
+  const askDelCrew = (rows) => {
+    const need = rows.map((r) => r[0]).filter((id) => !(id in DC));
+    if (!need.length || dcBusy) return;
+    dcBusy = true;
+    fetch('delcrew.php?ids=' + need.slice(0, 100).join(','), { cache: 'no-store' }).then((r) => r.json()).then((j) => { Object.keys(j || {}).forEach((k) => { DC[k] = j[k]; }); })
+      .catch(() => { need.forEach((id) => { DC[id] = 0; }); }).finally(() => { dcBusy = false; render(); });
+  };
+  const finishCrew = (r) => { const m = delCrewAll()[r[3][1] + '>' + r[4][1]]; if (m) return m[0]; return DC[r[0]]; };
   const crewLink = (c, esc) => c ? ' Finish them with <b>' + esc(c.name) + '</b>' + (window.GL && window.GL.on() ? window.GL('/crew/' + c.id, 'Open this crew in the game') : ' <a href="https://game.influenceth.io/crew/' + c.id + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="Open this crew in the game">in game ↗</a>') + '.' : '';
   const say = (html, err) => { S.msg = html; S.msgErr = !!err; const e = document.getElementById('dk-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
   // ProcessProductsStart (@influenceth/sdk 2.8.1, checked with System.getRunSystemCall 8 Nov):
@@ -719,8 +728,9 @@ ${R.map(route).join('')}
       { const ids = new Set(onRock().filter(isStore).map((b) => b.id)), bn = (id) => nm(onRock().find((b) => b.id === id)) || 'Building #' + id, now = Date.now() / 1000;
         const ow = (S.incList || []).filter((r) => ids.has(r[4][1]));
         const CREWCOL = /[?&]beta=1\b/.test(location.search); // TEST ONLY until Mark says go live
+        if (CREWCOL && ow.length) askDelCrew(ow);
         if (ow.length) h += `<div class="card"><h2><span class="n">🚚</span>Already on its way on ${esc(S.rock)}</h2><div class="hint" style="margin:0 0 8px">Deliveries you've sent that haven't been finished yet. They count as already there, so they aren't sent again.</div><table><thead><tr><th>From</th><th>Goods</th><th>To</th>${CREWCOL ? '<th>Finish with</th>' : ''}<th>Status</th></tr></thead><tbody>` +
-          ow.map((r) => `<tr><td class="src">${esc(r[3][0] === 5 ? bn(r[3][1]) : 'elsewhere')}</td><td>${r[5].map((x) => esc(pname(x[0])) + ' ' + amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(bn(r[4][1]))}</td>${CREWCOL ? '<td class="src">' + crewTag(finishCrew(r)) + '</td>' : ''}<td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
+          ow.map((r) => `<tr><td class="src">${esc(r[3][0] === 5 ? bn(r[3][1]) : 'elsewhere')}</td><td>${r[5].map((x) => esc(pname(x[0])) + ' ' + amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(bn(r[4][1]))}</td>${CREWCOL ? '<td class="src">' + (finishCrew(r) === undefined ? '<span style="color:var(--dim)">looking…</span>' : finishCrew(r) ? crewTag(finishCrew(r)) : '<span style="color:var(--dim)">not known</span>') + '</td>' : ''}<td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
           `</tbody></table>${S.incErr ? '<div class="hint" style="color:var(--amber)">' + esc(S.incErr) + '</div>' : ''}</div>`; }
       if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
 <table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th>${SHIPS ? '<th></th>' : ''}</tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td>${SHIPS ? `<td><button class="dk-shipbtn${S.ship && S.ship.p === f.p ? ' on' : ''}" data-ship="${f.p}" data-shipq="${f.q}">🚀 Load a ship</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` + (SHIPS ? '<div id="dk-ship"></div>' : '');
