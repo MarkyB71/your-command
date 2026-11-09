@@ -265,8 +265,9 @@
       `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
     return h;
   }
-  function render(m) {
+  function render(m, mode) {
     const k = K();
+    const cargo = mode === 'ship'; // Cargo bay (Mark, 9 Nov): same steps 1–3 on the rock to make it on, then load a ship with what's left to fly in
     if (!k) return;
     const esc = k.esc, S = k.S, rl = k.rocks();
     if (!rl.length) { m.innerHTML = '<div class="card"><div class="src">No warehouses or tank farms found for this wallet.</div></div>'; return; }
@@ -282,7 +283,7 @@
     const bulk = P.p ? k.bulk(P.p) : true;
     const qty = P.p ? Math.max(0, bulk ? Math.round((+P.q || 0) * UNITS[P.unit]) : Math.ceil(+P.q || 0)) : 0;
 
-    let h = `<div class="card"><h2><span class="n">1</span>Rock</h2><select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
+    let h = `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2><select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <input type="search" id="pp-find" placeholder="🔍 Search…" value="${esc(P.find)}">
 <select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
@@ -296,6 +297,7 @@
         h += `<div class="card"><h2><span class="n">3</span>What you need</h2><div class="src" style="color:var(--red)">✗ ${esc(k.pname(P.p))} can’t be made on ${esc(S.rock)}` +
           (W.noBld[P.p] ? ' – it needs a ' + W.noBld[P.p].join(' or ') + ', and there isn’t one here.' : '.') + '</div>' +
           (window.YICSRCTXT ? `<div class="src" style="margin-top:8px">Where to get it instead: ${window.YICSRCTXT(P.p, qty, k.astId(S.rock)) || 'nowhere found'}</div>` : '') + '</div>';
+        if (cargo) { P.shipItems = { [P.p]: qty }; P.shipQty = qty; h += '<div id="pp-ship"></div>'; return finish(m, h); }
       } else {
         // step 3: what you need – only the things that come from outside the chain
         const row = (p, q, how) => `<tr><td>${esc(k.pname(p))}</td><td class="num">${k.amt(p, q)}</td><td class="src">${how}</td></tr>`;
@@ -316,6 +318,15 @@
           `<table style="margin-top:8px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table>` +
           `<div class="hint">Worked back from ${k.amt(P.p, qty)} ${esc(k.pname(P.p))}: stock and by-products are used first, then anything this rock can mine, then anything its buildings can make. Only what’s left needs flying in or buying.</div></div>`;
 
+        if (cargo) {
+          // only what the rock can't get from its storage, by-products, mining or making goes on the ship –
+          // worked back through the chain as far as the amount needs (Mark, 9 Nov)
+          const items = {}; Object.keys(W.fly).forEach((p) => { items[p] = Math.ceil(W.fly[p]); });
+          h += Object.keys(items).length ? '<div id="pp-ship"></div>'
+            : `<div class="card"><div class="src"><span class="ok">✓ Nothing to fly in</span> – everything for ${k.amt(P.p, qty)} ${esc(k.pname(P.p))} can come from ${esc(S.rock)} itself. Use 🏭 Production.</div></div>`;
+          P.shipItems = items; P.shipQty = qty;
+          return finish(m, h);
+        }
         // where each process's outputs go
         const ST = stores(W), byId = (id) => ST.wh.concat(ST.tf).find((b) => b.id === +id);
         const pf = P.for || (P.use ? 'build' : 'stock');
@@ -348,7 +359,14 @@
         h += movesHTML(W, ST, byId);
       }
     }
+    P.shipItems = null;
+    finish(m, h);
+  }
+  function finish(m, h) {
+    const k = K(), S = k.S;
     m.innerHTML = h;
+    const sh = m.querySelector('#pp-ship');
+    if (sh && window.YICSHIP && P.shipItems) window.YICSHIP.render(sh, { items: P.shipItems, what: k.pname(P.p), runs: 1, label: k.amt(P.p, P.shipQty || 0) + ' ' + k.pname(P.p) });
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     on('pp-rock', 'change', (e) => { S.rock = e.target.value; P.moverSet = false; P.runner = 0; k.render(); });
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });

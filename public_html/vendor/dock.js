@@ -641,7 +641,7 @@ ${R.map(route).join('')}
     const LB = window.YICHUBBRIDGE;
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
     // new Production screen (Mark, 9 Nov – TEST ONLY, vendor/prodplan.js): rock → what to make + amount → what you need → processes
-    if (LB && window.YICPROD && S.mode !== 'ship' && S.mode !== 'feed') { window.YICPROD.render(m); return; }
+    if (LB && window.YICPROD && S.mode !== 'feed') { window.YICPROD.render(m, S.mode === 'ship' ? 'ship' : 'make'); return; } // Cargo bay uses it too (Mark, 9 Nov)
     if (S.mode === 'feed' && window.YICFEED) {
       m.innerHTML = (LB ? '' : modeBar('feed')) + '<div id="dk-feedpg"></div>';
       m.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; S.ship = null; render(); }));

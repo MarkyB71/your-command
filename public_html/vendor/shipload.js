@@ -190,7 +190,7 @@
     }
     if (SS.opt >= opts.length) SS.opt = 0;
     const destTypes = new Set(k.allB().filter((b) => k.rockOf(b) === k.S.rock).map((b) => b.Building.buildingType));
-    let h = `<div class="card"><h2><span class="n">🚀</span>Load a ship ${pick.items ? 'for ' + esc(pick.what) + ' × ' + (+pick.runs).toLocaleString('en-GB') + (+pick.runs === 1 ? ' run' : ' runs') + ' on ' + esc(k.S.rock) : 'with ' + esc(k.pname(pick.p)) + ' for ' + esc(k.S.rock)}</h2>
+    let h = `<div class="card"><h2><span class="n">🚀</span>Load a ship ${pick.label ? 'for ' + esc(pick.label) + ' on ' + esc(k.S.rock) : pick.items ? 'for ' + esc(pick.what) + ' × ' + (+pick.runs).toLocaleString('en-GB') + (+pick.runs === 1 ? ' run' : ' runs') + ' on ' + esc(k.S.rock) : 'with ' + esc(k.pname(pick.p)) + ' for ' + esc(k.S.rock)}</h2>
 <div class="hint" style="margin:0 0 8px">This only <b>loads</b> the ship. You fly it to ${esc(k.S.rock)} and unload it yourself in the game.</div>
 <div class="src" style="margin-bottom:4px"><b>1 · What to send</b></div>`;
     // Mark (9 Nov): too much on screen – one drop-down, the item list only for the one picked
