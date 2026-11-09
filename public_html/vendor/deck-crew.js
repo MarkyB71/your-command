@@ -50,6 +50,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 .cqg-s{font:12px/1.35 system-ui,sans-serif;color:#8fa79a}
 .cqg-f{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 .cqg-f img{width:38px;height:48px;object-fit:cover;object-position:50% 0;border-radius:5px;border:2px solid;background:#000}
+.cq-one .cq-back{position:sticky;top:0;z-index:3;box-shadow:0 4px 12px #000}
 .cq-mem h3{margin:0 0 10px;font:700 16px system-ui,sans-serif;color:#c8f5dc}
 .cq-mem .cq-more{all:unset;cursor:pointer;margin-left:10px;color:${COL};font:600 12px system-ui,sans-serif;text-decoration:underline}
 @media (max-width:700px){.cq-lk{flex-basis:138px;width:138px!important;max-width:138px!important}.cq-read{display:none}}
@@ -116,7 +117,8 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
     if (!c) return;
     let one = el.querySelector('.cq-one');
     if (!one) { one = document.createElement('div'); one.className = 'cq-one'; el.appendChild(one); }
-    one.innerHTML = '<button type="button" class="cq-back">◂ All crews</button><div class="cq-mem"><h3>' + Y.esc(c.name) + ' <span style="font-weight:400;color:#8fa79a;font-size:13px">· ' + c.roster.length + ' crewmate' + (c.roster.length === 1 ? '' : 's') + ' · ' + Y.esc(c.place || c.ast || '') + '</span><button type="button" class="cq-more" data-full="' + Y.esc(c.id) + '">Full crew details ▸</button></h3>' + (Y.crewTraits ? Y.crewTraits(c) : '') + '</div>';
+    one.scrollTop = 0;
+    one.innerHTML = '<button type="button" class="cq-back">◂ All crews</button><div class="cq-mem"><h3>' + Y.esc(c.name) + ' <span style="font-weight:400;color:#8fa79a;font-size:13px">· ' + c.roster.length + ' crewmate' + (c.roster.length === 1 ? '' : 's') + ' · ' + Y.esc(c.place || c.ast || '') + '</span><button type="button" class="cq-more" data-full="' + Y.esc(c.id) + '">Full crew details ▸</button></h3>' + (Y.crewTraits ? Y.crewTraits(c) : '') + '<button type="button" class="cq-back" style="position:static;margin-top:12px">◂ All crews</button></div>';
     el.classList.add('cq-showone');
     if (Y.fillFacesIn) Y.fillFacesIn(one);
   }
@@ -154,6 +156,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
 
   function hero(el) {
     addCss();
+    el.classList.remove('cq-showone'); // a redraw always starts on all crews (Mark, 9 Nov: couldn't get back)
     const Y = window.YIC;
     if (!Y || !Y.D) return;
     const D = Y.D;
@@ -186,6 +189,10 @@ body.dk-crew #main h2,body.dk-crew #main th{color:#9be8bf}
     if (Y.fillFacesIn) Y.fillFacesIn(el);
   }
 
+  // back to all crews from anywhere: the deck's seat / deck tabs, or Escape (Mark, 9 Nov: "i can't go back")
+  const allCrews = () => { const h = document.getElementById('deckhero'); if (!h) return; h.classList.remove('cq-showone'); const o = h.querySelector('.cq-one'); if (o) o.remove(); };
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.dkr-home, button[data-deck], .dkr-st')) allCrews(); }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') allCrews(); });
   window.YICDECKHERO = window.YICDECKHERO || {};
   window.YICDECKHERO.crew = hero;
 })();
