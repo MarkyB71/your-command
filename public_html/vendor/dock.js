@@ -31,7 +31,7 @@
   const SLOT = 2, WAREHOUSE = 1, TANK = 10;
   const BTN = { 3: 'Refinery', 4: 'Bioreactor', 5: 'Factory', 6: 'Shipyard' };
   const FBT = { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 }; // recipe type -> building type (chain.js)
-  const OUTFIX = /[?&]beta=1\b/.test(location.search); // output storage that can take solids – TEST ONLY (Mark, 9 Nov 2026)
+  const OUTFIX = true; // output storage that can take solids, clearer can't-start reasons, one per line – LIVE 9 Nov 2026 (tested on ?beta=1 – Mark)
   const TANKOK = new Set([1, 2, 3, 4, 5, 6, 7, 8, 23, 24, 27, 33, 50, 66, 73, 76, 116, 169, 170, 180, 184, 185, 220]);
   const CAP = { 1: [1.5e12, 75e9], 10: [75e9, 997.5e9] }; // grams, volume
   const FOOD = 129;
@@ -816,7 +816,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
           if (!c.now) { after.push(c); return; }
           // Mark (9 Nov): processes that make a solid (Magnesium, Boric Acid, Ammonium Chloride, Nitric Acid…) were stuck
           // because their output was going to the tank farm where the next step's inputs wait. One output storage takes ALL
-          // of a process's outputs, so pick the nearest storage that can take them all and has room (TEST ONLY ?beta=1)
+          // of a process's outputs, so pick the nearest storage that can take them all and has room (LIVE 9 Nov 2026)
           if (OUTFIX && c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) {
             const pb = c.fin ? c.bl : c.bld || c.from, tank = c.to;
             const roomFor = (t) => { const i = inv(t) || { mass: 0, volume: 0 }, cp = CAP[t.Building.buildingType], a = addTo[t.id] || { g: 0, v: 0 }, o2 = outAdd[t.id] || [0, 0];
@@ -844,7 +844,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
             qEnd = Math.max(qEnd, Date.now() / 1000) + add;
           }
           if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); const o2 = outAdd[c.to.id] = outAdd[c.to.id] || [0, 0]; o2[0] += c.outG - c.inG; o2[1] += c.outV - c.inV; } else {
-            // Mark (9 Nov): say WHY there's no building – none on the rock, all busy, or the free ones already used by this approval (TEST ONLY ?beta=1)
+            // Mark (9 Nov): say WHY there's no building – none on the rock, all busy, or the free ones already used by this approval (LIVE 9 Nov 2026)
             if (OUTFIX) { const kind = BTN[bt] || 'building', all = on.filter((x) => x.Building.buildingType === bt && x.Building.status === 3);
               c.why = !all.length ? 'no ' + kind + ' on ' + S.rock : all.some((x) => freeSlot(x)) ? 'the free ' + kind + ' is already taken by another process in this approval' : 'every ' + kind + ' on ' + S.rock + ' is busy'; }
             wait.push(c); }
