@@ -56,6 +56,8 @@
 
   // Load a ship (Mark, 9 Nov 2026) – LIVE 9 Nov 2026: vendor/shipload.js fills #dk-ship under "Short on this rock"
   const SHIPS = true; // LIVE 9 Nov 2026
+  // 🐞 Report a problem inside the hub (Mark, 10 Nov 2026) – TEST ONLY (?beta=1). Opens the site's report box (vendor/report.js).
+  const REPHUB = /[?&]beta=1\b/.test(location.search);
   const S = { bs: 30, calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
@@ -66,6 +68,7 @@
     const ov = document.createElement('div'); ov.id = 'dk-ov';
     ov.innerHTML = WRAP + '<div id="dockpg"><div class="dhead"><div class="stripe"></div><div class="in"><h1>LOGISTICS HUB</h1>' +
       '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div>' + '<button id="dk-hrc" class="dkp-rc" style="margin:0" title="Fetch fresh game data">↻ Check the game again</button>' + '<a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div><div id="dk-main"></div>' +
+      (REPHUB ? '<div class="dk-rep">Found something not working? <a href="#" id="dk-repb">🐞 Report a problem</a></div>' : '') +
       '<div class="mocknote">Game data, pictures and art © Unstoppable Games (Influence), used with credit under CC BY-NC 4.0 · Not an official Influence site · <a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
     // Mark (8 Nov): the airlock window looks out at one of the game's buildings – a different one each time –
     // and opening the doors shows the whole building
@@ -94,6 +97,7 @@
     mo.observe(document.documentElement, { childList: true, subtree: true });
     const timer = setInterval(keep, 1000); keep();
     // Return to the Bridge (Mark, 8 Nov): close the dock and go to the Bridge – no reload
+    ov.addEventListener('click', (e) => { if (e.target.id === 'dk-repb') { e.preventDefault(); if (window.YICreport) window.YICreport(); } });
     ov.addEventListener('click', (e) => { if (e.target.id === 'dk-hrc' && !e.target.disabled) recheck(null); });
     ov.addEventListener('click', (e) => {
       const a = e.target.closest('[data-dkback]'); if (!a) return; e.preventDefault();
