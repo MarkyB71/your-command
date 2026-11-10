@@ -115,6 +115,9 @@
 .cl-note .ndp{position:absolute;left:0;right:0;bottom:24px;display:flex;gap:4px;padding:4px;background:#0c1320;border:1px solid #2a3a50;border-radius:6px}
 .cl-note .ndp select{flex:1 1 auto;height:24px;color:#e6ebf2;border-color:#2a3a50}
 .cl-note .ndp button{width:auto!important;padding:0 8px!important;height:24px!important;color:#05080d!important;background:#8fe3ff!important;font-weight:600!important}
+.cl-need .nd-x{font-style:normal;color:#8b9ab0;font-size:11px}
+.cl-note .ndp input{width:auto;flex:1 1 auto;min-width:0;max-width:none;height:24px;margin:0;padding:0 5px;font:11px system-ui,sans-serif;color:#e6ebf2;background:#0a101b;border:1px solid #2a3a50;border-radius:4px}
+.cl-note .ndp{align-items:center;color:#8b9ab0;font-size:11px}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -147,23 +150,41 @@
   const bName = (k) => { try { return window.YICBL[k][0]; } catch (e) { return 'Building'; } };
   const guessB = (t) => { t = String(t || '').toLowerCase(); return BTYPES.find((k) => t.includes(bName(k).toLowerCase())) || '9'; };
   const NDBETA = /[?&]beta=1\b/.test(location.search); // 📦 TEST ONLY for now (Mark, 10 Nov)
-  let needsFor = null; // note showing its "which building?" picker
+  let needsFor = null, procFor = null;
+  // ⚙ process boxes: a process (window.YICPROCS from vendor/buildplan.js: [name, building type, inputs per run, outputs per run])
+  // and how many runs – what its inputs still need on the rock (Mark, 10 Nov 22:41)
+  const PT = { 1: 'Refinery', 2: 'Factory', 3: 'Bioreactor', 4: 'Shipyard', 5: 'Dry dock' };
+  const procs = () => window.YICPROCS || [];
+  const pnm = (p) => { try { return window.YIC.pn(+p); } catch (e) { return 'Product ' + p; } };
+  const guessP = (t) => {
+    t = String(t || '').toLowerCase();
+    const P = procs();
+    let f = P.find((q) => t.includes(q[0].toLowerCase()));
+    if (!f) f = P.filter((q) => Object.keys(q[3]).some((o) => { const n = pnm(o).toLowerCase(); return n.length > 3 && t.includes(n); }))
+      .sort((a, b) => Object.keys(a[3]).length - Object.keys(b[3]).length)[0];
+    return f ? f[0] : '';
+  }; // note showing its "which building?" picker
   function needsBody(x) {
     const Y = window.YIC, BL = window.YICBL;
-    if (!Y || !BL || !BL[x.bld]) return '<div class="nd-l">Still loading…</div>';
+    let inp = null, extra = '';
+    if (x.kind === 'proc') {
+      const pr = procs().find((q) => q[0] === x.proc), n = Math.max(1, +x.runs || 1);
+      if (pr) { inp = {}; Object.keys(pr[2]).forEach((p) => { inp[p] = pr[2][p] * n; }); extra = '<div class="nd-l">Makes ' + Object.keys(pr[3]).map((o) => esc(pnm(o))).join(', ') + '</div>'; }
+    } else if (BL && BL[x.bld]) inp = BL[x.bld][1];
+    if (!Y || !inp) return '<div class="nd-l">Still loading…</div>';
     const ai = (Y.asts || []).findIndex((a) => a.id === x.rock), stk = ai >= 0 ? (Y.tot && Y.tot[ai]) || {} : {};
-    const inp = BL[x.bld][1], fmt = (p, n) => { try { return Y.pfmt(+p, n); } catch (e) { return String(n); } }, nm = (p) => { try { return Y.pn(+p); } catch (e) { return 'Product ' + p; } };
+    const fmt = (p, n) => { try { return Y.pfmt(+p, n); } catch (e) { return String(n); } }, nm = (p) => { try { return Y.pn(+p); } catch (e) { return 'Product ' + p; } };
     let short = 0;
     const rows = Object.keys(inp).map((p) => {
       const need = inp[p], have = stk[p] || 0, left = Math.max(0, need - have);
       if (left > 0) short++;
       return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b></div>';
     }).join('');
-    return (short ? '<div class="nd-l">Still needed on the rock:</div>' : '<div class="nd-l ok">✓ Everything is on the rock</div>') + rows;
+    return extra + (short ? '<div class="nd-l">Still needed on the rock:</div>' : '<div class="nd-l ok">✓ Everything is on the rock</div>') + rows;
   }
   let linkFrom = null; // note waiting for its link partner
   const day = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const left = () => load().filter((x) => !x.done && x.kind !== 'needs').length;
+  const left = () => load().filter((x) => !x.done && x.kind !== 'needs' && x.kind !== 'proc').length;
 
   // The chair's label: "Captain's log · 3 to do"
   function label() {
@@ -221,15 +242,17 @@
     const all = load(), done = all.filter((x) => x.done).length;
     const R = rocks(), opts = (sel) => '<option value="">No rock</option>' + R.map((r) => '<option value="' + r.id + '"' + (sel === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
     const needCard = (x) => '<div class="cl-note cl-need" data-n="' + esc(x.id) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:0deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
-      '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || '') + '</span><span class="t">📦 ' + esc(bName(x.bld)) + '</span>' + needsBody(x) +
+      '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || '') + '</span><span class="t">' + (x.kind === 'proc' ? '⚙ ' + esc(x.proc) + ' <i class="nd-x">× ' + (+x.runs || 1) + (((procs().find((q) => q[0] === x.proc) || [])[1]) ? ' · ' + PT[procs().find((q) => q[0] === x.proc)[1]] : '') + '</i>' : '📦 ' + esc(bName(x.bld))) + '</span>' + needsBody(x) +
       '<span class="ft"><span style="flex:1"></span><button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note">🔗</button><button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this box">✕</button></span></div>';
-    const note = (x) => x.kind === 'needs' ? needCard(x) : '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
+    const note = (x) => (x.kind === 'needs' || x.kind === 'proc') ? needCard(x) : '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
       (x.rock ? '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || 'Asteroid #' + x.rock) + '</span>' : '') +
       '<span class="t">' + esc(x.text) + '</span><span class="ft">' +
       (R.length ? '<select data-rock="' + esc(x.id) + '" title="Which rock is this for?">' + opts(x.rock || null) + '</select>' : '<span style="flex:1"></span>') +
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
       (x.rock && NDBETA ? '<button type="button" class="nd" data-nd="' + esc(x.id) + '" title="Show what a building still needs on this rock">📦</button>' : '') +
+      (x.rock && NDBETA ? '<button type="button" class="nd" data-pr="' + esc(x.id) + '" title="Show what a process still needs on this rock">⚙</button>' : '') +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
+      (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Process…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 52px">×<button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
       (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
     scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
@@ -239,7 +262,7 @@
       (colPanel && R.length ? '<div class="cl-cols">' + R.map((r) => { const cur = rockCol(r.id, R); return '<div class="cl-crow"><span class="n" style="color:' + cur + '">' + esc(r.name) + '</span>' +
         RC.map((c) => '<button type="button" class="sw' + (c === cur ? ' on' : '') + '" data-rc="' + r.id + '" data-c="' + c + '" style="background:' + c + '" title="Use this colour for ' + esc(r.name) + '"></button>').join('') + '</div>'; }).join('') + '</div>' : '') +
       (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div></div>' +
-      '<div class="cl-board' + (linkFrom ? ' linkmode' : '') + '"><div class="cl-cv"><svg class="cl-lines"></svg>' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div></div>';
+      (procFor ? '<datalist id="cl-procs">' + procs().map((q) => '<option value="' + esc(q[0]) + '">' + esc(PT[q[1]] || '') + '</option>').join('') + '</datalist>' : '') + '<div class="cl-board' + (linkFrom ? ' linkmode' : '') + '"><div class="cl-cv"><svg class="cl-lines"></svg>' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div></div>';
 
     tabs(scr);
     scr.querySelector('.cl-add').addEventListener('submit', (e) => {
@@ -274,7 +297,17 @@
       draw(scr);
     }));
     // 📦 pick a building, then a "still needed" box appears beside the note, linked to it
-    scr.querySelectorAll('button[data-nd]').forEach((b) => b.addEventListener('click', () => { needsFor = needsFor === b.dataset.nd ? null : b.dataset.nd; draw(scr); }));
+    scr.querySelectorAll('button[data-nd]').forEach((b) => b.addEventListener('click', () => { needsFor = needsFor === b.dataset.nd ? null : b.dataset.nd; procFor = null; draw(scr); }));
+    scr.querySelectorAll('button[data-pr]').forEach((b) => b.addEventListener('click', () => { procFor = procFor === b.dataset.pr ? null : b.dataset.pr; needsFor = null; draw(scr); }));
+    scr.querySelectorAll('button[data-prgo]').forEach((b) => b.addEventListener('click', () => {
+      const nid = b.dataset.prgo, a = load(), x = a.find((y) => y.id === nid),
+        pn = (scr.querySelector('input[data-prn="' + nid + '"]') || {}).value, rn = +((scr.querySelector('input[data-prr="' + nid + '"]') || {}).value) || 1;
+      if (!x || !procs().find((q) => q[0] === pn)) { const i = scr.querySelector('input[data-prn="' + nid + '"]'); if (i) { i.style.borderColor = '#e0282e'; i.focus(); } return; }
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      a.push({ id, kind: 'proc', proc: pn, runs: Math.max(1, Math.min(9999, Math.round(rn))), rock: x.rock, rockName: x.rockName, added: Date.now(), x: Math.min(78, (x.x || 0) + 19), py: (x.py || 0) + 30, rot: 0 });
+      save(a); const L = loadL(); L.push([x.id, id]); saveL(L);
+      procFor = null; draw(scr);
+    }));
     scr.querySelectorAll('button[data-ndgo]').forEach((b) => b.addEventListener('click', () => {
       const a = load(), x = a.find((y) => y.id === b.dataset.ndgo), sel = scr.querySelector('select[data-ndb="' + b.dataset.ndgo + '"]');
       if (!x || !sel) return;
