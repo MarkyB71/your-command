@@ -5,7 +5,7 @@
    - In the hub, "🍽 Feed crews" mode (vendor/dock.js modeBar) shows a card per crew with a tick. Every crew that
      can be fed (food under 95%, Food stored on its rock, not in flight) starts ticked; click a card to untick.
    Each crew is fed from the biggest Food stock on its own rock (stock shared out as it goes, A–Z),
-   up to one year's food (1,000 kg per crewmate, same maths as the Logistics Hub's crew step).
+   up to a full larder: 1,000 kg per crewmate minus current food – the game's own Feed Crew sum (also used by the Hub's crew step).
    Nothing is sent until the player presses Approve AND approves again in their own wallet, and the
    connected wallet must be the one the page is showing. Only the game's ResupplyFood system is called:
      run_system('ResupplyFood', [5, buildingId, 2, food, 1, crewId])   (@influenceth/sdk 2.8.1, as tidy.js / dock.js)
@@ -64,11 +64,11 @@
       else if (c.food >= 0.95) row.why = 'full';
       else if (/in flight|in orbit/i.test(c.place || '') || !c.ast) row.why = 'not on a rock';
       else {
-        // time since fed in years from the food ratio (inverse of SDK getCurrentFoodRatio), at most one year's food
-        const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5);
-        // feed 95% of the gap: our food-bonus maths is close to the game's but not exact, and one crew
-        // over the game's limit (E6030: food limit reached) cancels the whole approval (Mark, 10 Nov 2026)
-        const need = Math.floor(c.roster.length * 1000 * yrs * 0.95);
+        // same sum as the game's Feed Crew dialog (client FeedCrew.js): max food (1,000 kg per crewmate)
+        // minus current food (max x food ratio). Our earlier time-based sum went over the game's limit
+        // below 50% food (E6030: food limit reached), which cancels the whole approval (fixed 10 Nov 2026)
+        const max = c.roster.length * 1000;
+        const need = Math.max(0, max - Math.ceil(max * c.food));
         const list = (stock[c.ast] || []).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]);
         if (need <= 0) row.why = 'full';
         else if (!list.length) row.why = stock[c.ast] ? 'Food on ' + c.ast + ' all used above' : 'no Food on ' + c.ast;

@@ -822,7 +822,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
 <div class="hint">Must be on this rock. Best fed crew with the best transport bonus is picked for you.</div>`;
         S.feedCall = null;
         if (c && c.food < 0.95) {
-          const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5), need = Math.floor(c.mates * 1000 * yrs);
+          const need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food)); // game's sum: max food - current food (client FeedCrew.js)
           const src = onRock().filter(isStore).map((b) => [b, ((inv(b) || { contents: [] }).contents).reduce((s, x) => s + (x.product === FOOD ? x.amount : 0), 0)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
           if (src) S.feedCall = { src: src[0].id, give: Math.min(need, src[1]), crew: c.id };
           h += `<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:6px">${c.fm < 1 ? '⚠ ' + esc(c.name) + ' is hungry – moves will be slower.' : esc(c.name) + ' is ' + Math.round(c.food * 100) + '% fed.'}</div>` +
