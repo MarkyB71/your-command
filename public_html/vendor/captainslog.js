@@ -118,6 +118,7 @@
 .cl-need .nd-x{font-style:normal;color:#8b9ab0;font-size:11px}
 .cl-note .ndp input{width:auto;flex:1 1 auto;min-width:0;max-width:none;height:24px;margin:0;padding:0 5px;font:11px system-ui,sans-serif;color:#e6ebf2;background:#0a101b;border:1px solid #2a3a50;border-radius:4px}
 .cl-note .ndp{align-items:center;color:#8b9ab0;font-size:11px}
+.cl-need .nd-nob{margin:4px 0 2px;padding:3px 6px;border:1px solid #e0282e;border-radius:4px;color:#ff564d;font-size:11px;font-weight:600;background:rgba(224,40,46,.1)}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -169,7 +170,16 @@
     let inp = null, extra = '';
     if (x.kind === 'proc') {
       const pr = procs().find((q) => q[0] === x.proc), n = Math.max(1, +x.runs || 1);
-      if (pr) { inp = {}; Object.keys(pr[2]).forEach((p) => { inp[p] = pr[2][p] * n; }); extra = '<div class="nd-l">Makes ' + Object.keys(pr[3]).map((o) => esc(pnm(o))).join(', ') + '</div>'; }
+      if (pr) {
+        inp = {}; Object.keys(pr[2]).forEach((p) => { inp[p] = pr[2][p] * n; });
+        extra = '<div class="nd-l">Makes ' + Object.keys(pr[3]).map((o) => esc(pnm(o))).join(', ') + '</div>';
+        // Is there a finished building of the right kind on the rock? (same check as the Construction planner; Mark, 10 Nov 22:44)
+        const FBT = (window.YICREC && window.YICREC.FBT) || { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 };
+        let nb = -1;
+        try { nb = ((Y && Y.D && Y.D.allB) || []).filter((b) => b.Building && b.Building.buildingType === FBT[pr[1]] && b.Building.status === 3 && (((b.Location || {}).locations || []).find((l) => l.label === 3) || {}).id === x.rock).length; } catch (e) {}
+        if (nb === 0) extra = '<div class="nd-nob">✗ No ' + esc(PT[pr[1]] || 'building') + ' on ' + esc((x.rockName || 'this rock')) + '</div>' + extra;
+        else if (nb > 0) extra = '<div class="nd-l ok">✓ ' + nb + ' ' + esc(PT[pr[1]] || 'building') + (nb > 1 ? 's' : '') + ' on the rock</div>' + extra;
+      }
     } else if (BL && BL[x.bld]) inp = BL[x.bld][1];
     if (!Y || !inp) return '<div class="nd-l">Still loading…</div>';
     const ai = (Y.asts || []).findIndex((a) => a.id === x.rock), stk = ai >= 0 ? (Y.tot && Y.tot[ai]) || {} : {};
