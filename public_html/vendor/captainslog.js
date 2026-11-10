@@ -122,6 +122,8 @@
 .cl-note .ndp{flex-wrap:wrap;width:260px;right:auto;left:-6px;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.6)}
 .cl-note .ndp input[data-prn]{flex:1 1 100%;height:28px;font-size:12.5px}
 .cl-note .ndp select{height:28px;font-size:12.5px}
+/* "No rock" notes in white so they don't look like a rock colour (Mark, 10 Nov 22:52) – test only for now */
+.cl-scr.cl-beta .cl-note{--rc:#e6ebf2}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -252,6 +254,7 @@
       return;
     }
     const ob = scr.querySelector('.cl-board'); if (ob) scrollY = ob.scrollTop;
+    scr.classList.toggle('cl-beta', NDBETA);
     const all = load(), done = all.filter((x) => x.done).length;
     const R = rocks(), opts = (sel) => '<option value="">No rock</option>' + R.map((r) => '<option value="' + r.id + '"' + (sel === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
     const needCard = (x) => '<div class="cl-note cl-need" data-n="' + esc(x.id) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:0deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
@@ -386,7 +389,7 @@
     // Lines between linked notes, centre to centre; click a line to remove the link
     function lines() {
       const svg = cv.querySelector('.cl-lines'), L = loadL(), col = {};
-      all.forEach((x) => { col[x.id] = x.rock ? rockCol(x.rock, R) : '#8fe3ff'; });
+      all.forEach((x) => { col[x.id] = x.rock ? rockCol(x.rock, R) : (NDBETA ? '#e6ebf2' : '#8fe3ff'); });
       const mid = (id) => { const n = cv.querySelector('.cl-note[data-n="' + id + '"]'); return n ? [n.offsetLeft + n.offsetWidth / 2, n.offsetTop + n.offsetHeight / 2] : null; };
       svg.innerHTML = L.map((l, i) => {
         const a = mid(l[0]), b = mid(l[1]);
