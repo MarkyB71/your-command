@@ -1,6 +1,6 @@
 /* Captain's log – Skippy's Awesome Command Deck – TEST ONLY (?beta=1), Mark 10 Nov 2026
    "Just be able to add boxes with tasks for now and tick them off when done ... to help me remember
-   what I was doing last night." A panel under the SkippyChain on the Bridge; clicking it puts the log
+   what I was doing last night." A console on the Bridge in the Weapons console's place; clicking it puts the log
    on the viewscreen (like Deck controls). Saved IN THIS BROWSER ONLY (localStorage) – Mark: "steer clear
    of holding data", so nothing goes to the server. May join the Logistics Hub later.
    Project doc: claude/planning-section-idea-2026-11-10.md */
@@ -12,13 +12,6 @@
   let on = false;
 
   const CSS = `
-.cl-btn{all:unset;box-sizing:border-box;cursor:pointer;display:block;position:absolute;top:calc(100% + 84px);left:50%;width:min(230px,150%);padding:8px 6px 9px;z-index:2;text-align:center;border-radius:8px 8px 3px 3px;border:1px solid #2a5866;border-top:2px solid #8fe3ff;background:linear-gradient(180deg,rgba(143,227,255,.1),rgba(0,0,0,.35));box-shadow:0 0 18px -6px #8fe3ff,inset 0 0 22px -10px #8fe3ff;transform:translateX(-50%) perspective(500px) rotateX(18deg);transition:box-shadow .2s,transform .2s}
-.cl-btn:hover,.cl-btn:focus-visible,.cl-btn.on{box-shadow:0 0 26px -2px #8fe3ff,inset 0 0 26px -8px #8fe3ff;transform:translateX(-50%) perspective(500px) rotateX(10deg) translateY(-2px)}
-.cl-btn b{display:block;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8fe3ff;text-shadow:0 0 8px rgba(143,227,255,.6)}
-.cl-btn span{display:block;font-size:12px;color:#c4cdd9;margin-top:3px}
-.brs:has(.cl-btn) .brs-floor{height:166px}
-@media (max-width:760px){.cl-btn,.cl-btn:hover,.cl-btn.on{position:static;transform:none;width:100%;max-width:240px}.brs:has(.cl-btn) .brs-floor{height:26px}}
-@media (prefers-reduced-motion:reduce){.cl-btn{transition:none}}
 .cl-scr{position:relative;display:block;height:clamp(320px,52vh,600px);overflow:auto;padding:34px 16px 16px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.45;color:#c4cdd9;scrollbar-color:#2c3a4c transparent}
 .cl-scr *{box-sizing:border-box}
 .cl-in{max-width:620px;margin:0 auto}
@@ -50,8 +43,11 @@
   const left = () => load().filter((x) => !x.done).length;
 
   function label() {
-    const b = document.querySelector('.cl-btn span');
-    if (b) { const n = left(); b.textContent = n ? n + ' still to do' : 'Your to-do list'; }
+    const b = document.querySelector('.cl-btn');
+    if (!b) return;
+    const n = left();
+    b.querySelector('.st-n').textContent = n;
+    b.querySelector('.st-l').textContent = n === 1 ? 'task to do' : 'tasks to do';
   }
 
   function draw(scr) {
@@ -114,15 +110,21 @@
     draw(scr);
   }
 
+  // Takes the Weapons console's place for now (Mark, 10 Nov: "remove the Weapons button for now and look
+  // to see where it goes when we get to conflict"). The Weapons console comes back from pages/workload.js
+  // if this file is not loaded.
   function addPanel(br) {
-    const mid = br.querySelector('.brs-mid');
-    if (!mid || !mid.querySelector('.brs-chair') || mid.querySelector('.cl-btn')) return;
+    const wpn = br.querySelector('.st.wpn'), mid = br.querySelector('.brs-mid');
+    if (!wpn || !mid || br.querySelector('.cl-btn')) return;
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'cl-btn';
+    b.className = 'st cl-btn';
+    b.style.cssText = '--dc:#8fe3ff;--ry:-15deg';
     b.title = "Captain's log – your own to-do list, saved in this browser";
-    b.innerHTML = "<b>📋 Captain's log</b><span></span>";
-    mid.appendChild(b);
+    b.innerHTML = '<span class="st-scr"><span class="st-h">Captain\'s log<i class="st-led"></i></span><span class="st-r">Log station</span>' +
+      '<span class="st-n"></span><span class="st-l"></span><span class="st-s">Your own to-do list</span><span class="st-go">Open log ▸</span></span>' +
+      '<span class="st-base"><i></i><i></i><i></i><i></i></span>';
+    wpn.replaceWith(b);
     label();
     b.addEventListener('click', () => setOn(br, !on));
     // the chair (today's workload) and Deck controls take the viewscreen back
