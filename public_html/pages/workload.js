@@ -520,7 +520,13 @@
   }
 
   // Today's workload drawn somewhere else – the Captain's log's 🗓 Today tab (vendor/captainslog.js, Mark 10 Nov – beta)
-  window.YICdrawToday = (el) => { drawAlerts(el); animTiles(el); };
+  // ai: which rock (index into the rock list, '' = all rocks) – the Today tab has its own picker, so it doesn't
+  // follow the rock picked on another deck (Mark, 10 Nov 22:27: "Today seems to be fixed to one asteroid")
+  window.YICdrawToday = (el, ai) => {
+    const sel = APP.$('#ast'), old = sel ? sel.value : '';
+    if (sel && ai != null) sel.value = ai;
+    try { drawAlerts(el); animTiles(el); } finally { if (sel) sel.value = old; }
+  };
 
   function animTiles(m) {
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;

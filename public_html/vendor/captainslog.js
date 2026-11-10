@@ -9,7 +9,7 @@
   // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
 
   const KEY = 'sk_captains_log', LKEY = 'sk_captains_log_links';
-  let on = false, tab = 'today', sdTick = 0, lastRock = null, scrollY = 0, rolled = false, passChair = false, todayTop = 0; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
+  let on = false, tab = 'today', sdTick = 0, lastRock = null, scrollY = 0, rolled = false, passChair = false, todayTop = 0, todayAst = ''; // todayAst: Today tab's own rock ('' = all) // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
 .cl-scr{box-sizing:border-box;position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
@@ -104,6 +104,7 @@
 .cl-crow .sw{flex:none;width:18px;height:18px;min-width:0;margin:0;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;opacity:.8}
 .cl-crow .sw:hover{opacity:1}
 .cl-crow .sw.on{border-color:#fff;opacity:1}
+.cl-tast{flex:0 1 200px;min-width:0;max-width:none;height:34px;margin:0;padding:0 8px;font:inherit;font-size:13px;color:#c4cdd9;background:#0c1320;border:1px solid #2a3a50;border-radius:6px}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -159,12 +160,16 @@
     // 📜 Log – everything your crews have done in the game, from the game's own records (same as the Activity log page)
     // 🗓 Today – today's workload (was the chair's own view), drawn by pages/workload.js
     if (tab === 'today') {
-      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Today\'s workload</span></div>' + TABS() + '</div><div class="cl-logv cl-today"></div>';
+      let AS = []; try { AS = (window.YIC && window.YIC.asts) || []; } catch (e) {}
+      const pick = '<select class="cl-tast" aria-label="Which rock"><option value="">All rocks</option>' + AS.map((a, i) => '<option value="' + i + '"' + (String(i) === todayAst ? ' selected' : '') + '>' + esc(a.name) + '</option>').join('') + '</select>';
+      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Today\'s workload</span></div>' + TABS() + (AS.length > 1 ? pick : '') + '</div><div class="cl-logv cl-today"></div>';
+      const ts = scr.querySelector('.cl-tast');
+      if (ts) ts.addEventListener('change', () => { todayAst = ts.value; todayTop = 0; draw(scr); });
       tabs(scr);
       scr.classList.remove('rolled');
       deckUp(scr, false);
       const v = scr.querySelector('.cl-today');
-      if (window.YICdrawToday) { window.YICdrawToday(v); v.scrollTop = todayTop; v.addEventListener('scroll', () => (todayTop = v.scrollTop), { passive: true }); }
+      if (window.YICdrawToday) { window.YICdrawToday(v, todayAst); v.scrollTop = todayTop; v.addEventListener('scroll', () => (todayTop = v.scrollTop), { passive: true }); }
       else v.innerHTML = '<div class="note">Still loading – try again in a moment.</div>';
       return;
     }
