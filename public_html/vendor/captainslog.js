@@ -9,7 +9,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const KEY = 'sk_captains_log';
-  let on = false, tab = 'notes'; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
+  let on = false, tab = 'notes', sdTick = 0; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
 .cl-scr{position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
@@ -43,6 +43,11 @@
 .cl-logv .hl-day{color:#8fe3ff;border-bottom-color:#1e3a48;letter-spacing:.06em}
 .cl-logv .hl-row{font-size:14px;border-bottom-color:#122030}
 .cl-logv .hl-row:hover{background:rgba(143,227,255,.05)}
+.cl-logv .hl-row{grid-template-columns:92px 28px minmax(0,1fr) minmax(110px,200px)}
+.cl-logv .hl-sd{display:block;color:#8fe3ff;font-weight:600;font-size:13px}
+.cl-logv .hl-real{display:block;color:#6b7a90;font-size:11px}
+.cl-logv .hl-day .hl-real{display:inline;font-size:12px;letter-spacing:0;color:#8b9ab0}
+.cl-bar .h .cl-sdnow{display:inline;color:#8fe3ff;font-size:11px}
 .cl-logv .note{color:#9fb0c4;font-size:13px}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
@@ -81,10 +86,13 @@
   function draw(scr) {
     // 📜 Log – everything your crews have done in the game, from the game's own records (same as the Activity log page)
     if (tab === 'log') {
-      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Everything your crews have done, from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
+      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Adalia stardate <b class="cl-sdnow">' + (window.YICstardate ? window.YICstardate(Date.now() / 1000, 2) : '') + '</b> · from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
       tabs(scr);
+      // the stardate ticks on: 1 Adalian day is 1 real hour, so 0.01 is 36 seconds
+      clearInterval(sdTick);
+      sdTick = setInterval(() => { const n = scr.querySelector('.cl-sdnow'); if (!n || !n.isConnected) return clearInterval(sdTick); if (window.YICstardate) n.textContent = window.YICstardate(Date.now() / 1000, 2); }, 6000);
       const v = scr.querySelector('.cl-logv');
-      if (window.YICdrawHistory) window.YICdrawHistory(v, { into: true, noTitle: true });
+      if (window.YICdrawHistory) window.YICdrawHistory(v, { into: true, noTitle: true, stardate: true });
       else v.innerHTML = '<div class="note">Still loading – try again in a moment.</div>';
       return;
     }

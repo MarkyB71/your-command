@@ -13,6 +13,10 @@ const CSS=`.hl-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .hl-more{margin:14px 0}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Adalia stardate (Mark, 10 Nov 2026 – Captain's log): the game's own clock in Adalian days, as the game client works it out
+   (@influenceth/sdk Time: zero at 1618668000, 24× time, so 1 Adalian day = 1 real hour). */
+const SD=(t,dp)=>((t-1618668000)/3600).toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
+window.YICstardate=SD;
 const CATS=[
   ['trade','Trades and orders','🪙',n=>/Order|Purchased|Exchange|Swap|Sale/i.test(n)],
   ['deliv','Deliveries','📦',n=>/Delivery|Transfer$/i.test(n)],
@@ -121,8 +125,9 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
     if(!list.length){m.appendChild(el('div','note','Nothing matches.'));return}
     let day='';const box=el('div');
     list.slice(0,S.show).forEach(([r,d])=>{const dt=new Date(r.t*1000),dy=dt.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-      if(dy!==day){day=dy;box.appendChild(el('div','hl-day',esc(dy)))}
-      box.appendChild(el('div','hl-row','<span class="hl-tm">'+dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})+'</span><span class="hl-ic" title="'+esc(cat(r.n)[1])+'">'+cat(r.n)[2]+'</span><span class="hl-what">'+d+'</span><span class="hl-crew">'+esc(crewName[r.c]||('Crew #'+r.c))+'</span>'))});
+      const tm=dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+      if(dy!==day){day=dy;box.appendChild(el('div','hl-day',opt.stardate?'Stardate '+esc(SD(r.t,0))+' <span class="hl-real">· '+esc(dy)+'</span>':esc(dy)))}
+      box.appendChild(el('div','hl-row','<span class="hl-tm">'+(opt.stardate?'<b class="hl-sd">'+esc(SD(r.t,2))+'</b><span class="hl-real">'+tm+'</span>':tm)+'</span><span class="hl-ic" title="'+esc(cat(r.n)[1])+'">'+cat(r.n)[2]+'</span><span class="hl-what">'+d+'</span><span class="hl-crew">'+esc(crewName[r.c]||('Crew #'+r.c))+'</span>'))});
     m.appendChild(box);
     if(list.length>S.show){const b=el('button','hl-more','Show more ('+(list.length-S.show).toLocaleString()+' left)');b.addEventListener('click',()=>{S.show+=500;draw()});m.appendChild(b)}
   }
