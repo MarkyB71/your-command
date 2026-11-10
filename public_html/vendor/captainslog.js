@@ -93,6 +93,11 @@
 .brs .brs-mid .brs-pc.cl-up:hover{transform:perspective(500px) rotateX(4deg) translateY(-2px)}
 .brs .brs-mid .brs-pc.cl-up::after{content:'';position:absolute;left:50%;top:calc(100% + 1px);width:110%;height:32px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,210,74,.14),rgba(255,210,74,.02));clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);pointer-events:none}
 .brs.brs:has(.brs-pc.cl-up) .brs-floor{height:26px}
+/* Weapons console on standby until conflict arrives – dimmed so the live stations stand out (Mark, 10 Nov 22:11) */
+.brs .st.wpn{filter:saturate(.35) brightness(.62)}
+.brs .st.wpn:hover{filter:saturate(.5) brightness(.75)}
+.brs .st.wpn .st-scr{box-shadow:none}
+.brs .st.wpn .st-led{opacity:.3}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
