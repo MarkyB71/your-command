@@ -1,4 +1,4 @@
-/* Captain's log – Skippy's Awesome Command Deck – TEST ONLY (?beta=1), Mark 10 Nov 2026
+/* Captain's log – Skippy's Awesome Command Deck – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
    "Just be able to add boxes with tasks for now and tick them off when done ... to help me remember
    what I was doing last night." A console on the Bridge in the Weapons console's place; clicking it puts the log
    on the viewscreen (like Deck controls). Saved IN THIS BROWSER ONLY (localStorage) – Mark: "steer clear
@@ -6,7 +6,7 @@
    Project doc: claude/planning-section-idea-2026-11-10.md */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return; // test only
+  // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
 
   const KEY = 'sk_captains_log', LKEY = 'sk_captains_log_links';
   let on = false, tab = 'today', sdTick = 0, lastRock = null, scrollY = 0, rolled = false, passChair = false, todayTop = 0; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)

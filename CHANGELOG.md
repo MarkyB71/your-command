@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Captain's log on the Bridge: the captain's chair now opens your Captain's log with three tabs – 🗓 Today (today's workload), 📌 Notes (sticky notes you drag around, tick off, tie to a rock with your own rock colours from 10 game colours, and link together; saved in your browser only) and 📜 Log (everything your crews have done, with Adalia Stardates from the game's own clock). The Bridge consoles roll up while you work on the notes. Deck controls moved to the far left of the top bar, the SkippyChain sits above the chair, and the Weapons console is dimmed on standby. Help page updated.
+
 ## 10 Nov 2026 – Logistics Hub: a Hub tab in the main deck's top bar, a matching top bar inside the Hub, Bridge-style side walls, and a 🐞 Report a problem button in the Hub.
 
 ## 10 Nov 2026 – Bridge welcome: the doors and Skippy's welcome clip now show only on your very first visit (clicking Skippy in the chair still plays it any time).
