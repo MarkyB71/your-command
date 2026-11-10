@@ -155,7 +155,7 @@
   const BTYPES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
   const bName = (k) => { try { return window.YICBL[k][0]; } catch (e) { return 'Building'; } };
   const guessB = (t) => { t = String(t || '').toLowerCase(); return BTYPES.find((k) => t.includes(bName(k).toLowerCase())) || '9'; };
-  const NDBETA = /[?&]beta=1\b/.test(location.search); // 📦 TEST ONLY for now (Mark, 10 Nov)
+  const NDBETA = true; // 📦 / ⚙ boxes, white no-rock notes, Skippys Sticky Wall – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   let needsFor = null, procFor = null;
   // ⚙ process boxes: a process (window.YICPROCS from vendor/buildplan.js: [name, building type, inputs per run, outputs per run])
   // and how many runs – what its inputs still need on the rock (Mark, 10 Nov 22:41)

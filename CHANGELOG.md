@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Captain's log: Notes are now Skippys Sticky Wall. New 📦 Still needed box (pick a building – shows what's still short on the note's rock) and ⚙ Process box (pick a process and runs – shows the building it needs, whether you have one there, and what's still short). Notes with no rock are white. Help page updated.
+
 ## 10 Nov 2026 – Captain's log fix: the Today tab has its own rock picker (starts on All rocks) – it was following the rock picked on another deck. Help page updated.
 
 ## 10 Nov 2026 – Captain's log on the Bridge: the captain's chair now opens your Captain's log with three tabs – 🗓 Today (today's workload), 📌 Notes (sticky notes you drag around, tick off, tie to a rock with your own rock colours from 10 game colours, and link together; saved in your browser only) and 📜 Log (everything your crews have done, with Adalia Stardates from the game's own clock). The Bridge consoles roll up while you work on the notes. Deck controls moved to the far left of the top bar, the SkippyChain sits above the chair, and the Weapons console is dimmed on standby. Help page updated.
