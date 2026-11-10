@@ -85,7 +85,7 @@
     [30, 55].map((x) => '<line x1="' + x + '" y1="' + (x * 0.25) + '" x2="' + x + '" y2="' + (620 - x * 2.4) + '" stroke="#3a2a16" stroke-width="2"/>').join('') +
     [945, 970].map((x) => '<line x1="' + x + '" y1="' + ((1000 - x) * 0.25) + '" x2="' + x + '" y2="' + (620 - (1000 - x) * 2.4) + '" stroke="#3a2a16" stroke-width="2"/>').join('') +
     '<rect x="38" y="120" width="10" height="160" rx="3" fill="#ffb03b" opacity=".25"/><rect x="952" y="120" width="10" height="160" rx="3" fill="#ff8a1f" opacity=".25"/>' +
-    [150, 190, 230].map((y, i) => '<circle class="lb-bl" cx="64" cy="' + y + '" r="3" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="lb-bl" cx="936" cy="' + y + '" r="3" fill="#ffb03b" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
+    [150, 190, 230].map((y, i) => '<circle class="lb-bl" cx="17" cy="' + y + '" r="3.5" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="lb-bl" cx="983" cy="' + y + '" r="3.5" fill="#ffb03b" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
     '<path d="M80,420 Q500,470 920,420" stroke="#ffb03b" stroke-opacity=".18" stroke-width="2" fill="none"/>' +
     '<path d="M0,620 Q500,520 1000,620" stroke="#ffb03b" stroke-opacity=".12" stroke-width="2" fill="none"/></svg>';
   // the logistics officer's chair (same shape as the captain's chair, orange trim)
