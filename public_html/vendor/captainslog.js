@@ -9,7 +9,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const KEY = 'sk_captains_log', LKEY = 'sk_captains_log_links';
-  let on = false, tab = 'notes', sdTick = 0, lastRock = null, scrollY = 0; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
+  let on = false, tab = 'notes', sdTick = 0, lastRock = null, scrollY = 0, rolled = false; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
 .cl-scr{position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
@@ -63,6 +63,12 @@
 .cl-logv .hl-day .hl-real{display:inline;font-size:12px;letter-spacing:0;color:#8b9ab0}
 .cl-bar .h .cl-sdnow{display:inline;color:#8fe3ff;font-size:11px}
 .cl-logv .note{color:#9fb0c4;font-size:13px}
+.cl-head{flex:none}
+.cl-head .cl-bar{max-height:220px;transition:max-height .3s ease,opacity .25s ease,margin .3s ease}
+.cl-roll{max-height:0;overflow:hidden;opacity:0;text-align:center;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8fe3ff;transition:max-height .3s ease,opacity .25s ease}
+.cl-scr.rolled .cl-head:not(:hover):not(:focus-within) .cl-bar{max-height:0;opacity:0;margin-bottom:0;overflow:hidden}
+.cl-scr.rolled .cl-head:not(:hover):not(:focus-within) .cl-roll{max-height:20px;opacity:.75;padding:2px 0 6px}
+@media (prefers-reduced-motion:reduce){.cl-head .cl-bar,.cl-roll{transition:none}}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -112,6 +118,7 @@
     if (tab === 'log') {
       scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Adalia Stardate <b class="cl-sdnow">' + (window.YICstardate ? window.YICstardate(Date.now() / 1000, 2) : '') + '</b> · from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
       tabs(scr);
+      scr.classList.remove('rolled');
       // the stardate ticks on: 1 Adalian day is 1 real hour, so 0.01 is 36 seconds
       clearInterval(sdTick);
       sdTick = setInterval(() => { const n = scr.querySelector('.cl-sdnow'); if (!n || !n.isConnected) return clearInterval(sdTick); if (window.YICstardate) n.textContent = window.YICstardate(Date.now() / 1000, 2); }, 6000);
@@ -130,10 +137,10 @@
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
-    scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' +
+    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') +
-      (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div>' +
+      (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div></div>' +
       '<div class="cl-board' + (linkFrom ? ' linkmode' : '') + '"><div class="cl-cv"><svg class="cl-lines"></svg>' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div></div>';
 
     tabs(scr);
@@ -181,6 +188,9 @@
     };
     fit();
     board.scrollTop = scrollY;
+    // The header rolls up while you work on the notes and rolls back down when you hover over it (Mark, 10 Nov)
+    scr.classList.toggle('rolled', rolled && !linkFrom);
+    board.addEventListener('pointerenter', () => { if (linkFrom) return; rolled = true; scr.classList.add('rolled'); });
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest('input,button,select')) return;
       e.preventDefault();
@@ -254,6 +264,7 @@
     const h = map && map.style.display !== 'none' ? map.offsetHeight : 0;
     if (h > 0) scr.style.height = h + 'px';
     if (map) map.style.display = 'none';
+    rolled = false; // header starts rolled down each time the log opens
     plate.textContent = "CAPTAIN'S LOG";
     if (btn) btn.classList.add('on');
     draw(scr);
