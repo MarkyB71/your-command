@@ -66,7 +66,9 @@
       else {
         // time since fed in years from the food ratio (inverse of SDK getCurrentFoodRatio), at most one year's food
         const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5);
-        const need = Math.floor(c.roster.length * 1000 * yrs);
+        // feed 95% of the gap: our food-bonus maths is close to the game's but not exact, and one crew
+        // over the game's limit (E6030: food limit reached) cancels the whole approval (Mark, 10 Nov 2026)
+        const need = Math.floor(c.roster.length * 1000 * yrs * 0.95);
         const list = (stock[c.ast] || []).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]);
         if (need <= 0) row.why = 'full';
         else if (!list.length) row.why = stock[c.ast] ? 'Food on ' + c.ast + ' all used above' : 'no Food on ' + c.ast;
