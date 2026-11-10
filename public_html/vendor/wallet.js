@@ -116,7 +116,7 @@
     var wrap = document.createElement('div');
     wrap.style.cssText = 'margin:0 0 18px';
     wrap.innerHTML = '<button type="button" id="wc-btn" style="margin-top:0">Connect wallet</button>' +
-      '<div style="font-size:12px;color:#8b9ab0;margin-top:6px">Only reads your address – never asks to sign or send anything.</div>' +
+      '<div style="font-size:12px;color:#8b9ab0;margin-top:6px">Only reads your address. It never asks you to sign or send anything, except in the Logistics Hub, and only for game actions you approve.</div>' +
       '<div style="font-size:13px;color:#8b9ab0;margin-top:14px">Or paste it:</div>';
     lab.parentNode.insertBefore(wrap, lab);
     var btn = document.getElementById('wc-btn');

@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Sign-in page: the wallet note now says the site never asks you to sign or send anything, except in the Logistics Hub for game actions you approve.
+
 ## 10 Nov 2026 – Galley fix: Feed crews now gives each crew exactly enough to reach 100% food – the same sum the game's own Feed Crew uses. Before, a crew under 50% food was offered too much and the game turned the whole feed down ("food limit reached"). Same fix in Production's crew feeding.
 
 ## 9 Nov 2026 – Logistics Hub: a small hidden extra in the airlock for players who don't want to go through it every time. (Not on the Help page – ask Skippy.)
