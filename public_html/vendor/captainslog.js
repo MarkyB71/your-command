@@ -80,6 +80,14 @@
 .cl-scr{transition:height .35s ease}
 @media (prefers-reduced-motion:reduce){.brs.cl-deckup .brs-deck,.brs.cl-deckup .brs-floor,.cl-scr{transition:none}}
 @media (prefers-reduced-motion:reduce){.cl-head .cl-bar,.cl-roll{transition:none}}
+/* Deck controls moves to the far left of the top tool row (Mark, 10 Nov 22:06); the holo-panel above the chair is hidden */
+.brs .dc-holo{display:none!important}
+#dktools #cl-dc{order:-1;display:inline-flex;align-items:center;gap:7px;background:#121a26;color:#8fe3ff;border:1px solid #2a3648;border-radius:8px;cursor:pointer;font:inherit}
+#dktools #cl-dc:hover,#dktools #cl-dc:focus-visible,#dktools #cl-dc.on{border-color:#8fe3ff;box-shadow:0 0 10px -2px #8fe3ff}
+#cl-dc .l{display:grid;grid-template-columns:repeat(3,6px);gap:2px}
+#cl-dc .l i{height:4px;border-radius:1px}
+#cl-dc .l i:nth-child(1){background:#3fd68a}#cl-dc .l i:nth-child(2){background:#e8645a}#cl-dc .l i:nth-child(3){background:#4f90ff}
+#cl-dc .l i:nth-child(4){grid-column:1/-1;height:3px;background:#9a6bff}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -358,6 +366,30 @@
     const br = document.querySelector('.brs');
     if (br && !br.querySelector('.cl-chair')) addPanel(br);
   };
+  // Deck controls button at the far left of the tool row (search / Play / Command Deck…). It opens the same
+  // Deck controls on the Bridge viewscreen (vendor/deckcontrols.js) – from another deck it goes to the Bridge first.
+  const dcBtn = () => {
+    const tray = document.getElementById('dktools');
+    if (!tray) return;
+    let b = document.getElementById('cl-dc');
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button'; b.id = 'cl-dc';
+      b.title = "Deck controls – settings for Skippy's Command Deck browser extension";
+      b.innerHTML = '<span class="l" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Deck controls';
+      b.addEventListener('click', () => {
+        const h = document.querySelector('.brs .dc-holo');
+        if (h) { h.click(); return; }
+        if (window.YICgoDeck) window.YICgoDeck('bridge');
+        let n = 0; const t = setInterval(() => { const x = document.querySelector('.brs .dc-holo'); if (x) { clearInterval(t); if (!x.classList.contains('on')) x.click(); } else if (++n > 40) clearInterval(t); }, 100);
+      });
+    }
+    if (b.parentNode !== tray) tray.prepend(b);
+    const h = document.querySelector('.brs .dc-holo');
+    b.classList.toggle('on', !!(h && h.classList.contains('on')));
+  };
+  new MutationObserver(dcBtn).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  dcBtn();
   new MutationObserver(check).observe(document.documentElement, { childList: true, subtree: true });
   check();
 })();
