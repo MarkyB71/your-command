@@ -83,7 +83,7 @@ body > header{display:none!important}
 .toprow[data-mv="1"]{display:none!important}
 #deckbar{display:block;padding:8px 16px 0}
 #deckbar .dk-row{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end}
-#deckbar .dk-hubtab{margin-left:14px;color:#ffd28a;background:#1a1208;border-color:#5a3e18}
+#deckbar .dk-hubtab{color:#ffd28a;background:#1a1208;border-color:#5a3e18}
 #deckbar .dk-hubtab:hover,#deckbar .dk-hubtab:focus-visible{color:#1a1000;background:#ffb03b;box-shadow:0 0 18px #ffb03b}
 body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
 #deckbar .dk{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 18px 8px;font:700 13px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8b9ab0;background:#0c1118;border:1px solid #243041;border-bottom:0;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);transition:color .15s,background .15s,box-shadow .15s}
@@ -583,12 +583,13 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
     db.innerHTML =
       '<div class="dk-row">' +
       DECKS.map(
-        (x) =>
+        (x, i) =>
           '<button type="button" class="dk' + (x === d ? ' on' : '') + '" data-deck="' + x.id + '" style="--dc:' + x.col +
-          '"><i class="dl"></i>' + x.name + '</button>',
+          '"><i class="dl"></i>' + x.name + '</button>' +
+          // Logistics Hub as a deck tab, in its orange, right after The Bridge so it's one click to switch (Mark, 10 Nov 2026)
+          // – TEST ONLY (?beta=1); replaces the tool-row button
+          (HUBTAB && i === 0 ? '<button type="button" class="dk dk-hubtab" style="--dc:#ffb03b" title="Opens the page that acts in the game – it only sends what you approve in your wallet"><i class="dl"></i>Logistics Hub</button>' : ''),
       ).join('') +
-      // Logistics Hub as a deck tab, in its orange (Mark, 10 Nov 2026) – TEST ONLY (?beta=1); replaces the tool-row button
-      (HUBTAB ? '<button type="button" class="dk dk-hubtab" style="--dc:#ffb03b" title="Opens the page that acts in the game – it only sends what you approve in your wallet"><i class="dl"></i>Logistics Hub ↗</button>' : '') +
       '</div><div class="dk-sub">' +
       (have.length > 1
         ? have.map((k) => '<button type="button" class="pg' + (k === cur ? ' on' : '') + '" data-pg="' + k + '">' + label(k).replace(/[<>&]/g, '') + '</button>').join('')
