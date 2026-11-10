@@ -88,6 +88,11 @@
 #cl-dc .l i{height:4px;border-radius:1px}
 #cl-dc .l i:nth-child(1){background:#3fd68a}#cl-dc .l i:nth-child(2){background:#e8645a}#cl-dc .l i:nth-child(3){background:#4f90ff}
 #cl-dc .l i:nth-child(4){grid-column:1/-1;height:3px;background:#9a6bff}
+/* SkippyChain moves up above the chair, where the Deck controls panel was (Mark, 10 Nov 22:09) */
+.brs .brs-mid .brs-pc.cl-up,.brs .brs-mid .brs-pc.cl-up:hover{position:relative;top:auto;left:auto;width:min(230px,100%);margin:0 auto 34px;transform:perspective(500px) rotateX(10deg)}
+.brs .brs-mid .brs-pc.cl-up:hover{transform:perspective(500px) rotateX(4deg) translateY(-2px)}
+.brs .brs-mid .brs-pc.cl-up::after{content:'';position:absolute;left:50%;top:calc(100% + 1px);width:110%;height:32px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,210,74,.14),rgba(255,210,74,.02));clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);pointer-events:none}
+.brs.brs:has(.brs-pc.cl-up) .brs-floor{height:26px}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -342,6 +347,8 @@
     const mid = br.querySelector('.brs-mid'), chair = mid && mid.querySelector('.brs-chair');
     if (!chair || chair.classList.contains('cl-chair')) return;
     chair.classList.add('cl-chair');
+    const pc = mid.querySelector('.brs-pc');
+    if (pc) { pc.classList.add('cl-up'); mid.insertBefore(pc, chair); }
     chair.title = "The captain's chair – your Captain's log: today's workload, notes and the game log";
     label();
     // The chair, Deck controls and the log share the viewscreen. Skippy's own click (welcome clip) is left alone.
