@@ -814,11 +814,13 @@
   function skippyIntro(br) {
     if (window.YICskIntro) return;
     window.YICskIntro = 1;
-    // once per visit (sessionStorage)
+    // once per visit (sessionStorage). TEST ONLY (?beta=1, Mark 10 Nov 2026): first visit ever only (localStorage)
     const SK_ONCE = true;
+    const SK_FIRST = /[?&]beta=1\b/.test(location.search);
     try {
-      if (SK_ONCE && sessionStorage.getItem('yic-sk-intro')) return;
-      sessionStorage.setItem('yic-sk-intro', '1');
+      const store = SK_FIRST ? localStorage : sessionStorage;
+      if (SK_ONCE && store.getItem('yic-sk-intro')) return;
+      store.setItem('yic-sk-intro', '1');
     } catch (e) {}
     if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     const st = document.createElement('style');
