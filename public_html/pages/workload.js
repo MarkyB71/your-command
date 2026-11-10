@@ -814,9 +814,9 @@
   function skippyIntro(br) {
     if (window.YICskIntro) return;
     window.YICskIntro = 1;
-    // once per visit (sessionStorage). TEST ONLY (?beta=1, Mark 10 Nov 2026): first visit ever only (localStorage)
+    // first visit ever only (localStorage) – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark); was once per visit
     const SK_ONCE = true;
-    const SK_FIRST = /[?&]beta=1\b/.test(location.search);
+    const SK_FIRST = true;
     try {
       const store = SK_FIRST ? localStorage : sessionStorage;
       if (SK_ONCE && store.getItem('yic-sk-intro')) return;
