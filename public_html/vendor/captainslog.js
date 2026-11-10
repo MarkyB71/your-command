@@ -190,11 +190,11 @@
     { const a = load(); let ch = false;
       cv.querySelectorAll('.cl-note').forEach((el) => { const n = a.find((q) => q.id === el.dataset.n); if (n && n.py == null) { n.py = el.offsetTop; ch = true; el.style.top = n.py + 'px'; } });
       if (ch) save(a); }
-    // the board is always a bit taller than the lowest note, so there's room to scroll down and add more
+    // the board fits the notes: just one note's room below the lowest (Mark, 10 Nov – no big gap left after moving notes back up); dragging near the bottom edge makes more
     const fit = (extra) => {
       let lo = 0;
       cv.querySelectorAll('.cl-note').forEach((el) => { lo = Math.max(lo, el.offsetTop + el.offsetHeight); });
-      cv.style.height = Math.max(board.clientHeight, lo + 300, extra || 0) + 'px';
+      cv.style.height = Math.max(board.clientHeight, lo + 150, extra || 0) + 'px';
     };
     fit();
     board.scrollTop = scrollY;
