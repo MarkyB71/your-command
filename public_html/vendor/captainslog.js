@@ -9,7 +9,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const KEY = 'sk_captains_log', LKEY = 'sk_captains_log_links';
-  let on = false, tab = 'notes', sdTick = 0, lastRock = null; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
+  let on = false, tab = 'notes', sdTick = 0, lastRock = null, scrollY = 0; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
 .cl-scr{position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
@@ -23,7 +23,8 @@
 .cl-add input:focus{outline:none;border-color:#8fe3ff}
 .cl-add button,.cl-clear{flex:none;min-width:0;height:34px;margin:0;padding:0 16px;font:600 13px system-ui,sans-serif;color:#05080d;background:#8fe3ff;border:0;border-radius:6px;cursor:pointer}
 .cl-clear{padding:0 10px;font-size:12px;color:#8fe3ff;background:none;border:1px solid #2a5866}
-.cl-board{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;border-top:1px dashed #1e2a3a}
+.cl-board{position:relative;flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;border-top:1px dashed #1e2a3a;scrollbar-color:#2c3a4c transparent}
+.cl-cv{position:relative;min-height:100%}
 .cl-none{position:absolute;inset:0;display:grid;place-items:center;color:#8b9ab0;font-size:13px;pointer-events:none}
 .cl-note{--rc:#8fe3ff;position:absolute;z-index:1;width:150px;min-height:120px;padding:10px 10px 30px;background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 9%,#0f1d2a),#0c1622);border:1px solid color-mix(in srgb,var(--rc) 35%,#1e2a3a);border-top:3px solid var(--rc);border-radius:2px 2px 2px 14px;box-shadow:3px 5px 14px rgba(0,0,0,.55),0 0 14px -6px #8fe3ff;transform:rotate(var(--rot,0deg));cursor:grab;touch-action:none;user-select:none;transition:box-shadow .15s}
 .cl-note::before{content:'';position:absolute;left:50%;top:-9px;width:44px;height:14px;transform:translateX(-50%) rotate(-3deg);background:rgba(143,227,255,.18);border:1px solid rgba(143,227,255,.25)}
@@ -70,7 +71,7 @@
     let a = [];
     try { a = JSON.parse(localStorage.getItem(KEY) || '[]'); if (!Array.isArray(a)) a = []; } catch (e) {}
     // notes from the first (list) version have no place on the board yet – give them one
-    if (a.some((n) => n.x == null)) { const b = a.filter((n) => n.x != null); a.forEach((n) => { if (n.x == null) { const p = spot(b); n.x = p.x; n.y = p.y; n.rot = 0; b.push(n); } }); save(a); }
+    if (a.some((n) => n.x == null)) { const b = a.filter((n) => n.x != null); a.forEach((n) => { if (n.x == null) { const p = spot(b); n.x = p.x; n.py = p.py; n.rot = 0; b.push(n); } }); save(a); }
     return a;
   };
   const save = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
@@ -93,13 +94,15 @@
     b.querySelector('.st-l').textContent = n === 1 ? 'task to do' : 'tasks to do';
   }
 
-  // A new note goes in the next free spot of a loose grid (as % of the board, so it fits any screen size)
-  const spot = (a) => {
-    for (let i = 0; i < 40; i++) {
-      const x = 2 + (i % 5) * 19.5, y = 4 + Math.floor(i / 5) * 32;
-      if (!a.some((n) => Math.abs((n.x || 0) - x) < 8 && Math.abs((n.y || 0) - y) < 12)) return { x, y };
+  // A new note goes in the next free spot of a loose grid, starting where you have scrolled to.
+  // Across: % of the board (fits any screen width). Down: pixels (py), so the board can scroll down as far as you need.
+  const spot = (a, top) => {
+    top = top || 0;
+    for (let i = 0; i < 60; i++) {
+      const x = 2 + (i % 5) * 19.5, py = top + 10 + Math.floor(i / 5) * 140;
+      if (!a.some((n) => n.py != null && Math.abs((n.x || 0) - x) < 8 && Math.abs(n.py - py) < 80)) return { x, py };
     }
-    return { x: 2 + Math.random() * 70, y: 4 + Math.random() * 50 };
+    return { x: 2 + Math.random() * 70, py: top + 10 + Math.random() * 200 };
   };
 
   const tabs = (scr) => scr.querySelectorAll('.cl-tabs button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; draw(scr); }));
@@ -117,30 +120,31 @@
       else v.innerHTML = '<div class="note">Still loading – try again in a moment.</div>';
       return;
     }
+    const ob = scr.querySelector('.cl-board'); if (ob) scrollY = ob.scrollTop;
     const all = load(), done = all.filter((x) => x.done).length;
     const R = rocks(), opts = (sel) => '<option value="">No rock</option>' + R.map((r) => '<option value="' + r.id + '"' + (sel === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
-    const note = (x) => '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.y || 0) + '%;--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
+    const note = (x) => '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
       (x.rock ? '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || 'Asteroid #' + x.rock) + '</span>' : '') +
       '<span class="t">' + esc(x.text) + '</span><span class="ft">' +
       (R.length ? '<select data-rock="' + esc(x.id) + '" title="Which rock is this for?">' + opts(x.rock || null) + '</select>' : '<span style="flex:1"></span>') +
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
-    scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' +
+    scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') +
       (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div>' +
-      '<div class="cl-board' + (linkFrom ? ' linkmode' : '') + '"><svg class="cl-lines"></svg>' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div>';
+      '<div class="cl-board' + (linkFrom ? ' linkmode' : '') + '"><div class="cl-cv"><svg class="cl-lines"></svg>' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div></div>';
 
     tabs(scr);
     scr.querySelector('.cl-add').addEventListener('submit', (e) => {
       e.preventDefault();
       const t = scr.querySelector('.cl-add input').value.trim();
       if (!t) return;
-      const a = load(), p = spot(a), rs = scr.querySelector('.cl-add select'), rk = rs && rs.value ? +rs.value : null;
+      const a = load(), p = spot(a, scr.querySelector('.cl-board').scrollTop), rs = scr.querySelector('.cl-add select'), rk = rs && rs.value ? +rs.value : null;
       lastRock = rk;
       const rn = rk ? (R.find((r) => r.id === rk) || {}).name : null;
-      a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: t, added: Date.now(), done: false, x: p.x, y: p.y, rot: +(Math.random() * 4 - 2).toFixed(1), rock: rk, rockName: rn });
+      a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: t, added: Date.now(), done: false, x: p.x, py: p.py, rot: +(Math.random() * 4 - 2).toFixed(1), rock: rk, rockName: rn });
       save(a); draw(scr); label();
       scr.querySelector('.cl-add input').focus();
     });
@@ -164,8 +168,20 @@
     scr.querySelectorAll('button[data-ln]').forEach((b) => b.addEventListener('click', () => { linkFrom = linkFrom === b.dataset.ln ? null : b.dataset.ln; draw(scr); }));
 
     // Drag a note around the board; where you drop it is saved
-    const board = scr.querySelector('.cl-board');
-    board.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
+    const board = scr.querySelector('.cl-board'), cv = board.querySelector('.cl-cv');
+    // notes from before scrolling was added were placed as % of the screen height – fix them to pixels once
+    { const a = load(); let ch = false;
+      cv.querySelectorAll('.cl-note').forEach((el) => { const n = a.find((q) => q.id === el.dataset.n); if (n && n.py == null) { n.py = el.offsetTop; ch = true; el.style.top = n.py + 'px'; } });
+      if (ch) save(a); }
+    // the board is always a bit taller than the lowest note, so there's room to scroll down and add more
+    const fit = (extra) => {
+      let lo = 0;
+      cv.querySelectorAll('.cl-note').forEach((el) => { lo = Math.max(lo, el.offsetTop + el.offsetHeight); });
+      cv.style.height = Math.max(board.clientHeight, lo + 300, extra || 0) + 'px';
+    };
+    fit();
+    board.scrollTop = scrollY;
+    cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest('input,button,select')) return;
       e.preventDefault();
       if (linkFrom && linkFrom !== el.dataset.n) { // second click in link mode: link (or unlink) the two notes
@@ -173,29 +189,35 @@
         if (i >= 0) L.splice(i, 1); else L.push([A, B]);
         saveL(L); linkFrom = null; draw(scr); return;
       }
-      const bw = board.clientWidth, bh = board.clientHeight, sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+      const bw = cv.clientWidth, sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop, st0 = board.scrollTop;
       el.classList.add('drag'); el.setPointerCapture(e.pointerId);
       const pos = (ev) => [
         Math.max(0, Math.min(bw - el.offsetWidth, ox + ev.clientX - sx)) / bw * 100,
-        Math.max(0, Math.min(bh - el.offsetHeight, oy + ev.clientY - sy)) / bh * 100,
+        Math.max(0, oy + ev.clientY - sy + board.scrollTop - st0),
       ];
-      const move = (ev) => { const [x, y] = pos(ev); el.style.left = x + '%'; el.style.top = y + '%'; lines(); };
+      const move = (ev) => {
+        // drag near the bottom (or top) edge and the board scrolls with you
+        const r = board.getBoundingClientRect();
+        if (ev.clientY > r.bottom - 36) { fit(board.scrollTop + board.clientHeight + 60); board.scrollTop += 14; }
+        else if (ev.clientY < r.top + 36) board.scrollTop -= 14;
+        const [x, y] = pos(ev); el.style.left = x + '%'; el.style.top = y + 'px'; lines();
+      };
       const up = (ev) => {
         el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
         el.classList.remove('drag');
         const [x, y] = pos(ev), a = load(), n = a.find((q) => q.id === el.dataset.n);
-        if (n) { n.x = +x.toFixed(2); n.y = +y.toFixed(2); save(a); }
-        board.appendChild(el); // last moved sits on top
-        lines();
+        if (n) { n.x = +x.toFixed(2); n.py = Math.round(y); save(a); }
+        cv.appendChild(el); // last moved sits on top
+        fit(); lines();
       };
       el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
     }));
 
     // Lines between linked notes, centre to centre; click a line to remove the link
     function lines() {
-      const svg = board.querySelector('.cl-lines'), L = loadL(), col = {};
+      const svg = cv.querySelector('.cl-lines'), L = loadL(), col = {};
       all.forEach((x) => { col[x.id] = x.rock ? rockCol(x.rock, R) : '#8fe3ff'; });
-      const mid = (id) => { const n = board.querySelector('.cl-note[data-n="' + id + '"]'); return n ? [n.offsetLeft + n.offsetWidth / 2, n.offsetTop + n.offsetHeight / 2] : null; };
+      const mid = (id) => { const n = cv.querySelector('.cl-note[data-n="' + id + '"]'); return n ? [n.offsetLeft + n.offsetWidth / 2, n.offsetTop + n.offsetHeight / 2] : null; };
       svg.innerHTML = L.map((l, i) => {
         const a = mid(l[0]), b = mid(l[1]);
         if (!a || !b) return '';
