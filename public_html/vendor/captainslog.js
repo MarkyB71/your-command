@@ -98,6 +98,12 @@
 .brs .st.wpn:hover{filter:saturate(.5) brightness(.75)}
 .brs .st.wpn .st-scr{box-shadow:none}
 .brs .st.wpn .st-led{opacity:.3}
+.cl-cols{flex:1 1 100%;display:grid;gap:4px;padding:8px 10px;border:1px solid #1e2a3a;border-radius:8px;background:#0a101b}
+.cl-crow{display:flex;align-items:center;gap:5px}
+.cl-crow .n{flex:0 0 170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600}
+.cl-crow .sw{flex:none;width:18px;height:18px;min-width:0;margin:0;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;opacity:.8}
+.cl-crow .sw:hover{opacity:1}
+.cl-crow .sw.on{border-color:#fff;opacity:1}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -112,11 +118,17 @@
   const save = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
   const loadL = () => { try { const a = JSON.parse(localStorage.getItem(LKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
   const saveL = (a) => { try { localStorage.setItem(LKEY, JSON.stringify(a)); } catch (e) {} };
-  // Rock colours – subtle, from the deck colours the site already uses (Bridge, Crew, Flight, Trade, Engineering,
-  // Science, Hub orange, pink), one per rock in rock-number order so a rock keeps its colour.
-  const RC = ['#8fe3ff', '#3fd68a', '#9a6bff', '#ffd24a', '#e8645a', '#4f90ff', '#ff9a3d', '#e070c0'];
+  // Rock colours – 10 from the game's own palette (influence-client theme.js, as already used on the site:
+  // main blue, Scientist blue, Pilot purple, Engineer red, Miner orange, light orange, yellow, green, soft green, grey).
+  // The game gives asteroids no colour of their own, so each player picks one per rock (🎨 Rock colours, Mark 10 Nov);
+  // until then rocks get them in rock-number order. Saved in this browser only.
+  const RC = ['#36a7cd', '#4f90ff', '#884fff', '#e0282e', '#ff8c1a', '#faaf42', '#ffd94f', '#57ff65', '#88e675', '#8b9ab0'];
+  const CKEY = 'sk_captains_log_rockcols';
+  const loadC = () => { try { return JSON.parse(localStorage.getItem(CKEY) || '{}') || {}; } catch (e) { return {}; } };
+  const saveC = (o) => { try { localStorage.setItem(CKEY, JSON.stringify(o)); } catch (e) {} };
+  let colPanel = false;
   const rocks = () => { try { return ((window.YIC.D && window.YIC.D.owned) || []).map((a) => ({ id: a.id, name: (a.Name && a.Name.name) || 'Asteroid #' + a.id })).sort((a, b) => a.id - b.id); } catch (e) { return []; } };
-  const rockCol = (id, R) => { const i = R.findIndex((r) => r.id === id); return i < 0 ? '#8b9ab0' : RC[i % RC.length]; };
+  const rockCol = (id, R) => { const c = loadC()[id]; if (c && RC.includes(c)) return c; const i = R.findIndex((r) => r.id === id); return i < 0 ? '#8b9ab0' : RC[i % RC.length]; };
   let linkFrom = null; // note waiting for its link partner
   const day = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const left = () => load().filter((x) => !x.done).length;
@@ -182,6 +194,9 @@
     scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') +
+      (R.length ? '<button type="button" class="cl-clear cl-colbtn">🎨 Rock colours</button>' : '') +
+      (colPanel && R.length ? '<div class="cl-cols">' + R.map((r) => { const cur = rockCol(r.id, R); return '<div class="cl-crow"><span class="n" style="color:' + cur + '">' + esc(r.name) + '</span>' +
+        RC.map((c) => '<button type="button" class="sw' + (c === cur ? ' on' : '') + '" data-rc="' + r.id + '" data-c="' + c + '" style="background:' + c + '" title="Use this colour for ' + esc(r.name) + '"></button>').join('') + '</div>'; }).join('') + '</div>' : '') +
       (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div></div>' +
       '<div class="cl-board' + (linkFrom ? ' linkmode' : '') + '"><div class="cl-cv"><svg class="cl-lines"></svg>' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div></div>';
 
@@ -207,6 +222,10 @@
     }));
     const clr = scr.querySelector('.cl-clear');
     if (clr) clr.addEventListener('click', () => { const keep = load().filter((y) => !y.done), ids = new Set(keep.map((y) => y.id)); save(keep); saveL(loadL().filter((l) => ids.has(l[0]) && ids.has(l[1]))); draw(scr); label(); });
+    // 🎨 Rock colours: pick one of the 10 game colours for each rock
+    const cb = scr.querySelector('.cl-colbtn');
+    if (cb) cb.addEventListener('click', () => { colPanel = !colPanel; draw(scr); });
+    scr.querySelectorAll('.cl-cols .sw').forEach((b) => b.addEventListener('click', () => { const o = loadC(); o[b.dataset.rc] = b.dataset.c; saveC(o); draw(scr); }));
     // rock picker on each note
     scr.querySelectorAll('select[data-rock]').forEach((sl) => sl.addEventListener('change', () => {
       const a = load(), x = a.find((y) => y.id === sl.dataset.rock), rk = sl.value ? +sl.value : null;
