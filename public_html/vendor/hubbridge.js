@@ -53,9 +53,11 @@
 #dk-ov .lb-t.hot b{color:#ff7a7a}
 #dk-ov .lb-t span{display:block;color:#d9cbb6}
 #dk-ov .lb-t i{display:block;font-style:normal;margin-top:6px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:${OR}}
+#dk-ov .lb-bl{animation:lbBlink 4s infinite}
+@keyframes lbBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
 @keyframes lbLed{0%,100%{opacity:1}50%{opacity:.35}}
 @media (max-width:760px){#dk-ov .lb-deck{grid-template-columns:1fr 1fr;perspective:none}#dk-ov .lb-chair{grid-column:1/-1;order:-1;flex-direction:row;justify-content:center;gap:10px}#dk-ov .lb-chair svg{max-width:60px}#dk-ov .lb-st,#dk-ov .lb-st:hover,#dk-ov .lb-st.on{transform:none}#dk-ov .lb-vs{width:96%}#dk-ov .lb-scr{clip-path:none}}
-@media (prefers-reduced-motion:reduce){#dk-ov .lb-led{animation:none}#dk-ov .lb-st{transition:none}}
+@media (prefers-reduced-motion:reduce){#dk-ov .lb-led,#dk-ov .lb-bl{animation:none}#dk-ov .lb-st{transition:none}}
 `;
   const BG =
     '<svg class="lb-bg" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><defs>' +
@@ -68,6 +70,24 @@
     '<polygon points="0,0 60,18 60,460 0,620" fill="url(#lbW)"/>' +
     '<polygon points="1000,0 940,18 940,460 1000,620" fill="url(#lbW2)"/>' +
     '<path d="M60,460 Q500,500 940,460" stroke="#ffb03b" stroke-opacity=".18" stroke-width="2" fill="none"/></svg>';
+  // Side walls like the Bridge's (Mark, 10 Nov 2026) – TEST ONLY (?beta=1): wall panels, two lines, a glowing bar and blinking lights
+  const WALLS = /[?&]beta=1\b/.test(location.search);
+  const BGW =
+    '<svg class="lb-bg" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><defs>' +
+    '<linearGradient id="lbW" x1="0" x2="1"><stop offset="0" stop-color="#140e08"/><stop offset="1" stop-color="#20170c"/></linearGradient>' +
+    '<linearGradient id="lbW2" x1="1" x2="0"><stop offset="0" stop-color="#140e08"/><stop offset="1" stop-color="#20170c"/></linearGradient>' +
+    '<radialGradient id="lbF" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#2a1d0e"/><stop offset="1" stop-color="#07060a"/></radialGradient></defs>' +
+    '<rect width="1000" height="620" fill="url(#lbF)"/>' +
+    '<polygon points="0,0 1000,0 920,18 80,18" fill="#1a130a"/>' +
+    '<line x1="120" y1="9" x2="880" y2="9" stroke="#ffb03b" stroke-opacity=".35" stroke-width="2"/>' +
+    '<polygon points="0,0 80,18 80,420 0,620" fill="url(#lbW)"/>' +
+    '<polygon points="1000,0 920,18 920,420 1000,620" fill="url(#lbW2)"/>' +
+    [30, 55].map((x) => '<line x1="' + x + '" y1="' + (x * 0.25) + '" x2="' + x + '" y2="' + (620 - x * 2.4) + '" stroke="#3a2a16" stroke-width="2"/>').join('') +
+    [945, 970].map((x) => '<line x1="' + x + '" y1="' + ((1000 - x) * 0.25) + '" x2="' + x + '" y2="' + (620 - (1000 - x) * 2.4) + '" stroke="#3a2a16" stroke-width="2"/>').join('') +
+    '<rect x="38" y="120" width="10" height="160" rx="3" fill="#ffb03b" opacity=".25"/><rect x="952" y="120" width="10" height="160" rx="3" fill="#ff8a1f" opacity=".25"/>' +
+    [150, 190, 230].map((y, i) => '<circle class="lb-bl" cx="64" cy="' + y + '" r="3" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="lb-bl" cx="936" cy="' + y + '" r="3" fill="#ffb03b" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
+    '<path d="M80,420 Q500,470 920,420" stroke="#ffb03b" stroke-opacity=".18" stroke-width="2" fill="none"/>' +
+    '<path d="M0,620 Q500,520 1000,620" stroke="#ffb03b" stroke-opacity=".12" stroke-width="2" fill="none"/></svg>';
   // the logistics officer's chair (same shape as the captain's chair, orange trim)
   const CHAIR =
     '<svg viewBox="0 0 140 150" aria-hidden="true"><defs><linearGradient id="lbC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3820"/><stop offset="1" stop-color="#1c140a"/></linearGradient></defs>' +
@@ -151,7 +171,7 @@
     const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {
-      main.innerHTML = `<div class="lb">${BG}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
+      main.innerHTML = `<div class="lb">${WALLS ? BGW : BG}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
       lb = main.querySelector('.lb');
     }
     const N = nums(S);
