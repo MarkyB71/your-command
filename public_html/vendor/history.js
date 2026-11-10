@@ -28,7 +28,7 @@ const words=n=>n.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCas
 const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
-export function drawHistory(m){
+export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere else (Captain's log on the Bridge, Mark 10 Nov – beta); opt.noTitle: no heading */
   if(!document.getElementById('hl-css')){const st=el('style');st.id='hl-css';st.textContent=CSS;document.head.appendChild(st)}
   const Y=window.YIC;let D;try{D=Y.D}catch(e){}
   if(!D){m.innerHTML='<div class="note">Still loading your data…</div>';return}
@@ -92,7 +92,7 @@ export function drawHistory(m){
 
   function draw(){
     m.innerHTML='';
-    m.appendChild(el('h2','hl-title','Activity log'));
+    if(!opt.noTitle)m.appendChild(el('h2','hl-title','Activity log'));
     const H=HC[S.range];
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
     rs.addEventListener('change',()=>{S.range=rs.value;S.show=300;S.crew='';fetchRange();draw()});
@@ -128,9 +128,11 @@ export function drawHistory(m){
   }
   draw();
   function fetchRange(){const k=S.range;if(HC[k]||LD[k])return;
-    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.wait?{error:'cooldown',until:Date.now()+j.wait*1000,max:j.max||3}:j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
+    LD[k]=fetch('history.php?range='+k+'&wallet='+encodeURIComponent(D.wallet||''),{cache:'no-store'}).then(r=>r.json()).then(j=>{HC[k]=j.wait?{error:'cooldown',until:Date.now()+j.wait*1000,max:j.max||3}:j.error?{error:j.error}:j}).catch(e=>{HC[k]={error:String(e)}}).finally(()=>{delete LD[k];if(S.range!==k)return;if(opt.into){if(m.isConnected)drawHistory(m,opt);return}const b=document.getElementById('vJ');if(b&&b.className==='on')drawHistory(document.getElementById('main'))})}
   fetchRange();
 }
+
+window.YICdrawHistory=drawHistory; // used by the Captain's log on the Bridge (vendor/captainslog.js)
 
 /* Adds "Activity log" to the Logistics menu, after Deliveries */
 {

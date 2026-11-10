@@ -9,7 +9,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const KEY = 'sk_captains_log';
-  let on = false;
+  let on = false, tab = 'notes'; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
 .cl-scr{position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
@@ -36,6 +36,14 @@
 .cl-note button:hover{color:#ff564d;border-color:#ff564d}
 .cl-note.done{opacity:.6;border-top-color:#3fd68a}
 .cl-note.done .t{color:#8b9ab0;text-decoration:line-through}
+.cl-tabs{display:flex;gap:4px;flex:none}
+.cl-tabs button{min-width:0;height:34px;margin:0;padding:0 12px;font:600 13px system-ui,sans-serif;color:#c4cdd9;background:#0c1320;border:1px solid #2a3a50;border-radius:6px;cursor:pointer}
+.cl-tabs button.on{color:#05080d;background:#8fe3ff;border-color:#8fe3ff}
+.cl-logv{flex:1 1 auto;min-height:0;overflow:auto;max-width:900px;width:100%;margin:0 auto;padding:0 4px;scrollbar-color:#2c3a4c transparent}
+.cl-logv .hl-day{color:#8fe3ff;border-bottom-color:#1e3a48;letter-spacing:.06em}
+.cl-logv .hl-row{font-size:14px;border-bottom-color:#122030}
+.cl-logv .hl-row:hover{background:rgba(143,227,255,.05)}
+.cl-logv .note{color:#9fb0c4;font-size:13px}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -68,17 +76,29 @@
     return { x: 2 + Math.random() * 70, y: 4 + Math.random() * 50 };
   };
 
+  const tabs = (scr) => scr.querySelectorAll('.cl-tabs button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; draw(scr); }));
+
   function draw(scr) {
+    // 📜 Log – everything your crews have done in the game, from the game's own records (same as the Activity log page)
+    if (tab === 'log') {
+      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Everything your crews have done, from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
+      tabs(scr);
+      const v = scr.querySelector('.cl-logv');
+      if (window.YICdrawHistory) window.YICdrawHistory(v, { into: true, noTitle: true });
+      else v.innerHTML = '<div class="note">Still loading – try again in a moment.</div>';
+      return;
+    }
     const all = load(), done = all.filter((x) => x.done).length;
     const note = (x) => '<div class="cl-note' + (x.done ? ' done' : '') + '" data-n="' + esc(x.id) + '" style="left:' + (x.x || 0) + '%;top:' + (x.y || 0) + '%;--rot:' + (x.rot || 0) + 'deg">' +
       '<span class="t">' + esc(x.text) + '</span><span class="d">' + (x.done ? 'done ' + day(x.doneAt) : day(x.added)) + '</span>' +
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
       '<button type="button" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></div>';
-    scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around</span></div>' +
+    scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note"><button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') + '</div>' +
       '<div class="cl-board">' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div>';
 
+    tabs(scr);
     scr.querySelector('.cl-add').addEventListener('submit', (e) => {
       e.preventDefault();
       const t = scr.querySelector('.cl-add input').value.trim();
