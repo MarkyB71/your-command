@@ -12,32 +12,41 @@
   let on = false;
 
   const CSS = `
-.cl-scr{position:relative;display:block;height:clamp(320px,52vh,600px);overflow:auto;padding:34px 16px 16px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.45;color:#c4cdd9;scrollbar-color:#2c3a4c transparent}
+.cl-scr{position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
 .cl-scr *{box-sizing:border-box}
-.cl-in{max-width:620px;margin:0 auto}
-.cl-top{padding:12px 14px;margin:0 0 10px;border:1px solid #2a3646;border-left:3px solid #8fe3ff}
-.cl-top b{display:block;color:#fff;font-size:15px}
-.cl-top span{display:block;color:#8b9ab0;font-size:12px}
-.cl-add{display:flex;gap:8px;margin:0 0 14px}
-.cl-add input{flex:1 1 auto;min-width:0;max-width:none;height:36px;margin:0;padding:0 10px;font:inherit;color:#fff;background:#0c1320;border:1px solid #2a3a50;border-radius:6px}
+.cl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:760px;width:100%;margin:0 auto 10px}
+.cl-bar .h{flex:none;margin-right:6px}
+.cl-bar .h b{display:block;color:#fff;font-size:15px}
+.cl-bar .h span{display:block;color:#8b9ab0;font-size:11px}
+.cl-add{display:flex;gap:8px;flex:1 1 260px;margin:0}
+.cl-add input{flex:1 1 auto;min-width:0;max-width:none;height:34px;margin:0;padding:0 10px;font:inherit;color:#fff;background:#0c1320;border:1px solid #2a3a50;border-radius:6px}
 .cl-add input:focus{outline:none;border-color:#8fe3ff}
-.cl-add button,.cl-clear{flex:none;min-width:0;height:36px;margin:0;padding:0 16px;font:600 13px system-ui,sans-serif;color:#05080d;background:#8fe3ff;border:0;border-radius:6px;cursor:pointer}
-.cl-clear{height:28px;padding:0 10px;font-size:12px;color:#8fe3ff;background:none;border:1px solid #2a5866}
-.cl-scr h3{display:flex;align-items:center;gap:10px;margin:16px 0 6px;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#4fb3ff}
-.cl-scr h3 .cl-clear{margin-left:auto;letter-spacing:0;text-transform:none}
-.cl-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto 28px;gap:10px;align-items:center;padding:9px 12px;margin:0 0 6px;border:1px solid #1e2a3a;border-radius:8px;background:#0c1320}
-.cl-row:hover{border-color:#4fb3ff}
-.cl-row input{width:18px;height:18px;margin:0;padding:0;min-width:0;flex:none;accent-color:#3fd68a;cursor:pointer}
-.cl-row .t{color:#fff;overflow-wrap:anywhere}
-.cl-row .d{color:#8b9ab0;font-size:11px;white-space:nowrap}
-.cl-row button{width:28px;height:28px;margin:0;padding:0;min-width:0;font:inherit;color:#8b9ab0;background:none;border:1px solid transparent;border-radius:5px;cursor:pointer}
-.cl-row button:hover{color:#ff564d;border-color:#ff564d}
-.cl-row.done .t{color:#8b9ab0;text-decoration:line-through}
-.cl-none{padding:10px 12px;color:#8b9ab0;font-size:13px}
+.cl-add button,.cl-clear{flex:none;min-width:0;height:34px;margin:0;padding:0 16px;font:600 13px system-ui,sans-serif;color:#05080d;background:#8fe3ff;border:0;border-radius:6px;cursor:pointer}
+.cl-clear{padding:0 10px;font-size:12px;color:#8fe3ff;background:none;border:1px solid #2a5866}
+.cl-board{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;border-top:1px dashed #1e2a3a}
+.cl-none{position:absolute;inset:0;display:grid;place-items:center;color:#8b9ab0;font-size:13px;pointer-events:none}
+.cl-note{position:absolute;width:150px;min-height:120px;padding:10px 10px 26px;background:linear-gradient(180deg,#132433,#0c1622);border:1px solid #2a5866;border-top:3px solid #8fe3ff;border-radius:2px 2px 2px 14px;box-shadow:3px 5px 14px rgba(0,0,0,.55),0 0 14px -6px #8fe3ff;transform:rotate(var(--rot,0deg));cursor:grab;touch-action:none;user-select:none;transition:box-shadow .15s}
+.cl-note::before{content:'';position:absolute;left:50%;top:-9px;width:44px;height:14px;transform:translateX(-50%) rotate(-3deg);background:rgba(143,227,255,.18);border:1px solid rgba(143,227,255,.25)}
+.cl-note:hover{box-shadow:4px 7px 18px rgba(0,0,0,.6),0 0 18px -4px #8fe3ff}
+.cl-note.drag{cursor:grabbing;z-index:5;transform:rotate(0deg) scale(1.04);box-shadow:8px 12px 24px rgba(0,0,0,.7),0 0 22px -2px #8fe3ff;transition:none}
+.cl-note .t{display:block;color:#fff;font-size:13.5px;overflow-wrap:anywhere}
+.cl-note .d{position:absolute;left:10px;bottom:6px;color:#8b9ab0;font-size:10.5px}
+.cl-note input{position:absolute;right:30px;bottom:5px;width:16px;height:16px;margin:0;padding:0;min-width:0;accent-color:#3fd68a;cursor:pointer}
+.cl-note button{position:absolute;right:5px;bottom:3px;width:20px;height:20px;margin:0;padding:0;min-width:0;font:12px/1 system-ui,sans-serif;color:#8b9ab0;background:none;border:1px solid transparent;border-radius:4px;cursor:pointer}
+.cl-note button:hover{color:#ff564d;border-color:#ff564d}
+.cl-note.done{opacity:.6;border-top-color:#3fd68a}
+.cl-note.done .t{color:#8b9ab0;text-decoration:line-through}
+@media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const load = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const load = () => {
+    let a = [];
+    try { a = JSON.parse(localStorage.getItem(KEY) || '[]'); if (!Array.isArray(a)) a = []; } catch (e) {}
+    // notes from the first (list) version have no place on the board yet – give them one
+    if (a.some((n) => n.x == null)) { const b = a.filter((n) => n.x != null); a.forEach((n) => { if (n.x == null) { const p = spot(b); n.x = p.x; n.y = p.y; n.rot = 0; b.push(n); } }); save(a); }
+    return a;
+  };
   const save = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
   const day = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const left = () => load().filter((x) => !x.done).length;
@@ -50,23 +59,32 @@
     b.querySelector('.st-l').textContent = n === 1 ? 'task to do' : 'tasks to do';
   }
 
-  function draw(scr) {
-    const all = load(), todo = all.filter((x) => !x.done), done = all.filter((x) => x.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
-    const row = (x) => '<div class="cl-row' + (x.done ? ' done' : '') + '"><input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') +
-      ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '"><span class="t">' + esc(x.text) + '</span><span class="d">' +
-      (x.done ? 'done ' + day(x.doneAt) : 'added ' + day(x.added)) + '</span><button type="button" data-rm="' + esc(x.id) + '" title="Remove">✕</button></div>';
-    scr.innerHTML = '<div class="cl-in"><div class="cl-top"><b>📋 Captain\'s log</b><span>Saved in this browser only – nothing is sent anywhere.</span></div>' +
-      '<form class="cl-add"><input type="text" maxlength="300" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New task"><button type="submit">Add</button></form>' +
-      '<h3>To do</h3>' + (todo.length ? todo.map(row).join('') : '<div class="cl-none">Nothing to do – add a task above.</div>') +
-      (done.length ? '<h3>Done<button type="button" class="cl-clear">Clear done</button></h3>' + done.map(row).join('') : '') + '</div>';
+  // A new note goes in the next free spot of a loose grid (as % of the board, so it fits any screen size)
+  const spot = (a) => {
+    for (let i = 0; i < 40; i++) {
+      const x = 2 + (i % 5) * 19.5, y = 4 + Math.floor(i / 5) * 32;
+      if (!a.some((n) => Math.abs((n.x || 0) - x) < 8 && Math.abs((n.y || 0) - y) < 12)) return { x, y };
+    }
+    return { x: 2 + Math.random() * 70, y: 4 + Math.random() * 50 };
+  };
 
-    const inp = scr.querySelector('.cl-add input');
+  function draw(scr) {
+    const all = load(), done = all.filter((x) => x.done).length;
+    const note = (x) => '<div class="cl-note' + (x.done ? ' done' : '') + '" data-n="' + esc(x.id) + '" style="left:' + (x.x || 0) + '%;top:' + (x.y || 0) + '%;--rot:' + (x.rot || 0) + 'deg">' +
+      '<span class="t">' + esc(x.text) + '</span><span class="d">' + (x.done ? 'done ' + day(x.doneAt) : day(x.added)) + '</span>' +
+      '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
+      '<button type="button" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></div>';
+    scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around</span></div>' +
+      '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note"><button type="submit">Add</button></form>' +
+      (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') + '</div>' +
+      '<div class="cl-board">' + (all.length ? all.map(note).join('') : '<div class="cl-none">No notes yet – add one above.</div>') + '</div>';
+
     scr.querySelector('.cl-add').addEventListener('submit', (e) => {
       e.preventDefault();
-      const t = inp.value.trim();
+      const t = scr.querySelector('.cl-add input').value.trim();
       if (!t) return;
-      const a = load();
-      a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: t, added: Date.now(), done: false });
+      const a = load(), p = spot(a);
+      a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: t, added: Date.now(), done: false, x: p.x, y: p.y, rot: +(Math.random() * 4 - 2).toFixed(1) });
       save(a); draw(scr); label();
       scr.querySelector('.cl-add input').focus();
     });
@@ -80,6 +98,28 @@
     }));
     const clr = scr.querySelector('.cl-clear');
     if (clr) clr.addEventListener('click', () => { save(load().filter((y) => !y.done)); draw(scr); label(); });
+
+    // Drag a note around the board; where you drop it is saved
+    const board = scr.querySelector('.cl-board');
+    board.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || e.target.closest('input,button')) return;
+      e.preventDefault();
+      const bw = board.clientWidth, bh = board.clientHeight, sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+      el.classList.add('drag'); el.setPointerCapture(e.pointerId);
+      const pos = (ev) => [
+        Math.max(0, Math.min(bw - el.offsetWidth, ox + ev.clientX - sx)) / bw * 100,
+        Math.max(0, Math.min(bh - el.offsetHeight, oy + ev.clientY - sy)) / bh * 100,
+      ];
+      const move = (ev) => { const [x, y] = pos(ev); el.style.left = x + '%'; el.style.top = y + '%'; };
+      const up = (ev) => {
+        el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+        el.classList.remove('drag');
+        const [x, y] = pos(ev), a = load(), n = a.find((q) => q.id === el.dataset.n);
+        if (n) { n.x = +x.toFixed(2); n.y = +y.toFixed(2); save(a); }
+        board.appendChild(el); // last moved sits on top
+      };
+      el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    }));
   }
 
   const mapOf = (vs) => vs.querySelector(':scope > div:not(.brs-plate):not(.brs-log):not(.dc-scr)');
