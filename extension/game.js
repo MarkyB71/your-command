@@ -64,6 +64,7 @@
   }
 
   function tagBridge() {
+    const TAG = { friendly: 1, neutral: 1, hostile: 1 };
     // Friend / foe tags: kept in the extension's own storage (so the options page can list, share and
     // clear them). Passes them to maptags.js in the page, and saves the changes it sends back.
     const send = t => window.postMessage({ yic: 'tags', tags: t || {} }, location.origin);
@@ -71,8 +72,15 @@
     chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch.mapTags) send(ch.mapTags.newValue); });
     window.addEventListener('message', e => {
       if (e.source !== window || !e.data || e.data.yic !== 'tags-save') return;
-      const t = e.data.tags;
-      if (t && typeof t === 'object' && !Array.isArray(t)) chrome.storage.local.set({ mapTags: t });
+      // Same checks as site.js: wallet-address keys only, at most 2000 tags, known tag values, short names.
+      const t = e.data.tags, clean = {};
+      if (!t || typeof t !== 'object' || Array.isArray(t)) return;
+      Object.keys(t).slice(0, 2000).forEach(a => {
+        const x = t[a];
+        if (!/^0x[0-9a-f]{1,64}$/i.test(a) || !x || typeof x !== 'object') return;
+        clean[a] = { tag: TAG[x.tag] ? x.tag : '', name: typeof x.name === 'string' ? x.name.slice(0, 40) : '' };
+      });
+      chrome.storage.local.set({ mapTags: clean });
     });
   }
 

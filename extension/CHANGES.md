@@ -3,6 +3,9 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
+## 0.6.6 – coming soon
+- **Safer friend / foe tags** – tags you set on the game's map are now checked before they're saved (proper wallet addresses, friendly / neutral / hostile only, up to 2,000 tags), the same checks the Command Deck already makes.
+
 ## 0.6.5 – 6 Nov 2026
 - **Ships in flight on the system map** (on by default – switch off in Options) – a purple dot shows where each of your ships is right now, worked out with the game's own flight maths, with a faint line along its route. A hollow ring marks where the ship and the rock meet, and light blue dots lead from there to where that rock is today. Hover a ship for its name, route, when it leaves (if it hasn't yet) and when it arrives. A "Ships in flight" switch on the belt map hides or shows them.
   - **Other players' ships too** – everyone else's ships in flight show as triangles, coloured by your friend / foe tags (friendly teal, neutral yellow, hostile red, untagged orange). Hostile routes are always drawn; hover any ship for its route, owner and arrival. The belt-wide list comes from the Command Deck and updates every 5 minutes.
