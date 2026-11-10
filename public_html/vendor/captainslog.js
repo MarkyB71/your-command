@@ -214,6 +214,7 @@
     board.scrollTop = scrollY;
     // The header rolls up while you work on the notes and rolls back down when you hover over it (Mark, 10 Nov)
     scr.classList.remove('rolled'); // header always pinned at the top
+    board.addEventListener('pointerleave', () => { if (!board.querySelector('.cl-note.drag')) showDeck(scr); });
     board.addEventListener('pointerenter', () => { if (linkFrom) return; /* header stays pinned (Mark, 10 Nov 22:02 – roll-up removed) */ const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
     if (false) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
@@ -272,6 +273,14 @@
   // a thin "Bridge consoles" strip – no gap, nothing off the bottom (Mark, 10 Nov).
   // Hover the strip: the consoles come back and the viewscreen goes back to its normal size.
   // Move back onto the notes: they roll up again.
+  // Consoles back, viewscreen back to its normal size (hovering the strip, or moving off the notes – Mark, 10 Nov 22:04)
+  function showDeck(scr) {
+    const br = scr.closest('.brs');
+    if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) return;
+    br.classList.add('cl-deckshow');
+    if (scr.dataset.base) scr.style.height = scr.dataset.base + 'px';
+  }
+
   function deckUp(scr, up) {
     const br = scr.closest('.brs'), deck = br && br.querySelector('.brs-deck');
     if (!br || !deck) return;
@@ -279,7 +288,7 @@
     const base = +scr.dataset.base;
     if (!br.querySelector('.cl-dh')) {
       const d = document.createElement('div'); d.className = 'cl-dh'; d.textContent = '▴ Bridge consoles ▴'; deck.before(d);
-      d.addEventListener('mouseenter', () => { br.classList.add('cl-deckshow'); scr.style.height = base + 'px'; });
+      d.addEventListener('mouseenter', () => showDeck(scr));
     }
     if (up) {
       br.classList.add('cl-deckup'); br.classList.remove('cl-deckshow');
