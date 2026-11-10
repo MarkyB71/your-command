@@ -86,7 +86,7 @@
   function draw(scr) {
     // 📜 Log – everything your crews have done in the game, from the game's own records (same as the Activity log page)
     if (tab === 'log') {
-      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Adalia stardate <b class="cl-sdnow">' + (window.YICstardate ? window.YICstardate(Date.now() / 1000, 2) : '') + '</b> · from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
+      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Adalia Stardate <b class="cl-sdnow">' + (window.YICstardate ? window.YICstardate(Date.now() / 1000, 2) : '') + '</b> · from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
       tabs(scr);
       // the stardate ticks on: 1 Adalian day is 1 real hour, so 0.01 is 36 seconds
       clearInterval(sdTick);
