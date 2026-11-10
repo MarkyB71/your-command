@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Browser extension 0.6.5 is on the Chrome Web Store: ships in flight on the game's system map – your ships and other players' ships (in your friend / foe tag colours), with routes and where they meet their rock, and a tick box for each group. Help page no longer says "coming in 0.6.5".
+
 ## 10 Nov 2026 – Skippys Sticky Wall: the heading and tabs sit on the top line, with adding notes and Rock colours on their own line underneath.
 
 ## 10 Nov 2026 – Captain's log: Notes are now Skippys Sticky Wall. New 📦 Still needed box (pick a building – shows what's still short on the note's rock) and ⚙ Process box (pick a process and runs – shows the building it needs, whether you have one there, and what's still short). Notes with no rock are white. Help page updated.
