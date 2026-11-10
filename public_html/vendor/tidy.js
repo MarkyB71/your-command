@@ -522,9 +522,14 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
 <p>Then press <b>↻ Check again</b> above. Step 3 should say "Nothing to move – everything is in its place ✓", and step 1 shows how full each building is now.</p>`;
   }
 
+  // next step starts at the top (Mark, 10 Nov): the page sits inside the deck's viewscreen, which scrolls on its own
+  function toTop(m) {
+    for (let e = m; e && e !== document.body; e = e.parentElement) { if (e.scrollHeight > e.clientHeight + 2) e.scrollTop = 0; }
+    scrollTo(0, 0);
+  }
   function wire(m) {
     const q = (s) => m.querySelector(s), qa = (s) => m.querySelectorAll(s);
-    qa('[data-step]').forEach((b) => b.addEventListener('click', () => { S.step = +b.dataset.step; S.msg = ''; page(m); scrollTo(0, 0); }));
+    qa('[data-step]').forEach((b) => b.addEventListener('click', () => { S.step = +b.dataset.step; S.msg = ''; page(m); toTop(m); }));
     qa('[data-rock]').forEach((b) => b.addEventListener('click', () => { if (S.busy) return; S.rock = b.dataset.rock; S.edit = {}; S.rtick = {}; S.groups = null; S.leave = {}; S.mover = null; S.mtick = {}; S.mtinit = false; S.sent = {}; S.msg = ''; page(m); }));
     const rl = q('#st-reload'); if (rl) rl.addEventListener('click', () => { if (!S.loading) reload(m); });
     qa('[data-gq]').forEach((b) => b.addEventListener('click', () => {
