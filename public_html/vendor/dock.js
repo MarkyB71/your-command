@@ -71,7 +71,7 @@
     ov.innerHTML = WRAP + '<div id="dockpg">' + (TOPBAR
       // Mark (10 Nov, TEST ONLY): the top like the main deck – deck tabs (The Bridge · Logistics Hub) and a tool row under a glowing line
       ? '<div class="dhead dk-top"><div class="stripe"></div><div class="dkt-row"><a href="#" data-dkback class="dkt" title="Return to the Bridge">The Bridge</a><h1 class="dkt on">LOGISTICS HUB</h1>' +
-        '<div class="dkt-tools"><div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET<i></i></div></div></div>' +
+        '<div class="dkt-tools"><div class="live"><i></i>THIS PAGE CAN SEND GAME ACTIONS WHEN APPROVED<i></i></div></div></div>' +
         '<div class="dkt-sub"><button id="dk-hrc" class="dkp-rc" title="Fetch fresh game data">↻ Check the game again</button></div></div>'
       : '<div class="dhead"><div class="stripe"></div><div class="in"><h1>LOGISTICS HUB</h1>' +
       '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div>' + '<button id="dk-hrc" class="dkp-rc" style="margin:0" title="Fetch fresh game data">↻ Check the game again</button>' + '<a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div>') + '<div id="dk-main"></div>' +
