@@ -12,7 +12,7 @@
   let on = false, tab = 'notes', sdTick = 0, lastRock = null, scrollY = 0, rolled = false; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
-.cl-scr{position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
+.cl-scr{box-sizing:border-box;position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
 .cl-scr *{box-sizing:border-box}
 .cl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:760px;width:100%;margin:0 auto 10px}
 .cl-bar .h{flex:none;margin-right:6px}
@@ -69,10 +69,10 @@
 .cl-scr.rolled .cl-head:not(:hover):not(:focus-within) .cl-bar{max-height:0;opacity:0;margin-bottom:0;overflow:hidden}
 .cl-scr.rolled .cl-head:not(:hover):not(:focus-within) .cl-roll{max-height:20px;opacity:.75;padding:2px 0 6px}
 .cl-dh{display:none}
-.brs.cl-deckup .cl-dh{display:block;position:relative;z-index:3;margin:6px auto 0;width:min(320px,60%);padding:5px 0 7px;text-align:center;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8fe3ff;opacity:.75;border-top:1px solid #2a5866;cursor:default}
+.brs.cl-deckup:not(.cl-deckshow) .cl-dh{display:block;position:relative;z-index:3;margin:6px auto 0;width:min(320px,60%);padding:5px 0 7px;text-align:center;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8fe3ff;opacity:.75;border-top:1px solid #2a5866;cursor:default}
 .brs.cl-deckup .brs-deck,.brs.cl-deckup .brs-floor{transition:max-height .35s ease,opacity .3s ease}
-.brs.cl-deckup:not(:has(.cl-dh:hover,.brs-deck:hover,.brs-deck :focus-visible)) .brs-deck{max-height:0;opacity:0;overflow:hidden;pointer-events:none}
-.brs.cl-deckup:not(:has(.cl-dh:hover,.brs-deck:hover,.brs-deck :focus-visible)) .brs-floor{max-height:0;opacity:0;overflow:hidden}
+.brs.cl-deckup:not(.cl-deckshow) .brs-deck{max-height:0;opacity:0;overflow:hidden;pointer-events:none}
+.brs.cl-deckup:not(.cl-deckshow) .brs-floor{max-height:0;opacity:0;overflow:hidden}
 .brs.cl-deckup .brs-deck{max-height:600px}
 .brs.cl-deckup .brs-floor{max-height:200px}
 .cl-scr{transition:height .35s ease}
@@ -200,8 +200,8 @@
     board.scrollTop = scrollY;
     // The header rolls up while you work on the notes and rolls back down when you hover over it (Mark, 10 Nov)
     scr.classList.toggle('rolled', rolled && !linkFrom);
-    board.addEventListener('pointerenter', () => { if (linkFrom) return; rolled = true; scr.classList.add('rolled'); deckUp(scr, true); });
-    if (rolled && !linkFrom) deckUp(scr, true);
+    board.addEventListener('pointerenter', () => { if (linkFrom) return; rolled = true; scr.classList.add('rolled'); const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
+    if (rolled && !linkFrom) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest('input,button,select')) return;
       e.preventDefault();
@@ -254,20 +254,26 @@
 
   const mapOf = (vs) => vs.querySelector(':scope > div:not(.brs-plate):not(.brs-log):not(.dc-scr)');
 
-  // The Bridge consoles below the viewscreen roll up too, and the notes get their room (Mark, 10 Nov).
-  // Hover the thin "Bridge consoles" strip to bring them back down.
+  // The Bridge consoles below the viewscreen roll up too, and the viewscreen fills the window down to
+  // a thin "Bridge consoles" strip – no gap, nothing off the bottom (Mark, 10 Nov).
+  // Hover the strip: the consoles come back and the viewscreen goes back to its normal size.
+  // Move back onto the notes: they roll up again.
   function deckUp(scr, up) {
-    const br = scr.closest('.brs'), deck = br && br.querySelector('.brs-deck'), floor = br && br.querySelector('.brs-floor');
+    const br = scr.closest('.brs'), deck = br && br.querySelector('.brs-deck');
     if (!br || !deck) return;
-    if (!br.querySelector('.cl-dh')) { const d = document.createElement('div'); d.className = 'cl-dh'; d.textContent = '▴ Bridge consoles ▴'; deck.before(d); }
-    if (up && !br.classList.contains('cl-deckup')) {
-      const base = scr.offsetHeight, extra = deck.offsetHeight + (floor ? floor.offsetHeight : 0) - 30;
-      scr.dataset.base = base;
-      br.classList.add('cl-deckup');
-      if (extra > 0) scr.style.height = base + extra + 'px';
-    } else if (!up && br.classList.contains('cl-deckup')) {
-      br.classList.remove('cl-deckup');
-      if (scr.dataset.base) scr.style.height = scr.dataset.base + 'px';
+    if (!scr.dataset.base) scr.dataset.base = scr.offsetHeight;
+    const base = +scr.dataset.base;
+    if (!br.querySelector('.cl-dh')) {
+      const d = document.createElement('div'); d.className = 'cl-dh'; d.textContent = '▴ Bridge consoles ▴'; deck.before(d);
+      d.addEventListener('mouseenter', () => { br.classList.add('cl-deckshow'); scr.style.height = base + 'px'; });
+    }
+    if (up) {
+      br.classList.add('cl-deckup'); br.classList.remove('cl-deckshow');
+      const top = scr.getBoundingClientRect().top, fill = Math.round(window.innerHeight - Math.max(0, top) - 48);
+      scr.style.height = Math.max(base, fill) + 'px';
+    } else {
+      br.classList.remove('cl-deckup', 'cl-deckshow');
+      scr.style.height = base + 'px';
     }
   }
 
