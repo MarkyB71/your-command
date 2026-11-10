@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Logistics Hub: a Hub tab in the main deck's top bar, a matching top bar inside the Hub, Bridge-style side walls, and a 🐞 Report a problem button in the Hub.
+
 ## 10 Nov 2026 – Bridge welcome: the doors and Skippy's welcome clip now show only on your very first visit (clicking Skippy in the chair still plays it any time).
 
 ## 10 Nov 2026 – Sign-in page: the wallet note now says the site never asks you to sign or send anything, except in the Logistics Hub for game actions you approve.

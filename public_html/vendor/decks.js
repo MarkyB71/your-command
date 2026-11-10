@@ -67,7 +67,7 @@ function wNameBox(pen) {
   // moved into the Logistics Hub's 🗄 Storage console (Mark, 10 Nov) – no longer an Engineering page
   // if (/[?&]beta=1\b/.test(location.search)) DECKS[4].pages.push('ST');
   window.YICDECKLIST = DECKS;
-  const HUBTAB = /[?&]beta=1\b/.test(location.search);
+  const HUBTAB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   if (HUBTAB) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;

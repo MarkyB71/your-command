@@ -56,10 +56,10 @@
 
   // Load a ship (Mark, 9 Nov 2026) – LIVE 9 Nov 2026: vendor/shipload.js fills #dk-ship under "Short on this rock"
   const SHIPS = true; // LIVE 9 Nov 2026
-  // 🐞 Report a problem inside the hub (Mark, 10 Nov 2026) – TEST ONLY (?beta=1). Opens the site's report box (vendor/report.js).
-  const REPHUB = /[?&]beta=1\b/.test(location.search);
-  // Hub top bar like the main deck's tab bar (Mark, 10 Nov 2026) – TEST ONLY (?beta=1)
-  const TOPBAR = /[?&]beta=1\b/.test(location.search);
+  // 🐞 Report a problem inside the hub (Mark, 10 Nov 2026). Opens the site's report box (vendor/report.js).
+  const REPHUB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
+  // Hub top bar like the main deck's tab bar (Mark, 10 Nov 2026)
+  const TOPBAR = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   const S = { bs: 30, calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------

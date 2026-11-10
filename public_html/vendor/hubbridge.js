@@ -71,8 +71,8 @@
     '<polygon points="0,0 60,18 60,460 0,620" fill="url(#lbW)"/>' +
     '<polygon points="1000,0 940,18 940,460 1000,620" fill="url(#lbW2)"/>' +
     '<path d="M60,460 Q500,500 940,460" stroke="#ffb03b" stroke-opacity=".18" stroke-width="2" fill="none"/></svg>';
-  // Side walls like the Bridge's (Mark, 10 Nov 2026) – TEST ONLY (?beta=1): wall panels, two lines, a glowing bar and blinking lights
-  const WALLS = /[?&]beta=1\b/.test(location.search);
+  // Side walls like the Bridge's (Mark, 10 Nov 2026): wall panels, two lines, a glowing bar and blinking lights
+  const WALLS = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   const BGW =
     '<svg class="lb-bg" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><defs>' +
     '<linearGradient id="lbW" x1="0" x2="1"><stop offset="0" stop-color="#140e08"/><stop offset="1" stop-color="#20170c"/></linearGradient>' +
