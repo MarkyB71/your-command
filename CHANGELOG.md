@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Galley fix: Feed crews now gives each crew exactly enough to reach 100% food – the same sum the game's own Feed Crew uses. Before, a crew under 50% food was offered too much and the game turned the whole feed down ("food limit reached"). Same fix in Production's crew feeding.
+
 ## 9 Nov 2026 – Logistics Hub: a small hidden extra in the airlock for players who don't want to go through it every time. (Not on the Help page – ask Skippy.)
 
 ## 9 Nov 2026 – Logistics Hub is now the Logistics Bridge: a viewscreen with consoles, like the Bridge in orange. 🏭 Production (rock, what to make and how much – weight or count, "What's it for?" from building recipes – what you need worked back through the chain, processes in order, where things go with how full afterwards, moves, two crews picked for you with the option to feed them, start processes with finish times). 🚀 Cargo bay (how many rocks to fly in from, the ship there or the nearest one, trips, flight times, and exactly what will be loaded). 🍽 Galley (feed your crews – tick the ones to feed). Crew Quarters: crew cards with crewmate pictures – click a crew to see all its members; 🍽 Feed crews opens the hub. Crew planner: new green look, top part stays put while scrolling. Help page updated.
