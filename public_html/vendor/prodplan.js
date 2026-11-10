@@ -458,7 +458,7 @@
           t += row(p, tot, parts.join('<br>'));
         });
         h += `<div class="card"><h2><span class="n">3</span>What you need</h2>` +
-          `<div class="dkp-sum"><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length}</b>to fly in or buy</div><div><b>${mi.length}</b>to mine here</div><div class="good"><b>${st.length}</b>from storage</div><div><b>${W.steps.length}</b>processes</div></div>` +
+          `<div class="dkp-sum"><div><b>${W.steps.length}</b>processes</div><div class="good"><b>${st.length}</b>from storage</div><div><b>${mi.length}</b>to mine here</div><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length}</b>to fly in or buy</div></div>` +
           (W.haveTarget ? `<div class="hint">You already have ${k.amt(P.p, W.haveTarget)} of ${esc(k.pname(P.p))} on this rock – this plan makes ${k.amt(P.p, qty)} more.</div>` : '') +
           // the inputs list folds away if the player wants (Mark, 9 Nov) – remembered while the page is open
           `<details id="pp-inputs" class="dkp-fold"${P.inOpen ? ' open' : ''}><summary>Inputs (${prods.length})</summary><table style="margin-top:4px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table></details>` +
