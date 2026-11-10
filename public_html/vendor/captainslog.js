@@ -213,9 +213,9 @@
     fit();
     board.scrollTop = scrollY;
     // The header rolls up while you work on the notes and rolls back down when you hover over it (Mark, 10 Nov)
-    scr.classList.toggle('rolled', rolled && !linkFrom);
-    board.addEventListener('pointerenter', () => { if (linkFrom) return; rolled = true; scr.classList.add('rolled'); const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
-    if (rolled && !linkFrom) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
+    scr.classList.remove('rolled'); // header always pinned at the top
+    board.addEventListener('pointerenter', () => { if (linkFrom) return; /* header stays pinned (Mark, 10 Nov 22:02 – roll-up removed) */ const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
+    if (false) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest('input,button,select')) return;
       e.preventDefault();
