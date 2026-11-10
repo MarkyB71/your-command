@@ -645,7 +645,10 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     }
   }
 
-  const isOn = () => { const b = document.getElementById('vST'); return !!(b && b.className === 'on'); };
+  // In the Logistics Hub (Mark, 10 Nov – moved there, beta): dock.js draws it on the viewscreen via YICTIDY.render(el)
+  let hubEl = null;
+  const isOn = () => { if (hubEl && hubEl.isConnected) return true; const b = document.getElementById('vST'); return !!(b && b.className === 'on'); };
+  window.YICTIDY = { render: (el) => { hubEl = el; page(el); } };
   // hidden "Storage tidy" page button – the Engineering deck shows it as a console (decks.js, beta only)
   const hook = () => {
     const after = document.getElementById('vB'), main = document.getElementById('main');
@@ -665,5 +668,5 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     const b = document.getElementById('vST'), t = e.target.closest && e.target.closest('button[id^="v"]');
     if (b && t && t !== b) b.className = '';
   }, true);
-  setInterval(hook, 700);
+  // setInterval(hook, 700); // Engineering page button retired – Storage tidy lives in the Logistics Hub now (Mark, 10 Nov)
 })();

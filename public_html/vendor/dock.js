@@ -667,6 +667,8 @@ ${R.map(route).join('')}
     const LB = window.YICHUBBRIDGE;
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
     // new Production screen (Mark, 9 Nov – TEST ONLY, vendor/prodplan.js): rock → what to make + amount → what you need → processes
+    // 🗄 Storage tidy (Mark, 10 Nov – moved into the hub; still TEST ONLY, vendor/tidy.js loads on ?beta=1 only)
+    if (LB && S.mode === 'tidy' && window.YICTIDY) { window.YICTIDY.render(m); return; }
     if (LB && window.YICPROD && S.mode !== 'feed') { window.YICPROD.render(m, S.mode === 'ship' ? 'ship' : 'make'); return; } // Cargo bay uses it too (Mark, 9 Nov)
     if (S.mode === 'feed' && window.YICFEED) {
       m.innerHTML = (LB ? '' : modeBar('feed')) + '<div id="dk-feedpg"></div>';

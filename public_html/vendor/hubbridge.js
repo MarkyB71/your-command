@@ -104,10 +104,10 @@
     { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: 11 },
     { m: 'feed', name: 'Galley', ico: '🍽', col: '#ffc45e', ry: 7 },
     { m: 'home', name: 'Deliveries', ico: '🚚', col: '#ffd28a', ry: -7, k: 'dels' },
-    { m: '', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -11, off: 'Storage tidy moves in here soon' },
+    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -11 }, // Storage tidy (beta only – switched off when tidy.js isn't loaded)
     { m: '', name: 'Spare', ico: '·', col: '#8a6a3a', ry: -15, off: 'Kept free for future tools' },
   ];
-  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS' };
+  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: 'STORAGE TIDY' };
 
   function station(s, N, mode) {
     let n = '', l = '', sub = '', go = 'Open ▸';
@@ -115,6 +115,7 @@
     else if (s.m === 'ship') { n = N.docked; l = N.docked === 1 ? 'ship docked' : 'ships docked'; sub = 'Load a ship'; }
     else if (s.m === 'feed') { n = N.feed == null ? N.hungry : N.feed; l = n === 1 ? 'crew to feed' : 'crews to feed'; sub = N.hungry ? '<b>' + N.hungry + ' hungry</b>' : 'Feed crews'; }
     else if (s.k === 'dels') { n = N.dels; l = N.dels === 1 ? 'delivery on its way' : 'deliveries on their way'; sub = 'Finish them in the game'; go = 'Show ▸'; }
+    else if (s.m === 'tidy') { if (!window.YICTIDY) { s = Object.assign({}, s, { m: '', off: 'Storage tidy – coming soon' }); n = s.ico; l = s.off; go = 'Coming soon'; } else { n = s.ico; l = 'Storage tidy'; sub = 'Names · moves'; } }
     else { n = s.ico; l = s.off; sub = ''; go = 'Coming soon'; }
     const on = s.m && s.m === mode && !s.k;
     return `<button type="button" class="lb-st${s.off ? ' off' : ''}${on ? ' on' : ''}"${s.m ? ` data-lb="${s.m}"` : ' tabindex="-1"'} style="--dc:${s.col};--ry:${s.ry}deg" title="${esc(s.off || sub.replace(/<[^>]+>/g, ''))}"><span class="lb-sc"><span class="lb-h">${s.ico} ${esc(s.name)}<i class="lb-led"></i></span><span class="lb-n">${n}</span><span class="lb-l">${esc(l)}</span><span class="lb-s">${sub}</span><span class="lb-go">${go}</span></span><span class="lb-base"><i></i><i></i><i></i><i></i></span></button>`;
@@ -147,7 +148,7 @@
   function screen(main, S, render) {
     if (!document.getElementById('lb-css')) { const st = document.createElement('style'); st.id = 'lb-css'; st.textContent = CSS; document.head.appendChild(st); }
     if (!S.mode) S.mode = 'home';
-    const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' ? S.mode : 'make';
+    const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {
       main.innerHTML = `<div class="lb">${BG}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;

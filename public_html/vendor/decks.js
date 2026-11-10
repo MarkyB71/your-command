@@ -64,7 +64,8 @@ function wNameBox(pen) {
   // Lot leases (Mark, 5 Nov 2026 – LIVE 5 Nov): fills the Science Lab's spare console
   DECKS[3].pages.push('LL');
   // Storage tidy (Mark, 6 Nov 2026) – TEST ONLY on ?beta=1: renames storage to the "Skippy's X" standard (vendor/tidy.js)
-  if (/[?&]beta=1\b/.test(location.search)) DECKS[4].pages.push('ST');
+  // moved into the Logistics Hub's 🗄 Storage console (Mark, 10 Nov) – no longer an Engineering page
+  // if (/[?&]beta=1\b/.test(location.search)) DECKS[4].pages.push('ST');
   window.YICDECKLIST = DECKS;
 
   const CSS = `
