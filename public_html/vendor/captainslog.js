@@ -119,6 +119,9 @@
 .cl-note .ndp input{width:auto;flex:1 1 auto;min-width:0;max-width:none;height:24px;margin:0;padding:0 5px;font:11px system-ui,sans-serif;color:#e6ebf2;background:#0a101b;border:1px solid #2a3a50;border-radius:4px}
 .cl-note .ndp{align-items:center;color:#8b9ab0;font-size:11px}
 .cl-need .nd-nob{margin:4px 0 2px;padding:3px 6px;border:1px solid #e0282e;border-radius:4px;color:#ff564d;font-size:11px;font-weight:600;background:rgba(224,40,46,.1)}
+.cl-note .ndp{flex-wrap:wrap;width:260px;right:auto;left:-6px;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.6)}
+.cl-note .ndp input[data-prn]{flex:1 1 100%;height:28px;font-size:12.5px}
+.cl-note .ndp select{height:28px;font-size:12.5px}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -262,7 +265,7 @@
       (x.rock && NDBETA ? '<button type="button" class="nd" data-nd="' + esc(x.id) + '" title="Show what a building still needs on this rock">📦</button>' : '') +
       (x.rock && NDBETA ? '<button type="button" class="nd" data-pr="' + esc(x.id) + '" title="Show what a process still needs on this rock">⚙</button>' : '') +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
-      (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Process…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 52px">×<button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
+      (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Type to search processes…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 70px">runs<span style="flex:1"></span><button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
       (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
     scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
