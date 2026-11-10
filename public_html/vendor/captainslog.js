@@ -220,7 +220,7 @@
     return { x: 2 + Math.random() * 70, py: top + 10 + Math.random() * 200 };
   };
 
-  const TABS = () => '<div class="cl-tabs">' + [['today', '🗓 Today'], ['notes', '📌 Notes'], ['log', '📜 Log']].map((t) => '<button type="button" data-tab="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>').join('') + '</div>';
+  const TABS = () => '<div class="cl-tabs">' + [['today', '🗓 Today'], ['notes', NDBETA ? '📌 Skippys Sticky Wall' : '📌 Notes'], ['log', '📜 Log']].map((t) => '<button type="button" data-tab="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>').join('') + '</div>';
   const tabs = (scr) => scr.querySelectorAll('.cl-tabs button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; draw(scr); }));
 
   function draw(scr) {
@@ -271,7 +271,7 @@
       (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Type to search processes…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 70px">runs<span style="flex:1"></span><button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
       (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
-    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
+    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>' + (NDBETA ? 'Skippys Sticky Wall · ' : '') + 'saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') +
       (R.length ? '<button type="button" class="cl-clear cl-colbtn">🎨 Rock colours</button>' : '') +
