@@ -5,8 +5,8 @@
     '#repl{text-align:center;margin:0 auto 10px;padding:12px 16px;color:#9aa8bb;font-size:14px;border-top:1px solid #2a3442;max-width:640px}' +
     '#repl .rep{display:inline-block;margin:4px 5px;padding:5px 12px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;background:#161d27;color:#8fe3ff;border:1px solid #5b9dff}' +
     '#repl .rep:hover,#repl .rep:focus-visible{box-shadow:0 0 10px rgba(143,227,255,.35)}' +
-    '#repb{position:fixed!important;inset:0;z-index:100000!important;background:rgba(0,0,0,.6);display:none}' +
-    '#repp{position:fixed!important;z-index:100001!important;left:50%;top:50%;transform:translate(-50%,-50%);' +
+    '#repb{position:fixed!important;inset:0;z-index:2147483100!important;background:rgba(0,0,0,.6);display:none}' +
+    '#repp{position:fixed!important;z-index:2147483101!important;left:50%;top:50%;transform:translate(-50%,-50%);' +
     'width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;' +
     'background:#10161f;border:1px solid #5b9dff;border-radius:10px;box-shadow:0 0 24px rgba(91,157,255,.35);' +
     'padding:18px 18px 16px;color:#dfe7f2;font-size:14px;display:none;text-align:left}' +
@@ -25,6 +25,12 @@
     '#repp .msg{margin-top:10px;min-height:1em}#repp .msg.err{color:#ff6b6b}#repp .msg.ok{color:#3fd68a;font-weight:700}';
 
   function pageName() {
+    // Logistics Hub (Mark, 10 Nov): the hub sits over the page, so name the hub and the screen showing
+    var ov = document.getElementById('dk-ov');
+    if (ov && ov.isConnected) {
+      var pl = ov.querySelector('.lb-plate'), sc = pl ? pl.textContent.replace(/\s+/g, ' ').trim() : '';
+      return 'Logistics Hub' + (sc ? ' – ' + sc.charAt(0) + sc.slice(1).toLowerCase() : '');
+    }
     var h = document.querySelector('h1.brand');
     var t = h ? h.textContent.replace(/\s+/g, ' ').trim() : '';
     return t || document.title || '';
@@ -97,6 +103,13 @@
       })
       .catch(function () { m.className = 'msg err'; m.textContent = 'Sorry, that did not send. Please try again.'; g.disabled = false; });
   }
+
+  window.YICreport = function () {
+    if (!document.getElementById('rep-css') && document.head) {
+      var st = document.createElement('style'); st.id = 'rep-css'; st.textContent = CSS; document.head.appendChild(st);
+    }
+    open();
+  };
 
   setInterval(function () {
     if (!document.getElementById('rep-css') && document.head) {
