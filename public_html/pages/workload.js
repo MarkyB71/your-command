@@ -519,6 +519,9 @@
     m.innerHTML = h + planH;
   }
 
+  // Today's workload drawn somewhere else – the Captain's log's 🗓 Today tab (vendor/captainslog.js, Mark 10 Nov – beta)
+  window.YICdrawToday = (el) => { drawAlerts(el); animTiles(el); };
+
   function animTiles(m) {
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!document.getElementById('al-anim-css')) {

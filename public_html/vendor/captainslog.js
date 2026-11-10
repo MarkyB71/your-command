@@ -9,7 +9,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return; // test only
 
   const KEY = 'sk_captains_log', LKEY = 'sk_captains_log_links';
-  let on = false, tab = 'notes', sdTick = 0, lastRock = null, scrollY = 0, rolled = false; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
+  let on = false, tab = 'today', sdTick = 0, lastRock = null, scrollY = 0, rolled = false, passChair = false, todayTop = 0; // tab: 'notes' (sticky notes) or 'log' (everything done in the game)
 
   const CSS = `
 .cl-scr{box-sizing:border-box;position:relative;display:flex;flex-direction:column;height:clamp(320px,52vh,600px);padding:30px 16px 14px;clip-path:polygon(3% 0,97% 0,100% 12%,100% 100%,0 100%,0 12%);background:repeating-linear-gradient(0deg,rgba(143,227,255,.03) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);font-size:14px;line-height:1.4;color:#c4cdd9}
@@ -62,6 +62,8 @@
 .cl-logv .hl-real{display:block;color:#6b7a90;font-size:11px}
 .cl-logv .hl-day .hl-real{display:inline;font-size:12px;letter-spacing:0;color:#8b9ab0}
 .cl-bar .h .cl-sdnow{display:inline;color:#8fe3ff;font-size:11px}
+.cl-today h2{font-size:16px!important;color:#8fe3ff;letter-spacing:.04em}
+.cl-today .note{font-size:12px}
 .cl-logv .note{color:#9fb0c4;font-size:13px}
 .cl-head{flex:none}
 .cl-head .cl-bar{max-height:220px;transition:max-height .3s ease,opacity .25s ease,margin .3s ease}
@@ -101,12 +103,12 @@
   const day = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const left = () => load().filter((x) => !x.done).length;
 
+  // The chair's label: "Captain's log · 3 to do"
   function label() {
-    const b = document.querySelector('.cl-btn');
+    const b = document.querySelector('.brs-chair.cl-chair .brs-cl');
     if (!b) return;
     const n = left();
-    b.querySelector('.st-n').textContent = n;
-    b.querySelector('.st-l').textContent = n === 1 ? 'task to do' : 'tasks to do';
+    b.textContent = "Captain's log" + (n ? ' · ' + n + ' to do' : '');
   }
 
   // A new note goes in the next free spot of a loose grid, starting where you have scrolled to.
@@ -120,12 +122,24 @@
     return { x: 2 + Math.random() * 70, py: top + 10 + Math.random() * 200 };
   };
 
+  const TABS = () => '<div class="cl-tabs">' + [['today', '🗓 Today'], ['notes', '📌 Notes'], ['log', '📜 Log']].map((t) => '<button type="button" data-tab="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>').join('') + '</div>';
   const tabs = (scr) => scr.querySelectorAll('.cl-tabs button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; draw(scr); }));
 
   function draw(scr) {
     // 📜 Log – everything your crews have done in the game, from the game's own records (same as the Activity log page)
+    // 🗓 Today – today's workload (was the chair's own view), drawn by pages/workload.js
+    if (tab === 'today') {
+      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Today\'s workload</span></div>' + TABS() + '</div><div class="cl-logv cl-today"></div>';
+      tabs(scr);
+      scr.classList.remove('rolled');
+      deckUp(scr, false);
+      const v = scr.querySelector('.cl-today');
+      if (window.YICdrawToday) { window.YICdrawToday(v); v.scrollTop = todayTop; v.addEventListener('scroll', () => (todayTop = v.scrollTop), { passive: true }); }
+      else v.innerHTML = '<div class="note">Still loading – try again in a moment.</div>';
+      return;
+    }
     if (tab === 'log') {
-      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Adalia Stardate <b class="cl-sdnow">' + (window.YICstardate ? window.YICstardate(Date.now() / 1000, 2) : '') + '</b> · from the game\'s records</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' + '</div><div class="cl-logv"></div>';
+      scr.innerHTML = '<div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Adalia Stardate <b class="cl-sdnow">' + (window.YICstardate ? window.YICstardate(Date.now() / 1000, 2) : '') + '</b> · from the game\'s records</span></div>' + TABS() + '</div><div class="cl-logv"></div>';
       tabs(scr);
       scr.classList.remove('rolled');
       deckUp(scr, false);
@@ -147,7 +161,7 @@
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
-    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + '<div class="cl-tabs"><button type="button" data-tab="notes"' + (tab === 'notes' ? ' class="on"' : '') + '>📌 Notes</button><button type="button" data-tab="log"' + (tab === 'log' ? ' class="on"' : '') + '>📜 Log</button></div>' +
+    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') +
       (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div></div>' +
@@ -278,7 +292,7 @@
   }
 
   function setOn(br, want) {
-    const vs = br.querySelector('.brs-vs'), plate = vs && vs.querySelector('.brs-plate'), btn = br.querySelector('.cl-btn');
+    const vs = br.querySelector('.brs-vs'), plate = vs && vs.querySelector('.brs-plate'), btn = br.querySelector('.brs-chair');
     if (!vs || !plate) return;
     let scr = vs.querySelector('.cl-scr');
     const map = mapOf(vs);
@@ -292,7 +306,7 @@
     }
     // close today's workload or Deck controls first, so only one thing is on the viewscreen
     const chair = br.querySelector('.brs-chair'), holo = br.querySelector('.dc-holo.on');
-    if (vs.querySelector('.brs-log') && chair) chair.click();
+    if (vs.querySelector('.brs-log') && chair) { passChair = true; chair.click(); passChair = false; }
     if (holo) holo.click();
     on = true;
     if (!scr) { scr = document.createElement('section'); scr.className = 'cl-scr'; vs.insertBefore(scr, plate); }
@@ -305,27 +319,24 @@
     draw(scr);
   }
 
-  // Takes the Weapons console's place for now (Mark, 10 Nov: "remove the Weapons button for now and look
-  // to see where it goes when we get to conflict"). The Weapons console comes back from pages/workload.js
-  // if this file is not loaded.
+  // The captain's chair opens the Captain's log (Mark, 10 Nov 2026: "consolidate Today's workload and Captain's log"):
+  // Today's workload is now the log's first tab. The Weapons console is back in its place, ready for conflict.
   function addPanel(br) {
-    const wpn = br.querySelector('.st.wpn'), mid = br.querySelector('.brs-mid');
-    if (!wpn || !mid || br.querySelector('.cl-btn')) return;
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'st cl-btn';
-    b.style.cssText = '--dc:#8fe3ff;--ry:-15deg';
-    b.title = "Captain's log – your own to-do list, saved in this browser";
-    b.innerHTML = '<span class="st-scr"><span class="st-h">Captain\'s log<i class="st-led"></i></span><span class="st-r">Log station</span>' +
-      '<span class="st-n"></span><span class="st-l"></span><span class="st-s">Your own to-do list</span><span class="st-go">Open log ▸</span></span>' +
-      '<span class="st-base"><i></i><i></i><i></i><i></i></span>';
-    wpn.replaceWith(b);
+    const mid = br.querySelector('.brs-mid'), chair = mid && mid.querySelector('.brs-chair');
+    if (!chair || chair.classList.contains('cl-chair')) return;
+    chair.classList.add('cl-chair');
+    chair.title = "The captain's chair – your Captain's log: today's workload, notes and the game log";
     label();
-    b.addEventListener('click', () => setOn(br, !on));
-    // the chair (today's workload) and Deck controls take the viewscreen back
+    // The chair, Deck controls and the log share the viewscreen. Skippy's own click (welcome clip) is left alone.
     mid.addEventListener('click', (e) => {
-      const t = e.target.closest && e.target.closest('.brs-chair,.dc-holo');
-      if (on && t && !(e.target.closest('.brs-sk'))) setOn(br, false);
+      if (passChair || !e.target.closest || e.target.closest('.brs-sk')) return;
+      if (e.target.closest('.brs-chair')) {
+        e.stopPropagation(); e.preventDefault(); // the old Today's workload view is not used any more
+        if (on && tab === 'today') setOn(br, false);
+        else { tab = 'today'; setOn(br, true); }
+        return;
+      }
+      if (on && e.target.closest('.dc-holo')) setOn(br, false);
     }, true);
     if (on) setOn(br, true);
   }
@@ -336,7 +347,7 @@
       const st = document.createElement('style'); st.id = 'cl-css'; st.textContent = CSS; document.head.appendChild(st);
     }
     const br = document.querySelector('.brs');
-    if (br && !br.querySelector('.cl-btn')) addPanel(br);
+    if (br && !br.querySelector('.cl-chair')) addPanel(br);
   };
   new MutationObserver(check).observe(document.documentElement, { childList: true, subtree: true });
   check();
