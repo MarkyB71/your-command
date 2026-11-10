@@ -54,6 +54,7 @@
 #dk-ov .lb-t span{display:block;color:#d9cbb6}
 #dk-ov .lb-t i{display:block;font-style:normal;margin-top:6px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:${OR}}
 #dk-ov .lb-bl{animation:lbBlink 4s infinite}
+#dk-ov .lb.lbw .lb-vs{width:84%}
 @keyframes lbBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
 @keyframes lbLed{0%,100%{opacity:1}50%{opacity:.35}}
 @media (max-width:760px){#dk-ov .lb-deck{grid-template-columns:1fr 1fr;perspective:none}#dk-ov .lb-chair{grid-column:1/-1;order:-1;flex-direction:row;justify-content:center;gap:10px}#dk-ov .lb-chair svg{max-width:60px}#dk-ov .lb-st,#dk-ov .lb-st:hover,#dk-ov .lb-st.on{transform:none}#dk-ov .lb-vs{width:96%}#dk-ov .lb-scr{clip-path:none}}
@@ -85,7 +86,7 @@
     [30, 55].map((x) => '<line x1="' + x + '" y1="' + (x * 0.25) + '" x2="' + x + '" y2="' + (620 - x * 2.4) + '" stroke="#3a2a16" stroke-width="2"/>').join('') +
     [945, 970].map((x) => '<line x1="' + x + '" y1="' + ((1000 - x) * 0.25) + '" x2="' + x + '" y2="' + (620 - (1000 - x) * 2.4) + '" stroke="#3a2a16" stroke-width="2"/>').join('') +
     '<rect x="38" y="120" width="10" height="160" rx="3" fill="#ffb03b" opacity=".25"/><rect x="952" y="120" width="10" height="160" rx="3" fill="#ff8a1f" opacity=".25"/>' +
-    [150, 190, 230].map((y, i) => '<circle class="lb-bl" cx="17" cy="' + y + '" r="3.5" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="lb-bl" cx="983" cy="' + y + '" r="3.5" fill="#ffb03b" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
+    [150, 190, 230].map((y, i) => '<circle class="lb-bl" cx="64" cy="' + y + '" r="3.5" fill="#3fd68a" style="animation-delay:' + i * 1.3 + 's"/><circle class="lb-bl" cx="936" cy="' + y + '" r="3.5" fill="#ffb03b" style="animation-delay:' + (i * 1.3 + 0.6) + 's"/>').join('') +
     '<path d="M80,420 Q500,470 920,420" stroke="#ffb03b" stroke-opacity=".18" stroke-width="2" fill="none"/>' +
     '<path d="M0,620 Q500,520 1000,620" stroke="#ffb03b" stroke-opacity=".12" stroke-width="2" fill="none"/></svg>';
   // the logistics officer's chair (same shape as the captain's chair, orange trim)
@@ -171,7 +172,7 @@
     const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {
-      main.innerHTML = `<div class="lb">${WALLS ? BGW : BG}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
+      main.innerHTML = `<div class="lb${WALLS ? ' lbw' : ''}">${WALLS ? BGW : BG}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
       lb = main.querySelector('.lb');
     }
     const N = nums(S);
