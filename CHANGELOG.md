@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 10 Nov 2026 – Skippys Sticky Wall: the heading and tabs sit on the top line, with adding notes and Rock colours on their own line underneath.
+
 ## 10 Nov 2026 – Captain's log: Notes are now Skippys Sticky Wall. New 📦 Still needed box (pick a building – shows what's still short on the note's rock) and ⚙ Process box (pick a process and runs – shows the building it needs, whether you have one there, and what's still short). Notes with no rock are white. Help page updated.
 
 ## 10 Nov 2026 – Captain's log fix: the Today tab has its own rock picker (starts on All rocks) – it was following the rock picked on another deck. Help page updated.

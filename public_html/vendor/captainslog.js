@@ -124,6 +124,8 @@
 .cl-note .ndp select{height:28px;font-size:12.5px}
 /* "No rock" notes in white so they don't look like a rock colour (Mark, 10 Nov 22:52) – test only for now */
 .cl-scr.cl-beta .cl-note{--rc:#e6ebf2}
+/* Sticky Wall: heading and tabs on the top line, the add / colour actions on their own line under it (Mark, 10 Nov 23:06) */
+.cl-act{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #1e2a3a}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -271,10 +273,10 @@
       (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Type to search processes…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 70px">runs<span style="flex:1"></span><button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
       (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
-    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>' + (NDBETA ? 'Skippys Sticky Wall · ' : '') + 'saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
-      '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
+    scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only</span></div>' + TABS() +
+      '<div class="cl-act"><form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
       (done ? '<button type="button" class="cl-clear">Clear done (' + done + ')</button>' : '') +
-      (R.length ? '<button type="button" class="cl-clear cl-colbtn">🎨 Rock colours</button>' : '') +
+      (R.length ? '<button type="button" class="cl-clear cl-colbtn">🎨 Rock colours</button>' : '') + '</div>' +
       (colPanel && R.length ? '<div class="cl-cols">' + R.map((r) => { const cur = rockCol(r.id, R); return '<div class="cl-crow"><span class="n" style="color:' + cur + '">' + esc(r.name) + '</span>' +
         RC.map((c) => '<button type="button" class="sw' + (c === cur ? ' on' : '') + '" data-rc="' + r.id + '" data-c="' + c + '" style="background:' + c + '" title="Use this colour for ' + esc(r.name) + '"></button>').join('') + '</div>'; }).join('') + '</div>' : '') +
       (linkFrom ? '<span class="cl-hint">🔗 Click another note to link it (click a linked one again to unlink) – or 🔗 again / Esc to cancel</span>' : '') + '</div></div>' +
