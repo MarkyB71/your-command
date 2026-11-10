@@ -105,6 +105,16 @@
 .cl-crow .sw:hover{opacity:1}
 .cl-crow .sw.on{border-color:#fff;opacity:1}
 .cl-tast{flex:0 1 200px;min-width:0;max-width:none;height:34px;margin:0;padding:0 8px;font:inherit;font-size:13px;color:#c4cdd9;background:#0c1320;border:1px solid #2a3a50;border-radius:6px}
+.cl-note.cl-need{width:220px;padding-bottom:28px;border-top-style:dashed}
+.cl-need .nd-l{margin:4px 0 3px;color:#8b9ab0;font-size:10.5px}
+.cl-need .nd-l.ok{color:#57ff65}
+.cl-need .nd-r{display:flex;gap:6px;justify-content:space-between;font-size:11.5px;line-height:1.35;color:#c4cdd9}
+.cl-need .nd-r b{color:#ff8c1a;font-weight:600;white-space:nowrap}
+.cl-need .nd-r.ok{opacity:.55}.cl-need .nd-r.ok b{color:#57ff65}
+.cl-note .ft .nd:hover{color:#ffd94f;border-color:#ffd94f}
+.cl-note .ndp{position:absolute;left:0;right:0;bottom:24px;display:flex;gap:4px;padding:4px;background:#0c1320;border:1px solid #2a3a50;border-radius:6px}
+.cl-note .ndp select{flex:1 1 auto;height:24px;color:#e6ebf2;border-color:#2a3a50}
+.cl-note .ndp button{width:auto!important;padding:0 8px!important;height:24px!important;color:#05080d!important;background:#8fe3ff!important;font-weight:600!important}
 @media (prefers-reduced-motion:reduce){.cl-note{transition:none}}
 `;
 
@@ -130,9 +140,30 @@
   let colPanel = false;
   const rocks = () => { try { return ((window.YIC.D && window.YIC.D.owned) || []).map((a) => ({ id: a.id, name: (a.Name && a.Name.name) || 'Asteroid #' + a.id })).sort((a, b) => a.id - b.id); } catch (e) { return []; } };
   const rockCol = (id, R) => { const c = loadC()[id]; if (c && RC.includes(c)) return c; const i = R.findIndex((r) => r.id === id); return i < 0 ? '#8b9ab0' : RC[i % RC.length]; };
+  // 📦 "Still needed" boxes (Mark, 10 Nov 22:34): linked to a note, they show what a building still needs on the
+  // note's rock – the building's recipe (window.YICBL, from vendor/buildplan.js) against the stock on that rock
+  // (window.YIC.tot – everything held there, including what's already in a planned site).
+  const BTYPES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  const bName = (k) => { try { return window.YICBL[k][0]; } catch (e) { return 'Building'; } };
+  const guessB = (t) => { t = String(t || '').toLowerCase(); return BTYPES.find((k) => t.includes(bName(k).toLowerCase())) || '9'; };
+  const NDBETA = /[?&]beta=1\b/.test(location.search); // 📦 TEST ONLY for now (Mark, 10 Nov)
+  let needsFor = null; // note showing its "which building?" picker
+  function needsBody(x) {
+    const Y = window.YIC, BL = window.YICBL;
+    if (!Y || !BL || !BL[x.bld]) return '<div class="nd-l">Still loading…</div>';
+    const ai = (Y.asts || []).findIndex((a) => a.id === x.rock), stk = ai >= 0 ? (Y.tot && Y.tot[ai]) || {} : {};
+    const inp = BL[x.bld][1], fmt = (p, n) => { try { return Y.pfmt(+p, n); } catch (e) { return String(n); } }, nm = (p) => { try { return Y.pn(+p); } catch (e) { return 'Product ' + p; } };
+    let short = 0;
+    const rows = Object.keys(inp).map((p) => {
+      const need = inp[p], have = stk[p] || 0, left = Math.max(0, need - have);
+      if (left > 0) short++;
+      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b></div>';
+    }).join('');
+    return (short ? '<div class="nd-l">Still needed on the rock:</div>' : '<div class="nd-l ok">✓ Everything is on the rock</div>') + rows;
+  }
   let linkFrom = null; // note waiting for its link partner
   const day = (t) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const left = () => load().filter((x) => !x.done).length;
+  const left = () => load().filter((x) => !x.done && x.kind !== 'needs').length;
 
   // The chair's label: "Captain's log · 3 to do"
   function label() {
@@ -189,12 +220,17 @@
     const ob = scr.querySelector('.cl-board'); if (ob) scrollY = ob.scrollTop;
     const all = load(), done = all.filter((x) => x.done).length;
     const R = rocks(), opts = (sel) => '<option value="">No rock</option>' + R.map((r) => '<option value="' + r.id + '"' + (sel === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
-    const note = (x) => '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
+    const needCard = (x) => '<div class="cl-note cl-need" data-n="' + esc(x.id) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:0deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
+      '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || '') + '</span><span class="t">📦 ' + esc(bName(x.bld)) + '</span>' + needsBody(x) +
+      '<span class="ft"><span style="flex:1"></span><button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note">🔗</button><button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this box">✕</button></span></div>';
+    const note = (x) => x.kind === 'needs' ? needCard(x) : '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
       (x.rock ? '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || 'Asteroid #' + x.rock) + '</span>' : '') +
       '<span class="t">' + esc(x.text) + '</span><span class="ft">' +
       (R.length ? '<select data-rock="' + esc(x.id) + '" title="Which rock is this for?">' + opts(x.rock || null) + '</select>' : '<span style="flex:1"></span>') +
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
+      (x.rock && NDBETA ? '<button type="button" class="nd" data-nd="' + esc(x.id) + '" title="Show what a building still needs on this rock">📦</button>' : '') +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
+      (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
       '<button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this note">✕</button></span></div>';
     scr.innerHTML = '<div class="cl-head"><div class="cl-roll">📋 Captain\'s log ▾</div><div class="cl-bar"><div class="h"><b>📋 Captain\'s log</b><span>Saved in this browser only · drag notes around · scroll down for more room</span></div>' + TABS() +
       '<form class="cl-add"><input type="text" maxlength="200" placeholder="e.g. Build a Habitat on TRCS CMS" aria-label="New note">' + (R.length ? '<select aria-label="Rock">' + opts(lastRock) + '</select>' : '') + '<button type="submit">Add</button></form>' +
@@ -236,6 +272,16 @@
       const a = load(), x = a.find((y) => y.id === sl.dataset.rock), rk = sl.value ? +sl.value : null;
       if (x) { x.rock = rk; x.rockName = rk ? (R.find((r) => r.id === rk) || {}).name : null; save(a); }
       draw(scr);
+    }));
+    // 📦 pick a building, then a "still needed" box appears beside the note, linked to it
+    scr.querySelectorAll('button[data-nd]').forEach((b) => b.addEventListener('click', () => { needsFor = needsFor === b.dataset.nd ? null : b.dataset.nd; draw(scr); }));
+    scr.querySelectorAll('button[data-ndgo]').forEach((b) => b.addEventListener('click', () => {
+      const a = load(), x = a.find((y) => y.id === b.dataset.ndgo), sel = scr.querySelector('select[data-ndb="' + b.dataset.ndgo + '"]');
+      if (!x || !sel) return;
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      a.push({ id, kind: 'needs', bld: sel.value, rock: x.rock, rockName: x.rockName, added: Date.now(), x: Math.min(78, (x.x || 0) + 19), py: x.py || 0, rot: 0 });
+      save(a); const L = loadL(); L.push([x.id, id]); saveL(L);
+      needsFor = null; draw(scr);
     }));
     // 🔗 start / cancel linking
     scr.querySelectorAll('button[data-ln]').forEach((b) => b.addEventListener('click', () => { linkFrom = linkFrom === b.dataset.ln ? null : b.dataset.ln; draw(scr); }));
