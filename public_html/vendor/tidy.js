@@ -319,6 +319,9 @@
 #st-wrap .st-steps button,#st-wrap .st-w button{padding:8px 14px;border-radius:8px;border:1px solid #2b5a72;background:#131821;color:#e6ebf2;cursor:pointer}
 #st-wrap .st-steps button.on,#st-wrap .st-w button.on{border-color:#8fe3ff;color:#8fe3ff;box-shadow:0 0 10px rgba(143,227,255,.3)}
 #st-wrap .st-w{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+#st-wrap input[type=checkbox]{width:18px!important;min-width:0!important;height:18px;flex:none!important;margin:0!important;padding:0!important}
+#st-wrap .st-lv{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 18px;margin:10px 0}
+#st-wrap .st-lv label{display:flex!important;align-items:center;gap:10px;width:auto!important;margin:0!important;text-align:left;cursor:pointer}
 #st-wrap .st-opt{display:grid;grid-template-columns:170px 1fr;gap:8px 14px;align-items:center;margin:10px 0}
 #st-wrap .st-opt label{color:#b7c3d4}
 #st-wrap .st-go{font:700 16px system-ui,sans-serif;padding:12px 22px;border-radius:10px;border:1px solid #57ff65;background:#0f2a14;color:#57ff65;cursor:pointer}
@@ -472,7 +475,7 @@ ${GROUPS.map(([g, n, tank]) => `<tr><td>${esc(n)}${tank ? ' <span style="color:#
 </tbody></table>
 <h3>Leave alone</h3>
 <p>Ticked buildings are not touched – nothing is taken out or put in (e.g. stock you sell).</p>
-<div class="st-w">${store.map((b) => `<label style="margin-right:10px"><input type="checkbox" data-lv="${b.id}"${S.leave[b.id] ? ' checked' : ''}> ${esc(nm(b) || 'Building #' + b.id)}</label>`).join('')}</div>
+<div class="st-lv">${store.map((b) => `<label><input type="checkbox" data-lv="${b.id}"${S.leave[b.id] ? ' checked' : ''}><span>${esc(nm(b) || 'Building #' + b.id)}</span></label>`).join('')}</div>
 <h3>Who moves it</h3>
 <div class="st-w">${plan.crews.length ? sel('st-mover', plan.crews.map((c) => [c.id, c.name + ' – free transport ×' + c.free.toFixed(2) + ' – food ' + Math.round(c.food * 100) + '%' + (c.fm < 1 ? ' (hungry, slower)' : '') + (c.busy ? ' – busy until ' + c.busy : '')]), S.mover) : '<span class="st-bad">None of your crews is on this rock right now – fly one there to move goods.</span>'}
 <span style="color:#8b9ab0;font-size:13px">best first: deliveries inside the free transport distance arrive straight away</span></div>
