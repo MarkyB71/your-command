@@ -7,9 +7,9 @@
   let wallet = '', sway = null, busy = false, last = 0;
 
   const st = document.createElement('style');
+  st.id = 'sw-css'; // app.js rewrites <head> after loading, so draw() puts this back if it goes
   st.textContent = '#dktools #swbal{order:-1!important;background:#0e2933!important;color:#cccccc!important;border:1px solid #57d5ff!important;border-radius:8px!important;box-shadow:0 0 8px rgba(87,213,255,.2)!important;font-family:ui-monospace,Menlo,monospace!important;cursor:pointer}' +
     '#dktools #swbal b{color:#57d5ff;font-weight:600}#dktools #swbal:hover,#dktools #swbal:focus-visible{box-shadow:0 0 14px rgba(87,213,255,.45)!important}';
-  document.head.appendChild(st);
 
   const fmt = (n) => n >= 1e6 ? (n / 1e6).toLocaleString('en-GB', { maximumFractionDigits: 2 }) + 'M' : Math.floor(n).toLocaleString('en-GB');
 
@@ -22,6 +22,7 @@
   }
 
   function draw() {
+    if (!document.getElementById('sw-css')) document.head.appendChild(st);
     const tray = document.getElementById('dktools'), wc = document.getElementById('wc-top');
     let b = document.getElementById('swbal');
     if (!tray || !wc || !wallet) { if (b) b.remove(); return; }
