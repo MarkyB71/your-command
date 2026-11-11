@@ -63,8 +63,8 @@ function wNameBox(pen) {
   }
   // Lot leases (Mark, 5 Nov 2026 – LIVE 5 Nov): fills the Science Lab's spare console
   DECKS[3].pages.push('LL');
-  // Spectral Type Raws (Mark, 10 Nov 2026) – TEST ONLY on ?beta=1: raw materials on each asteroid type (vendor/rocktypes.js)
-  if (/[?&]beta=1\b/.test(location.search)) DECKS[3].pages.push('RT');
+  // Spectral Type Raws (Mark, 10 Nov 2026) – LIVE 11 Nov: raw materials on each asteroid type (vendor/rocktypes.js)
+  DECKS[3].pages.push('RT');
   // Storage tidy (Mark, 6 Nov 2026) – TEST ONLY on ?beta=1: renames storage to the "Skippy's X" standard (vendor/tidy.js)
   // moved into the Logistics Hub's 🗄 Storage console (Mark, 10 Nov) – no longer an Engineering page
   // if (/[?&]beta=1\b/.test(location.search)) DECKS[4].pages.push('ST');

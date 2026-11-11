@@ -1,13 +1,12 @@
-/* Spectral Type Raws (was Rock types) – Your Influence Command (Mark, 10 Nov 2026) – TEST ONLY on ?beta=1
+/* Spectral Type Raws (was Rock types) – Your Influence Command (Mark, 10 Nov 2026) – LIVE 11 Nov 2026 (tested on ?beta=1 – Mark)
    Science Lab page: which of the 22 raw materials can be mined on each asteroid type
    (C, Cm, Ci, Cs, Cms, Cis, S, Sm, Si, M, I). Data: app.js SPEC (same as the Supply chain page).
    Layout (Mark, 11 Nov): type buttons on top (pick several), raw materials below in rows by group,
    lit in the game's resource colours when found on the picked types. Click a raw = types that have it get a white ring.
-   To go live: remove the BETA line here and in decks.js, add a CHANGELOG line and a Help page entry. */
+ */
 (function () {
   'use strict';
-  const BETA = /[?&]beta=1\b/.test(location.search);
-  if (!BETA) return;
+  // LIVE 11 Nov 2026 (tested on ?beta=1 – Mark)
 
   // Game colours (influence-client theme.js resources – same as the Resource map)
   const GROUPS = [
