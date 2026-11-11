@@ -119,6 +119,9 @@ const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},clo
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
+/* CAS (test, ?beta=1 – community request 11 Nov 2026): changing the recipe on one box changes every box for that same product in the chain.
+   Stored in S.choice as 'id:<item id>' so Back/Forward and resets carry it too. */
+const CAS=/[?&]beta=1/.test(location.search),chs=(key,id)=>{const v=CAS?S.choice['id:'+id]:undefined;return v!==undefined?v:S.choice[key]};
 const inF=k=>!S.foc||k===S.foc||k.startsWith(S.foc+'/');
 function isOpen(key,d){if(S.foc){if(S.foc.startsWith(key+'/'))return true;d-=S.foc.split('/').length-1}return S.closed.has(key)?false:(S.opened.has(key)||S.all)?true:d<3}
 export function drawChain(m){
@@ -159,11 +162,11 @@ export function drawChain(m){
   function node0(id,qty,path,key){
     const br=el('div','pc-br'),all=makers[id]||[],o=opts(id,path);
     if(path.includes(id)){br.appendChild(el('div','pc-n loop',head(id,qty)+'<span class="pc-t pc-lp">made earlier in this chain</span>'));return br}
-    const isRaw=id<=22,mine=isRaw&&(S.choice[key]===undefined||S.choice[key]===-1),pick=o.find(x=>x.i===S.choice[key])||o[0];
+    const isRaw=id<=22,cv=chs(key,id),mine=isRaw&&(cv===undefined||cv===-1),pick=o.find(x=>x.i===cv)||o[0];
     const sel=(c,cur)=>{const s=el('select');
       if(isRaw){const m=el('option',null,'Mine it (raw)');m.value=-1;if(cur===-1)m.selected=true;s.appendChild(m)}
       o.forEach(x=>{const op=el('option');op.value=x.i;op.textContent=x.name;if(x===cur)op.selected=true;s.appendChild(op)});
-      s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;draw()});c.appendChild(s)};
+      if(CAS)s.title='Changes every '+N[id]+' in this chain';s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;if(CAS)S.choice['id:'+id]=+s.value;draw()});c.appendChild(s)};
     if(!all.length||!o.length||mine){const c=el('div','pc-n raw',head(id,qty));if(isRaw&&o.length)sel(c,-1);
       c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>'+(isRaw?mineHTML(id,ai,o.length,qty):''));
       br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
@@ -261,8 +264,8 @@ export function drawChain(m){
   function totals(){const need={},via={},pl={};
     const tk=(id,q)=>{if(S.use==null||!Y||id>=1000)return 0;if(pl[id]===undefined)pl[id]=((Y.tot[S.use]||{})[id])||0;const t=Math.min(pl[id],q);pl[id]-=t;return t};
     const walk=(id,qty,path,key)=>{if(path.includes(id))return;qty-=tk(id,qty);if(qty<=1e-9)return;
-      const o=opts(id,path);if(!o.length||(id<=22&&(S.choice[key]===undefined||S.choice[key]===-1)))return;
-      const p=o.find(x=>x.i===S.choice[key])||o[0];if(path.length){need[id]=(need[id]||0)+qty;via[id]=p.type}
+      const o=opts(id,path);const cv=chs(key,id);if(!o.length||(id<=22&&(cv===undefined||cv===-1)))return;
+      const p=o.find(x=>x.i===cv)||o[0];if(path.length){need[id]=(need[id]||0)+qty;via[id]=p.type}
       const runs=qty/p.out[id];for(const [i,v] of Object.entries(p.inp))walk(+i,v*runs,path.concat(id),key+'/'+i)};
     walk(S.prod,S.amt,[],'r');return {need,via}}
   function prodList(){const {need,via}=totals(),ids=Object.keys(need).map(Number),box=el('details','pc-raws pc-ptp');box.open=S.ptpOpen!==false;
