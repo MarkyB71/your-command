@@ -32,16 +32,32 @@
 .rt-t small{display:block;font-size:10px;font-weight:400;color:${COL};margin-top:3px;min-height:12px}
 .rt-clr{all:unset;cursor:pointer;color:#8b9ab0;font-size:13px;padding:6px 10px;border:1px solid #2a3648;border-radius:8px}
 .rt-sum{color:#c9d6e8;font-size:14px;margin:0 0 10px}
-.rt-g{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;margin:0 0 6px;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 12%,transparent),transparent 70%)}
+.rt-g{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;margin:0 0 6px;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 12%,transparent),transparent 70%)}
 .rt-gn{color:color-mix(in srgb,var(--gc) 80%,#fff);font-weight:600;font-size:15px}
-.rt-raws{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
-.rt-r{all:unset;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid transparent;color:#5d6a7d;font-size:13px}
-.rt-r img{opacity:.35}
-.rt-r.yes{color:color-mix(in srgb,var(--gc) 75%,#fff);border-color:color-mix(in srgb,var(--gc) 70%,transparent);background:color-mix(in srgb,var(--gc) 10%,transparent)}
-.rt-r.yes img{opacity:1}
-.rt-r.all{color:#c9d6e8}
-.rt-r.all img{opacity:.9}
-.rt-r.pick{box-shadow:0 0 0 2px #fff inset}
+.rt-raws{display:flex;flex-wrap:wrap;gap:6px 4px;align-items:flex-start}
+.rt-r{all:unset;cursor:pointer;box-sizing:border-box;width:86px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 2px;border-radius:8px;color:#5d6a7d;font-size:12px;text-align:center;line-height:1.2}
+.rt-r:hover{background:rgba(255,255,255,.04)}
+.rt-tube{position:relative;width:30px;height:78px}
+.rt-cap{position:absolute;left:-3px;right:-3px;top:0;height:8px;border-radius:3px;background:linear-gradient(180deg,#56657a,#2a3646)}
+.rt-glass{position:absolute;left:0;right:0;top:7px;bottom:0;border:2px solid rgba(160,185,215,.28);border-top:0;border-radius:0 0 15px 15px;overflow:hidden;background:linear-gradient(90deg,rgba(255,255,255,.07),transparent 40%,rgba(255,255,255,.04))}
+.rt-liq{position:absolute;left:0;right:0;bottom:0;height:0;transition:height .5s ease;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 75%,#000),var(--gc) 45%,color-mix(in srgb,var(--gc) 70%,#000));box-shadow:0 0 14px var(--gc)}
+.rt-liq::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:color-mix(in srgb,var(--gc) 50%,#fff);opacity:.8}
+.rt-liq i{position:absolute;bottom:-6px;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6);animation:rtbub 2.6s infinite ease-in}
+.rt-liq i:nth-child(2){left:16px;animation-delay:1.1s;width:3px;height:3px}
+.rt-liq i:nth-child(3){left:8px;animation-delay:1.9s}
+.rt-liq i:nth-child(1){left:5px}
+@keyframes rtbub{0%{transform:translateY(0);opacity:0}15%{opacity:.8}100%{transform:translateY(-50px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.rt-liq i{animation:none;display:none}.rt-liq{transition:none}}
+.rt-ico{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:1}
+.rt-ico img{width:20px;height:20px;opacity:.3;filter:grayscale(1)}
+.rt-r.yes,.rt-r.all{color:#c9d6e8}
+.rt-r.yes{color:color-mix(in srgb,var(--gc) 70%,#fff)}
+.rt-r.yes .rt-liq{height:72%}
+.rt-r.all .rt-liq{height:40%;opacity:.55;box-shadow:none}
+.rt-r.yes .rt-ico img,.rt-r.all .rt-ico img{opacity:1;filter:drop-shadow(0 0 2px #000)}
+.rt-r.yes .rt-glass{border-color:color-mix(in srgb,var(--gc) 60%,transparent)}
+.rt-r.pick .rt-glass{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.5)}
+.rt-r.pick{color:#fff}
 @media (max-width:700px){.rt-g{grid-template-columns:1fr}}`;
 
   function css() {
@@ -87,7 +103,9 @@
       ids.slice().sort((a, b) => pn(a).localeCompare(pn(b))).forEach((p) => {
         const cl = sel.length ? (has(p) ? ' yes' : '') : ' all';
         const on = types.filter((t) => t.r.has(p)).map((t) => t.n).join(', ');
-        h += '<button class="rt-r' + cl + (S.raw === p ? ' pick' : '') + '" data-r="' + p + '" title="' + esc(pn(p)) + ' – found on ' + on + '">' + Y.ricon(p, 22).replace('margin-right:8px', 'margin-right:0') + esc(pn(p)) + '</button>';
+        h += '<button class="rt-r' + cl + (S.raw === p ? ' pick' : '') + '" data-r="' + p + '" title="' + esc(pn(p)) + ' – found on ' + on + '">' +
+          '<span class="rt-tube"><span class="rt-cap"></span><span class="rt-glass"><span class="rt-liq"><i></i><i></i><i></i></span></span><span class="rt-ico">' + Y.ricon(p, 20).replace('margin-right:8px;', '') + '</span></span>' +
+          '<span>' + esc(pn(p)) + '</span></button>';
       });
       h += '</div></div>';
     });
