@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 11 Nov 2026 – SWAY balance: the top bar now shows the SWAY in your wallet, with the game's SWAY icon, just left of Deck controls (Deck controls now sits in the middle of the bar). Updates every 5 minutes; click to read it again. Help page updated.
+
 ## 11 Nov 2026 – Science Lab: new Spectral type raws page – pick an asteroid type (rock specimens under glass) and see which raw materials can be mined there, in test tubes coloured like the game's resource groups. Pick a raw material to see which types have it. Help page updated.
 
 ## 10 Nov 2026 – Browser extension 0.6.5 is on the Chrome Web Store: ships in flight on the game's system map – your ships and other players' ships (in your friend / foe tag colours), with routes and where they meet their rock, and a tick box for each group. Help page no longer says "coming in 0.6.5".

@@ -1,9 +1,8 @@
-/* SWAY balance – Skippy's Awesome Command Deck (Mark, 11 Nov 2026) – TEST on ?beta=1
+/* SWAY balance – Skippy's Awesome Command Deck (Mark, 11 Nov 2026) – LIVE 11 Nov 2026 (tested on ?beta=1 – Mark)
    Shows the loaded wallet's SWAY just left of Deck controls on the decks, to help when buying across the belt.
    Read only: sway.php asks a public Starknet node for balanceOf on the SWAY token. Colours from the game's theme.js
    (backgroundMain #0e2933, brightMain #57d5ff, mainText #cccccc). Click the pill to read it again. */
 (function () {
-  if (!/[?&]beta=1\b/.test(location.search)) return; // test only
   let wallet = '', sway = null, busy = false, last = 0;
 
   const st = document.createElement('style');
