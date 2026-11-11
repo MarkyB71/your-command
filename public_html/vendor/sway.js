@@ -33,6 +33,18 @@
     }
     const dc = document.getElementById('cl-dc'); // just left of Deck controls – Mark 11 Nov (same order, placed before it)
     if (dc && dc.parentNode === tray) { if (b.nextElementSibling !== dc) tray.insertBefore(b, dc); } else if (b.parentNode !== tray) tray.prepend(b);
+    // Deck controls in the middle of the bar, SWAY just to its left (Mark 11 Nov). The tool row is right-aligned,
+    // so a gap after Deck controls slides both left; only when the row is on one line and there is room.
+    if (dc && dc.parentNode === tray) {
+      const bar = tray.parentNode.getBoundingClientRect(), pg = [...tray.parentNode.children].filter((c) => c !== tray && c.offsetParent).pop();
+      const cur = parseFloat(dc.style.marginRight) || 0, r = dc.getBoundingClientRect();
+      let want = Math.max(0, cur + (r.left + r.width / 2) - (bar.left + bar.width / 2));
+      const oneLine = !pg || Math.abs(tray.getBoundingClientRect().top - pg.getBoundingClientRect().top) < 20;
+      if (!oneLine) want = 0;
+      else if (pg) want = Math.min(want, cur + b.getBoundingClientRect().left - pg.getBoundingClientRect().right - 16);
+      want = Math.max(0, Math.round(want));
+      if (Math.abs(want - cur) > 1) dc.style.setProperty('margin-right', want + 'px', 'important');
+    }
     const t = sway === null ? (busy ? '… SWAY' : '– SWAY') : fmt(sway) + ' SWAY';
     if (b.dataset.t !== t) { b.dataset.t = t; b.innerHTML = '<b>◈</b> ' + t; }
     b.title = sway === null ? 'SWAY balance (click to read again)' : 'SWAY in this wallet: ' + sway.toLocaleString('en-GB', { maximumFractionDigits: 6 }) + ' – click to read again';
