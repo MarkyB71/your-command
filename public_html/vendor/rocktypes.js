@@ -22,14 +22,24 @@
 
   const CSS = `.rt-h{color:#c9d6e8;font-size:15px;font-weight:600;margin:4px 0 2px}
 .rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
-.rt-types{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;align-items:center}
-.rt-t{all:unset;cursor:pointer;box-sizing:border-box;min-width:64px;padding:8px 10px 6px;border-radius:10px;border:1px solid #2a3648;background:#0d1520;text-align:center;color:#c9d6e8;font-weight:600;font-size:15px}
-.rt-t:hover{border-color:${COL}}
-.rt-t.on{border-color:${COL};background:rgba(79,144,255,.18);box-shadow:0 0 12px -2px ${COL}}
-.rt-t.hit{border-color:#fff;box-shadow:0 0 12px -2px #fff}
-.rt-t .d{display:flex;gap:3px;justify-content:center;margin-top:5px}
-.rt-t .d i{width:7px;height:7px;border-radius:50%;opacity:.9}
-.rt-t small{display:block;font-size:10px;font-weight:400;color:${COL};margin-top:3px;min-height:12px}
+.rt-types{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;align-items:center}
+.rt-t{all:unset;cursor:pointer;box-sizing:border-box;width:76px;display:flex;flex-direction:column;align-items:center;color:#c9d6e8;font-weight:600;font-size:14px;text-align:center}
+.rt-t svg{display:block;width:70px;height:78px;overflow:visible;transition:filter .2s,transform .2s}
+.rt-t:hover svg{transform:translateY(-3px)}
+.rt-dome{fill:rgba(140,170,210,.06);stroke:rgba(160,185,215,.35);stroke-width:1.5}
+.rt-shine{fill:none;stroke:rgba(255,255,255,.35);stroke-width:2;stroke-linecap:round}
+.rt-base{fill:#2a3646}.rt-plate{fill:#121a26;stroke:#3a4658}
+.rt-lab{fill:#c9d6e8;font:600 12px system-ui,sans-serif;text-anchor:middle}
+.rt-rock{transform-origin:35px 36px}
+.rt-t.on .rt-dome{fill:rgba(79,144,255,.16);stroke:${COL}}
+.rt-t.on svg{filter:drop-shadow(0 0 8px ${COL})}
+.rt-t.on .rt-plate{stroke:${COL}}.rt-t.on .rt-lab{fill:#fff}
+.rt-t.on .rt-rock{animation:rtspin 14s linear infinite}
+.rt-t.hit .rt-dome{stroke:#fff;stroke-width:2.5}
+.rt-t.hit svg{filter:drop-shadow(0 0 8px rgba(255,255,255,.7))}
+@keyframes rtspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.rt-t.on .rt-rock{animation:none}}
+.rt-t small{display:block;font-size:10px;font-weight:400;color:${COL};margin-top:2px;min-height:12px}
 .rt-clr{all:unset;cursor:pointer;color:#8b9ab0;font-size:13px;padding:6px 10px;border:1px solid #2a3648;border-radius:8px}
 .rt-sum{color:#c9d6e8;font-size:14px;margin:0 0 10px}
 .rt-g{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;margin:0 0 6px;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 12%,transparent),transparent 70%)}
@@ -79,6 +89,29 @@
     return out;
   }
 
+  // a lumpy rock under a glass dome, with mineral flecks in the colours of the groups found on that type
+  function jar(t, i) {
+    let seed = 7 + i * 131;
+    const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+    const pts = [];
+    for (let k = 0; k < 11; k++) {
+      const a = (k / 11) * Math.PI * 2, r = 13 + rnd() * 6;
+      pts.push((35 + Math.cos(a) * r).toFixed(1) + ',' + (36 + Math.sin(a) * r * 0.85).toFixed(1));
+    }
+    const cols = GROUPS.filter((g) => g[2].some((p) => t.r.has(p))).map((g) => g[1]);
+    let fl = '';
+    for (let k = 0; k < 12; k++) {
+      const a = rnd() * Math.PI * 2, r = rnd() * 10;
+      fl += '<circle cx="' + (35 + Math.cos(a) * r).toFixed(1) + '" cy="' + (36 + Math.sin(a) * r * 0.8).toFixed(1) + '" r="' + (1.3 + rnd() * 1.3).toFixed(1) + '" fill="' + cols[k % cols.length] + '"/>';
+    }
+    return '<svg viewBox="0 0 70 78" aria-hidden="true"><defs><radialGradient id="rtg' + i + '" cx=".35" cy=".3"><stop offset="0" stop-color="#7d7268"/><stop offset="1" stop-color="#2e2924"/></radialGradient></defs>' +
+      '<path class="rt-dome" d="M8 58 V34 A27 27 0 0 1 62 34 V58 Z"/>' +
+      '<g class="rt-rock"><polygon points="' + pts.join(' ') + '" fill="url(#rtg' + i + ')" stroke="#1a1612"/>' + fl + '</g>' +
+      '<path class="rt-shine" d="M15 30 A21 21 0 0 1 27 14"/>' +
+      '<rect class="rt-base" x="4" y="57" width="62" height="5" rx="2"/><rect class="rt-plate" x="14" y="63" width="42" height="15" rx="3"/>' +
+      '<text class="rt-lab" x="35" y="74.5">' + t.n + '</text></svg>';
+  }
+
   function page(m) {
     css();
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, SPEC = Y.SPEC;
@@ -87,12 +120,11 @@
     const sel = types.filter((t) => S.sel.has(t.n));
     const has = (p) => sel.some((t) => t.r.has(p));
     let h = '<div class="rt-h">Asteroid types</div><p class="rt-note">Pick one or more types to light up the raw materials that can be mined there. Pick a raw material to see which types have it.</p><div class="rt-types">';
-    types.forEach((t) => {
+    types.forEach((t, i) => {
       const tip = my[t.n] ? 'Your rocks: ' + my[t.n].join(', ') : '';
       const hit = S.raw && t.r.has(S.raw);
-      h += '<button class="rt-t' + (S.sel.has(t.n) ? ' on' : '') + (hit ? ' hit' : '') + '" data-t="' + t.n + '" title="' + esc(tip) + '">' + t.n + '<span class="d">' +
-        GROUPS.filter((g) => g[2].some((p) => t.r.has(p))).map((g) => '<i style="background:' + g[1] + '"></i>').join('') +
-        '</span><small>' + (my[t.n] ? my[t.n].length + ' yours' : '') + '</small></button>';
+      h += '<button class="rt-t' + (S.sel.has(t.n) ? ' on' : '') + (hit ? ' hit' : '') + '" data-t="' + t.n + '" title="' + esc(t.n + '-type' + (tip ? ' – ' + tip : '')) + '">' + jar(t, i) +
+        '<small>' + (my[t.n] ? my[t.n].length + ' yours' : '') + '</small></button>';
     });
     if (S.sel.size || S.raw) h += '<button class="rt-clr" data-clr>Clear</button>';
     h += '</div>';
