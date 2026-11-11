@@ -1,44 +1,48 @@
 /* Rock types – Your Influence Command (Mark, 10 Nov 2026) – TEST ONLY on ?beta=1
    Science Lab page: which of the 22 raw materials can be mined on each asteroid type
    (C, Cm, Ci, Cs, Cms, Cis, S, Sm, Si, M, I). Data: app.js SPEC (same as the Supply chain page).
-   Rows are grouped like the game's extraction bonuses (Volatile, Organic, Metal, Rare Earth, Fissile).
-   The types of your own rocks are lit; click a type (or a raw material) to highlight it.
+   Layout (Mark, 11 Nov): type buttons on top (pick several), raw materials below in rows by group,
+   lit in the game's resource colours when found on the picked types. Click a raw = types that have it get a white ring.
    To go live: remove the BETA line here and in decks.js, add a CHANGELOG line and a Help page entry. */
 (function () {
   'use strict';
   const BETA = /[?&]beta=1\b/.test(location.search);
   if (!BETA) return;
 
-  const COL = '#4f90ff'; // Scientist blue (game theme) – the Science Lab colour
+  // Game colours (influence-client theme.js resources – same as the Resource map)
   const GROUPS = [
-    ['Volatile', [1, 2, 3, 4, 5, 6, 7, 8]],
-    ['Organic', [9, 10, 11]],
-    ['Metal', [12, 13, 14, 18, 19, 20, 21]],
-    ['Rare Earth', [16, 17]],
-    ['Fissile', [15, 22]],
+    ['Volatiles', '#5bc0f5', [1, 2, 3, 4, 5, 6, 7, 8]],
+    ['Organics', '#68d346', [9, 10, 11]],
+    ['Metals', '#f8852c', [12, 13, 14, 18, 19, 20, 21]],
+    ['Rare Earth', '#f63637', [16, 17]],
+    ['Fissiles', '#8a1aff', [15, 22]],
   ];
-  const S = { col: '', row: 0 };
+  const COL = '#4f90ff'; // Scientist blue – the Science Lab colour
+  const S = { sel: new Set(), raw: 0 };
 
-  const CSS = `.rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
-.rt-wrap{overflow-x:auto;background:#0d1520;border:1px solid #23324a;border-radius:10px}
-.rt{border-collapse:collapse;width:100%;font-size:14px}
-.rt th,.rt td{padding:6px 8px;text-align:center;border-bottom:1px solid #1a2433;white-space:nowrap}
-.rt th:first-child,.rt td:first-child{text-align:left;position:sticky;left:0;background:#0d1520;z-index:1}
-.rt thead th{color:#c9d6e8;font-weight:600;cursor:pointer;user-select:none}
-.rt thead th small{display:block;font-weight:400;font-size:11px;color:#8b9ab0}
-.rt .rt-g td{color:${COL};font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#0a111a;text-align:left}
-.rt .rt-g td:first-child{background:#0a111a}
-.rt tbody tr.rt-r{cursor:pointer}
-.rt .rt-y{color:${COL};font-size:16px}
-.rt .rt-n{color:#3a4658}
-.rt .rt-mine{background:rgba(79,144,255,.08)}
-.rt th.rt-mine{color:${COL}}
-.rt .rt-sel{background:rgba(79,144,255,.22)!important}
-.rt tr.rt-on td{background:rgba(79,144,255,.14)}
-.rt tr.rt-on td:first-child{background:#13233a}
-.rt td.rt-cnt{color:#8b9ab0}
-.rt-key{display:flex;gap:16px;flex-wrap:wrap;color:#8b9ab0;font-size:12px;margin:8px 2px 0}
-.rt-key b{color:${COL}}`;
+  const CSS = `.rt-h{color:#c9d6e8;font-size:15px;font-weight:600;margin:4px 0 2px}
+.rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
+.rt-types{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;align-items:center}
+.rt-t{all:unset;cursor:pointer;box-sizing:border-box;min-width:64px;padding:8px 10px 6px;border-radius:10px;border:1px solid #2a3648;background:#0d1520;text-align:center;color:#c9d6e8;font-weight:600;font-size:15px}
+.rt-t:hover{border-color:${COL}}
+.rt-t.on{border-color:${COL};background:rgba(79,144,255,.18);box-shadow:0 0 12px -2px ${COL}}
+.rt-t.hit{border-color:#fff;box-shadow:0 0 12px -2px #fff}
+.rt-t .d{display:flex;gap:3px;justify-content:center;margin-top:5px}
+.rt-t .d i{width:7px;height:7px;border-radius:50%;opacity:.9}
+.rt-t small{display:block;font-size:10px;font-weight:400;color:${COL};margin-top:3px;min-height:12px}
+.rt-clr{all:unset;cursor:pointer;color:#8b9ab0;font-size:13px;padding:6px 10px;border:1px solid #2a3648;border-radius:8px}
+.rt-sum{color:#c9d6e8;font-size:14px;margin:0 0 10px}
+.rt-g{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;margin:0 0 6px;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 12%,transparent),transparent 70%)}
+.rt-gn{color:color-mix(in srgb,var(--gc) 80%,#fff);font-weight:600;font-size:15px}
+.rt-raws{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.rt-r{all:unset;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid transparent;color:#5d6a7d;font-size:13px}
+.rt-r img{opacity:.35}
+.rt-r.yes{color:color-mix(in srgb,var(--gc) 75%,#fff);border-color:color-mix(in srgb,var(--gc) 70%,transparent);background:color-mix(in srgb,var(--gc) 10%,transparent)}
+.rt-r.yes img{opacity:1}
+.rt-r.all{color:#c9d6e8}
+.rt-r.all img{opacity:.9}
+.rt-r.pick{box-shadow:0 0 0 2px #fff inset}
+@media (max-width:700px){.rt-g{grid-template-columns:1fr}}`;
 
   function css() {
     if (document.getElementById('rt-css')) return;
@@ -48,7 +52,7 @@
     document.head.appendChild(st);
   }
 
-  // your rocks' types: asteroid box + owned/controlled rocks
+  // your rocks' types (owned / controlled rocks)
   function mine(Y) {
     const out = {};
     (Y.D && Y.D.owned || []).forEach((a) => {
@@ -62,37 +66,36 @@
   function page(m) {
     css();
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, SPEC = Y.SPEC;
-    const types = Object.keys(SPEC).map((k) => ({ k: +k, n: SPEC[k][0], r: new Set(SPEC[k][1]) }));
+    const types = Object.keys(SPEC).map((k) => ({ n: SPEC[k][0], r: new Set(SPEC[k][1]) }));
     const my = mine(Y);
-    let h = '<p class="rt-note">Which raw materials can be mined on each asteroid type. ' +
-      '<span style="color:' + COL + '">●</span> = found on that type. Your rocks\' types are lit. Click a type or a material to highlight it.</p>';
-    h += '<div class="rt-wrap"><table class="rt"><thead><tr><th>Raw material</th>';
+    const sel = types.filter((t) => S.sel.has(t.n));
+    const has = (p) => sel.some((t) => t.r.has(p));
+    let h = '<div class="rt-h">Asteroid types</div><p class="rt-note">Pick one or more types to light up the raw materials that can be mined there. Pick a raw material to see which types have it.</p><div class="rt-types">';
     types.forEach((t) => {
-      const c = (my[t.n] ? ' rt-mine' : '') + (S.col === t.n ? ' rt-sel' : '');
-      const tip = my[t.n] ? 'Your rocks: ' + my[t.n].join(', ') : 'None of your rocks';
-      h += '<th class="' + c.trim() + '" data-c="' + t.n + '" title="' + esc(tip) + '">' + t.n +
-        '<small>' + (my[t.n] ? my[t.n].length + ' yours' : '&nbsp;') + '</small></th>';
+      const tip = my[t.n] ? 'Your rocks: ' + my[t.n].join(', ') : '';
+      const hit = S.raw && t.r.has(S.raw);
+      h += '<button class="rt-t' + (S.sel.has(t.n) ? ' on' : '') + (hit ? ' hit' : '') + '" data-t="' + t.n + '" title="' + esc(tip) + '">' + t.n + '<span class="d">' +
+        GROUPS.filter((g) => g[2].some((p) => t.r.has(p))).map((g) => '<i style="background:' + g[1] + '"></i>').join('') +
+        '</span><small>' + (my[t.n] ? my[t.n].length + ' yours' : '') + '</small></button>';
     });
-    h += '<th title="How many types have it">Types</th></tr></thead><tbody>';
-    GROUPS.forEach(([g, ids]) => {
-      h += '<tr class="rt-g"><td colspan="' + (types.length + 2) + '">' + g + '</td></tr>';
-      ids.forEach((p) => {
-        const n = types.filter((t) => t.r.has(p)).length;
-        h += '<tr class="rt-r' + (S.row === p ? ' rt-on' : '') + '" data-r="' + p + '"><td>' + Y.ricon(p, 22) + esc(pn(p)) + '</td>';
-        types.forEach((t) => {
-          const y = t.r.has(p), c = (my[t.n] ? ' rt-mine' : '') + (S.col === t.n ? ' rt-sel' : '');
-          h += '<td class="' + (y ? 'rt-y' : 'rt-n') + c + '" title="' + esc(pn(p)) + (y ? ' – yes on ' : ' – not on ') + t.n + '">' + (y ? '●' : '·') + '</td>';
-        });
-        h += '<td class="rt-cnt">' + n + '</td></tr>';
+    if (S.sel.size || S.raw) h += '<button class="rt-clr" data-clr>Clear</button>';
+    h += '</div>';
+    const n = sel.length ? GROUPS.reduce((a, g) => a + g[2].filter(has).length, 0) : 0;
+    h += '<div class="rt-h">Raw materials</div><p class="rt-sum">' + (sel.length ? esc(sel.map((t) => t.n).join(' + ')) + ': <b>' + n + ' of 22</b> raw materials can be mined' : 'All 22 raw materials – pick a type above') + '</p>';
+    GROUPS.forEach(([g, c, ids]) => {
+      h += '<div class="rt-g" style="--gc:' + c + '"><div class="rt-gn">' + g + '</div><div class="rt-raws">';
+      ids.slice().sort((a, b) => pn(a).localeCompare(pn(b))).forEach((p) => {
+        const cl = sel.length ? (has(p) ? ' yes' : '') : ' all';
+        const on = types.filter((t) => t.r.has(p)).map((t) => t.n).join(', ');
+        h += '<button class="rt-r' + cl + (S.raw === p ? ' pick' : '') + '" data-r="' + p + '" title="' + esc(pn(p)) + ' – found on ' + on + '">' + Y.ricon(p, 22).replace('margin-right:8px', 'margin-right:0') + esc(pn(p)) + '</button>';
       });
+      h += '</div></div>';
     });
-    h += '<tr class="rt-g"><td>Total</td>';
-    types.forEach((t) => (h += '<td style="color:#c9d6e8">' + t.r.size + '</td>'));
-    h += '<td></td></tr></tbody></table></div>';
-    h += '<div class="rt-key"><span><b>Cms</b> and <b>Cis</b> hold the most (18 and 17)</span><span><b>I</b> holds volatiles only</span></div>';
     m.innerHTML = h;
-    m.querySelectorAll('th[data-c]').forEach((th) => th.addEventListener('click', () => { S.col = S.col === th.dataset.c ? '' : th.dataset.c; page(m); }));
-    m.querySelectorAll('tr[data-r]').forEach((tr) => tr.addEventListener('click', () => { S.row = S.row === +tr.dataset.r ? 0 : +tr.dataset.r; page(m); }));
+    m.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.t; S.sel.has(k) ? S.sel.delete(k) : S.sel.add(k); page(m); }));
+    m.querySelectorAll('[data-r]').forEach((b) => b.addEventListener('click', () => { S.raw = S.raw === +b.dataset.r ? 0 : +b.dataset.r; page(m); }));
+    const c = m.querySelector('[data-clr]');
+    if (c) c.addEventListener('click', () => { S.sel.clear(); S.raw = 0; page(m); });
   }
 
   // "Rock types" button in the Science Lab, after Resource map
