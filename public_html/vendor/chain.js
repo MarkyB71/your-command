@@ -119,9 +119,10 @@ const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},clo
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
-/* CAS (test, ?beta=1 – community request 11 Nov 2026): changing the recipe on one box changes every box for that same product in the chain.
-   Stored in S.choice as 'id:<item id>' so Back/Forward and resets carry it too. */
-const CAS=/[?&]beta=1/.test(location.search),chs=(key,id)=>{const v=CAS?S.choice['id:'+id]:undefined;return v!==undefined?v:S.choice[key]};
+/* CAS (LIVE 11 Nov 2026, tested on ?beta=1 – community request): changing the recipe on one box changes every box for that same product in the chain.
+   Stored in S.choice as 'id:<item id>' so Back/Forward and resets carry it too.
+   TO REVERT: set CAS=false (each box goes back to its own recipe choice). */
+const CAS=true,chs=(key,id)=>{const v=CAS?S.choice['id:'+id]:undefined;return v!==undefined?v:S.choice[key]};
 const inF=k=>!S.foc||k===S.foc||k.startsWith(S.foc+'/');
 function isOpen(key,d){if(S.foc){if(S.foc.startsWith(key+'/'))return true;d-=S.foc.split('/').length-1}return S.closed.has(key)?false:(S.opened.has(key)||S.all)?true:d<3}
 export function drawChain(m){
