@@ -1,4 +1,4 @@
-/* Rock types – Your Influence Command (Mark, 10 Nov 2026) – TEST ONLY on ?beta=1
+/* Spectral Type Raws (was Rock types) – Your Influence Command (Mark, 10 Nov 2026) – TEST ONLY on ?beta=1
    Science Lab page: which of the 22 raw materials can be mined on each asteroid type
    (C, Cm, Ci, Cs, Cms, Cis, S, Sm, Si, M, I). Data: app.js SPEC (same as the Supply chain page).
    Layout (Mark, 11 Nov): type buttons on top (pick several), raw materials below in rows by group,
@@ -98,12 +98,12 @@
     if (c) c.addEventListener('click', () => { S.sel.clear(); S.raw = 0; page(m); });
   }
 
-  // "Rock types" button in the Science Lab, after Resource map
+  // "Spectral type raws" button in the Science Lab, after Resource map
   const hook = () => {
     const after = document.getElementById('vLL') || document.getElementById('vI'), main = document.getElementById('main');
     if (!after || !main || document.getElementById('vRT')) return;
     const b = document.createElement('button');
-    b.id = 'vRT'; b.textContent = 'Rock types';
+    b.id = 'vRT'; b.textContent = 'Spectral type raws';
     after.after(b);
     b.addEventListener('click', () => {
       document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
