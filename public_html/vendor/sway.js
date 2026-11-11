@@ -7,7 +7,7 @@
   let wallet = '', sway = null, busy = false, last = 0;
 
   const st = document.createElement('style');
-  st.textContent = '#dktools #swbal{order:-2;background:#0e2933!important;color:#cccccc!important;border:1px solid #57d5ff!important;border-radius:8px!important;box-shadow:0 0 8px rgba(87,213,255,.2)!important;font-family:ui-monospace,Menlo,monospace!important;cursor:pointer}' +
+  st.textContent = '#dktools #swbal{order:-1!important;background:#0e2933!important;color:#cccccc!important;border:1px solid #57d5ff!important;border-radius:8px!important;box-shadow:0 0 8px rgba(87,213,255,.2)!important;font-family:ui-monospace,Menlo,monospace!important;cursor:pointer}' +
     '#dktools #swbal b{color:#57d5ff;font-weight:600}#dktools #swbal:hover,#dktools #swbal:focus-visible{box-shadow:0 0 14px rgba(87,213,255,.45)!important}';
   document.head.appendChild(st);
 
@@ -31,7 +31,8 @@
       b.type = 'button';
       b.onclick = (e) => { e.stopPropagation(); sway = null; draw(); load(true); };
     }
-    if (b.parentNode !== tray) tray.prepend(b); // order -2: just left of Deck controls (order -1) – Mark 11 Nov
+    const dc = document.getElementById('cl-dc'); // just left of Deck controls – Mark 11 Nov (same order, placed before it)
+    if (dc && dc.parentNode === tray) { if (b.nextElementSibling !== dc) tray.insertBefore(b, dc); } else if (b.parentNode !== tray) tray.prepend(b);
     const t = sway === null ? (busy ? '… SWAY' : '– SWAY') : fmt(sway) + ' SWAY';
     if (b.dataset.t !== t) { b.dataset.t = t; b.innerHTML = '<b>◈</b> ' + t; }
     b.title = sway === null ? 'SWAY balance (click to read again)' : 'SWAY in this wallet: ' + sway.toLocaleString('en-GB', { maximumFractionDigits: 6 }) + ' – click to read again';
