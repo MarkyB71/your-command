@@ -580,7 +580,7 @@
       { k: 'B', n: 'WB', id: 'store', name: 'Storage', role: 'Warehouse', col: '#ff8c00', ry: -5 },
       { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Production', col: '#b3855c', ry: -9 },
       { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Marketplace', col: '#57ff65', ry: -13 },
-      { k: 'A', id: 'sci', name: 'Science Lab', role: 'Standby · Discovery', col: '#4f90ff', ry: -17 });
+      { k: 'A', id: 'sci', name: 'Science Lab', role: 'Standby', col: '#4f90ff', ry: -17 });
   const PC_CSS = `
 .brs-mid{align-self:end;position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
 .brs:has(.brs-pc) .brs-floor{height:96px}
@@ -741,7 +741,7 @@
         '<button type="button" class="st" data-dk="' + d.k + '" data-deck="' + d.id + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
         ' style="--dc:' + d.col + ';--ry:' + d.ry + 'deg" title="Enter the ' + d.name + '"><span class="st-scr"><span class="st-h">' + APP.esc(d.name) +
         '<i class="st-led"></i></span><span class="st-r">' + d.role + ' station</span><span class="st-n">' + n[0] + '</span><span class="st-l">' + APP.esc(n[1]) +
-        '</span><span class="st-s">' + (warn ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) + (n[2] ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') +
+        '</span><span class="st-s">' + (warn ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) + (n[2] && !BLD ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') +
         '</span><span class="st-go">Enter deck ▸</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></button>'
       );
     };
