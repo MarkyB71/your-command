@@ -6,7 +6,14 @@
 // when you click. It never presses anything in the game.
 (() => {
   if (window.top !== window) return;
-  chrome.storage.sync.get({ chainLink: true }, o => { if (o.chainLink) start(); });
+  let on = true;
+  // Checks the switch live, so turning it on or off in Options works without a refresh.
+  chrome.storage.sync.get({ chainLink: true }, o => { on = o.chainLink !== false; start(); });
+  chrome.storage.onChanged.addListener((ch, area) => {
+    if (area !== 'sync' || !ch.chainLink) return;
+    on = ch.chainLink.newValue !== false;
+    if (!on) document.querySelectorAll('#yic-pc').forEach(b => b.remove());
+  });
 
   function start() {
     // Works on the page's text pieces (not whole elements), so labels like "Produced: <b>1 products</b>" still match.
@@ -47,6 +54,7 @@
     }
 
     function check() {
+      if (!on) return;
       const labels = texts(document.body).filter(n => /^process$/i.test(n.nodeValue.trim()));
       for (const label of labels) {
         const host = label.parentElement;

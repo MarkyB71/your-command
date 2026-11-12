@@ -433,12 +433,17 @@
     const raw = root.dataset.yicOpts;
     if (!raw) { if (++waited > 60) { clearInterval(go); note('options not found'); } return; }
     clearInterval(go);
-    let o = {}; try { o = JSON.parse(raw); } catch (e) {}
-    tagsOn = o.mapTags !== false; marketsOn = o.mapMarkets !== false;
-    if (!tagsOn && !marketsOn) { note('switched off in options'); return; }
-    TAGS.forEach(t => { const c = o['tagCol_' + t]; if (/^#[0-9a-f]{6}$/i.test(c || '')) COL[t] = c; });
+    // Re-reads the switches and colours every tick, so Options changes work without a refresh (0.6.7).
+    const readO = () => {
+      let o = {}; try { o = JSON.parse(root.dataset.yicOpts || '{}') || {}; } catch (e) {}
+      const was = tagsOn + '|' + marketsOn + '|' + TAGS.map(t => COL[t]).join();
+      tagsOn = o.mapTags !== false; marketsOn = o.mapMarkets !== false;
+      TAGS.forEach(t => { const c = o['tagCol_' + t]; if (/^#[0-9a-f]{6}$/i.test(c || '')) COL[t] = c; });
+      if (was !== tagsOn + '|' + marketsOn + '|' + TAGS.map(t => COL[t]).join()) dirty = true;
+    };
+    readO();
     listen();
-    const tick = () => { try { readAsteroids(); updateRings(); } catch (e) { if (rings) rings.visible = false; if (diamonds) diamonds.visible = false; note('paused – ' + e.message); } };
+    const tick = () => { readO(); if (!tagsOn && !marketsOn) { if (rings) rings.visible = false; if (diamonds) diamonds.visible = false; hideBox(); return; } try { readAsteroids(); updateRings(); } catch (e) { if (rings) rings.visible = false; if (diamonds) diamonds.visible = false; note('paused – ' + e.message); } };
     tick(); setInterval(tick, 2000);
     // keep the rings moving with the dots between ticks
     setInterval(() => { try { updateRings(); } catch (e) {} }, 500);

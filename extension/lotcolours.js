@@ -42,7 +42,8 @@
       // Wait for game.js to pass on your options; stop if this tweak is switched off.
       const raw = document.documentElement.dataset.yicOpts;
       if (!raw) return;
-      if (JSON.parse(raw).lotColours === false) { clearInterval(t); note('switched off in options'); return; }
+      // Off: keep waiting, so switching it ON in Options works without a refresh (switching OFF needs one – 0.6.7).
+      if (JSON.parse(raw).lotColours === false) { tries = 0; note('switched off in options'); return; }
       const s = [...stores()];
       if (!s.length) return;
       if (!s.some(x => x.assetSearch?.lotsMapped?.highlight?.field === 'category')) {

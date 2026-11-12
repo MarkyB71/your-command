@@ -191,6 +191,11 @@ try {
   await new Promise(r => setTimeout(r, 1500));
   const opts = await g2.evaluate(() => [document.documentElement.dataset.yicOpts, !!document.getElementById('yic-s')]);
   check(opts[0] && JSON.parse(opts[0]).sideButton === false && !opts[1], 'switching the S button off in options works', 'option not applied: ' + JSON.stringify(opts));
+  // 0.6.7: the game page that was ALREADY open follows the switch without a refresh – off, then back on.
+  const liveOff = await game.waitForFunction(() => !document.getElementById('yic-s'), null, { timeout: 4000 }).then(() => true, () => false);
+  await op.click('input[name=sideButton]');
+  const liveOn = await game.waitForFunction(() => !!document.getElementById('yic-s'), null, { timeout: 4000 }).then(() => true, () => false);
+  check(liveOff && liveOn, 'S button switches off and on in an open game tab (no refresh)', 'live switch: off ' + liveOff + ', on ' + liveOn);
   await op.click('input[name=sideButton]');
 
   check(!errs.length, 'no script errors anywhere', 'script errors:\n      ' + errs.join('\n      '));

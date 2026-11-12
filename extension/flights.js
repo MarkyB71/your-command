@@ -304,8 +304,6 @@
     const raw = root.dataset.yicOpts;
     if (!raw) { if (++waited > 60) { clearInterval(go); note('options not found'); } return; }
     clearInterval(go);
-    let o = {}; try { o = JSON.parse(raw); } catch (e) {}
-    if (o.mapFlights === false) { note('switched off in options'); return; }
-    start();
+    start(); // checks "mapFlights" on every tick, so switching it in Options works without a refresh (0.6.7)
   }, 1000);
 })();

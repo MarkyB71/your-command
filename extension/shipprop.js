@@ -132,9 +132,12 @@
     const raw = root.dataset.yicOpts;
     if (!raw) { if (++waited > 60) { clearInterval(go); note('options not found'); } return; }
     clearInterval(go);
-    let on = true; try { on = JSON.parse(raw).shipProp !== false; } catch (e) {}
-    if (!on) { note('switched off in options'); return; }
-    const tick = () => { try { refresh(); } catch (e) { note('paused – ' + e.message); } };
+    // Checks the switch every tick, so turning it on or off in Options works without a refresh (0.6.7).
+    const live = (k, d) => { try { const v = JSON.parse(root.dataset.yicOpts || '{}')[k]; return v === undefined ? d : v; } catch (e) { return d; } };
+    const tick = () => {
+      if (live('shipProp', true) === false) { document.querySelectorAll('.yic-prop').forEach(b => b.remove()); note('switched off in options'); return; }
+      try { refresh(); } catch (e) { note('paused – ' + e.message); }
+    };
     tick(); setInterval(tick, 5000);
   }, 1000);
 })();

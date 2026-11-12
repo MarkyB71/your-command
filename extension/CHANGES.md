@@ -5,6 +5,7 @@ Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.c
 
 ## 0.6.7 – coming soon
 - **SkippyChain button** (on by default – switch off in Options) – pick a process in the game's Refine / Manufacture / Bioreactor / Shipyard window and a gold "SkippyChain ↗" button appears beside PROCESS. Click it and your Command Deck tab opens The SkippyChain on that product – same recipe, amount from the runs you've set, on that rock.
+- **Settings switch straight away** – turning a game tweak on or off in Options or Deck controls now works without refreshing the game tab (S button, status dots, food and propellant bars, map tags, markets, ships in flight, hide used deposits, auto-pick sample, SkippyChain button). Lot colours is the one exception: switching it off takes effect the next time the game loads.
 
 ## 0.6.6 – 10 Nov 2026
 - **Safer friend / foe tags** – tags you set on the game's map are now checked before they're saved (proper wallet addresses, friendly / neutral / hostile only, up to 2,000 tags), the same checks the Command Deck already makes.

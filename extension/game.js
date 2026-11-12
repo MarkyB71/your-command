@@ -21,21 +21,24 @@
       for (const k in ch) opts[k] = ch[k].newValue;
       document.documentElement.dataset.yicOpts = JSON.stringify(opts);
     });
-    if (opts.sideButton) sideButton();
-    if (opts.hideUsedDeposits) hideUsed();
-    if (opts.autoSample) autoSample();
-    if (opts.mapTags !== false) tagBridge();
-    if (opts.mapMarkets !== false) marketBridge();
-    if (opts.mapFlights !== false) { flightBridge(); if (opts.mapTags === false) tagBridge(); }
+    // All helpers start, and each checks its switch (opts, kept up to date above) every time,
+    // so turning one on or off in Options / Deck controls works without a refresh (0.6.7).
+    sideButton(() => opts.sideButton !== false);
+    hideUsed(() => opts.hideUsedDeposits !== false);
+    autoSample(() => opts.autoSample !== false);
+    tagBridge();
+    marketBridge(() => opts.mapMarkets !== false);
+    flightBridge(() => opts.mapFlights !== false);
   });
 
-  function flightBridge() {
+  function flightBridge(on) {
     // Other players' ships in flight for the system map: asks the extension's background for the Command Deck's
     // belt-wide flight list (refreshed every 5 minutes) and passes it to flights.js in the page.
     let timer = null;
     const get = () => {
       if (!chrome.runtime || !chrome.runtime.id) { clearInterval(timer); return; }
       try {
+        if (!on()) return;
         chrome.runtime.sendMessage({ type: 'yic-flights' }, r => {
           if (chrome.runtime.lastError || !r || !r.ok) return;
           window.postMessage({ yic: 'flights', data: r.data, fetched: r.fetched }, location.origin);
@@ -43,9 +46,10 @@
       } catch (e) { clearInterval(timer); }
     };
     get(); timer = setInterval(get, 300000);
+    chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && ch.mapFlights && ch.mapFlights.newValue !== false) setTimeout(get, 50); });
   }
 
-  function marketBridge() {
+  function marketBridge(on) {
     // Open marketplaces for the system map: asks the extension's background for the Command Deck's
     // belt-wide market list (refreshed every 5 minutes) and passes it to maptags.js in the page.
     // After the extension is reloaded or updated, this old copy can't reach it any more –
@@ -54,6 +58,7 @@
     const get = () => {
       if (!chrome.runtime || !chrome.runtime.id) { clearInterval(timer); return; }
       try {
+        if (!on()) return;
         chrome.runtime.sendMessage({ type: 'yic-markets' }, r => {
           if (chrome.runtime.lastError || !r || !r.ok) return;
           window.postMessage({ yic: 'markets', data: r.data, fetched: r.fetched }, location.origin);
@@ -61,6 +66,7 @@
       } catch (e) { clearInterval(timer); }
     };
     get(); timer = setInterval(get, 300000);
+    chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && ch.mapMarkets && ch.mapMarkets.newValue !== false) setTimeout(get, 50); });
   }
 
   function tagBridge() {
@@ -84,7 +90,7 @@
     });
   }
 
-  function sideButton() {
+  function sideButton(on) {
     const icon = chrome.runtime.getURL('icons/icon48.png');
     const go = e => { e.preventDefault(); e.stopPropagation(); chrome.runtime.sendMessage({ type: 'yic-deck' }); };
     const TIP = "Skippy's Command Deck";
@@ -112,6 +118,7 @@
     root.querySelector('button').addEventListener('click', go);
 
     function dock() {
+      if (!on()) { if (s.isConnected) s.remove(); host.style.display = 'none'; return; }
       if (!host.isConnected) (document.body || document.documentElement).appendChild(host);
       // Only the side bar column itself: panels like Ship Inventory reuse the same tooltip id
       // on their own items, so keep just the right-most column of visible buttons.
@@ -148,13 +155,14 @@
     if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
   }
 
-  function hideUsed() {
+  function hideUsed(on) {
     // The picker always opens with "Show Used Deposits" ticked. Each time a new picker
     // appears, click that tick box once – the same as you doing it. Never touches it again,
     // so you can tick it back on yourself.
     const seen = new WeakSet();
     const X = "//*[text()[normalize-space()='Show Used Deposits']]";
     function check() {
+      if (!on()) return;
       const r = document.evaluate(X, document.body, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
       for (let i = 0; i < r.snapshotLength; i++) {
         const el = r.snapshotItem(i);
@@ -165,7 +173,7 @@
     }
     onChange(check);
   }
-  function autoSample() {
+  function autoSample(on) {
     // When the game's Extract Resource window opens and its Deposit box still says "Select",
     // open the sample list, click the top sample and press Done – the same clicks you'd make.
     // Once per window, so you can still change it. It never presses Extract.
@@ -196,7 +204,7 @@
       } finally { busy = false; }
     }
     function check() {
-      if (busy) return;
+      if (busy || !on()) return;
       const h = [...document.querySelectorAll('h1')].find(e => /^extract resource$/i.test(e.textContent.trim()));
       if (!h) return;
       let panel = h; while (panel.parentElement && !leaf(panel, /^deposit$/i)) panel = panel.parentElement;
