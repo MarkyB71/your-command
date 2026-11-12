@@ -119,6 +119,8 @@ const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},clo
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
+/* PCG (BETA only, 12 Nov 2026): "SkippyChain ↗" from the game (extension 0.6.7). To go live: PCG=true. */
+const PCG=/[?&]beta=1/.test(location.search);
 /* CAS (LIVE 11 Nov 2026, tested on ?beta=1 – community request): changing the recipe on one box changes every box for that same product in the chain.
    Stored in S.choice as 'id:<item id>' so Back/Forward and resets carry it too.
    TO REVERT: set CAS=false (each box goes back to its own recipe choice). */
@@ -133,7 +135,7 @@ export function drawChain(m){
     if(pp&&N[pp]){S.mode='from';S.prod=pp;if(pp>=1000)S.amt=1}
     if(pa&&window.YIC){const i=(window.YIC.asts||[]).findIndex(x=>x.name===pa),s0=document.getElementById('ast');if(i>=0&&s0){s0.value=String(i)}}
     /* from the game (extension 0.6.7 "SkippyChain ↗" button, no Command Deck tab open): ?pcn=<process name>&pcr=<runs> */
-    const pn=q.get('pcn');if(pn)window.__pcGo={n:pn,r:+q.get('pcr')||1};
+    const pn=PCG&&q.get('pcn');if(pn)window.__pcGo={n:pn,r:+q.get('pcr')||1};
     if(pp||pa||pn){q.delete('pcp');q.delete('pca');q.delete('pcn');q.delete('pcr');const qs=q.toString();history.replaceState(history.state,'',location.pathname+(qs?'?'+qs:'')+location.hash)}}catch(e){}}
   /* a game process (Manufacture Goods / Refine / Bioreactor window): open its main product, amount = runs × output, on that recipe */
   if(window.__pcGo){const g=window.__pcGo;window.__pcGo=null;const p=P.find(x=>x.name===g.n);
@@ -349,7 +351,7 @@ export function drawChain(m){
   document.addEventListener('click',e=>{const b=document.getElementById('vH'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700); /* keeps the button in place if the header is rebuilt on refresh */
   /* "SkippyChain ↗" in the game (extension 0.6.7): the extension posts the process, runs and rock here, into this open Command Deck tab */
-  addEventListener('message',e=>{const d=e.data;if(e.source!==window||e.origin!==location.origin||!d||d.type!=='yic-chain'||typeof d.n!=='string'||d.n.length>120)return;
+  addEventListener('message',e=>{const d=e.data;if(!PCG||e.source!==window||e.origin!==location.origin||!d||d.type!=='yic-chain'||typeof d.n!=='string'||d.n.length>120)return;
     window.__pcGo={n:d.n,r:+d.r||1};
     if(typeof d.a==='string'&&window.YIC){const i=(window.YIC.asts||[]).findIndex(x=>x.name===d.a),s0=document.getElementById('ast');if(i>=0&&s0)s0.value=String(i)}
     const go=(k=0)=>{const b=document.getElementById('vH');if(b){b.click();scrollTo(0,0)}else if(k<40)setTimeout(()=>go(k+1),250)};go()});
