@@ -14,7 +14,10 @@
   const dot = s => '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + STATE[s][0] +
     ';margin-right:7px;vertical-align:middle"></span>' + STATE[s][1];
 
-  function drawStatus(m) {
+  // types = which building types to list; label = what to call them (Mining status: extractors only – ?beta=1, Mark 12 Nov)
+  function drawStatus(m, types, label) {
+    types = types || PRODUCTION_TYPES;
+    label = label || 'production buildings';
     const Y = window.YIC, D = Y.D, esc = Y.esc, pn = Y.pn, fmt = Y.pfmt, BT = Y.BT, PROCN = Y.PROCN;
     const ai = document.querySelector('#ast').value;
     const an = ai === '' ? null : Y.asts[+ai].name;
@@ -33,6 +36,7 @@
       if (an && a !== an) return;
       if (st === 2) {   // being built: one row with its construction finish time
         const bt2 = b.Building.buildingType, f = b.Building.finishTime || 0;
+        if (types !== PRODUCTION_TYPES && !types.includes(bt2)) return;
         const nm2 = (b.Name && b.Name.name) || ((BT[bt2] || 'Building') + ' #' + b.id);
         const cr2 = (D.crewN || {})[b.Control && b.Control.controller && b.Control.controller.id] || '';
         const s2 = f && f <= now ? 'built' : 'build';
@@ -49,7 +53,7 @@
       const crew = (D.crewN || {})[b.Control && b.Control.controller && b.Control.controller.id] || '';
       const g = groups[a] = groups[a] || { prod: [], other: {} };
 
-      if (!PRODUCTION_TYPES.includes(bt)) { g.other[BT[bt]] = (g.other[BT[bt]] || 0) + 1; return; }
+      if (!types.includes(bt)) { if (types === PRODUCTION_TYPES || !PRODUCTION_TYPES.includes(bt)) g.other[BT[bt]] = (g.other[BT[bt]] || 0) + 1; return; }
 
       // Each extractor / processor / dry dock is one job
       const jobs = [];
@@ -81,7 +85,7 @@
       g.prod.sort((x, y) => RANK[x.s] - RANK[y.s] || x.type.localeCompare(y.type) || x.fin - y.fin || x.name.localeCompare(y.name));
       const n = k => g.prod.filter(x => x.s === k).length;
 
-      h += '<h2>' + esc(a) + '</h2><div class="note" style="padding:0 0 10px">' + g.prod.length + ' production buildings · ' +
+      h += '<h2>' + esc(a) + '</h2><div class="note" style="padding:0 0 10px">' + g.prod.length + ' ' + label + ' · ' +
         '<b style="color:#4cd04c">' + n('run') + ' working</b> · <b style="color:#ff7a7a">' + n('idle') + ' idle</b>' +
         (n('done') ? ' · <b style="color:#fab219">' + n('done') + ' finished, waiting to collect</b>' : '') +
         (n('build') + n('built') ? ' · <b style="color:#36a7cd">' + (n('build') + n('built')) + ' being built</b>' : '') + '</div>';
@@ -112,6 +116,29 @@
         : '<b data-fin="' + j.fin + '">' + Y.tLeft(j.fin, now) + '</b>') : '').join('<br>') + '</td></tr>';
   }
 
+  // Decks by crew + building (?beta=1 test): Engineering's Status leaves out extractors – they have their own
+  // "Extractor status" page on the Mining deck.
+  const BLD = /[?&]beta=1\b/.test(location.search);
   window.PAGES = window.PAGES || {};
-  window.PAGES.T = drawStatus;
+  window.PAGES.T = BLD ? (m) => drawStatus(m, [3, 4, 5, 6]) : drawStatus;
+  if (BLD) {
+    const hook = () => {
+      const after = document.getElementById('vE'), main = document.getElementById('main');
+      if (!after || !main || document.getElementById('vXS')) return;
+      const b = document.createElement('button');
+      b.id = 'vXS'; b.textContent = 'Extractor status';
+      after.after(b);
+      b.addEventListener('click', () => {
+        document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
+        try { window.YIC.view = 'M'; } catch (e) {} // add-on page – app.js leaves #main alone
+        b.className = 'on';
+        drawStatus(main, [2], 'extractors');
+      });
+    };
+    document.addEventListener('click', (e) => {
+      const b = document.getElementById('vXS'), t = e.target.closest && e.target.closest('button[id^="v"]');
+      if (b && t && t !== b) b.className = '';
+    }, true);
+    setInterval(hook, 700);
+  }
 })();
