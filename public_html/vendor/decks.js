@@ -77,7 +77,7 @@ function wNameBox(pen) {
     // colour = its main building. Storage joins the Trade Deck (Merchant: Marketplace + Warehouse).
     DECKS.splice(1, DECKS.length - 1,
       { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#ffff00', bld: 'Habitat', pages: ['C', 'Q'] },
-      { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#19d9ff', bld: 'Spaceport', pages: ['S', 'R', 'J'] },
+      { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', bld: 'Spaceport', pages: ['S', 'R', 'J'] },
       { id: 'mine', name: 'Mining', ico: '⛏', col: '#d9352b', bld: 'Extractor', pages: ['X', 'F', 'I', 'E'] },
       { id: 'eng', name: 'Engineering', ico: '🏭', col: '#b3855c', bld: 'Refinery · Factory · Shipyard', pages: ['P', 'U', 'D', 'T'] },
       { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#0a9900', bld: 'Bioreactor', pages: ['A', 'RT'] },
