@@ -578,9 +578,9 @@
       { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Habitat', col: '#ffff00', ry: 15 },
       { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Spaceport', col: '#19d9ff', ry: 11 },
       { k: 'X', n: 'MX', id: 'mine', name: 'Mining', role: 'Extractor', col: '#d9352b', ry: 7 },
-      { k: 'B', n: 'WB', id: 'store', name: 'Storage', role: 'Warehouse', col: '#ff8c00', ry: -5 },
-      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Production', col: '#b3855c', ry: -9 },
-      { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Marketplace', col: '#57ff65', ry: -13 },
+      { k: 'B', n: 'WB', id: 'store', name: 'Storage', role: 'Warehouse', col: '#ff8c00', ry: -7 },
+      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Production', col: '#b3855c', ry: -11 },
+      { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Marketplace', col: '#57ff65', ry: -15 },
       { k: 'A', id: 'sci', name: 'Science Lab', role: 'Standby', col: '#4f90ff', ry: -17 });
   const PC_CSS = `
 .brs-mid{align-self:end;position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
