@@ -577,7 +577,7 @@
       { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'All crews', col: '#ffff00', ry: 15, dots: [['#ffff00'], 'Habitat'] },
       { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Pilot', col: '#9a6bff', ry: 11, dots: [['#19d9ff'], 'Spaceport'] },
       { k: 'X', n: 'MX', id: 'mine', name: 'Mining', role: 'Miner', col: '#ff8c1a', ry: 7, dots: [['#d9352b'], 'Extractor'] },
-      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Engineer', col: '#b3855c', ry: -7, dots: [['#cc3777', '#b3855c', '#4848b3'], 'Refinery · Factory · Shipyard'] },
+      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Engineer', col: '#e8645a', ry: -7, dots: [['#cc3777', '#b3855c', '#4848b3'], 'Refinery · Factory · Shipyard'] },
       { k: 'A', id: 'sci', name: 'Science Lab', role: 'Scientist', col: '#0a9900', ry: -11, dots: [['#0a9900'], 'Bioreactor'] },
       { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Merchant', col: '#57ff65', ry: -15, dots: [['#57ff65', '#ff8c00'], 'Marketplace · Warehouse'] });
   const PC_CSS = `
