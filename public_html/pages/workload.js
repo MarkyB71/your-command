@@ -570,18 +570,16 @@
   // The SkippyChain gets its own gold console in front of the captain's chair (Mark, 29 Oct). Beta test.
   Object.assign(DECKS[3], { k: 'P', alt: '' });
   // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1 (same flag as vendor/decks.js).
-  // Six stations, three each side so the chair stays central (Mark). Science (standby for Discovery)
-  // keeps its deck tab but has no Bridge station for now.
+  // Six stations, three each side so the chair stays central: one per crew class + its buildings (Mark).
   const BLD = /[?&]beta=1\b/.test(location.search);
   if (BLD)
     DECKS.splice(0, DECKS.length,
-      { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Habitat', col: '#ffff00', ry: 15 },
-      { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Spaceport', col: '#19d9ff', ry: 11 },
-      { k: 'X', n: 'MX', id: 'mine', name: 'Mining', role: 'Extractor', col: '#d9352b', ry: 7 },
-      { k: 'B', n: 'WB', id: 'store', name: 'Storage', role: 'Warehouse', col: '#ff8c00', ry: -7 },
-      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Production', col: '#b3855c', ry: -11 },
-      { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Marketplace', col: '#57ff65', ry: -15 },
-      { k: 'A', id: 'sci', name: 'Science Lab', role: 'Standby', col: '#4f90ff', ry: -17 });
+      { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'All crews', col: '#ffff00', ry: 15, dots: [['#ffff00'], 'Habitat'] },
+      { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Pilot', col: '#19d9ff', ry: 11, dots: [['#19d9ff'], 'Spaceport'] },
+      { k: 'X', n: 'MX', id: 'mine', name: 'Mining', role: 'Miner', col: '#d9352b', ry: 7, dots: [['#d9352b'], 'Extractor'] },
+      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Engineer', col: '#b3855c', ry: -7, dots: [['#cc3777', '#b3855c', '#4848b3'], 'Refinery · Factory · Shipyard'] },
+      { k: 'A', id: 'sci', name: 'Science Lab', role: 'Scientist', col: '#0a9900', ry: -11, dots: [['#0a9900'], 'Bioreactor'] },
+      { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Merchant', col: '#57ff65', ry: -15, dots: [['#57ff65', '#ff8c00'], 'Marketplace · Warehouse'] });
   const PC_CSS = `
 .brs-mid{align-self:end;position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
 .brs:has(.brs-pc) .brs-floor{height:96px}
@@ -741,9 +739,9 @@
       return (
         '<button type="button" class="st" data-dk="' + d.k + '" data-deck="' + d.id + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
         ' style="--dc:' + d.col + ';--ry:' + d.ry + 'deg" title="Enter the ' + d.name + '"><span class="st-scr"><span class="st-h">' + APP.esc(d.name) +
-        '<i class="st-led"></i></span><span class="st-r">' + d.role + ' station</span><span class="st-n">' + n[0] + '</span><span class="st-l">' + APP.esc(n[1]) +
+        '<i class="st-led"></i></span><span class="st-r">' + d.role + (BLD ? '' : ' station') + '</span><span class="st-n">' + n[0] + '</span><span class="st-l">' + APP.esc(n[1]) +
         '</span><span class="st-s">' + (warn ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) + (n[2] && !BLD ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') +
-        '</span><span class="st-go">Enter deck ▸</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></button>'
+        '</span>' + (d.dots ? '<span class="st-dots">' + d.dots[0].map((c) => '<i style="background:' + c + '"></i>').join('') + '<em>' + d.dots[1] + '</em></span>' : '') + '<span class="st-go">Enter deck ▸</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></button>'
       );
     };
     br.innerHTML =
@@ -752,7 +750,7 @@
       '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<div class="brs-mid">' + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>🔗 SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' +
       station(DECKS[3]) + station(DECKS[4]) +
-      (BLD ? station(DECKS[5]) :
+      (BLD ? station(DECKS[5]) + '<style>.st-dots{display:flex;align-items:center;gap:4px;margin-top:6px}.st-dots i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 5px rgba(255,255,255,.25)}.st-dots em{font:normal 11px/1.2 system-ui,sans-serif;color:#8b9ab0;margin-left:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>' :
       // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
       '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>') +
       '</div><div class="brs-floor"></div>';

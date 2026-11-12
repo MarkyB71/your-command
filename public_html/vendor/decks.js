@@ -73,14 +73,15 @@ function wNameBox(pen) {
   // Building Categories (same table as the extension's lotcolours.js). Old layout stays for everyone else.
   const BLD = /[?&]beta=1\b/.test(location.search);
   if (BLD) {
+    // Each deck = one crew class + the buildings it works in (Mark, 12 Nov 2026, 2nd try);
+    // colour = its main building. Storage joins the Trade Deck (Merchant: Marketplace + Warehouse).
     DECKS.splice(1, DECKS.length - 1,
       { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#ffff00', bld: 'Habitat', pages: ['C', 'Q'] },
       { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#19d9ff', bld: 'Spaceport', pages: ['S', 'R', 'J'] },
       { id: 'mine', name: 'Mining', ico: '⛏', col: '#d9352b', bld: 'Extractor', pages: ['X', 'F', 'I', 'E'] },
-      { id: 'store', name: 'Storage', ico: '📦', col: '#ff8c00', bld: 'Warehouse', pages: ['B', 'V', 'L', 'LL'] },
-      { id: 'eng', name: 'Engineering', ico: '🏭', col: '#b3855c', bld: 'Refinery · Factory · Bioreactor · Shipyard', pages: ['P', 'U', 'D', 'T'] },
-      { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace', pages: ['K', 'Y', 'M', 'W', 'O'] },
-      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'standby for Discovery', pages: ['A', 'RT'] });
+      { id: 'eng', name: 'Engineering', ico: '🏭', col: '#b3855c', bld: 'Refinery · Factory · Shipyard', pages: ['P', 'U', 'D', 'T'] },
+      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#0a9900', bld: 'Bioreactor', pages: ['A', 'RT'] },
+      { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace · Warehouse', pages: ['K', 'Y', 'M', 'W', 'O', 'B', 'V', 'L', 'LL'] });
   }
   window.YICDECKLIST = DECKS;
   const HUBTAB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
