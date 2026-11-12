@@ -80,7 +80,7 @@ function wNameBox(pen) {
       { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', bld: 'Spaceport', pages: ['S', 'R', 'J'] },
       { id: 'mine', name: 'Mining', ico: '⛏', col: '#ff8c1a', bld: 'Extractor', pages: ['X', 'F', 'I', 'E'] },
       { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', bld: 'Refinery · Factory · Shipyard', pages: ['P', 'U', 'D', 'T'] },
-      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#0a9900', bld: 'Bioreactor', pages: ['A', 'RT'] },
+      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'Bioreactor', pages: ['A', 'RT'] },
       { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace · Warehouse', pages: ['K', 'Y', 'M', 'W', 'O', 'B', 'V', 'L', 'LL'] });
   }
   window.YICDECKLIST = DECKS;
