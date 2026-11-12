@@ -10,6 +10,18 @@ let last = 0;
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (msg && (msg.type === 'yic-markets' || msg.type === 'yic-flights')) return; // answered by the listeners below
+  // "SkippyChain ↗" button in the game's process window (chainlink.js): open it on the Command Deck.
+  if (msg && msg.type === 'yic-chain' && sender.tab && sender.origin === GAME) {
+    const n = typeof msg.n === 'string' ? msg.n.trim() : '', a = typeof msg.a === 'string' ? msg.a.trim() : '';
+    const r = Math.round(+msg.r);
+    if (!/^[\w ,.()'&/:+-]{2,120}$/.test(n) || !(r >= 1 && r <= 1e7) || !/^[\w ,.()'&/:+#-]{0,60}$/.test(a)) {
+      reply({ ok: false, error: 'bad request' }); return;
+    }
+    const now = Date.now();
+    if (now - last < 700) { reply({ ok: false, error: 'too fast' }); return; }
+    last = now;
+    openChain(n, r, a).then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
+  }
   // "Command Deck" button on the game page: jump back to the site.
   if (msg && msg.type === 'yic-deck' && sender.tab && sender.origin === GAME) {
     goDeck().then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
@@ -45,6 +57,24 @@ async function openInGame(path) {
     args: [path]
   });
   return { ok: true, mode: 'same-tab' };
+}
+
+// Opens a process in The SkippyChain: in the open Command Deck tab (no reload), or a new tab if none.
+async function openChain(n, r, a) {
+  const tabs = await chrome.tabs.query({ url: SITE + '/*' });
+  if (!tabs.length) {
+    const q = new URLSearchParams({ pcn: n, pcr: String(r) }); if (a) q.set('pca', a);
+    await chrome.tabs.create({ url: SITE + '/?' + q.toString() + '#vH' }); return;
+  }
+  const t = tabs.find(x => x.active) || tabs[0];
+  await chrome.tabs.update(t.id, { active: true });
+  await chrome.windows.update(t.windowId, { focused: true });
+  await chrome.scripting.executeScript({
+    target: { tabId: t.id },
+    world: 'MAIN',
+    func: (n, r, a) => window.postMessage({ type: 'yic-chain', n, r, a }, location.origin),
+    args: [n, r, a]
+  });
 }
 
 // Toolbar icon: jump back to the Command Deck tab (or open it if none).

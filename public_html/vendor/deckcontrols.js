@@ -57,6 +57,7 @@
     ['lotColours', 'Keep lot colours on', 'Switches on Building Categories colours each time the game loads.'],
     ['hideUsedDeposits', 'Hide used deposits', 'Only untouched core samples show when you pick one to extract from.'],
     ['autoSample', 'Auto-pick core sample', 'The top sample is picked for you. You still press Extract yourself.'],
+    ['chainLink', 'SkippyChain button', 'A gold "SkippyChain ↗" button in the game\'s process window opens that product in The SkippyChain here.'],
     ['sideButton', 'Command Deck button in the game', "The crowned S at the bottom of the game's side bar."],
     ['System map'],
     ['mapTags', 'Friend / foe tags', "Click an asteroid on the belt map to tag its owner. All of that owner's asteroids get a coloured ring.", true],
