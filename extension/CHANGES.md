@@ -6,7 +6,7 @@ Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.c
 ## 0.6.7 – coming soon
 - **SkippyChain button** (on by default – switch off in Options) – pick a process in the game's Refine / Manufacture / Bioreactor / Shipyard window and a gold "SkippyChain ↗" button appears beside PROCESS. Click it and your Command Deck tab opens The SkippyChain on that product – same recipe, amount from the runs you've set, on that rock.
 
-## 0.6.6 – coming soon
+## 0.6.6 – 10 Nov 2026
 - **Safer friend / foe tags** – tags you set on the game's map are now checked before they're saved (proper wallet addresses, friendly / neutral / hostile only, up to 2,000 tags), the same checks the Command Deck already makes.
 
 ## 0.6.5 – 6 Nov 2026
