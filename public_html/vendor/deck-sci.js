@@ -135,4 +135,7 @@ body.dk-sci #main h2,body.dk-sci #main th{color:#b0cdff}
 
   window.YICDECKHERO = window.YICDECKHERO || {};
   window.YICDECKHERO.sci = hero;
+  // Mining deck (?beta=1 test, 12 Nov 2026): borrows the specimen rack (rocks + untouched core samples)
+  // as a stand-in viewscreen until it gets its own piece.
+  window.YICDECKHERO.mine = (el) => { el.dataset.deck = 'sci'; return hero(el); };
 })();
