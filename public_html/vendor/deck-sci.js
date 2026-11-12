@@ -62,7 +62,7 @@ body.dk-sci #main h2,body.dk-sci #main th{color:#b0cdff}
     return list;
   }
 
-  function hero(el) {
+  function hero(el, mine) {
     addCss();
     const Y = window.YIC;
     if (!Y || !Y.D) return;
@@ -80,14 +80,14 @@ body.dk-sci #main h2,body.dk-sci #main th{color:#b0cdff}
       const scanned = list.filter((x) => x.scan).length;
       const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : null;
       el.innerHTML =
-        '<div class="sl-plate">SCIENCE LAB</div>' +
+        '<div class="sl-plate">' + (mine ? 'MINING' : 'SCIENCE LAB') + '</div>' +
         '<div class="sl-read"><b>' + list.length + '</b> rocks · <b>' + scanned + '</b> scanned' +
         (total != null ? ' · <b>' + total.toLocaleString() + '</b> untouched samples' : '') + '</div>' +
         '<div class="sl-hint">Click a tube to pick that rock</div>' +
         '<div class="sl-row">' +
         list.map((x, n) => {
           const on = x.i >= 0 && String(x.i) === sel;
-          const led = x.scan == null ? '#5b6677' : x.scan ? COL : '#ffab3d';
+          const led = x.scan == null ? '#5b6677' : x.scan ? (mine ? '#ff8c1a' : COL) : (mine ? '#ff564d' : '#ffab3d');
           const sm = counts ? (counts[x.name] || 0) : null;
           return '<button class="sl-t' + (on ? ' on' : '') + '" data-i="' + x.i + '" title="' + esc(x.name) +
             (x.scan == null ? '' : x.scan ? ' – scanned' : ' – not scanned yet') + (x.i < 0 ? ' (nothing of yours here yet)' : '') + '">' +
@@ -137,5 +137,29 @@ body.dk-sci #main h2,body.dk-sci #main th{color:#b0cdff}
   window.YICDECKHERO.sci = hero;
   // Mining deck (?beta=1 test, 12 Nov 2026): borrows the specimen rack (rocks + untouched core samples)
   // as a stand-in viewscreen until it gets its own piece.
-  window.YICDECKHERO.mine = (el) => { el.dataset.deck = 'sci'; return hero(el); };
+  // Now in Miner orange with a MINING plate (Mark, 12 Nov).
+  const MCSS = `
+#deckroom #deckhero.ml{background:radial-gradient(ellipse at 50% 0,rgba(255,140,26,.12),rgba(0,0,0,0) 60%),linear-gradient(180deg,#2a1a0c,#120b05)!important}
+#deckhero.ml .sl-plate{color:#ffc890;text-shadow:0 0 8px rgba(255,140,26,.8);background:#120b05}
+#deckhero.ml .sl-read{color:#ffc890}
+#deckhero.ml .sl-glass{border-color:rgba(255,200,144,.35)}
+#deckhero.ml .sl-liq{background:linear-gradient(180deg,rgba(255,140,26,.10),rgba(255,140,26,.35));border-top-color:rgba(255,200,144,.55)}
+#deckhero.ml .sl-bub{background:rgba(255,200,144,.6)}
+#deckhero.ml .sl-t:hover .sl-glass,#deckhero.ml .sl-t:focus-visible .sl-glass{border-color:#ff8c1a;box-shadow:0 0 16px -2px #ff8c1a}
+#deckhero.ml .sl-t.on .sl-glass{border-color:#ff8c1a;box-shadow:0 0 22px 0 #ff8c1a}
+#deckhero.ml .sl-t.on .sl-cap{background:#ff8c1a}
+#deckhero.ml .sl-t.on .sl-lb{color:#ff8c1a}
+#deckhero.ml .sl-sp{border-color:rgba(255,140,26,.45);color:#ffc890}
+#deckhero.ml .sl-shelf{background:linear-gradient(180deg,#2a1a0c,#120b05);border-top-color:#ff8c1a;box-shadow:0 -2px 14px -2px #ff8c1a}`;
+  window.YICDECKHERO.mine = (el) => {
+    if (!document.getElementById('ml-css')) {
+      const st = document.createElement('style');
+      st.id = 'ml-css';
+      st.textContent = MCSS;
+      document.head.appendChild(st);
+    }
+    el.dataset.deck = 'sci';
+    el.classList.add('ml');
+    return hero(el, true);
+  };
 })();
