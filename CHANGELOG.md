@@ -2,7 +2,7 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
-## 12 Nov 2026 – (beta only) The SkippyChain can now be opened from the game: with extension 0.6.7 (coming soon), a gold "SkippyChain ↗" button in the game's process window opens that product here – same recipe, amount from the runs set in the game, on that rock. Nothing changes on the site until the extension is updated.
+## 12 Nov 2026 – The SkippyChain can now be opened from the game: with extension 0.6.7, a gold "SkippyChain ↗" button in the game's process window opens that product here – same recipe, amount from the runs set in the game, on that rock.
 
 ## 11 Nov 2026 – The SkippyChain: change how something is made on one card and every card for that same product in the chain changes too (e.g. Iron from Olivine instead of Taenite). Community request. To undo: set CAS=false in vendor/chain.js. Help page updated.
 

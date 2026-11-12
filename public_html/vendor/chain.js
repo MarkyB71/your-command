@@ -119,8 +119,8 @@ const FS=[],cap=()=>({mode:S.mode,prod:S.prod,amt:S.amt,choice:{...S.choice},clo
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
-/* PCG (BETA only, 12 Nov 2026): "SkippyChain ↗" from the game (extension 0.6.7). To go live: PCG=true. */
-const PCG=/[?&]beta=1/.test(location.search);
+/* PCG (LIVE 12 Nov 2026, tested on ?beta=1): "SkippyChain ↗" from the game (extension 0.6.7). To switch off: PCG=false. */
+const PCG=true;
 /* CAS (LIVE 11 Nov 2026, tested on ?beta=1 – community request): changing the recipe on one box changes every box for that same product in the chain.
    Stored in S.choice as 'id:<item id>' so Back/Forward and resets carry it too.
    TO REVERT: set CAS=false (each box goes back to its own recipe choice). */
