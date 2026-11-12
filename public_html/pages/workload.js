@@ -569,6 +569,18 @@
   ];
   // The SkippyChain gets its own gold console in front of the captain's chair (Mark, 29 Oct). Beta test.
   Object.assign(DECKS[3], { k: 'P', alt: '' });
+  // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1 (same flag as vendor/decks.js).
+  // Seven stations: three left, four right; Science sits on standby where Weapons was.
+  const BLD = /[?&]beta=1\b/.test(location.search);
+  if (BLD)
+    DECKS.splice(0, DECKS.length,
+      { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'Habitat', col: '#ffff00', ry: 15 },
+      { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Spaceport', col: '#19d9ff', ry: 11 },
+      { k: 'X', n: 'MX', id: 'mine', name: 'Mining', role: 'Extractor', col: '#d9352b', ry: 7 },
+      { k: 'B', n: 'WB', id: 'store', name: 'Storage', role: 'Warehouse', col: '#ff8c00', ry: -5 },
+      { k: 'P', n: 'H', id: 'eng', name: 'Engineering', role: 'Production', col: '#b3855c', ry: -9 },
+      { k: 'K', id: 'trade', name: 'Trade Deck', role: 'Marketplace', col: '#57ff65', ry: -13 },
+      { k: 'A', id: 'sci', name: 'Science Lab', role: 'Standby · Discovery', col: '#4f90ff', ry: -17 });
   const PC_CSS = `
 .brs-mid{align-self:end;position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
 .brs:has(.brs-pc) .brs-floor{height:96px}
@@ -664,9 +676,19 @@
       hungry = crews.filter((c) => c.food != null && c.food < 0.5).length;
     let run = 0,
       ready = 0,
-      idle = 0;
+      idle = 0,
+      xRun = 0,
+      xIdle = 0,
+      wh = 0;
     (D.allB || []).forEach((b) => {
       const B = b.Building || {};
+      if (B.status === 3 && B.buildingType === 1) wh++;
+      // beta: extractors get their own Mining station
+      if (BLD && B.status === 3 && B.buildingType === 2) {
+        const busy = (b.Extractors || []).some((x) => x.status === 1);
+        if (busy) xRun++; else xIdle++;
+        return;
+      }
       if (B.status !== 3 || ![2, 3, 4, 5, 6].includes(B.buildingType)) return;
       let busy = false;
       [].concat(b.Extractors || [], b.Processors || [], b.DryDocks || []).forEach((x) => {
@@ -685,7 +707,9 @@
       C: [crews.length, crews.length === 1 ? 'crew on duty' : 'crews on duty', '', hungry ? hungry + ' hungry' : 'all crews fed'],
       H: [run, run === 1 ? 'job running' : 'jobs running', pl(idle, 'idle building'), ready ? ready + ' ready to collect' : ''],
       K: [ords, ords === 1 ? 'open listing' : 'open listings', 'Market · Trade finder · History', ''],
-      A: [rocks, rocks === 1 ? 'rock you run' : 'rocks you run', 'Asteroids · Core Samples · Lot resources', ''],
+      A: [rocks, rocks === 1 ? 'rock you run' : 'rocks you run', BLD ? 'Asteroids · Spectral types' : 'Asteroids · Core Samples · Lot resources', ''],
+      MX: [xRun, xRun === 1 ? 'extractor running' : 'extractors running', 'Core Samples · Lot resources', xIdle ? pl(xIdle, 'extractor') + ' ready for work' : ''],
+      WB: [wh, wh === 1 ? 'warehouse' : 'warehouses', 'Contents · Deliveries · Leases', ''],
     };
   }
   let brLog = false,
@@ -708,10 +732,10 @@
     // shows them at the bottom of the game. Only when the extension is installed; stays in this browser.
     if (document.documentElement.dataset.yicGameExt) {
       const one = (n) => ({ v: n[0], s: n[1], w: n[3] && /low|hungry|ready/.test(n[3]) ? n[3] : '' });
-      window.postMessage({ type: 'yic-deck-sum', d: { flight: one(N.S), crew: one(N.C), sci: one(N.A), eng: one(N.H), trade: one(N.K) } }, location.origin);
+      window.postMessage({ type: 'yic-deck-sum', d: { flight: one(N.S), crew: one(N.C), sci: one(N.A), eng: one(N.H), trade: one(N.K), mine: one(N.MX), store: one(N.WB) } }, location.origin);
     }
     const station = (d) => {
-      const n = N[d.k] || N[d.id === 'eng' ? 'H' : d.k],
+      const n = N[d.n] || N[d.k] || N[d.id === 'eng' ? 'H' : d.k],
         warn = n[3] && /low|hungry|ready/.test(n[3]);
       return (
         '<button type="button" class="st" data-dk="' + d.k + '" data-deck="' + d.id + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
@@ -727,8 +751,9 @@
       '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<div class="brs-mid">' + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>🔗 SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' +
       station(DECKS[3]) + station(DECKS[4]) +
+      (BLD ? station(DECKS[5]) + station(DECKS[6]) + '<style>.brs-deck:has(.brs-mid){grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,.85fr) repeat(4,minmax(0,1fr))}</style>' :
       // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
-      '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>' +
+      '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>') +
       '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const pcb = br.querySelector('.brs-pc');
