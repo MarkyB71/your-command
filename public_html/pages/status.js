@@ -176,6 +176,8 @@
     const hook = () => {
       const main = document.getElementById('main');
       if (!main) return;
+      const vt = document.getElementById('vT');
+      if (vt && vt.textContent !== 'Engineering status') vt.textContent = 'Engineering status'; // was "Status" (Mark, 12 Nov)
       EXTRA.forEach((x) => {
         const after = x.after.map((i) => document.getElementById(i)).find(Boolean);
         if (!after || document.getElementById(x.id)) return;
