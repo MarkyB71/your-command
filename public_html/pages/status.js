@@ -116,28 +116,37 @@
         : '<b data-fin="' + j.fin + '">' + Y.tLeft(j.fin, now) + '</b>') : '').join('<br>') + '</td></tr>';
   }
 
-  // Decks by crew + building (?beta=1 test): Engineering's Status leaves out extractors – they have their own
-  // "Extractor status" page on the Mining deck.
+  // Decks by crew + building (?beta=1 test): each deck gets a status page for its own buildings –
+  // Mining: extractors, Science Lab: bioreactors, Engineering's Status: refinery, factory, shipyard (Mark, 12 Nov).
   const BLD = /[?&]beta=1\b/.test(location.search);
   window.PAGES = window.PAGES || {};
-  window.PAGES.T = BLD ? (m) => drawStatus(m, [3, 4, 5, 6]) : drawStatus;
+  window.PAGES.T = BLD ? (m) => drawStatus(m, [3, 5, 6]) : drawStatus;
   if (BLD) {
+    const EXTRA = [
+      { id: 'vXS', after: ['vE'], text: 'Extractor status', types: [2], label: 'extractors' },
+      { id: 'vBS', after: ['vRT', 'vA'], text: 'Bioreactor status', types: [4], label: 'bioreactors' },
+    ];
     const hook = () => {
-      const after = document.getElementById('vE'), main = document.getElementById('main');
-      if (!after || !main || document.getElementById('vXS')) return;
-      const b = document.createElement('button');
-      b.id = 'vXS'; b.textContent = 'Extractor status';
-      after.after(b);
-      b.addEventListener('click', () => {
-        document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
-        try { window.YIC.view = 'M'; } catch (e) {} // add-on page – app.js leaves #main alone
-        b.className = 'on';
-        drawStatus(main, [2], 'extractors');
+      const main = document.getElementById('main');
+      if (!main) return;
+      EXTRA.forEach((x) => {
+        const after = x.after.map((i) => document.getElementById(i)).find(Boolean);
+        if (!after || document.getElementById(x.id)) return;
+        const b = document.createElement('button');
+        b.id = x.id; b.textContent = x.text;
+        after.after(b);
+        b.addEventListener('click', () => {
+          document.querySelectorAll('button.on').forEach((y) => y.classList.remove('on'));
+          try { window.YIC.view = 'M'; } catch (e) {} // add-on page – app.js leaves #main alone
+          b.className = 'on';
+          drawStatus(main, x.types, x.label);
+        });
       });
     };
     document.addEventListener('click', (e) => {
-      const b = document.getElementById('vXS'), t = e.target.closest && e.target.closest('button[id^="v"]');
-      if (b && t && t !== b) b.className = '';
+      const t = e.target.closest && e.target.closest('button[id^="v"]');
+      if (!t) return;
+      EXTRA.forEach((x) => { const b = document.getElementById(x.id); if (b && t !== b) b.className = ''; });
     }, true);
     setInterval(hook, 700);
   }

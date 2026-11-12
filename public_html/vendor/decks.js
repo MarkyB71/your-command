@@ -80,7 +80,7 @@ function wNameBox(pen) {
       { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', bld: 'Spaceport', pages: ['S', 'R', 'J'] },
       { id: 'mine', name: 'Mining', ico: '⛏', col: '#ff8c1a', bld: 'Extractor', pages: ['X', 'F', 'I', 'E', 'XS'] },
       { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', bld: 'Refinery · Factory · Shipyard', pages: ['P', 'U', 'D', 'T'] },
-      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'Bioreactor', pages: ['A', 'RT'] },
+      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'Bioreactor', pages: ['A', 'RT', 'BS'] },
       { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace · Warehouse', pages: ['K', 'Y', 'M', 'W', 'O', 'B', 'V', 'L', 'LL'] });
   }
   window.YICDECKLIST = DECKS;
@@ -218,7 +218,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: CQBETA0() ? 'All your crews' : 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
-    E: 'Who can mine what', LL: 'Who leases which lots', RT: 'Raw materials by type', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel', XS: 'Working · idle · time left',
+    E: 'Who can mine what', LL: 'Who leases which lots', RT: 'Raw materials by type', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel', XS: 'Working · idle · time left', BS: 'Food and more · time left',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
