@@ -68,6 +68,20 @@ function wNameBox(pen) {
   // Storage tidy (Mark, 6 Nov 2026) – TEST ONLY on ?beta=1: renames storage to the "Skippy's X" standard (vendor/tidy.js)
   // moved into the Logistics Hub's 🗄 Storage console (Mark, 10 Nov) – no longer an Engineering page
   // if (/[?&]beta=1\b/.test(location.search)) DECKS[4].pages.push('ST');
+  // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1. Players see the building
+  // colours while playing, and new buildings in Discovery just get a new deck. Colours = the game's
+  // Building Categories (same table as the extension's lotcolours.js). Old layout stays for everyone else.
+  const BLD = /[?&]beta=1\b/.test(location.search);
+  if (BLD) {
+    DECKS.splice(1, DECKS.length - 1,
+      { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#ffff00', bld: 'Habitat', pages: ['C', 'Q'] },
+      { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#19d9ff', bld: 'Spaceport', pages: ['S', 'R', 'J'] },
+      { id: 'mine', name: 'Mining', ico: '⛏', col: '#d9352b', bld: 'Extractor', pages: ['X', 'F', 'I', 'E'] },
+      { id: 'store', name: 'Storage', ico: '📦', col: '#ff8c00', bld: 'Warehouse', pages: ['B', 'V', 'L', 'LL'] },
+      { id: 'eng', name: 'Engineering', ico: '🏭', col: '#b3855c', bld: 'Refinery · Factory · Bioreactor · Shipyard', pages: ['P', 'U', 'D', 'T'] },
+      { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace', pages: ['K', 'Y', 'M', 'W', 'O'] },
+      { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'standby for Discovery', pages: ['A', 'RT'] });
+  }
   window.YICDECKLIST = DECKS;
   const HUBTAB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   if (HUBTAB) {
@@ -207,11 +221,11 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
-  const PIECE = { flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
+  const PIECE = { mine: 'Drill rig', store: 'Cargo racks', flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
   // LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): Crew Quarters shows crew cards instead of lockers, and its Crews console opens them
   const CQBETA = true;
   if (CQBETA) PIECE.crew = 'All crews';
-  const SEAT = { flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
+  const SEAT = { mine: 'Drill console', store: 'Loading desk', flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
   const ROOM_CSS = `
 #deckroom{position:relative;margin:14px 16px 0;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
 .dkr-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
