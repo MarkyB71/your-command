@@ -570,7 +570,8 @@
   // The SkippyChain gets its own gold console in front of the captain's chair (Mark, 29 Oct). Beta test.
   Object.assign(DECKS[3], { k: 'P', alt: '' });
   // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1 (same flag as vendor/decks.js).
-  // Seven stations: three left, four right; Science sits on standby where Weapons was.
+  // Six stations, three each side so the chair stays central (Mark). Science (standby for Discovery)
+  // keeps its deck tab but has no Bridge station for now.
   const BLD = /[?&]beta=1\b/.test(location.search);
   if (BLD)
     DECKS.splice(0, DECKS.length,
@@ -751,7 +752,7 @@
       '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<div class="brs-mid">' + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>🔗 SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' +
       station(DECKS[3]) + station(DECKS[4]) +
-      (BLD ? station(DECKS[5]) + station(DECKS[6]) + '<style>.brs-deck:has(.brs-mid){grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,.85fr) repeat(4,minmax(0,1fr))}</style>' :
+      (BLD ? station(DECKS[5]) :
       // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
       '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>') +
       '</div><div class="brs-floor"></div>';
