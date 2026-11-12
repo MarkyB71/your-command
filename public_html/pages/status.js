@@ -8,7 +8,9 @@
   const PRODUCTION_TYPES = [2, 3, 4, 5, 6];   // extractor, refinery, bioreactor, factory, shipyard
   const STATE = { run: ['#0ca30c', 'Working'], done: ['#fab219', 'Finished – collect'], idle: ['#d03b3b', 'Idle'],
     build: ['#36a7cd', 'Being built'], built: ['#fab219', 'Built – ready to finish'] };
-  const RANK = { idle: 0, done: 1, built: 1, run: 2, build: 3 };
+  // Non-production buildings (Storage / market, Spaceport, Habitat status – ?beta=1)
+  Object.assign(STATE, { ok: ['#0ca30c', 'Operating'], warn: ['#fab219', 'Nearly full (75%+)'], full: ['#d03b3b', 'Full (90%+)'] });
+  const RANK = { idle: 0, full: 0, done: 1, built: 1, warn: 1, run: 2, ok: 2, build: 3 };
   // Buildings under construction listed with their time left (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
   const when = t => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const dot = s => '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + STATE[s][0] +
@@ -53,6 +55,11 @@
       const crew = (D.crewN || {})[b.Control && b.Control.controller && b.Control.controller.id] || '';
       const g = groups[a] = groups[a] || { prod: [], other: {} };
 
+      if (types.includes(bt) && !PRODUCTION_TYPES.includes(bt)) {
+        const info = other(b, bt, D, Y);
+        if (okQ(name, BT[bt], crew, info.what, STATE[info.s][1])) g.prod.push({ id: b.id, name, type: BT[bt], crew, s: info.s, jobs: [{ s: info.s, what: info.what, out: '', fin: 0 }], fin: Infinity });
+        return;
+      }
       if (!types.includes(bt)) { if (types === PRODUCTION_TYPES || !PRODUCTION_TYPES.includes(bt)) g.other[BT[bt]] = (g.other[BT[bt]] || 0) + 1; return; }
 
       // Each extractor / processor / dry dock is one job
@@ -94,7 +101,10 @@
       const n = k => g.prod.filter(x => x.s === k).length;
 
       h += '<h2>' + esc(a) + '</h2><div class="note" style="padding:0 0 10px">' + g.prod.length + ' ' + label + ' · ' +
-        '<b style="color:#4cd04c">' + n('run') + ' working</b> · <b style="color:#ff7a7a">' + n('idle') + ' idle</b>' +
+        (n('ok') + n('warn') + n('full') ? '<b style="color:#4cd04c">' + (n('ok') + n('warn') + n('full')) + ' operating</b>' +
+          (n('warn') ? ' · <b style="color:#fab219">' + n('warn') + ' nearly full</b>' : '') + (n('full') ? ' · <b style="color:#ff7a7a">' + n('full') + ' full</b>' : '') +
+          (n('run') + n('idle') ? ' · ' : '') : '') +
+        (n('run') + n('idle') || !(n('ok') + n('warn') + n('full')) ? '<b style="color:#4cd04c">' + n('run') + ' working</b> · <b style="color:#ff7a7a">' + n('idle') + ' idle</b>' : '') +
         (n('done') ? ' · <b style="color:#fab219">' + n('done') + ' finished, waiting to collect</b>' : '') +
         (n('build') + n('built') ? ' · <b style="color:#36a7cd">' + (n('build') + n('built')) + ' being built</b>' : '') + '</div>';
 
@@ -107,9 +117,34 @@
         (sites[a] ? sites[a] + ' planned site' + (sites[a] > 1 ? 's' : '') + ' not shown.' : '') + '</div>';
     });
 
-    h += '<div class="note" style="padding:14px 0 0">Shipyard output amounts and secondary refinery outputs aren\'t shown. ' +
+    if (types.includes(6)) h += '<div class="note" style="padding:14px 0 0">Shipyard output amounts and secondary refinery outputs aren\'t shown. ' +
       'Warehouses and tank farms that are nearly full show on Today\'s Workload.</div>';
     m.innerHTML = h;
+  }
+
+  // What a non-production building is doing: storage fill, your listings, ships docked, crews stationed
+  function other(b, bt, D, Y) {
+    if (bt === 1 || bt === 10) {
+      const inv = (b.Inventories || []).find((i) => Y.SCAP[i.inventoryType]);
+      if (!inv) return { s: 'ok', what: 'Storage' };
+      const c = Y.SCAP[inv.inventoryType], f = Math.max((inv.mass || 0) / c[0], (inv.volume || 0) / c[1]);
+      return { s: f >= 0.9 ? 'full' : f >= 0.75 ? 'warn' : 'ok', what: Math.round(f * 100) + '% full – ' + Y.fmtT((inv.mass || 0) / 1e6) + ' stored' };
+    }
+    const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+    if (bt === 8) {
+      const n = (D.orders || []).filter((o) => o.entity && +o.entity.id === +b.id).length;
+      return { s: 'ok', what: n ? pl(n, 'listing') + ' of yours here' : 'No listings of yours here' };
+    }
+    if (bt === 7) {
+      const nm = (b.Name && b.Name.name) || '';
+      const n = nm ? (D.ships || []).filter((x) => !x.fl && x.place === nm).length : 0;
+      return { s: 'ok', what: n ? pl(n, 'ship') + ' of yours docked' : 'None of your ships docked' };
+    }
+    if (bt === 9) {
+      const n = (D.crewList || []).filter((c) => c.mates && +c.stn === +b.id).length;
+      return { s: 'ok', what: n ? pl(n, 'crew') + ' stationed here' : 'None of your crews here' };
+    }
+    return { s: 'ok', what: '' };
   }
 
   function row(x, Y, now) {
@@ -125,7 +160,8 @@
   }
 
   // Decks by crew + building (?beta=1 test): each deck gets a status page for its own buildings –
-  // Mining: extractors, Science Lab: bioreactors, Engineering's Status: refinery, factory, shipyard (Mark, 12 Nov).
+  // Mining: extractors, Science Lab: bioreactors, Trade: marketplaces + storage, Flight: spaceports, Crew: habitats,
+  // Engineering's Status: refinery, factory, shipyard (Mark, 12 Nov).
   const BLD = /[?&]beta=1\b/.test(location.search);
   window.PAGES = window.PAGES || {};
   window.PAGES.T = BLD ? (m) => drawStatus(m, [3, 5, 6]) : drawStatus;
@@ -133,6 +169,9 @@
     const EXTRA = [
       { id: 'vXS', after: ['vE'], text: 'Extractor status', types: [2], label: 'extractors' },
       { id: 'vBS', after: ['vRT', 'vA'], text: 'Bioreactor status', types: [4], label: 'bioreactors' },
+      { id: 'vMS', after: ['vLL', 'vL', 'vO'], text: 'Market and storage status', types: [8, 1, 10], label: 'marketplaces and storage' },
+      { id: 'vSS', after: ['vJ', 'vR'], text: 'Spaceport status', types: [7], label: 'spaceports' },
+      { id: 'vHS', after: ['vQ', 'vC'], text: 'Habitat status', types: [9], label: 'habitats' },
     ];
     const hook = () => {
       const main = document.getElementById('main');
