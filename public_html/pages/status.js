@@ -76,8 +76,16 @@
       if (okQ(name, BT[bt], crew, ...jobs.map(j => j.what + ' ' + j.out), STATE[s][1])) g.prod.push({ id: b.id, name, type: BT[bt], crew, s, jobs, fin });
     });
 
-    const aKeys = Object.keys(groups).sort();
-    if (!aKeys.length) { m.innerHTML = '<div class="note">Nothing matches.</div>'; return; }
+    // Own-building pages (Extractor / Bioreactor status): only rocks that have one; a picture when there are none
+    const sub = types !== PRODUCTION_TYPES;
+    const aKeys = Object.keys(groups).filter((a) => !sub || groups[a].prod.length).sort();
+    if (!aKeys.length) {
+      m.innerHTML = sub
+        ? '<div class="note" style="display:flex;align-items:center;padding:20px 0">' + types.map((t) => Y.bthumb(BT[t], 96, 72)).join('') +
+          (q || an ? 'No ' + esc(label) + ' match.' : 'You have no ' + esc(label) + ' yet.') + '</div>'
+        : '<div class="note">Nothing matches.</div>';
+      return;
+    }
 
     let h = '';
     aKeys.forEach(a => {
@@ -95,7 +103,7 @@
         g.prod.map(x => row(x, Y, now)).join('') + '</tbody></table></div>';
 
       const o = Object.entries(g.other).map(([k, v]) => v + ' ' + k + (v > 1 ? 's' : '')).join(', ');
-      if (o || sites[a]) h += '<div class="note" style="padding:8px 0 0">' + (o ? 'Also here: ' + esc(o) + '. ' : '') +
+      if (!sub && (o || sites[a])) h += '<div class="note" style="padding:8px 0 0">' + (o ? 'Also here: ' + esc(o) + '. ' : '') +
         (sites[a] ? sites[a] + ' planned site' + (sites[a] > 1 ? 's' : '') + ' not shown.' : '') + '</div>';
     });
 
