@@ -187,6 +187,13 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
     const d = DECKS.find((x) => x.id === id);
     if (d) go(d.pages.find((k) => btn(k)) || d.pages[0]);
   };
+  // A tile in the extension's deck strip in the game (0.6.8) opens that deck here.
+  addEventListener('message', (e) => {
+    const m = e.data;
+    if (e.source !== window || e.origin !== location.origin || !m || m.type !== 'yic-deck-go') return;
+    if (m.id === 'chain') { const h = document.getElementById('vH'); if (h) h.click(); return; }
+    if (DECKS.some((x) => x.id === m.id)) window.YICgoDeck(m.id);
+  });
 
   // Each deck is a room like the Bridge (Mark, 27 Oct): same viewscreen + consoles, its own walls,
   // props and colour. The deck's own piece (window.YICDECKHERO[id](el)) goes on the viewscreen;

@@ -704,6 +704,12 @@
     const N = bridgeNums(),
       br = document.createElement('div');
     br.className = 'brs';
+    // Deck strip in the game (extension 0.6.8): hand the station numbers to the extension, which
+    // shows them at the bottom of the game. Only when the extension is installed; stays in this browser.
+    if (document.documentElement.dataset.yicGameExt) {
+      const one = (n) => ({ v: n[0], s: n[1], w: n[3] && /low|hungry|ready/.test(n[3]) ? n[3] : '' });
+      window.postMessage({ type: 'yic-deck-sum', d: { flight: one(N.S), crew: one(N.C), sci: one(N.A), eng: one(N.H), trade: one(N.K) } }, location.origin);
+    }
     const station = (d) => {
       const n = N[d.k] || N[d.id === 'eng' ? 'H' : d.k],
         warn = n[3] && /low|hungry|ready/.test(n[3]);
