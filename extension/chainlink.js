@@ -6,9 +6,7 @@
 // when you click. It never presses anything in the game.
 (() => {
   if (window.top !== window) return;
-  const LOG = (...a) => console.log('[SkippyChain]', ...a); // test build only – remove before release
-  LOG('loaded');
-  chrome.storage.sync.get({ chainLink: true }, o => { LOG('option', o.chainLink); if (o.chainLink) start(); });
+  chrome.storage.sync.get({ chainLink: true }, o => { if (o.chainLink) start(); });
 
   function start() {
     // Works on the page's text pieces (not whole elements), so labels like "Produced: <b>1 products</b>" still match.
@@ -54,8 +52,7 @@
         const host = label.parentElement;
         if (!host || host.querySelector('#yic-pc')) continue;
         let d = null;
-        try { d = read(label); } catch (err) { LOG('read error', err); }
-        LOG('label found, read:', JSON.stringify(d));
+        try { d = read(label); } catch (err) {}
         if (!d) continue;
         const b = document.createElement('span');
         b.id = 'yic-pc';
@@ -73,7 +70,6 @@
           try { chrome.runtime.sendMessage({ type: 'yic-chain', ...now }); } catch (err) {}
         });
         label.after(b);
-        LOG('button added', !!document.getElementById('yic-pc'));
       }
     }
 
