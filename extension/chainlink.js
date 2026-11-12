@@ -9,40 +9,48 @@
   chrome.storage.sync.get({ chainLink: true }, o => { if (o.chainLink) start(); });
 
   function start() {
-    const leaf = (root, re) => [...root.querySelectorAll('*')].find(e => !e.children.length && re.test(e.textContent.trim()));
+    // Works on the page's text pieces (not whole elements), so labels like "Produced: <b>1 products</b>" still match.
+    const texts = root => {
+      const out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let n = w.nextNode(); n; n = w.nextNode()) { const v = n.nodeValue.trim(); if (v && !(n.parentElement && n.parentElement.closest('#yic-pc'))) out.push(n); }
+      return out;
+    };
+    const has = (root, re) => texts(root).some(n => re.test(n.nodeValue.trim()));
     const SKIP = /^(process|setup time.*|required.*|produced.*|round|max|select.*|\d.*|[^a-z]*)$/i;
 
     function read(label) {
       // The window: walk up from PROCESS until it also holds "Produced".
-      let panel = label;
-      while (panel.parentElement && !leaf(panel, /^produced:?/i)) panel = panel.parentElement;
-      if (!leaf(panel, /^produced:?/i)) return null;
+      let panel = label.parentElement;
+      while (panel.parentElement && !has(panel, /^produced\b/i)) panel = panel.parentElement;
+      if (!has(panel, /^produced\b/i)) return null;
       // Process name: the first plain text after the PROCESS label.
-      const all = [...panel.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim());
-      const i = all.indexOf(label);
-      const nameEl = all.slice(i + 1).find(e => !SKIP.test(e.textContent.trim()) && !e.closest('#yic-pc'));
-      const n = nameEl && nameEl.textContent.trim();
+      const all = texts(panel), i = all.indexOf(label);
+      const nm = all.slice(i + 1).find(n => !SKIP.test(n.nodeValue.trim()));
+      const n = nm && nm.nodeValue.trim();
       if (!n || n.length > 120) return null;
-      // Runs: the "189 SRs" figure.
-      const sr = [...panel.querySelectorAll('*')].filter(e => /^\s*[\d,]+\s*SRs\s*$/i.test(e.textContent))
-        .sort((a, b) => a.querySelectorAll('*').length - b.querySelectorAll('*').length)[0];
-      const r = sr ? +sr.textContent.replace(/[^\d]/g, '') : 1;
-      // Rock: the window's "<asteroid> > Lot #23" title, if it's there.
+      // Runs: the number just before "SRs" (or "189 SRs" in one piece).
+      let r = 1;
+      for (let k = 0; k < all.length; k++) {
+        const v = all[k].nodeValue.trim(), m = v.match(/^([\d,]+)\s*SRs$/i);
+        if (m) { r = +m[1].replace(/,/g, ''); break; }
+        if (/^SRs$/i.test(v) && k && /^[\d,]+$/.test(all[k - 1].nodeValue.trim())) { r = +all[k - 1].nodeValue.trim().replace(/,/g, ''); break; }
+      }
+      // Rock: the text just before "Lot #23" in the window's title, if it's there.
       let a = '', box = panel;
       for (let k = 0; k < 8 && box && !a; k++, box = box.parentElement) {
-        const t = [...box.querySelectorAll('*')].find(e => /Lot\s*#\s*\d+\s*$/.test(e.textContent.trim()) && e.textContent.trim().length < 90 && e.children.length < 6);
-        if (t) {
-          const first = [...t.querySelectorAll('*')].find(e => !e.children.length && e.textContent.trim() && !/lot\s*#/i.test(e.textContent) && !/^>$/.test(e.textContent.trim()));
-          a = (first ? first.textContent : t.textContent.replace(/>?\s*Lot\s*#\s*\d+\s*$/, '')).replace(/>\s*$/, '').trim();
-        }
+        const tx = texts(box), j = tx.findIndex(n => /lot\s*#\s*\d+$/i.test(n.nodeValue.trim()));
+        if (j < 0) continue;
+        const v = tx[j].nodeValue.trim().replace(/>?\s*lot\s*#\s*\d+$/i, '').replace(/>\s*$/, '').trim();
+        a = v || (j && tx[j - 1].nodeValue.trim().replace(/>\s*$/, '').trim()) || '';
       }
       return { n, r: Math.max(1, Math.min(1e7, r || 1)), a: a.slice(0, 60) };
     }
 
     function check() {
-      const labels = [...document.querySelectorAll('*')].filter(e => !e.children.length && /^process$/i.test(e.textContent.trim()));
+      const labels = texts(document.body).filter(n => /^process$/i.test(n.nodeValue.trim()));
       for (const label of labels) {
-        if (label.parentElement.querySelector('#yic-pc')) continue;
+        const host = label.parentElement;
+        if (!host || host.querySelector('#yic-pc')) continue;
         const d = read(label);
         if (!d) continue;
         const b = document.createElement('span');
@@ -51,7 +59,7 @@
         b.title = 'Open this in The SkippyChain on your Command Deck';
         b.setAttribute('role', 'button');
         b.style.cssText = 'margin-left:10px;padding:1px 7px;border:1px solid #ffd24a;border-radius:4px;color:#ffd24a;' +
-          'font-size:11px;cursor:pointer;text-transform:none;letter-spacing:0;white-space:nowrap;display:inline-block';
+          'font-size:11px;cursor:pointer;text-transform:none;letter-spacing:0;white-space:nowrap;display:inline-block;pointer-events:auto';
         b.addEventListener('mouseenter', () => { b.style.boxShadow = '0 0 8px rgba(255,210,74,.8)'; });
         b.addEventListener('mouseleave', () => { b.style.boxShadow = ''; });
         b.addEventListener('click', e => {
