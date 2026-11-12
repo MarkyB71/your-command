@@ -321,7 +321,7 @@ body.dk-flight #main th{color:#c4adff}
         });
         cv.addEventListener('pointermove', (e) => {
           if (!drag) return;
-          az = drag.az + (e.clientX - drag.x) * 0.008;
+          az = drag.az - (e.clientX - drag.x) * 0.008; // same way as the Bridge viewscreen (Mark, 12 Nov)
           tilt = Math.max(0.15, Math.min(1.45, drag.tilt + (e.clientY - drag.y) * 0.006));
           if (calm) frame();
         });
