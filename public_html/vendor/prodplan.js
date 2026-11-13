@@ -449,7 +449,7 @@
     const R = k.recipes(), types = {};
     k.allB().forEach((b) => { const r = k.rockOf(b); if (r && r !== dest) (types[r] = types[r] || new Set()).add(b.Building.buildingType); });
     const makers = (p) => Object.keys(types).filter((r) => R.some((x) => x.out[p] && !/Unbundling/.test(x.name) && types[r].has(k.FBT[x.type])));
-    h += `<div class="src" style="font-size:1.1em;margin-bottom:8px">You need to fly in from <b>${pk.length} rock${pk.length === 1 ? '' : 's'}</b>.</div>` +
+    h += `<div class="src" style="font-size:1.1em;margin-bottom:8px">You need to fly in from <b>${pk.length} rock${pk.length === 1 ? '' : 's'}</b>.${MAXB ? ' <span class="src">Click a rock to load its ship.</span>' : ''}</div>` +
       (short.length ? `<div class="src" style="margin-bottom:10px"><span class="short">Not enough in stock on your rocks:</span>` + short.map((p) => { const mk = makers(+p); return `<div style="margin-top:3px">• <b>${esc(k.pname(+p))}</b> – short by ${k.amt(+p, left[p])}${mk.length ? ' · <span class="ok">can be made on ' + mk.map(esc).join(', ') + '</span>' : ' · buy it or mine it'}</div>`; }).join('') + '</div>' : '');
     h += pk.map((x) => {
       const b = x.best, sel = x.r === C.src;
@@ -458,7 +458,7 @@
           : `🚀 Nearest: <b>${esc(b.s.name)}</b> · ${b.s.sst === 'f' ? 'flying to ' : 'at '}${esc(astName(b.s.dId))} · ${b.away == null ? '…' : hrsTxt(b.away) + ' away'}${b.refuel ? ' <span style="color:var(--amber)">(refuel first)</span>' : ''}`;
       return `<div class="dkp-t${sel ? ' fin' : ''}" data-src="${esc(x.r)}" style="cursor:pointer;margin-bottom:8px;display:block">
 <div class="dkp-n">${esc(x.r)} <span class="src" style="font-weight:400">· ${k.tonnes(x.G / 1000)} · ${hrsTxt(rt(x.r) < 1e6 ? rt(x.r) : null)} flight to ${esc(dest)}</span></div>
-<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}
+<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}${MAXB && b ? (b.there ? `<div style="margin-top:8px"><span class="dk-shipbtn" style="display:inline-block;padding:4px 12px;border-radius:8px;background:${sel ? '#ffb03b' : '#2a1d08'};color:${sel ? '#1a1000' : '#ffd28a'};border:1px solid #ffb03b;font-weight:700">📦 ${sel ? 'Loading list below ↓' : 'Click to load ' + esc(b.s.name) + ' now'}</span></div>` : `<div class="src" style="margin-top:8px;color:var(--dim)">✈ No ship here yet – fly one here in the game first</div>`) : ''}
 <div class="dkp-s" style="margin-top:4px">${Object.keys(x.got).sort((p1, p2) => x.got[p2] * g(p2) - x.got[p1] * g(p1)).map((p) => esc(k.pname(+p))).slice(0, 6).join(', ')}${Object.keys(x.got).length > 6 ? ' and ' + (Object.keys(x.got).length - 6) + ' more' : ''}</div></div>`;
     }).join('');
     // folded details: by material, and what to buy
