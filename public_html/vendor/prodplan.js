@@ -19,6 +19,103 @@
   function storesGet() { try { return JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) { return {}; } }
   function storesPut(o) { try { localStorage.setItem(SKEY, JSON.stringify(o)); } catch (e) {} }
 
+  // ---------- step 10: keep the order, show finished / running / next (Mark, 13 Nov – TEST ONLY, ?beta=1) ----------
+  // A plan is saved (this browser only – Mark: "fine for now") when its approval is sent. Reopening Production lists the
+  // plans; one shows each process as ✓ done / ⚙ running / ▶ ready / ⏳ waiting, read from the game (processors running
+  // that process in the buildings this plan started it in), and the ready ones can be started from there.
+  const TRACK = /[?&]beta=1\b/.test(location.search);
+  const PKEY = 'sk_prod_plans';
+  function plansGet() { try { return JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { return []; } }
+  function plansPut(a) { try { localStorage.setItem(PKEY, JSON.stringify(a)); } catch (e) {} }
+  const myPlans = () => { const k = K(), w = String((k.D() && k.D().wallet) || '').toLowerCase(); return plansGet().filter((x) => !x.wallet || x.wallet === w); };
+  function snapPlan(W, ST, qty) {
+    const k = K();
+    return { id: 'p' + Date.now(), wallet: String((k.D() && k.D().wallet) || '').toLowerCase(), rock: k.S.rock, p: P.p, qty, mat: ST.mat, made: Date.now(),
+      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0 })), started: {} };
+  }
+  function noteStarts(plan, list) {
+    (list || []).forEach((c) => { if (c.i == null) return; (plan.started[c.i] = plan.started[c.i] || []).push({ b: c.b.id, runs: c.runs, at: Math.floor(Date.now() / 1000) }); });
+  }
+  function savePlan(plan) { const a = plansGet().filter((x) => x.id !== plan.id); a.unshift(plan); plansPut(a.slice(0, 30)); }
+  // where each step of a saved plan stands now
+  function planStatus(plan) {
+    const k = K(), R = k.recipes(), now = Date.now() / 1000;
+    const on = k.allB().filter((b) => k.rockOf(b) === plan.rock), byId = (id) => on.find((b) => b.id === +id);
+    const mat = byId(plan.mat);
+    const pool = {}; ((mat && k.inv(mat)) || { contents: [] }).contents.forEach((c) => { pool[c.product] = (pool[c.product] || 0) + c.amount; });
+    const used = new Set();
+    return plan.steps.map((st, i) => {
+      const r = R.find((x) => x.name === st.name), pid = k.PID[st.name], bt = r ? k.FBT[r.type] : 0;
+      const starts = plan.started[i] || [];
+      let runningFin = 0, toCollect = 0, startedRuns = 0;
+      starts.forEach((x) => {
+        startedRuns += x.runs;
+        const b = byId(x.b), pr = b && (b.Processors || []).find((q) => q.status === 1 && q.runningProcess === pid);
+        if (pr) { if (pr.finishTime > now) runningFin = Math.max(runningFin, pr.finishTime); else toCollect++; }
+      });
+      const left = Math.max(0, st.runs - startedRuns);
+      const o = { i, st, r, bt, left, runningFin, toCollect };
+      if (runningFin) o.s = 'run'; else if (toCollect) o.s = 'collect'; else if (!left) o.s = 'done';
+      if (!left) return o;
+      if (o.s) { o.why = left.toLocaleString('en-GB') + ' runs still to start after this'; return o; }
+      o.s = 'wait';
+      if (!r) { o.why = 'recipe not found'; return o; }
+      if (!mat) { o.why = 'materials warehouse not found'; return o; }
+      if (!pid) { o.why = 'can’t be started from here'; return o; }
+      const one = { r, runs: left };
+      if (k.capRuns && !k.capRuns(one)) { o.why = 'one run takes longer than the game allows'; return o; }
+      const lack = Object.keys(r.inp).filter((ip) => (pool[ip] || 0) < r.inp[ip] * one.runs);
+      if (lack.length) { o.why = 'waiting for ' + lack.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (lack.length > 3 ? '…' : ''); return o; }
+      const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
+      if (!b) { o.why = 'no free ' + (k.BTN[bt] || 'building'); return o; }
+      const to = byId(st.to) || mat;
+      used.add(b.id); Object.keys(r.inp).forEach((ip) => { pool[ip] -= r.inp[ip] * one.runs; });
+      o.s = 'ready'; o.start = { i, b, slot: k.freeSlot(b), r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: mat, to };
+      return o;
+    });
+  }
+  const tally = (ss) => ({ done: ss.filter((x) => x.s === 'done').length, run: ss.filter((x) => x.s === 'run').length, col: ss.filter((x) => x.s === 'collect').length, ready: ss.filter((x) => x.s === 'ready').length });
+  const whenTxt = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  function plansListHTML() {
+    const k = K(), esc = k.esc, a = myPlans();
+    if (!a.length) return '';
+    return `<div class="card"><h2><span class="n">📋</span>Your production plans (${a.length})</h2>` + a.map((pl) => {
+      const t = tally(planStatus(pl)), n = pl.steps.length;
+      const bits = [t.done + ' of ' + n + ' done'];
+      if (t.run) bits.push('⚙ ' + t.run + ' running'); if (t.col) bits.push('✓ ' + t.col + ' to collect'); if (t.ready) bits.push('<span class="ok">▶ ' + t.ready + ' ready</span>');
+      return `<div class="dkp-t${t.done === n ? ' fin' : ''}" style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><a href="#" data-track="${esc(pl.id)}" style="flex:1;color:inherit;text-decoration:none"><b>${esc(k.pname(pl.p))}</b> ${k.amt(pl.p, pl.qty)} · ${esc(pl.rock)}<div class="src" style="margin-top:2px">${bits.join(' · ')}</div></a><button type="button" data-ppforget="${esc(pl.id)}" title="Forget this plan" style="min-width:0;flex:none">✕</button></div>`;
+    }).join('') + '<div class="hint">Saved in this browser when you approve a plan. Click one to see where it’s up to.</div></div>';
+  }
+  function trackHTML(plan) {
+    const k = K(), esc = k.esc, S = k.S, ss = planStatus(plan), t = tally(ss);
+    const on = k.allB().filter((b) => k.rockOf(b) === plan.rock), byId = (id) => on.find((b) => b.id === +id);
+    const cl = k.crews(plan.rock);
+    if (!cl.find((c) => c.id === P.runner)) P.runner = ((cl.find((c) => !c.busy) || cl[0]) || {}).id || 0;
+    const runner = cl.find((c) => c.id === P.runner);
+    const ready = ss.filter((x) => x.s === 'ready').map((x) => Object.assign(x.start, { crew: P.runner }));
+    S.rock = plan.rock; S.calls = []; S.feedCalls = []; S.feed = false; S.mover = P.runner; S.moverObj = runner;
+    S.startList = ready;
+    const ICON = { done: '<span class="ok">✓ done</span>', run: '⚙ running', collect: '<span style="color:var(--amber)">✓ finished – collect it in the game</span>', ready: '<span class="ok">▶ ready to start</span>', wait: '<span class="src">⏳ waiting</span>' };
+    let h = `<div class="card"><h2><span class="n">📋</span>${esc(k.pname(plan.p))} ${k.amt(plan.p, plan.qty)} on ${esc(plan.rock)}</h2>` +
+      `<div class="row"><button type="button" class="dk-shipbtn" id="pp-back" style="cursor:pointer">← All plans / new plan</button><span class="src">Planned ${esc(whenTxt(plan.made / 1000))} · materials in ${esc(byId(plan.mat) ? k.nm(byId(plan.mat)) : '?')}</span></div>` +
+      `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${plan.steps.length - t.done - t.run - t.col - t.ready}</b>waiting</div></div>` +
+      `<table style="margin-top:10px"><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Status</th></tr></thead><tbody>` +
+      ss.map((x) => {
+        const st = x.st, b = x.start && x.start.b;
+        const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + (x.start.capTxt ? '<br><span class="src">⏱ ' + esc(x.start.capTxt) + '</span>' : '') : '';
+        return `<tr><td>${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : ''}</td></tr>`;
+      }).join('') + '</tbody></table>' +
+      (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
+    if (t.done === plan.steps.length) return h + '<div class="card"><div class="src"><span class="ok">✓ All done.</span> You can forget this plan from the list.</div></div>';
+    h += `<div class="card"><h2><span class="n">▶</span>Start the next ones</h2>` + (cl.length
+      ? `<div class="row"><span class="src" style="min-width:150px">⚙ Runs the processes</span><select id="pp-trun">${cl.map((c) => `<option value="${c.id}"${c.id === P.runner ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready now'}</option>`).join('')}</select></div>`
+      : '<div class="src" style="color:var(--red)">None of your crews is on this rock.</div>') +
+      `<button class="approve" id="pp-tgo" style="margin-top:10px"${ready.length && runner && !S.busy ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : ready.length ? 'APPROVE IN WALLET (start ' + ready.length + ')' : 'NOTHING READY TO START YET'}</button>` +
+      `<div class="hint">Press ↻ Check the game again to update. A process is ready when its inputs are in the materials warehouse and a building is free.</div>` +
+      `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
+    return h;
+  }
+
   const UNITS = { kg: 1, t: 1000, kt: 1e6 };
   const hrs = (s) => (s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 * 2 ? (s / 3600).toFixed(1).replace(/\.0$/, '') + ' h' : (s / 86400).toFixed(1).replace(/\.0$/, '') + ' days');
 
@@ -419,6 +516,9 @@
     const esc = k.esc, S = k.S, rl = k.rocks();
     if (!rl.length) { m.innerHTML = '<div class="card"><div class="src">No warehouses or tank farms found for this wallet.</div></div>'; return; }
     if (!rl.includes(S.rock)) S.rock = rl[0];
+    // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
+    P.snap = null;
+    if (TRACK && !cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
     const types = new Set(k.onRock().map((b) => b.Building.buildingType));
     const canHere = (p) => k.recipes().some((r) => r.out[p] && !/Unbundling/.test(r.name) && types.has(k.FBT[r.type]));
     const prods = products();
@@ -430,7 +530,8 @@
     const bulk = P.p ? k.bulk(P.p) : true;
     const qty = P.p ? Math.max(0, bulk ? Math.round((+P.q || 0) * UNITS[P.unit]) : Math.ceil(+P.q || 0)) : 0;
 
-    let h = `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2><select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
+    let h = TRACK && !cargo ? plansListHTML() : '';
+    h += `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2><select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <input type="search" id="pp-find" placeholder="🔍 Search…" value="${esc(P.find)}">
 <select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
@@ -505,6 +606,7 @@
 <tr><td>🛢 Tank farm</td><td>${ST.tf.length ? sel('tank', ST.tf, '— don’t use one —') : '<span class="src">none on this rock</span>'}</td>${aft('tank')}<td class="src">Finished goods that are all fluid (e.g. Hydrogen Propellant).</td></tr>
 </tbody></table><div class="hint">Full now → full when the plan is done: <span style="color:#3fd68a">green</span> under 75%, <span style="color:#ffb03b">amber</span> 75–89%, <span style="color:#ff6b6b">red</span> 90% or more. Remembered for ${esc(S.rock)} in this browser.</div></div>`;
         h += movesHTML(W, ST, byId);
+        if (TRACK) P.snap = snapPlan(W, ST, qty);
       }
     }
     P.shipItems = null;
@@ -525,7 +627,14 @@
     m.querySelectorAll('[data-feed]').forEach((e) => e.addEventListener('change', () => { P.feed[e.dataset.feed] = e.checked; k.render(); }));
     on('pp-run', 'change', (e) => { P.runner = +e.target.value; P.feed.r = false; k.render(); });
     on('pp-start', 'change', (e) => { P.start = e.target.checked; k.render(); });
-    on('pp-go', 'click', () => k.approve());
+    // step 10: save the plan once its approval is sent (TEST ONLY)
+    const sent = () => !S.msgErr && /Sent to the game/.test(S.msg || '');
+    on('pp-go', 'click', async () => { const snap = P.snap; S.msg = ''; await k.approve(); if (TRACK && snap && sent()) { noteStarts(snap, S.batchStart); savePlan(snap); P.track = snap.id; k.render(); } });
+    on('pp-tgo', 'click', async () => { const id = P.track; S.msg = ''; await k.approve(); if (sent()) { const pl = plansGet().find((x) => x.id === id); if (pl) { noteStarts(pl, S.batchStart); savePlan(pl); } k.render(); } });
+    on('pp-trun', 'change', (e) => { P.runner = +e.target.value; k.render(); });
+    on('pp-back', 'click', () => { P.track = ''; S.msg = ''; k.render(); });
+    m.querySelectorAll('[data-track]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); P.track = b.dataset.track; S.msg = ''; k.render(); }));
+    m.querySelectorAll('[data-ppforget]').forEach((b) => b.addEventListener('click', () => { plansPut(plansGet().filter((x) => x.id !== b.dataset.ppforget)); k.render(); }));
     m.querySelectorAll('[data-for]').forEach((b) => b.addEventListener('click', () => { P.for = b.dataset.for; k.render(); }));
     m.querySelectorAll('select[data-st]').forEach((e) => e.addEventListener('change', () => { const all = storesGet(), r = (all[S.rock] = all[S.rock] || {}); r[e.dataset.st] = e.value ? +e.value : ''; storesPut(all); k.render(); }));
     m.querySelectorAll('[data-pp]').forEach((b) => b.addEventListener('click', () => { P.p = +b.dataset.pp; P.use = ''; P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; k.render(); }));
@@ -534,5 +643,5 @@
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
   }
 
-  window.YICPROD = { render, work };
+  window.YICPROD = { render, work, planStatus };
 })();
