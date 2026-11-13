@@ -432,6 +432,14 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
 <div class="st-w"><button id="st-gdone">Done – show me the list ↓</button><button id="st-gskip">Skip – keep all my names</button></div></div>`;
   }
 
+  // ↩ PUT BACK OLD NAMES (Mark, 13 Nov – TEST ONLY ?beta=1): just before a rename is sent, each building's current name is
+  // saved IN THIS BROWSER ONLY (localStorage, latest list per rock – nothing on the server). The button puts them back
+  // through the normal rename step.
+  const OKEY = 'yicOldNames';
+  const oldGet = () => { try { return JSON.parse(localStorage.getItem(OKEY) || '{}') || {}; } catch (e) { return {}; } };
+  const oldSave = (order) => { S.oldPend = { rock: S.rock, names: order.filter((x) => nm(x.b)).map((x) => [x.b.id, nm(x.b)]) }; }; // kept only once the wallet approves
+  const oldKeep = () => { const p = S.oldPend; S.oldPend = null; if (!p) return; try { const o = oldGet(), r = o[p.rock] || {}; p.names.forEach(([id, n]) => { r[id] = n; }); o[p.rock] = r; localStorage.setItem(OKEY, JSON.stringify(o)); } catch (e) {} };
+  const oldHere = () => { const r = oldGet()[S.rock] || {}; return onRock().filter((b) => r[b.id] && r[b.id] !== nm(b)); };
   function step2() {
     const { rows, order } = renamePlan();
     const types = [...new Set(onRock().map((b) => b.Building.buildingType))].filter((t) => t !== WAREHOUSE && t !== TANK).sort((a, b) => a - b);
@@ -441,8 +449,10 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
       : [['num', 'Numbered (' + P(BT[t] + ' 1') + ')'], ['make', 'By what it makes (' + P('Steel ' + BT[t] + ' 1') + ')'], ['keep', 'Keep current names']]);
     const changed = rows.filter((x) => x.change);
     const ready = order.length;
+    const oh = oldHere();
     return `<h3>Step 2: names</h3>
 ${guide()}
+${oh.length ? `<div class="st-w" style="margin:8px 0"><button class="st-next" id="st-old">↩ Put back your old names (${oh.length})</button> <span style="color:#8b9ab0;font-size:13px">The names from before your last rename here (saved in this browser) – check them below, then approve.</span></div>` : ''}
 <div class="st-opt">
 <label for="st-prefix">Your prefix</label><div><input type="text" id="st-prefix" maxlength="14" value="${esc(S.prefix)}" placeholder="e.g. your name – or leave empty"> <span style="color:${S.preWarn ? '#ff8a82' : '#8b9ab0'};font-size:13px">${S.preWarn ? RESV + '.' : 'goes in front of every new name'}</span></div>
 <label>Warehouses &amp; tank farms</label>${sel('st-s-store', [['job', 'By job (' + P('Rocks') + ', ' + P('Oxides 2') + ')'], ['main', 'By the main thing inside (' + P('Pyroxene') + ')'], ['keep', 'Keep current names']], S.style.store)}
@@ -547,7 +557,8 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     qa('select[id^="st-s-"]').forEach((s) => s.addEventListener('change', () => { S.style[s.id.slice(5)] = s.value; S.edit = {}; S.groups = null; page(m); }));
     qa('input[data-ed]').forEach((i) => i.addEventListener('change', () => { S.edit[i.dataset.ed] = i.value.trim(); page(m); }));
     qa('input[data-rt]').forEach((c) => c.addEventListener('change', () => { S.rtick[c.dataset.rt] = c.checked; page(m); }));
-    const rg = q('#st-rgo'); if (rg) rg.addEventListener('click', () => start(m, () => renamePlan().order.map((x) => ({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ChangeName'), '0x5', '0x5', hex(x.b.id), short(x.to), '0x1', hex(x.crew)] })), 'rename'));
+    const ob = q('#st-old'); if (ob) ob.addEventListener('click', () => { const r = oldGet()[S.rock] || {}; Object.keys(S.style).forEach((k) => { S.style[k] = 'keep'; }); oldHere().forEach((b) => { S.edit[b.id] = r[b.id]; S.rtick[b.id] = true; }); page(m); });
+    const rg = q('#st-rgo'); if (rg) rg.addEventListener('click', () => start(m, () => { const ord = renamePlan().order; oldSave(ord); return ord.map((x) => ({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ChangeName'), '0x5', '0x5', hex(x.b.id), short(x.to), '0x1', hex(x.crew)] })); }, 'rename'));
     qa('select[id^="st-g-"]').forEach((s) => s.addEventListener('change', () => { const [, , g, k] = s.id.split('-'); S.groups[g][+k] = +s.value; S.mtick = {}; S.mtinit = false; page(m); }));
     qa('input[data-lv]').forEach((c) => c.addEventListener('change', () => { S.leave[c.dataset.lv] = c.checked; S.mtick = {}; S.mtinit = false; page(m); }));
     const fd = q('#st-feed');
@@ -630,6 +641,7 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
       else if (w.account && typeof w.account.execute === 'function') res = await w.account.execute(calls.map((c) => ({ contractAddress: c.contract_address, entrypoint: c.entry_point, calldata: c.calldata })));
       else throw new Error('This wallet cannot send transactions from a web page.');
       const h = res && (res.transaction_hash || res.transactionHash);
+      if (kind === 'rename') oldKeep();
       if (kind === 'delivery') (S.lastPicked || []).forEach((k) => { S.sent[k] = 1; delete S.mtick[k]; });
       say(m, '✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer">${esc(String(h).slice(0, 10))}…</a>. ` : '') +
         (kind === 'rename' ? 'In a minute or two press ↻ Check again – the new names then show here.'
