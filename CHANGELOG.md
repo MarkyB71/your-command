@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 13 Nov 2026 – New deck layout: one deck per crew class and the game buildings it works in. New Mining deck (Core Samples, Lot resources, Resource map, Supply chain). Engineering now holds everything used when making products (Products, planners, Storage status – was Contents –, Deliveries, Leases, Lot leases). Science Lab: Asteroids, Spectral type raws, Bioreactor status. Trade Deck is trading only. Every deck has a status page for its own buildings. Bridge: three stations each side of the chair with building-colour dots; Weapons console removed. Crew Quarters in Habitat yellow, Trade Deck tab in Marketplace green. Feed crews link in Logistics Hub orange. Flight Deck navigation drags the same way as the Bridge. Help page updated.
+
 ## 12 Nov 2026 – The SkippyChain can now be opened from the game: with extension 0.6.7, a gold "SkippyChain ↗" button in the game's process window opens that product here – same recipe, amount from the runs set in the game, on that rock.
 
 ## 11 Nov 2026 – The SkippyChain: change how something is made on one card and every card for that same product in the chain changes too (e.g. Iron from Olivine instead of Taenite). Community request. To undo: set CAS=false in vendor/chain.js. Help page updated.

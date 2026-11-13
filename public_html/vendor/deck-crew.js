@@ -8,7 +8,7 @@
   'use strict';
   if (!window.YICDECKS) return;
   // Crew Quarters in Habitat yellow on ?beta=1 (decks by crew + building – Mark trying it, 13 Nov 2026)
-  const BLD = /[?&]beta=1\b/.test(location.search);
+  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   const COL = BLD ? '#ffff00' : '#3fd68a';
   const P = BLD
     ? { rgb: '255,255,0', lite: '#fff59a', pale: '#fffbd0', mute: '#a8a68a', d1: '#21200f', d2: '#110f06', d3: '#16150a', d4: '#38361f', d5: '#3d3b24', d6: '#2c2a17', d7: '#1c1b0e' }

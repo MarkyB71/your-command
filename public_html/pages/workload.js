@@ -571,7 +571,7 @@
   Object.assign(DECKS[3], { k: 'P', alt: '' });
   // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1 (same flag as vendor/decks.js).
   // Six stations, three each side so the chair stays central: one per crew class + its buildings (Mark).
-  const BLD = /[?&]beta=1\b/.test(location.search);
+  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   if (BLD)
     DECKS.splice(0, DECKS.length,
       { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'All crews', col: '#ffff00', ry: 15, dots: [['#ffff00'], 'Habitat'] },

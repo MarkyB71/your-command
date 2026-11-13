@@ -17,7 +17,7 @@
   --bg:#070b12;--panel:#0c1320;--panel2:#0a101b;--line:#1e2a3a;
   --text:#d7e6f5;--soft:#9fb0c4;--dim:#8b9ab0;
   --cyan:#8fe3ff;--blue:#4fb3ff;--gold:#ffd24a;--green:#3fd68a;
-  --flight:#9a6bff;--crew:#3fd68a;--sci:#4f90ff;--eng:#e8645a;--trade:#ffd24a;--bridge:#8fe3ff;
+  --flight:#9a6bff;--crew:#ffff00;--mine:#ff8c1a;--market:#57ff65;--sci:#4f90ff;--eng:#e8645a;--trade:#ffd24a;--bridge:#8fe3ff;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:16px}
@@ -136,7 +136,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <h2>Getting around</h2>
 <p>The site is laid out like a ship. Each <b>deck</b> is a room, and each <b>console</b> in that room opens one page on the big viewscreen.</p>
 <ul>
-  <li><b>Deck tabs</b> along the top – The Bridge, Flight Deck, Crew Quarters, Science Lab, Engineering and Trade Deck. Each has its own colour.</li>
+  <li><b>Deck tabs</b> along the top – The Bridge, Crew Quarters, Flight Deck, Mining, Engineering, Science Lab and Trade Deck. Each deck is one crew class and the game buildings it works in: the deck's colour is its crew class (Crew Quarters uses the Habitat's yellow, Trade Deck the Marketplace's green), and the Bridge stations show small dots in the game's own building colours.</li>
   <li><b>Consoles</b> – click one to open that page on the viewscreen. The page buttons under the deck tabs do the same.</li>
   <li><b>◂ Back button</b> on the viewscreen (or the seat in front of it) returns you to the deck's start.</li>
   <li><b>Rock picker</b> – the drop-down at the top of the viewscreen picks which asteroid the page shows.</li>
@@ -188,69 +188,82 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
 <p>Click <b>Deck controls</b> in the middle of the top bar (beside your SWAY balance) to put the Command Deck extension's settings on the viewscreen: switch each game tweak on or off, pick the friend / foe ring colours, and change or remove your tagged players. Everything is still saved inside the extension in your browser. Needs the extension, version 0.6.3 or later.</p>
 <h3>The SkippyChain (gold console above the chair)</h3>
 <p>Pick any product and see the whole production chain – every step back down to the raw resources. For each part you can choose to mine it, make it, or buy it. Change how something is made on one card and every card for that same product in the chain changes too – e.g. set Iron to be made from Olivine once and all the Iron branches follow. Set <b>Use my stock on</b> to a rock and the chain takes your stock off first, so you only see what's still needed. The <b>Still to produce – whole chain</b> box adds up everything that has to be made, grouped by Refinery, Factory, Bioreactor and Shipyard.</p>
-<h3>Weapons (orange console)</h3>
-<p>The Armoury station – dimmed on standby, kept ready for when conflict arrives in the game. Not in use yet.</p>
+<h3>The stations</h3>
+<p>Three stations each side of the chair – Crew Quarters, Flight Deck and Mining on the left; Engineering, Science Lab and Trade Deck on the right. Each shows its big number, any warning in red, and dots for its buildings. Click one to enter that deck.</p>
 </section>
 
 <section id="decks">
 <h2>The decks</h2>
-
-<div class="deck" style="--dc:var(--flight)">
-<h3>🚀 Flight Deck</h3>
-<p class="sub">Ships, travel and deliveries</p>
-<dl class="pages">
-  <dt>Ships</dt><dd>Your fleet – where each ship is, propellant, cargo and crew on board. Status colours match the game: in orbit blue, in flight orange, docked white.</dd>
-  <dt>Travel</dt><dd>Trip times between rocks and the best launch windows.</dd>
-  <dt>Deliveries</dt><dd>Goods coming in, going out, and on the way.</dd>
-  <dt>Activity log</dt><dd>What your crews have done recently.</dd>
-</dl>
-</div>
+<p>Every deck has its own <b>status</b> page for its buildings – working, idle or full, and the time left.</p>
 
 <div class="deck" style="--dc:var(--crew)">
 <h3>👥 Crew Quarters</h3>
-<p class="sub">Your crews and crewmates</p>
+<p class="sub">All crews · Habitat</p>
 <dl class="pages">
-  <dt>Crews</dt><dd>A card for every crew: where it is, ready or busy, a food bar and its crewmates' pictures (class colours, name on hover). Click a crew to see all its members – picture, class and traits – with <b>Full crew details ▸</b> for the old crew card. <b>◂ All crews</b> or Escape takes you back. The <b>🍽 Feed crews</b> button opens the Logistics Hub.</dd>
+  <dt>Crews</dt><dd>A card for every crew: where it is, ready or busy, a food bar and its crewmates' pictures (class colours, name on hover). Click a crew to see all its members – picture, class and traits – with <b>Full crew details ▸</b> for the old crew card. <b>◂ All crews</b> or Escape takes you back. The orange <b>🍽 Feed crews</b> button opens the Logistics Hub.</dd>
   <dt>Crew planner</dt><dd>Try swapping crewmates between crews to see the best line-up. The controls and spare bench stay at the top while the crews scroll.</dd>
+  <dt>Habitat status</dt><dd>Each of your habitats and how many of your crews are stationed there.</dd>
 </dl>
 </div>
 
-<div class="deck" style="--dc:var(--sci)">
-<h3>🔬 Science Lab</h3>
-<p class="sub">Asteroids, samples and resources</p>
+<div class="deck" style="--dc:var(--flight)">
+<h3>🚀 Flight Deck</h3>
+<p class="sub">Pilot · Spaceport</p>
 <dl class="pages">
-  <dt>Asteroids</dt><dd>Your rocks at a glance.</dd>
+  <dt>Ships</dt><dd>Your fleet – where each ship is, propellant, cargo and crew on board. Status colours match the game: in orbit blue, in flight orange, docked white.</dd>
+  <dt>Travel</dt><dd>Trip times between rocks and the best launch windows.</dd>
+  <dt>Activity log</dt><dd>What your crews have done recently.</dd>
+  <dt>Spaceport status</dt><dd>Each of your spaceports and how many of your ships are docked there.</dd>
+</dl>
+</div>
+
+<div class="deck" style="--dc:var(--mine)">
+<h3>⛏ Mining</h3>
+<p class="sub">Miner · Extractor</p>
+<dl class="pages">
   <dt>Core Samples</dt><dd>Untouched samples, by rock or by resource.</dd>
   <dt>Lot resources</dt><dd>The richest lots for each resource.</dd>
-  <dt>Supply chain</dt><dd>Which of your rocks can mine each raw resource, which need it flown in, and the quickest rock to fly it from.</dd>
   <dt>Resource Map</dt><dd>Pick a scanned rock and a resource and every lot lights up by how rich it is, in the game's own colours. "All resources" shows the best of each lot, and can highlight good free spots for warehouses and refineries. Add the rock's 3D model to see its real shape.</dd>
-  <dt>Lot leases</dt><dd>Type any asteroid's name or number (or tap Adalia Prime or one of your rocks) to see its lease offer – price a day, minimum term and notice – and every lot on a globe: free to lease (green), leased by you (gold) or leased by someone else (grey). Hover a lot for who leases it, the price and when it ends. Where leases were made at different prices you can colour them by price. Zoom in with the scroll wheel, a pinch or the + / − buttons. Click a lot to open it in the game. Tick boxes hide or show each kind. With Skippy's Command Deck 0.6.3 or later you can also colour leased lots by your friend / foe tags, and hovering a lot shows the tenant's tag.</dd>
-  <dt>Spectral type raws</dt><dd>Which of the 22 raw materials can be mined on each asteroid type – handy when a rock comes up for sale. Pick one or more types (the rock specimens at the top) and the raw materials found on them fill their test tubes in the game's colours: Volatiles, Organics, Metals, Rare Earth and Fissiles. Pick a raw material to see which types have it. The types of your own rocks show "yours".</dd>
+  <dt>Supply chain</dt><dd>Which of your rocks can mine each raw resource, which need it flown in, and the quickest rock to fly it from.</dd>
+  <dt>Extractor status</dt><dd>Every extractor – working, finished or idle, what it's extracting and the time left.</dd>
 </dl>
 </div>
 
 <div class="deck" style="--dc:var(--eng)">
 <h3>🏭 Engineering</h3>
-<p class="sub">Buildings, stock and planning</p>
+<p class="sub">Engineer · Refinery, Factory, Shipyard and Warehouse – everything used when making products</p>
 <dl class="pages">
   <dt>Products</dt><dd>Your stock, product by product, across every rock.</dd>
   <dt>Construction planner</dt><dd>What it takes to build a building or a ship on a chosen rock – what you have, what to fly in, and the fewest flights to do it.</dd>
   <dt>Production planner</dt><dd>Make any amount (kg, t or kt) of a product on a rock. Tabs for Refinery, Factory, Bioreactor and Shipyard.</dd>
-  <dt>Contents</dt><dd>What's in each warehouse and building. Switch between cards and a table.</dd>
-  <dt>Status</dt><dd>Every job running, with the time left – soonest first.</dd>
+  <dt>Engineering status</dt><dd>Every refinery, factory and shipyard job running, with the time left – soonest first.</dd>
+  <dt>Storage status</dt><dd>What's in each warehouse and tank farm, and how full it is. Switch between cards and a table.</dd>
+  <dt>Deliveries</dt><dd>Goods coming in, going out, and on the way.</dd>
   <dt>Leases</dt><dd>Lease end dates for the lots you use.</dd>
+  <dt>Lot leases</dt><dd>Type any asteroid's name or number (or tap Adalia Prime or one of your rocks) to see its lease offer – price a day, minimum term and notice – and every lot on a globe: free to lease (green), leased by you (gold) or leased by someone else (grey). Hover a lot for who leases it, the price and when it ends. Click a lot to open it in the game. With Skippy's Command Deck 0.6.3 or later you can also colour leased lots by your friend / foe tags.</dd>
+</dl>
+</div>
+
+<div class="deck" style="--dc:var(--sci)">
+<h3>🔬 Science Lab</h3>
+<p class="sub">Scientist · Bioreactor – more to come with Discovery</p>
+<dl class="pages">
+  <dt>Asteroids</dt><dd>Your rocks at a glance.</dd>
+  <dt>Spectral type raws</dt><dd>Which of the 22 raw materials can be mined on each asteroid type – handy when a rock comes up for sale. Pick one or more types and the raw materials found on them fill their test tubes in the game's colours. Pick a raw material to see which types have it. The types of your own rocks show "yours".</dd>
+  <dt>Bioreactor status</dt><dd>Every bioreactor – working, finished or idle, and the time left.</dd>
 </dl>
 </div>
 
 <div class="deck" style="--dc:var(--trade)">
 <h3>💰 Trade Deck</h3>
-<p class="sub">Markets and trading</p>
+<p class="sub">Merchant · Marketplace – trading only</p>
 <dl class="pages">
   <dt>Market</dt><dd>Buy and sell listings across the belt.</dd>
   <dt>Trade finder</dt><dd>Spots where you could buy low and sell high.</dd>
   <dt>Market history</dt><dd>Recent trades. Your crews show in gold; other players' crews show by name when they have given their crew one, otherwise as "Crew #number". Tick "Only my trades" to see just yours.</dd>
   <dt>My trading</dt><dd>Your orders (are you cheapest, or top bid?), a watch list of products, and a calculator for what an amount sells for or costs right now, fees included.</dd>
   <dt>Where to buy</dt><dd>The nearest places selling a product, with flight time, propellant burned and total cost. Choose Quickest or Economy.</dd>
+  <dt>Marketplace status</dt><dd>Each of your marketplaces and how many of your listings are on it.</dd>
 </dl>
 </div>
 </section>

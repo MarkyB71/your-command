@@ -71,7 +71,7 @@ function wNameBox(pen) {
   // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1. Players see the building
   // colours while playing, and new buildings in Discovery just get a new deck. Colours = the game's
   // Building Categories (same table as the extension's lotcolours.js). Old layout stays for everyone else.
-  const BLD = /[?&]beta=1\b/.test(location.search);
+  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   if (BLD) {
     // Each deck = one crew class + the buildings it works in (Mark, 12 Nov 2026, 2nd try);
     // colour = its crew. Trade Deck = trading only; storage, deliveries and leases are used when making

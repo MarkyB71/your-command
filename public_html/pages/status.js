@@ -162,7 +162,7 @@
   // Decks by crew + building (?beta=1 test): each deck gets a status page for its own buildings –
   // Mining: extractors, Science Lab: bioreactors, Trade: marketplaces + storage, Flight: spaceports, Crew: habitats,
   // Engineering's Status: refinery, factory, shipyard (Mark, 12 Nov).
-  const BLD = /[?&]beta=1\b/.test(location.search);
+  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   window.PAGES = window.PAGES || {};
   window.PAGES.T = BLD ? (m) => drawStatus(m, [3, 5, 6]) : drawStatus;
   if (BLD) {
