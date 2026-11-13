@@ -651,6 +651,8 @@ ${R.map(route).join('')}
       // SAME ACTIONS TWICE (Mark, 13 Nov – a ship was loaded twice: after Approve the screen stayed the same because the game
       // data hadn't caught up, so he pressed it again). The exact same actions can't be sent again for 15 minutes. LIVE 13 Nov 2026 (Mark)
       const sameKey = JSON.stringify(calls);
+      // remembered across reloads in this browser only (Mark, 13 Nov – TEST ONLY ?beta=1); nothing kept on the server
+      if (!S.lastSent && /[?&]beta=1\b/.test(location.search)) { try { S.lastSent = JSON.parse(localStorage.getItem('yicLastSent') || 'null'); } catch (e) {} }
       if (S.lastSent && S.lastSent.key === sameKey && Date.now() - S.lastSent.at < 15 * 60000)
         throw new Error('Checked just before sending – nothing was sent:<br>• These exact actions were sent ' + Math.max(1, Math.round((Date.now() - S.lastSent.at) / 60000)) + ' min ago. The game data can take a few minutes to catch up – press ↻ Check the game again in a minute or two.');
       const errs = checks(calls);
@@ -662,6 +664,7 @@ ${R.map(route).join('')}
       else throw new Error('This wallet cannot send transactions from a web page.');
       const h = res && (res.transaction_hash || res.transactionHash);
       S.lastSent = { key: sameKey, at: Date.now() };
+      try { localStorage.setItem('yicLastSent', JSON.stringify(S.lastSent)); } catch (e) {}
       S.sentAt = Date.now(); S.busy = false; render(); setTimeout(() => { loadDeliveries().then(render); }, 150000);
       say('✓ Sent to the game. ' + (h ? `Transaction <a href="https://voyager.online/tx/${esc(h)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(String(h).slice(0, 10))}…</a>. ` : '') + 'Finish the deliveries in the game with Finish All Ready Items, then press ↻ Check the game again.' +
         // which crew to finish with, with an in-game link (Mark, 9 Nov: hard to find the crew afterwards) – TEST ONLY
