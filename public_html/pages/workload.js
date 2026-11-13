@@ -36,7 +36,7 @@
         );
     const S = {
       collect: [],
-      soon: [], // finishing within 3 hours – the orange status dots (Mark, 13 Nov – TEST ONLY ?beta=1)
+      soon: [], // finishing within 3 hours – the orange status dots (Mark, 13 Nov – LIVE)
       risk: [],
       accept: [],
       lease: [],
@@ -46,7 +46,7 @@
       food: [],
       prop: [],
     };
-    const SOON = /[?&]beta=1\b/.test(location.search);
+    const SOON = true; // Finishing soon – LIVE 13 Nov 2026 (Mark)
     const soonTxt = (t) => { const m = Math.max(1, Math.round((t - now) / 60)); return 'finishes in ' + (m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm') + ' (' + new Date(t * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ')'; };
     const plan = {};
     let planX = 0;

@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 13 Nov 2026 – Captain's log Today: new "Finishing soon" list – jobs that finish within 3 hours, with time left. Help page updated.
+
 ## 13 Nov 2026 – Fix: table headings stay on top when you scroll – building pictures and "in game" buttons no longer show through them Today's workload jump links (e.g. Waiting to accept) scroll just the Captain's log, not the whole page, so the list shows properly.
 
 ## 13 Nov 2026 – Logistics Hub Production: 📋 your production plans are saved when you approve and listed at the top – see each process done / running / to collect / ready / waiting and start the next ones. MAX button (the most you can make from what's on the rock). Search by input or process. Cargo bay: best ship re-picked as flight times come in (with a warning), full ships marked, clear "Click to load" on rock cards. New welcome line. Help page updated.
