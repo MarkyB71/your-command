@@ -103,6 +103,7 @@ function wNameBox(pen) {
       'html body #dktools #dkrf{order:4!important;margin-right:auto!important}' +
       'html body #dktools [data-srch]{order:5!important}' +
       'html body #dktools #cdx,html body #dktools #dkhub{order:6!important}' +
+      'html body #dktools:not(.c2) :is(#swbal,#cl-dc,#dkrf){visibility:hidden}' +
       'html body #dktools #wc-top{order:7!important}html body #dktools #wc-nm{order:8!important}html body #dktools #dkhelp{order:9!important}';
     (document.body || document.documentElement).appendChild(st);
   };
@@ -114,15 +115,16 @@ function wNameBox(pen) {
     const t = document.getElementById('dktools'), sw = document.getElementById('swbal'), dc = document.getElementById('cl-dc'), pl = document.getElementById('play');
     if (!t || !sw || !dc || !pl || !t.parentNode) return;
     const bar = t.parentNode.getBoundingClientRect(), r = dc.getBoundingClientRect(), p = pl.getBoundingClientRect();
-    if (Math.abs(r.top - p.top) > 12) { sw.style.removeProperty('margin-left'); return; }
+    if (Math.abs(r.top - p.top) > 12) { sw.style.removeProperty('margin-left'); t.classList.add('c2'); return; }
     const cur = parseFloat(sw.style.marginLeft) || (sw.getBoundingClientRect().left - p.right - 6);
     let shift = (bar.left + bar.width / 2) - (r.left + r.width / 2);
     const sr = t.querySelector('[data-srch]'), rf = document.getElementById('dkrf');
     if (shift > 0 && sr && rf) shift = Math.min(shift, sr.getBoundingClientRect().left - rf.getBoundingClientRect().right - 8); // never push the right side onto a new line
     const want = Math.max(8, Math.round(cur + shift));
     if (Math.abs(want - cur) > 1) sw.style.setProperty('margin-left', want + 'px', 'important');
+    t.classList.add('c2'); // shown once placed – no jump on load (Mark, 13 Nov)
   };
-  if (BAR2) { setInterval(() => { bar2Css(); centreDc(); }, 1000); window.addEventListener('resize', centreDc); } // cheap checks once a second
+  if (BAR2) { setInterval(() => { bar2Css(); centreDc(); }, 1000); window.addEventListener('resize', centreDc); const t0 = Date.now(); const fast = () => { centreDc(); if (Date.now() - t0 > 3000) { const t = document.getElementById('dktools'); if (t) t.classList.add('c2'); } if (Date.now() - t0 < 8000) requestAnimationFrame(fast); }; requestAnimationFrame(fast); } // shown after 3 s whatever happens // cheap checks once a second
   if (HUBTAB) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
