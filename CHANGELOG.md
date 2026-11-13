@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 13 Nov 2026 – Captain's log: ✎ edit a note's text. ⚙ Process boxes get "🚚 Plan it in the Logistics Hub" and 📦 Still needed boxes get "make ›" on each short item – both open Production with the rock, product and amount filled in; if the rock can't make it, the box says which building is missing. Help page updated.
+
 ## 13 Nov 2026 – Fix: the Logistics Hub can no longer send the exact same actions twice within 15 minutes (a ship was loaded twice because the game data hadn't caught up after the first Approve). Reported by Mark.
 
 ## 13 Nov 2026 – New top bar layout: Play Influence on the left; SWAY, Deck controls (always centred) and Refresh Game Data in the middle; search, Command Deck, wallet and Help on the right. On decks with page buttons the bar has its own line. No more jumping about while the page loads, and no stray Logistics Hub button on load. The airlock now says "Warning. Airlock cycling. Entering the Logistics Hub." Help page updated.

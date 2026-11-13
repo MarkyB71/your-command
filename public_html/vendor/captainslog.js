@@ -165,7 +165,7 @@
   // 🚚 notes → Logistics Hub (Mark, 13 Nov – TEST ONLY ?beta=1): a ⚙ box can open Production with its rock, product and
   // amount filled in; a 📦 box's short items each get a "make ›" link. The hub still goes through the airlock and sends
   // nothing until you approve.
-  const HUBLINK = /[?&]beta=1\b/.test(location.search);
+  const HUBLINK = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // can this rock make it? – a finished building of a kind that has a process for it (Mark, 13 Nov: "make ›" on a
   // Habitation Module went through to the hub on TRCS CMS, which has no Shipyard). Returns '' if yes, else what's missing.
   const missingFor = (p, rockId) => {
@@ -176,7 +176,7 @@
     try { have = ((window.YIC && window.YIC.D && window.YIC.D.allB) || []).filter((b) => b.Building && b.Building.status === 3 && (((b.Location || {}).locations || []).find((l) => l.label === 3) || {}).id === rockId).map((b) => b.Building.buildingType); } catch (e) { return ''; }
     return kinds.some((t) => have.includes(t)) ? '' : 'needs a ' + kinds.map((t) => BN[t] || 'building').join(' or ') + ' – none on this rock';
   };
-  const hubHref = (p, q, rock) => location.pathname + '?' + (HUBLINK ? 'beta=1&' : '') + 'dock=1&mk=' + (+p) + '&q=' + Math.ceil(q) + (rock ? '&rock=' + encodeURIComponent(rock) : '');
+  const hubHref = (p, q, rock) => location.pathname + '?' + (/[?&]beta=1\b/.test(location.search) ? 'beta=1&' : '') + 'dock=1&mk=' + (+p) + '&q=' + Math.ceil(q) + (rock ? '&rock=' + encodeURIComponent(rock) : '');
   // ⚙ process boxes: a process (window.YICPROCS from vendor/buildplan.js: [name, building type, inputs per run, outputs per run])
   // and how many runs – what its inputs still need on the rock (Mark, 10 Nov 22:41)
   const PT = { 1: 'Refinery', 2: 'Factory', 3: 'Bioreactor', 4: 'Shipyard', 5: 'Dry dock' };
