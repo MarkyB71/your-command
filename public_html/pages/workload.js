@@ -978,4 +978,17 @@
     skippyIntro(m.querySelector('.brs') || m);
     skippyClick(m.querySelector('.brs') || m);
   };
+  // Jump links on Today's workload ("Waiting to accept" etc.): scroll only the box the list is in, not the whole page as
+  // well – the browser's own jump scrolled both, so the list sat under the top bar and the scroll stuck (Mark, 13 Nov)
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#al-"]');
+    if (!a) return;
+    const h = document.getElementById(a.getAttribute('href').slice(1));
+    if (!h) return;
+    let box = h.parentElement;
+    while (box && box !== document.body && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+    e.preventDefault();
+    if (!box || box === document.body) { h.scrollIntoView({ block: 'start' }); return; }
+    box.scrollTo({ top: box.scrollTop + h.getBoundingClientRect().top - box.getBoundingClientRect().top - 8, behavior: 'smooth' });
+  }, true);
 })();
