@@ -186,7 +186,20 @@
     return { steps, fly, mine, byUsed, stock, noBld, haveTarget, extra: made };
   }
 
-  // ---------- page ----------
+  // ---------- MAX (Mark, 13 Nov – TEST ONLY, ?beta=1): "use all the Pyroxene I have to make Sodium Tungstate" ----------
+  // The most of the target that can be made from what's on the rock now (storage, deliveries on the way, by-products) –
+  // nothing to fly in, buy or mine. Found by doubling then halving the amount. Says which input runs out first.
+  const MAXB = /[?&]beta=1\b/.test(location.search);
+  function maxMake(target) {
+    const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
+    if (!ok(1)) { const W = work(target, 1); return { q: 0, by: Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number) }; }
+    let lo = 1, hi = 2;
+    while (hi < 1e13 && ok(hi)) { lo = hi; hi *= 2; }
+    while (hi - lo > 1) { const mid = Math.floor((lo + hi) / 2); if (ok(mid)) lo = mid; else hi = mid; }
+    const W = work(target, hi);
+    return { q: lo, by: Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number) };
+  }
+
   function products() {
     const k = K(), seen = {};
     k.recipes().forEach((r) => { if (/Unbundling/.test(r.name)) return; Object.keys(r.out).forEach((o) => { seen[o] = 1; }); });
@@ -537,7 +550,9 @@
 <select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
       (f && !P.p ? `<div class="dkp-chips" style="margin-top:8px">${shown.slice(0, 24).map((p) => `<button type="button" data-pp="${p}" class="dk-shipbtn" style="cursor:pointer">${esc(k.pname(p))}</button>`).join('') || '<span class="src">Nothing matches.</span>'}</div>` : '') +
       (P.p ? `<div class="row" style="margin-top:10px"><span class="src">How much</span><input type="number" id="pp-q" min="0" step="any" value="${esc(P.q)}">` +
-        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') + '</div>' + forHTML() : '') + '</div>';
+        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') +
+        (MAXB ? `<button type="button" class="dk-shipbtn" id="pp-max" style="cursor:pointer" title="As much as you can make from what’s on this rock now">MAX</button>` : '') + '</div>' +
+        (MAXB && P.maxTxt ? `<div class="hint">${P.maxTxt}</div>` : '') + forHTML() : '') + '</div>';
 
     if (P.p && qty > 0) {
       const W = work(P.p, qty);
@@ -619,9 +634,16 @@
     if (sh && P.shipItems) cargoPanel(sh, P.shipItems);
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     on('pp-rock', 'change', (e) => { S.rock = e.target.value; P.moverSet = false; P.runner = 0; k.render(); });
-    on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
+    on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; P.maxTxt = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
-    on('pp-q', 'change', (e) => { P.q = e.target.value; k.render(); });
+    on('pp-q', 'change', (e) => { P.q = e.target.value; P.maxTxt = ''; k.render(); });
+    on('pp-max', 'click', () => {
+      const x = maxMake(P.p), esc = k.esc, by = x.by.map((p) => esc(k.pname(p))).slice(0, 3).join(', ');
+      if (!x.q) { P.maxTxt = '<span style="color:var(--amber)">Can’t make any from what’s on ' + esc(S.rock) + ' – needs ' + (by || 'more') + '.</span>'; k.render(); return; }
+      if (k.bulk(P.p)) { P.unit = x.q >= 1e6 ? 'kt' : x.q >= 1000 ? 't' : 'kg'; P.q = Math.floor(x.q / UNITS[P.unit] * 1000) / 1000; } else P.q = x.q;
+      P.use = ''; P.maxTxt = 'MAX from what’s on ' + esc(S.rock) + ' now' + (by ? ' – runs out of <b>' + by + '</b> first' : '') + '.';
+      k.render();
+    });
     on('pp-inputs', 'toggle', (e) => { P.inOpen = e.target.open; });
     on('pp-crew', 'change', (e) => { S.mover = +e.target.value; P.moverSet = true; P.feed.m = false; k.render(); });
     m.querySelectorAll('[data-feed]').forEach((e) => e.addEventListener('change', () => { P.feed[e.dataset.feed] = e.checked; k.render(); }));
@@ -643,5 +665,5 @@
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
   }
 
-  window.YICPROD = { render, work, planStatus };
+  window.YICPROD = { render, work, planStatus, maxMake };
 })();
