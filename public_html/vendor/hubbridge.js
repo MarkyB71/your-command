@@ -125,7 +125,7 @@
     { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: 11 },
     { m: 'feed', name: 'Galley', ico: '🍽', col: '#ffc45e', ry: 7 },
     { m: 'home', name: 'Deliveries', ico: '🚚', col: '#ffd28a', ry: -7, k: 'dels' },
-    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -11 }, // Storage tidy (beta only – switched off when tidy.js isn't loaded)
+    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -11 }, // Storage tidy (LIVE 13 Nov 2026 – switched off when tidy.js isn't loaded)
     { m: '', name: 'Spare', ico: '·', col: '#8a6a3a', ry: -15, off: 'Kept free for future tools' },
   ];
   const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: 'STORAGE TIDY' };

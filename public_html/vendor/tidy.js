@@ -1,4 +1,4 @@
-/* Storage tidy – Skippy's Awesome Command Deck – TEST ONLY (?beta=1)
+/* Storage tidy – Skippy's Awesome Command Deck – LIVE 13 Nov 2026 (tested on ?beta=1 first)
    Player page (design agreed with Mark 6 Nov 2026 – project doc claude/storage-tidy-player-page-2026-11-06.md):
      1 pick a rock · 2 naming (own prefix + styles, every name editable) · 3 moves (product groups → buildings,
      best free logistics crew, deliveries per approval) · 4 finish in the game + check again.
@@ -16,7 +16,7 @@
      out at 75,000 t. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return; // test only
+  // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark: "get some opinions on it and go from there")
 
   const DISPATCHER = '0x0422d33a3638dcc4c62e72e1d6942cd31eb643ef596ccac2351e0e21f6cd4bf4';
   const SLOT = 2; // warehouse / tank farm main storage (inventoryType 10 / 19)
@@ -432,7 +432,7 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
 <div class="st-w"><button id="st-gdone">Done – show me the list ↓</button><button id="st-gskip">Skip – keep all my names</button></div></div>`;
   }
 
-  // ↩ PUT BACK OLD NAMES (Mark, 13 Nov – TEST ONLY ?beta=1): just before a rename is sent, each building's current name is
+  // ↩ PUT BACK OLD NAMES (Mark, 13 Nov – LIVE 13 Nov 2026): just before a rename is sent, each building's current name is
   // saved IN THIS BROWSER ONLY (localStorage, latest list per rock – nothing on the server). The button puts them back
   // through the normal rename step.
   const OKEY = 'yicOldNames';
