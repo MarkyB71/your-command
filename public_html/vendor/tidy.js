@@ -450,7 +450,7 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
     const changed = rows.filter((x) => x.change);
     const ready = order.length;
     const oh = oldHere();
-    return `<h3>Step 2: names</h3>
+    return `<h3>Step 2: names${S.rock ? ' – ' + esc(S.rock) : ''}</h3>
 ${guide()}
 ${oh.length ? `<div class="st-w" style="margin:8px 0"><button class="st-next" id="st-old">↩ Put back your old names (${oh.length})</button> <span style="color:#8b9ab0;font-size:13px">The names from before your last rename here (saved in this browser) – check them below, then approve.</span></div>` : ''}
 <div class="st-opt">
@@ -477,7 +477,7 @@ ${changed.map((x) => `<tr class="${x.err || S.rtick[x.b.id] === false ? 'st-off'
     const ok = plan.rows.filter((x) => x.state === 'ok');
     const picked = ok.filter((x) => S.mtick[x.key]);
     if (!Object.keys(S.mtick).length && !S.mtinit) { S.mtinit = true; ok.filter((x) => !S.sent[x.key]).slice(0, S.bs === 'All' ? Infinity : S.bs).forEach((x) => { S.mtick[x.key] = 1; }); return step3(); }
-    return `<h3>Step 3: moves</h3>
+    return `<h3>Step 3: moves${S.rock ? ' – ' + esc(S.rock) : ''}</h3>
 <p>Pick where each kind of goods should live. The first building fills to 95%, then the overflow takes the rest. Goods already in their place stay put.</p>
 <table><thead><tr><th>Goods</th><th>What's in it</th><th>Goes to</th><th>Overflow</th></tr></thead><tbody>
 ${GROUPS.map(([g, n, tank]) => `<tr><td>${esc(n)}${tank ? ' <span style="color:#8b9ab0;font-size:12px">(tank)</span>' : ''}</td><td style="color:#8b9ab0;font-size:13px">${esc(GDESC[g])}</td>
@@ -526,7 +526,7 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
   }
 
   function step4() {
-    return `<h3>Step 4: finish</h3>
+    return `<h3>Step 4: finish${S.rock ? ' – ' + esc(S.rock) : ''}</h3>
 <p>Each delivery shows up in the game as a <b>Ready</b> "Surface Transfer" for the crew that moved it.</p>
 <p>In the game, open that crew and press <b>Finish All Ready Items</b> – that finishes them all at once.</p>
 <p>Then press <b>↻ Check again</b> above. Step 3 should say "Nothing to move – everything is in its place ✓", and step 1 shows how full each building is now.</p>`;
