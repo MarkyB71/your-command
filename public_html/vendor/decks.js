@@ -91,8 +91,11 @@ function wNameBox(pen) {
   // (sway.js skips its own centring and midRf() leaves Refresh in the row while this is on).
   const BAR2 = /[?&]beta=1\b/.test(location.search);
   window.YICBAR2 = BAR2;
-  if (BAR2) {
+  // the page can rebuild <head>/<body> after this script runs (Mark saw it come and go in Brave), so tools() puts it back
+  const bar2Css = () => {
+    if (!BAR2 || document.getElementById('dkbar2-css')) return;
     const st = document.createElement('style');
+    st.id = 'dkbar2-css';
     st.textContent = 'html body #dktools{flex:1 1 560px!important;margin-left:0!important}' +
       'html body #dktools #play{order:1!important}' +
       'html body #dktools #swbal{order:2!important;margin-left:auto!important}' +
@@ -102,7 +105,8 @@ function wNameBox(pen) {
       'html body #dktools #cdx,html body #dktools #dkhub{order:6!important}' +
       'html body #dktools #wc-top{order:7!important}html body #dktools #wc-nm{order:8!important}html body #dktools #dkhelp{order:9!important}';
     (document.body || document.documentElement).appendChild(st);
-  }
+  };
+  bar2Css();
   if (HUBTAB) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
@@ -661,6 +665,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   }
   window.addEventListener('resize', () => { const db = document.getElementById('deckbar'); if (db) midRf(db); });
   function tools(db) {
+    bar2Css();
     if (!tray) {
       tray = document.createElement('div');
       tray.id = 'dktools';
