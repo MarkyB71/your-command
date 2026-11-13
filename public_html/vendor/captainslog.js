@@ -110,7 +110,7 @@
 .cl-need .nd-l.ok{color:#57ff65}
 .cl-need .nd-r{display:flex;gap:6px;justify-content:space-between;font-size:11.5px;line-height:1.35;color:#c4cdd9}
 .cl-need .nd-hub{display:block;margin:6px 0 4px;padding:4px 8px;border-radius:6px;border:1px solid #ffb03b;background:#2a1d08;color:#ffd28a;font-size:11.5px;font-weight:700;text-decoration:none;text-align:center}.cl-need .nd-hub:hover,.cl-need .nd-hub:focus-visible{background:#ffb03b;color:#1a1000}
-.cl-need .nd-mk{flex:none;color:#ffb03b;font-size:10.5px;text-decoration:none;margin-left:4px}.cl-need .nd-mk:hover{text-decoration:underline}
+.cl-need .nd-no{flex:none;color:#8b9ab0;font-size:10px;font-style:normal;margin-left:4px;white-space:nowrap}.cl-need .nd-mk{flex:none;color:#ffb03b;font-size:10.5px;text-decoration:none;margin-left:4px}.cl-need .nd-mk:hover{text-decoration:underline}
 .cl-need .nd-r b{color:#ff8c1a;font-weight:600;white-space:nowrap}
 .cl-need .nd-r.ok{opacity:.55}.cl-need .nd-r.ok b{color:#57ff65}
 .cl-note .ft .nd:hover{color:#ffd94f;border-color:#ffd94f}
@@ -165,6 +165,16 @@
   // amount filled in; a 📦 box's short items each get a "make ›" link. The hub still goes through the airlock and sends
   // nothing until you approve.
   const HUBLINK = /[?&]beta=1\b/.test(location.search);
+  // can this rock make it? – a finished building of a kind that has a process for it (Mark, 13 Nov: "make ›" on a
+  // Habitation Module went through to the hub on TRCS CMS, which has no Shipyard). Returns '' if yes, else what's missing.
+  const missingFor = (p, rockId) => {
+    const FBT = (window.YICREC && window.YICREC.FBT) || { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 }, BN = { 3: 'Refinery', 4: 'Bioreactor', 5: 'Factory', 6: 'Shipyard' };
+    const kinds = [...new Set(procs().filter((q) => q[3][p] && !/Unbundling/.test(q[0])).map((q) => FBT[q[1]]))];
+    if (!kinds.length) return 'can’t be made – buy or mine it';
+    let have = [];
+    try { have = ((window.YIC && window.YIC.D && window.YIC.D.allB) || []).filter((b) => b.Building && b.Building.status === 3 && (((b.Location || {}).locations || []).find((l) => l.label === 3) || {}).id === rockId).map((b) => b.Building.buildingType); } catch (e) { return ''; }
+    return kinds.some((t) => have.includes(t)) ? '' : 'needs a ' + kinds.map((t) => BN[t] || 'building').join(' or ') + ' – none on this rock';
+  };
   const hubHref = (p, q, rock) => location.pathname + '?' + (HUBLINK ? 'beta=1&' : '') + 'dock=1&mk=' + (+p) + '&q=' + Math.ceil(q) + (rock ? '&rock=' + encodeURIComponent(rock) : '');
   // ⚙ process boxes: a process (window.YICPROCS from vendor/buildplan.js: [name, building type, inputs per run, outputs per run])
   // and how many runs – what its inputs still need on the rock (Mark, 10 Nov 22:41)
@@ -187,13 +197,13 @@
       if (pr) {
         inp = {}; Object.keys(pr[2]).forEach((p) => { inp[p] = pr[2][p] * n; });
         extra = '<div class="nd-l">Makes ' + Object.keys(pr[3]).map((o) => esc(pnm(o))).join(', ') + '</div>';
-        if (HUBLINK) { const o = Object.keys(pr[3])[0], rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || ''; extra += '<a class="nd-hub" href="' + esc(hubHref(o, pr[3][o] * n, rn)) + '" title="Opens Production in the Logistics Hub with this filled in – nothing is sent until you approve">🚚 Plan it in the Logistics Hub ›</a>'; }
         // Is there a finished building of the right kind on the rock? (same check as the Construction planner; Mark, 10 Nov 22:44)
         const FBT = (window.YICREC && window.YICREC.FBT) || { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 };
         let nb = -1;
         try { nb = ((Y && Y.D && Y.D.allB) || []).filter((b) => b.Building && b.Building.buildingType === FBT[pr[1]] && b.Building.status === 3 && (((b.Location || {}).locations || []).find((l) => l.label === 3) || {}).id === x.rock).length; } catch (e) {}
         if (nb === 0) extra = '<div class="nd-nob">✗ No ' + esc(PT[pr[1]] || 'building') + ' on ' + esc((x.rockName || 'this rock')) + '</div>' + extra;
         else if (nb > 0) extra = '<div class="nd-l ok">✓ ' + nb + ' ' + esc(PT[pr[1]] || 'building') + (nb > 1 ? 's' : '') + ' on the rock</div>' + extra;
+        if (HUBLINK && nb !== 0) { const o = Object.keys(pr[3])[0], rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || ''; extra += '<a class="nd-hub" href="' + esc(hubHref(o, pr[3][o] * n, rn)) + '" title="Opens Production in the Logistics Hub with this filled in – nothing is sent until you approve">🚚 Plan it in the Logistics Hub ›</a>'; }
       }
     } else if (BL && BL[x.bld]) inp = BL[x.bld][1];
     if (!Y || !inp) return '<div class="nd-l">Still loading…</div>';
@@ -204,7 +214,7 @@
       const need = inp[p], have = stk[p] || 0, left = Math.max(0, need - have);
       if (left > 0) short++;
       const rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || '';
-      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b>' + (HUBLINK && left > 0 && x.kind !== 'proc' ? '<a class="nd-mk" href="' + esc(hubHref(p, left, rn)) + '" title="Plan making this in the Logistics Hub">make ›</a>' : '') + '</div>';
+      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b>' + (HUBLINK && left > 0 && x.kind !== 'proc' ? ((mm) => mm ? '<i class="nd-no" title="' + esc(nm(p) + ' ' + mm) + '">✗ ' + esc(mm.replace(/ – .*/, '')) + '</i>' : '<a class="nd-mk" href="' + esc(hubHref(p, left, rn)) + '" title="Plan making this in the Logistics Hub">make ›</a>')(missingFor(p, x.rock)) : '') + '</div>';
     }).join('');
     return extra + (short ? '<div class="nd-l">Still needed on the rock:</div>' : '<div class="nd-l ok">✓ Everything is on the rock</div>') + rows;
   }
