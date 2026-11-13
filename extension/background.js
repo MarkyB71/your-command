@@ -24,7 +24,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   }
   // "Command Deck" button on the game page: jump back to the site.
   if (msg && msg.type === 'yic-deck' && sender.tab && sender.origin === GAME) {
-    goDeck().then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
+    goDeck(DECK_IDS.includes(msg.id) ? msg.id : '').then(() => reply({ ok: true }), () => reply({ ok: false })); return true;
   }
   if (!msg || msg.type !== 'yic-open' || typeof msg.path !== 'string' || !OK.test(msg.path)) {
     reply({ ok: false, error: 'bad request' }); return;
@@ -78,13 +78,21 @@ async function openChain(n, r, a) {
 }
 
 // Toolbar icon: jump back to the Command Deck tab (or open it if none).
-chrome.action.onClicked.addListener(goDeck);
-async function goDeck() {
+// A deck id (from the deck strip in the game, 0.6.8) also opens that deck on the Command Deck.
+const DECK_IDS = ['flight', 'crew', 'mine', 'sci', 'eng', 'trade', 'chain'];
+chrome.action.onClicked.addListener(() => goDeck(''));
+async function goDeck(id) {
   const tabs = await chrome.tabs.query({ url: SITE + '/*' });
   if (!tabs.length) { await chrome.tabs.create({ url: SITE + '/' }); return; }
   const t = tabs.find(x => x.active) || tabs[0];
   await chrome.tabs.update(t.id, { active: true });
   await chrome.windows.update(t.windowId, { focused: true });
+  if (id) await chrome.scripting.executeScript({
+    target: { tabId: t.id },
+    world: 'MAIN',
+    func: id => window.postMessage({ type: 'yic-deck-go', id }, location.origin),
+    args: [id]
+  });
 }
 
 // Open marketplaces for the system map (maptags.js), from the Command Deck's belt-wide market list.

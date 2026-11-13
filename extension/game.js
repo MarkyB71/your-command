@@ -9,7 +9,7 @@
 // and sends nothing anywhere.
 (() => {
   if (window.top !== window || document.getElementById('yic-s')) return;
-  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, chainLink: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, mapFlights: true, flightsFriendly: true, flightsNeutral: true, flightsHostile: true, flightsOther: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, chainLink: true, deckStrip: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, mapFlights: true, flightsFriendly: true, flightsNeutral: true, flightsHostile: true, flightsOther: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
 
   chrome.storage.sync.get(DEFAULTS, opts => {
     // Hand the choices to the page-side script (lotcolours.js) through a page attribute.
@@ -23,7 +23,7 @@
     });
     // All helpers start, and each checks its switch (opts, kept up to date above) every time,
     // so turning one on or off in Options / Deck controls works without a refresh (0.6.7).
-    sideButton(() => opts.sideButton !== false);
+    sideButton(() => opts.sideButton !== false, () => opts.deckStrip !== false);
     hideUsed(() => opts.hideUsedDeposits !== false);
     autoSample(() => opts.autoSample !== false);
     tagBridge();
@@ -90,7 +90,7 @@
     });
   }
 
-  function sideButton(on) {
+  function sideButton(on, strip) {
     const icon = chrome.runtime.getURL('icons/icon48.png');
     const go = e => { e.preventDefault(); e.stopPropagation(); chrome.runtime.sendMessage({ type: 'yic-deck' }); };
     const TIP = "Skippy's Command Deck";
@@ -105,6 +105,18 @@
     s.innerHTML = `<img src="${icon}" alt="${TIP}" style="width:28px;height:28px;display:block;pointer-events:none">`;
     s.addEventListener('click', go);
 
+    // SkippyChain button just under it (0.6.8): opens The SkippyChain on the Command Deck.
+    const CT = 'The SkippyChain – full production chain';
+    const c = document.createElement('div');
+    c.id = 'yic-sc';
+    c.setAttribute('data-tooltip-id', 'hudMenuTooltip');
+    c.setAttribute('data-tooltip-place', 'left');
+    c.setAttribute('data-tooltip-content', CT);
+    c.setAttribute('role', 'button');
+    c.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" aria-label="' + CT + '" style="display:block;pointer-events:none" fill="none" stroke="#ffd24a" stroke-width="2.2" stroke-linecap="round">' +
+      '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>';
+    c.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); chrome.runtime.sendMessage({ type: 'yic-deck', id: 'chain' }); });
+
     // Floating fallback when there is no side bar.
     const host = document.createElement('div');
     host.style.cssText = 'position:fixed;right:15px;bottom:120px;z-index:2147483647;display:none';
@@ -118,25 +130,34 @@
     root.querySelector('button').addEventListener('click', go);
 
     function dock() {
-      if (!on()) { if (s.isConnected) s.remove(); host.style.display = 'none'; return; }
+      if (!on()) { if (s.isConnected) s.remove(); if (c.isConnected) c.remove(); host.style.display = 'none'; return; }
       if (!host.isConnected) (document.body || document.documentElement).appendChild(host);
       // Only the side bar column itself: panels like Ship Inventory reuse the same tooltip id
       // on their own items, so keep just the right-most column of visible buttons.
       const all = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')]
-        .filter(b => b !== s)
+        .filter(b => b !== s && b !== c)
         .map(b => ({ b, r: b.getBoundingClientRect() }))
         .filter(o => o.r.width > 0 && o.r.height > 0);
       const edge = Math.max(...all.map(o => o.r.left));
       const btns = all.filter(o => Math.abs(o.r.left - edge) < 8)
         .sort((a, c) => a.r.top - c.r.top).map(o => o.b);
-      if (!btns.length) { if (s.isConnected) s.remove(); host.style.display = ''; return; }
+      if (!btns.length) { if (s.isConnected) s.remove(); if (c.isConnected) c.remove(); host.style.display = ''; return; }
       host.style.display = 'none';
       // Most common class = the game's normal (not selected) side bar button.
       const n = {}; btns.forEach(b => { n[b.className] = (n[b.className] || 0) + 1; });
       const cls = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
       if (s.className !== cls) s.className = cls;
       const last = btns[btns.length - 1];
-      if (s.previousElementSibling !== last) last.after(s);
+      if (c.className !== cls) c.className = cls;
+      // With the deck strip at the bottom of the game, the S button isn't needed (Mark, 12 Nov):
+      // only the SkippyChain button stays in the side bar.
+      if (strip()) {
+        if (s.isConnected) s.remove();
+        if (c.previousElementSibling !== last) last.after(c);
+      } else {
+        if (s.previousElementSibling !== last) last.after(s);
+        if (s.nextElementSibling !== c) s.after(c);
+      }
     }
     dock();
     setInterval(dock, 1000);

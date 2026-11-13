@@ -24,7 +24,7 @@ window.addEventListener('message', e => {
 // friend / foe tags, and send back changes. Only the known settings are accepted; nothing else
 // on the page is read, and everything stays saved in this browser only.
 (() => {
-  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, chainLink: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, mapFlights: true, flightsFriendly: true, flightsNeutral: true, flightsHostile: true, flightsOther: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
+  const DEFAULTS = { sideButton: true, lotColours: true, hideUsedDeposits: true, autoSample: true, chainLink: true, deckStrip: true, statusDots: true, crewFood: true, shipProp: true, mapTags: true, mapMarkets: true, mapFlights: true, flightsFriendly: true, flightsNeutral: true, flightsHostile: true, flightsOther: true, tagCol_friendly: '#88e675', tagCol_neutral: '#ffd94f', tagCol_hostile: '#ff564d' };
   const TAG = { friendly: 1, neutral: 1, hostile: 1 };
   const alive = () => { try { return !!(chrome.runtime && chrome.runtime.id); } catch (e) { return false; } };
   const reply = () => {
@@ -52,5 +52,26 @@ window.addEventListener('message', e => {
       });
       chrome.storage.local.set({ mapTags: clean });
     }
+  });
+})();
+
+// Deck strip in the game (0.6.8): the Command Deck sends its station numbers; only short plain
+// numbers and words for the five known stations are kept, in this browser only.
+(() => {
+  const K = ['flight', 'crew', 'mine', 'sci', 'eng', 'trade'];
+  const str = (x, n) => typeof x === 'string' ? x.slice(0, n) : '';
+  window.addEventListener('message', e => {
+    if (e.source !== window || e.origin !== location.origin) return;
+    const m = e.data;
+    if (!m || m.type !== 'yic-deck-sum' || !m.d || typeof m.d !== 'object') return;
+    try { if (!chrome.runtime || !chrome.runtime.id) return; } catch (err) { return; }
+    const out = {};
+    K.forEach(k => {
+      const x = m.d[k];
+      if (!x || typeof x !== 'object') return;
+      const v = Number.isFinite(x.v) ? Math.max(0, Math.min(1e6, Math.round(x.v))) : null;
+      out[k] = { v, s: str(x.s, 30), w: str(x.w, 40) };
+    });
+    chrome.storage.local.set({ deckSummary: out });
   });
 })();

@@ -152,7 +152,8 @@ try {
   const fast = [await ask('/lot/1'), await ask('/lot/2')];
   check(fast[1] && fast[1].ok === false, 'two links within 0.7 s: the second is held back', 'rate limit not working: ' + JSON.stringify(fast));
 
-  // Game page: S button docks after the last side bar button, with the usual button class.
+  // Game page: with the deck strip on (default since 0.6.8) the S button is tucked away and the gold
+  // SkippyChain button docks after the last side bar button, with the usual button class.
   // A fresh game tab, so nothing from the link tests above can get in the way.
   const game = await ctx.newPage();
   await game.goto(GAME + '/');
@@ -160,10 +161,12 @@ try {
   if (game) {
     const gtab = game;
     const dock = await gtab.waitForFunction(() => {
-      const s = document.getElementById('yic-s'); const bar = document.getElementById('bar');
-      return s && s.parentElement === bar && bar.lastElementChild === s && s.className === 'hudBtn' && s.querySelector('img').naturalWidth > 0;
+      const c = document.getElementById('yic-sc'); const bar = document.getElementById('bar');
+      return c && c.parentElement === bar && bar.lastElementChild === c && c.className === 'hudBtn' && !document.getElementById('yic-s');
     }, null, { timeout: 5000 }).then(() => true).catch(() => false);
-    check(dock, 'S button sits at the bottom of the game side bar, game look, icon loads', 'S button not docked properly: ' + await what());
+    check(dock, 'SkippyChain button sits at the bottom of the game side bar (S button tucked away while the deck strip is on)', 'side bar buttons not docked properly: ' + await what());
+    const strip = await gtab.waitForFunction(() => !!document.getElementById('yic-strip') && document.querySelectorAll('#yic-strip [data-k]').length === 6, null, { timeout: 4000 }).then(() => true, () => false);
+    check(strip, 'deck strip is on the game page with its 6 consoles', 'deck strip missing');
     const unticked = await gtab.waitForFunction(() => document.getElementById('usedTxt').dataset.on === '0', null, { timeout: 3000 }).then(() => true).catch(() => false);
     check(unticked, '"Show Used Deposits" unticked once', '"Show Used Deposits" was not unticked');
     await gtab.click('#usedTxt'); await new Promise(r => setTimeout(r, 1000));
@@ -171,8 +174,8 @@ try {
     const lc = await gtab.evaluate(() => document.documentElement.dataset.yicLotColours || '');
     ok('lot colours script ran (' + (lc || 'no game store on the stand-in page – expected') + ')');
     const tabsBefore = ctx.pages().length;
-    await gtab.click('#yic-s'); await new Promise(r => setTimeout(r, 800));
-    check(ctx.pages().length === tabsBefore, 'S button goes back to the open Command Deck tab (no new tab)', 'S button opened another tab');
+    await gtab.click('#yic-sc'); await new Promise(r => setTimeout(r, 800));
+    check(ctx.pages().length === tabsBefore, 'SkippyChain button goes back to the open Command Deck tab (no new tab)', 'SkippyChain button opened another tab');
   }
 
   // Options page: shows, saves, and the game reads it
@@ -184,6 +187,11 @@ try {
   check(boxes.length >= 4 && boxes.every(b => b[1] === !OFF.includes(b[0])), 'options page shows ' + boxes.length + ' choices, all on by default', 'options page: ' + JSON.stringify(boxes));
   const sd = await game.evaluate(() => document.documentElement.dataset.yicStatusDots || '').catch(() => '');
   check(sd && !/switched off/.test(sd), 'status dots on by default (' + sd + ')', 'status dots: ' + sd);
+  // Deck strip off → the S button comes back in the open game tab (no refresh); the S button tests below need it off.
+  await op.click('input[name=deckStrip]');
+  const sBack = await game.waitForFunction(() => !!document.getElementById('yic-s') && !document.getElementById('yic-strip'), null, { timeout: 4000 }).then(() => true, () => false);
+  check(sBack, 'switching the deck strip off brings the S button back (no refresh)', 'deck strip off: S button / strip wrong');
+  await new Promise(r => setTimeout(r, 600));
   await op.click('input[name=sideButton]');
   await op.waitForFunction(() => document.getElementById('saved').textContent === 'Saved', null, { timeout: 3000 }).catch(() => {});
   const g2 = await ctx.newPage();

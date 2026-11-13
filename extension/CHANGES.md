@@ -3,7 +3,11 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## 0.6.7 – coming soon
+## 0.6.8 – coming soon
+- **Deck strip** (on by default – switch off in Options) – your Command Deck's six stations (Crew Quarters, Flight Deck, Mining, Engineering, Science Lab, Trade Deck) along the bottom of the game, in the empty space between the game's buttons and the clock, each with its number and anything that needs you (hungry crews, ships low on propellant, jobs ready to collect…). Click one to open that deck on your Command Deck tab. It moves out of the way of the game's own buttons and hides when there isn't room.
+- **SkippyChain button on the side bar** – a gold chain-link button in the game's side bar opens The SkippyChain on your Command Deck. While the deck strip is on, the S button is tucked away (the strip does its job).
+
+## 0.6.7 – 13 Nov 2026
 - **SkippyChain button** (on by default – switch off in Options) – pick a process in the game's Refine / Manufacture / Bioreactor / Shipyard window and a gold "SkippyChain ↗" button appears beside PROCESS. Click it and your Command Deck tab opens The SkippyChain on that product – same recipe, amount from the runs you've set, on that rock.
 - **Settings switch straight away** – turning a game tweak on or off in Options or Deck controls now works without refreshing the game tab (S button, status dots, food and propellant bars, map tags, markets, ships in flight, hide used deposits, auto-pick sample, SkippyChain button). Lot colours is the one exception: switching it off takes effect the next time the game loads.
 
