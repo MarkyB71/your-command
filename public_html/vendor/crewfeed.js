@@ -41,7 +41,7 @@
       a.href = location.pathname + (location.search ? location.search.replace(/[?&](dock|feed)=1\b/g, '').replace(/^&/, '?') + '&' : '?') + 'dock=1&feed=1';
       a.textContent = '🍽 Feed crews – in the Logistics Hub ▸';
       a.title = 'Opens the Logistics Hub, where game actions are sent';
-      a.style.cssText = 'display:inline-block;margin:0 0 8px;padding:4px 12px 5px;border:1px solid #3fd68a;border-radius:4px;background:#0b110e;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#3fd68a;text-decoration:none';
+      a.style.cssText = 'display:inline-block;margin:0 0 8px;padding:4px 12px 5px;border:1px solid #ffb03b;border-radius:4px;background:#1a1208;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#ffd28a;text-decoration:none'; // Logistics Hub orange, like its tab (Mark, 13 Nov)
       row.before(a);
     };
   }
