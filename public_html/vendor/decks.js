@@ -86,6 +86,23 @@ function wNameBox(pen) {
   }
   window.YICDECKLIST = DECKS;
   const HUBTAB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
+  // TOP BAR LAYOUT (Mark, 11 Nov – built 13 Nov, TEST ONLY ?beta=1): left = Play Influence; middle = SWAY, Deck controls,
+  // Refresh Game Data; right (personal corner) = Search, Command Deck, wallet + ✎, Help. Done with CSS order + auto margins
+  // (sway.js skips its own centring and midRf() leaves Refresh in the row while this is on).
+  const BAR2 = /[?&]beta=1\b/.test(location.search);
+  window.YICBAR2 = BAR2;
+  if (BAR2) {
+    const st = document.createElement('style');
+    st.textContent = 'html body #dktools{flex:1 1 560px!important;margin-left:0!important}' +
+      'html body #dktools #play{order:1!important}' +
+      'html body #dktools #swbal{order:2!important;margin-left:auto!important}' +
+      'html body #dktools #cl-dc{order:3!important;margin-right:0!important}' +
+      'html body #dktools #dkrf{order:4!important;margin-right:auto!important}' +
+      'html body #dktools [data-srch]{order:5!important}' +
+      'html body #dktools #cdx,html body #dktools #dkhub{order:6!important}' +
+      'html body #dktools #wc-top{order:7!important}html body #dktools #wc-nm{order:8!important}html body #dktools #dkhelp{order:9!important}';
+    (document.body || document.documentElement).appendChild(st);
+  }
   if (HUBTAB) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
@@ -628,6 +645,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   function midRf(db) {
     const sub = db.querySelector('.dk-sub'), rb = document.getElementById('dkrf');
     if (!sub || !rb) return;
+    if (BAR2) { const t = document.getElementById('dktools'); rb.classList.remove('mid'); sub.classList.remove('rfm'); if (t && rb.parentNode !== t) t.appendChild(rb); return; }
     if (rb.parentNode !== sub) sub.appendChild(rb);
     rb.classList.add('glo'); // same glow as Play Influence (Mark, 8 Nov 2026)
     sub.classList.add('rfm');
