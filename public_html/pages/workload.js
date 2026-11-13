@@ -36,6 +36,7 @@
         );
     const S = {
       collect: [],
+      soon: [], // finishing within 3 hours – the orange status dots (Mark, 13 Nov – TEST ONLY ?beta=1)
       risk: [],
       accept: [],
       lease: [],
@@ -45,6 +46,8 @@
       food: [],
       prop: [],
     };
+    const SOON = /[?&]beta=1\b/.test(location.search);
+    const soonTxt = (t) => { const m = Math.max(1, Math.round((t - now) / 60)); return 'finishes in ' + (m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm') + ' (' + new Date(t * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ')'; };
     const plan = {};
     let planX = 0;
     const add = (k, r) => {
@@ -102,12 +105,14 @@
         (b.Extractors || []).forEach((e) => {
           if (e.status !== 1) return;
           busy = true;
+          if (SOON && e.finishTime > now && e.finishTime - now < 10800) add('soon', r(1, 'Extracting ' + APP.pn(e.outputProduct) + ' – ' + soonTxt(e.finishTime), e.finishTime));
           if (e.finishTime <= now)
             add('collect', r(2, 'Extracting ' + APP.pn(e.outputProduct) + ' – finished', e.finishTime));
         });
         (b.Processors || []).forEach((p) => {
           if (p.status !== 1) return;
           busy = true;
+          if (SOON && p.finishTime > now && p.finishTime - now < 10800) { const pq = APP.PROCN[p.runningProcess]; add('soon', r(1, (pq ? pq[0] : 'Process') + ' – ' + soonTxt(p.finishTime), p.finishTime)); }
           if (p.finishTime <= now) {
             const pr = APP.PROCN[p.runningProcess];
             add('collect', r(2, (pr ? pr[0] : 'Process') + ' – finished', p.finishTime));
@@ -116,6 +121,7 @@
         (b.DryDocks || []).forEach((d) => {
           if (d.status !== 1) return;
           busy = true;
+          if (SOON && d.finishTime > now && d.finishTime - now < 10800) add('soon', r(1, 'Ship assembly – ' + soonTxt(d.finishTime), d.finishTime));
           if (d.finishTime <= now) add('collect', r(2, 'Ship assembly – finished', d.finishTime));
         });
         if (!busy) add('idle', r(1, 'Nothing running'));
@@ -361,6 +367,7 @@
     });
     const SEC = [
       ['collect', 'Ready to collect', 'Finished jobs waiting for you to collect the output.'],
+      ...(SOON ? [['soon', 'Finishing soon', 'Jobs that finish within 3 hours – the orange ones.']] : []),
       [
         'risk',
         'Materials at risk',
@@ -467,6 +474,7 @@
           accept: 'Resource',
           lease: 'Lease',
           build: 'Progress',
+          soon: 'Job',
           idle: 'Type',
           store: 'Space used',
           food: 'Food level',
