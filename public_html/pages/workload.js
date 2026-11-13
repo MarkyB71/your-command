@@ -406,8 +406,8 @@
         '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' +
         COL[l] +
         ';margin-right:7px;vertical-align:middle"></span>';
-    // Finishing soon is for information only – it doesn't count as needing you (Mark, 13 Nov – TEST ONLY ?beta=1)
-    const SOONX = /[?&]beta=1\b/.test(location.search);
+    // Finishing soon is for information only – it doesn't count as needing you (Mark, 13 Nov – LIVE 13 Nov 2026)
+    const SOONX = true;
     const total = SEC.reduce((n, [k]) => n + (SOONX && k === 'soon' ? 0 : S[k].length), 0),
       pk = Object.keys(plan).sort(),
       pn_ = pk.reduce((n, k) => n + plan[k], 0);

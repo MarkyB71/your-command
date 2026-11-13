@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 13 Nov 2026 – Captain's log Today: "Finishing soon" jobs no longer count as needing your attention. Logistics Hub: the same-actions guard (15 minutes) now still works after a page reload – remembered in your browser only. Help page updated.
+
 ## 13 Nov 2026 – Captain's log Today: new "Finishing soon" list – jobs that finish within 3 hours, with time left. Help page updated.
 
 ## 13 Nov 2026 – Fix: table headings stay on top when you scroll – building pictures and "in game" buttons no longer show through them Today's workload jump links (e.g. Waiting to accept) scroll just the Captain's log, not the whole page, so the list shows properly.
