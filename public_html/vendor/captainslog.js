@@ -109,6 +109,8 @@
 .cl-need .nd-l{margin:4px 0 3px;color:#8b9ab0;font-size:10.5px}
 .cl-need .nd-l.ok{color:#57ff65}
 .cl-need .nd-r{display:flex;gap:6px;justify-content:space-between;font-size:11.5px;line-height:1.35;color:#c4cdd9}
+.cl-need .nd-hub{display:block;margin:6px 0 4px;padding:4px 8px;border-radius:6px;border:1px solid #ffb03b;background:#2a1d08;color:#ffd28a;font-size:11.5px;font-weight:700;text-decoration:none;text-align:center}.cl-need .nd-hub:hover,.cl-need .nd-hub:focus-visible{background:#ffb03b;color:#1a1000}
+.cl-need .nd-mk{flex:none;color:#ffb03b;font-size:10.5px;text-decoration:none;margin-left:4px}.cl-need .nd-mk:hover{text-decoration:underline}
 .cl-need .nd-r b{color:#ff8c1a;font-weight:600;white-space:nowrap}
 .cl-need .nd-r.ok{opacity:.55}.cl-need .nd-r.ok b{color:#57ff65}
 .cl-note .ft .nd:hover{color:#ffd94f;border-color:#ffd94f}
@@ -159,6 +161,11 @@
   const guessB = (t) => { t = String(t || '').toLowerCase(); return BTYPES.find((k) => t.includes(bName(k).toLowerCase())) || '9'; };
   const NDBETA = true; // 📦 / ⚙ boxes, white no-rock notes, Skippys Sticky Wall – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   let needsFor = null, procFor = null;
+  // 🚚 notes → Logistics Hub (Mark, 13 Nov – TEST ONLY ?beta=1): a ⚙ box can open Production with its rock, product and
+  // amount filled in; a 📦 box's short items each get a "make ›" link. The hub still goes through the airlock and sends
+  // nothing until you approve.
+  const HUBLINK = /[?&]beta=1\b/.test(location.search);
+  const hubHref = (p, q, rock) => location.pathname + '?' + (HUBLINK ? 'beta=1&' : '') + 'dock=1&mk=' + (+p) + '&q=' + Math.ceil(q) + (rock ? '&rock=' + encodeURIComponent(rock) : '');
   // ⚙ process boxes: a process (window.YICPROCS from vendor/buildplan.js: [name, building type, inputs per run, outputs per run])
   // and how many runs – what its inputs still need on the rock (Mark, 10 Nov 22:41)
   const PT = { 1: 'Refinery', 2: 'Factory', 3: 'Bioreactor', 4: 'Shipyard', 5: 'Dry dock' };
@@ -180,6 +187,7 @@
       if (pr) {
         inp = {}; Object.keys(pr[2]).forEach((p) => { inp[p] = pr[2][p] * n; });
         extra = '<div class="nd-l">Makes ' + Object.keys(pr[3]).map((o) => esc(pnm(o))).join(', ') + '</div>';
+        if (HUBLINK) { const o = Object.keys(pr[3])[0], rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || ''; extra += '<a class="nd-hub" href="' + esc(hubHref(o, pr[3][o] * n, rn)) + '" title="Opens Production in the Logistics Hub with this filled in – nothing is sent until you approve">🚚 Plan it in the Logistics Hub ›</a>'; }
         // Is there a finished building of the right kind on the rock? (same check as the Construction planner; Mark, 10 Nov 22:44)
         const FBT = (window.YICREC && window.YICREC.FBT) || { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 };
         let nb = -1;
@@ -195,7 +203,8 @@
     const rows = Object.keys(inp).map((p) => {
       const need = inp[p], have = stk[p] || 0, left = Math.max(0, need - have);
       if (left > 0) short++;
-      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b></div>';
+      const rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || '';
+      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b>' + (HUBLINK && left > 0 && x.kind !== 'proc' ? '<a class="nd-mk" href="' + esc(hubHref(p, left, rn)) + '" title="Plan making this in the Logistics Hub">make ›</a>' : '') + '</div>';
     }).join('');
     return extra + (short ? '<div class="nd-l">Still needed on the rock:</div>' : '<div class="nd-l ok">✓ Everything is on the rock</div>') + rows;
   }
@@ -357,7 +366,7 @@
     board.addEventListener('pointerenter', () => { if (linkFrom) return; /* header stays pinned (Mark, 10 Nov 22:02 – roll-up removed) */ const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
     if (false) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || e.target.closest('input,button,select')) return;
+      if (e.button !== 0 || e.target.closest('input,button,select,a')) return;
       e.preventDefault();
       if (linkFrom && linkFrom !== el.dataset.n) { // second click in link mode: link (or unlink) the two notes
         const A = linkFrom, B = el.dataset.n, L = loadL(), i = L.findIndex((l) => l.includes(A) && l.includes(B));

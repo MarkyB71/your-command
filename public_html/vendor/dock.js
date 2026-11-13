@@ -1001,6 +1001,8 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
   // ---------- start ----------
   function start() {
     if (/[?&]feed=1\b/.test(location.search)) S.mode = 'feed'; // from Crew Quarters' "Feed crews" button
+    // from a Captain's log box (Mark, 13 Nov – TEST ONLY ?beta=1): ?mk=product&q=amount&rock=name opens Production filled in
+    { const u = new URLSearchParams(location.search); if (u.get('mk') && /[?&]beta=1\b/.test(location.search)) { S.mode = 'make'; window.YICPRODGO = { p: +u.get('mk'), q: +u.get('q') || 0, rock: u.get('rock') || '' }; } }
     build();
     loadRecipes().then(() => {
       const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; S.dataAt = Date.now(); render(); }); } }, 400);

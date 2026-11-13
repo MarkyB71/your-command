@@ -541,6 +541,14 @@
     if (!k) return;
     const esc = k.esc, S = k.S, rl = k.rocks();
     if (!rl.length) { m.innerHTML = '<div class="card"><div class="src">No warehouses or tank farms found for this wallet.</div></div>'; return; }
+    // opened from a Captain's log box (dock.js start, ?mk=…) – fill in rock, product and amount once
+    const go = window.YICPRODGO;
+    if (go && !cargo) {
+      window.YICPRODGO = null;
+      if (go.rock && rl.includes(go.rock)) S.rock = go.rock;
+      P.p = go.p; P.use = ''; P.find = ''; P.track = ''; P.maxTxt = '';
+      if (k.bulk(P.p)) { const q = go.q || 100000; P.unit = q >= 1e6 ? 'kt' : q >= 1000 ? 't' : 'kg'; P.q = Math.ceil(q / UNITS[P.unit] * 1000) / 1000; } else P.q = go.q || 1;
+    }
     if (!rl.includes(S.rock)) S.rock = rl[0];
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
