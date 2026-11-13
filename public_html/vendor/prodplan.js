@@ -536,7 +536,10 @@
     const canHere = (p) => k.recipes().some((r) => r.out[p] && !/Unbundling/.test(r.name) && types.has(k.FBT[r.type]));
     const prods = products();
     const f = P.find.trim().toLowerCase();
-    const hit = (p) => !f || k.pname(p).toLowerCase().includes(f);
+    // search by input or process too (Mark, 13 Nov – TEST ONLY, ?beta=1): "Pyroxene" also finds what's made FROM it,
+    // e.g. Sodium Chromate from Pyroxene Acid Leaching. via(p) = the matching process, shown on the button.
+    const via = (p) => { if (!MAXB || !f || k.pname(p).toLowerCase().includes(f)) return null; return k.recipes().find((r) => r.out[p] && !/Unbundling/.test(r.name) && (r.name.toLowerCase().includes(f) || Object.keys(r.inp).some((ip) => k.pname(+ip).toLowerCase().includes(f)))) || null; };
+    const hit = (p) => !f || k.pname(p).toLowerCase().includes(f) || !!via(p);
     // a new search clears the old pick if it no longer matches (Mark, 9 Nov: "it remembers the first search")
     if (P.p && !hit(P.p)) { P.p = 0; P.use = ''; }
     const shown = prods.filter(hit);
@@ -546,9 +549,9 @@
     let h = TRACK && !cargo ? plansListHTML() : '';
     h += `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2><select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
-<input type="search" id="pp-find" placeholder="🔍 Search…" value="${esc(P.find)}">
+<input type="search" id="pp-find" placeholder="${MAXB ? '🔍 Product, input or process…' : '🔍 Search…'}" value="${esc(P.find)}">
 <select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
-      (f && !P.p ? `<div class="dkp-chips" style="margin-top:8px">${shown.slice(0, 24).map((p) => `<button type="button" data-pp="${p}" class="dk-shipbtn" style="cursor:pointer">${esc(k.pname(p))}</button>`).join('') || '<span class="src">Nothing matches.</span>'}</div>` : '') +
+      (f && !P.p ? `<div class="dkp-chips" style="margin-top:8px">${shown.slice(0, 40).map((p) => { const v = via(p); return `<button type="button" data-pp="${p}" class="dk-shipbtn" style="cursor:pointer"${v ? ` title="${esc(v.name)}"` : ''}>${esc(k.pname(p))}${v ? ` <span class="src" style="font-size:.85em">← ${esc(v.name)}</span>` : ''}</button>`; }).join('') || '<span class="src">Nothing matches.</span>'}</div>` : '') +
       (P.p ? `<div class="row" style="margin-top:10px"><span class="src">How much</span><input type="number" id="pp-q" min="0" step="any" value="${esc(P.q)}">` +
         (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') +
         (MAXB ? `<button type="button" class="dk-shipbtn" id="pp-max" style="cursor:pointer" title="As much as you can make from what’s on this rock now">MAX</button>` : '') + '</div>' +
