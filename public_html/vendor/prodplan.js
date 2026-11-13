@@ -387,7 +387,7 @@
   // there to collect, showing flight times and how many flights will be needed. Shuttles are not any good for transporting."
   // Flight times: the site's own route maths (vendor/travel.js, same as the Travel page – quickest trip leaving now,
   // 1 game day = 1 real hour), the ship's propellant now, no crew engine bonus. Light / Heavy Transports only.
-  const C = { src: '', pick: {}, rt: {}, to: {}, key: '', busy: false };
+  const C = { src: '', pick: {}, mine: {}, chg: {}, rt: {}, to: {}, key: '', busy: false };
   const SHIPT = { 2: 'Light Transport', 3: 'Heavy Transport' };
   let TR = null;
   // Mark (9 Nov, 3rd go): "too much on here. I just want to know how many locations i need to fly in from, are there any
@@ -429,7 +429,17 @@
         return { s, there, trips, away, refuel: f && f.refuel, done };
       }).sort((a, b) => (a.done ?? 1e9) - (b.done ?? 1e9) || (b.there - a.there));
       x.opts = opts;
-      if (!opts.find((o) => o.s.id === (C.pick[x.r] || 0))) C.pick[x.r] = opts[0] ? opts[0].s.id : 0;
+      // Mark (13 Nov, TEST ONLY ?beta=1): the ship was picked before the flight times were worked out and then kept –
+      // now the best ship is picked again as the times come in, until you pick one yourself; when it changes, a warning
+      // says so. If you picked one and a quicker one turns up, it says that instead.
+      if (MAXB && opts[0]) {
+        const was = C.pick[x.r], top = opts[0];
+        if (!C.mine[x.r]) { if (was && was !== top.s.id && top.done != null) C.chg[x.r] = was; C.pick[x.r] = top.s.id; }
+        else if (!opts.find((o) => o.s.id === was)) { C.pick[x.r] = top.s.id; C.mine[x.r] = false; }
+        const cur = opts.find((o) => o.s.id === C.pick[x.r]);
+        x.warn = C.mine[x.r] && cur && top !== cur && top.done != null && cur.done != null && cur.done - top.done > 0.5 ? 'quicker: ' + top.s.name + ' – all done in ' + hrsTxt(top.done)
+          : C.chg[x.r] ? 'ship changed to ' + (cur ? cur.s.name : '?') + ' now the flight times are worked out – check it’s the one you want' : '';
+      } else if (!opts.find((o) => o.s.id === (C.pick[x.r] || 0))) C.pick[x.r] = opts[0] ? opts[0].s.id : 0;
       x.best = opts.find((o) => o.s.id === C.pick[x.r]);
     });
     let h = `<div class="card"><h2><span class="n">🚀</span>Fly it in to ${esc(dest)}</h2>`;
@@ -448,7 +458,7 @@
           : `🚀 Nearest: <b>${esc(b.s.name)}</b> · ${b.s.sst === 'f' ? 'flying to ' : 'at '}${esc(astName(b.s.dId))} · ${b.away == null ? '…' : hrsTxt(b.away) + ' away'}${b.refuel ? ' <span style="color:var(--amber)">(refuel first)</span>' : ''}`;
       return `<div class="dkp-t${sel ? ' fin' : ''}" data-src="${esc(x.r)}" style="cursor:pointer;margin-bottom:8px;display:block">
 <div class="dkp-n">${esc(x.r)} <span class="src" style="font-weight:400">· ${k.tonnes(x.G / 1000)} · ${hrsTxt(rt(x.r) < 1e6 ? rt(x.r) : null)} flight to ${esc(dest)}</span></div>
-<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>
+<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}
 <div class="dkp-s" style="margin-top:4px">${Object.keys(x.got).sort((p1, p2) => x.got[p2] * g(p2) - x.got[p1] * g(p1)).map((p) => esc(k.pname(+p))).slice(0, 6).join(', ')}${Object.keys(x.got).length > 6 ? ' and ' + (Object.keys(x.got).length - 6) + ' more' : ''}</div></div>`;
     }).join('');
     // folded details: by material, and what to buy
@@ -484,7 +494,7 @@
     h += `</div><div class="hint">This only loads a ship – you fly it and unload it in the game. Flight times: quickest route leaving now (site's route maths), loaded with a full tank; getting there with the propellant it has now. Light / Heavy Transports only.</div>`;
     el.innerHTML = h + '</div>';
     el.querySelectorAll('[data-src]').forEach((r) => r.addEventListener('click', () => { C.src = r.dataset.src; k.render(); }));
-    const cs = el.querySelector('#pp-cship'); if (cs) cs.addEventListener('change', () => { C.pick[C.src] = +cs.value; k.render(); });
+    const cs = el.querySelector('#pp-cship'); if (cs) cs.addEventListener('change', () => { C.pick[C.src] = +cs.value; C.mine[C.src] = true; delete C.chg[C.src]; k.render(); });
     const cc = el.querySelector('#pp-ccrew'); if (cc) cc.addEventListener('change', () => { S.mover = +cc.value; k.render(); });
     const go = el.querySelector('#pp-cgo'); if (go) go.addEventListener('click', () => k.approve());
     // flight times (take a moment): each rock → here, and each ship → each pick-up rock; then draw again
