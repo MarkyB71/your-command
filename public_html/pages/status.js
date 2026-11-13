@@ -169,7 +169,8 @@
     const EXTRA = [
       { id: 'vXS', after: ['vE'], text: 'Extractor status', types: [2], label: 'extractors' },
       { id: 'vBS', after: ['vRT', 'vA'], text: 'Bioreactor status', types: [4], label: 'bioreactors' },
-      { id: 'vMS', after: ['vLL', 'vL', 'vO'], text: 'Market and storage status', types: [8, 1, 10], label: 'marketplaces and storage' },
+      { id: 'vMS', after: ['vO', 'vW'], text: 'Marketplace status', types: [8], label: 'marketplaces' },
+      { id: 'vWS', after: ['vLL', 'vL', 'vT'], text: 'Storage status', types: [1, 10], label: 'warehouses and tank farms' },
       { id: 'vSS', after: ['vJ', 'vR'], text: 'Spaceport status', types: [7], label: 'spaceports' },
       { id: 'vHS', after: ['vQ', 'vC'], text: 'Habitat status', types: [9], label: 'habitats' },
     ];
