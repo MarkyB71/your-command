@@ -170,7 +170,6 @@
       { id: 'vXS', after: ['vE'], text: 'Extractor status', types: [2], label: 'extractors' },
       { id: 'vBS', after: ['vRT', 'vA'], text: 'Bioreactor status', types: [4], label: 'bioreactors' },
       { id: 'vMS', after: ['vO', 'vW'], text: 'Marketplace status', types: [8], label: 'marketplaces' },
-      { id: 'vWS', after: ['vLL', 'vL', 'vT'], text: 'Storage status', types: [1, 10], label: 'warehouses and tank farms' },
       { id: 'vSS', after: ['vJ', 'vR'], text: 'Spaceport status', types: [7], label: 'spaceports' },
       { id: 'vHS', after: ['vQ', 'vC'], text: 'Habitat status', types: [9], label: 'habitats' },
     ];
@@ -179,6 +178,9 @@
       if (!main) return;
       const vt = document.getElementById('vT');
       if (vt && vt.textContent !== 'Engineering status') vt.textContent = 'Engineering status'; // was "Status" (Mark, 12 Nov)
+      // Contents already shows each warehouse / tank farm with a how-full bar, so it IS the storage status page (Mark, 13 Nov)
+      const vb = document.getElementById('vB');
+      if (vb && vb.textContent !== 'Storage status') vb.textContent = 'Storage status';
       EXTRA.forEach((x) => {
         const after = x.after.map((i) => document.getElementById(i)).find(Boolean);
         if (!after || document.getElementById(x.id)) return;

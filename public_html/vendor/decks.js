@@ -80,7 +80,7 @@ function wNameBox(pen) {
       { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#ffff00', bld: 'Habitat', pages: ['C', 'Q', 'HS'] },
       { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', bld: 'Spaceport', pages: ['S', 'R', 'J', 'SS'] },
       { id: 'mine', name: 'Mining', ico: '⛏', col: '#ff8c1a', bld: 'Extractor', pages: ['X', 'F', 'I', 'E', 'XS'] },
-      { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', bld: 'Refinery · Factory · Shipyard · Warehouse', pages: ['P', 'U', 'D', 'T', 'B', 'V', 'L', 'LL', 'WS'] },
+      { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', bld: 'Refinery · Factory · Shipyard · Warehouse', pages: ['P', 'U', 'D', 'T', 'B', 'V', 'L', 'LL'] },
       { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'Bioreactor', pages: ['A', 'RT', 'BS'] },
       { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace', pages: ['K', 'Y', 'M', 'W', 'O', 'MS'] });
   }
@@ -219,7 +219,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: CQBETA0() ? 'All your crews' : 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
-    E: 'Who can mine what', LL: 'Who leases which lots', RT: 'Raw materials by type', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel', XS: 'Working · idle · time left', BS: 'Food and more · time left', MS: 'Your listings', WS: 'How full', SS: 'Ships docked', HS: 'Crews stationed',
+    E: 'Who can mine what', LL: 'Who leases which lots', RT: 'Raw materials by type', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel', XS: 'Working · idle · time left', BS: 'Food and more · time left', MS: 'Your listings', SS: 'Ships docked', HS: 'Crews stationed',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
