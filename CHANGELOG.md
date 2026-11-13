@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 13 Nov 2026 – Fix: the Logistics Hub can no longer send the exact same actions twice within 15 minutes (a ship was loaded twice because the game data hadn't caught up after the first Approve). Reported by Mark.
+
 ## 13 Nov 2026 – New top bar layout: Play Influence on the left; SWAY, Deck controls (always centred) and Refresh Game Data in the middle; search, Command Deck, wallet and Help on the right. On decks with page buttons the bar has its own line. No more jumping about while the page loads, and no stray Logistics Hub button on load. The airlock now says "Warning. Airlock cycling. Entering the Logistics Hub." Help page updated.
 
 ## 13 Nov 2026 – Fix: Logistics Hub process starts no longer fail with "E6049: max process time". Very slow processes (e.g. Natural Flavorings Growing – 2 runs) start as many runs as the game allows, and show "⏱ game limit: X of Y runs now – start the rest when it finishes". Reported by Mark.
