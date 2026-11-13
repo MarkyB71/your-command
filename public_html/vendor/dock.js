@@ -18,6 +18,8 @@
       a.title = 'Opens a page that acts in the game – it can send moves and process starts from your wallet, only when you approve them';
       a.href = location.pathname + (location.search ? location.search + '&' : '?') + 'dock=1';
       a.style.cssText = 'display:inline-block;padding:5px 10px;border-radius:8px;border:1px solid #ffb03b;color:#ffd28a;background:#2a1d08;text-decoration:none;font-weight:600;font-size:12px;line-height:1.2;white-space:nowrap;order:8';
+      // the deck bar's own Logistics Hub tab replaces it; it showed loose on the page for a moment on load (Mark, 13 Nov – TEST ONLY ?beta=1)
+      if (/[?&]beta=1\b/.test(location.search)) a.style.display = 'none';
       document.body.appendChild(a);
     };
     setInterval(addLink, 1500); addLink();
