@@ -432,6 +432,13 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
 <div class="st-w"><button id="st-gdone">Done – show me the list ↓</button><button id="st-gskip">Skip – keep all my names</button></div></div>`;
   }
 
+  // ↩ OLD NAMES (Mark, 13 Nov): the names Mark's storage had before the 6 Nov tidy (tidy.js 957a3df renames list) – he can't
+  // find anything under "Rocks 1, 2…". One button puts them back; the normal rename step then orders and checks them.
+  const OLD = { 40805: 'Skippys Iron', 41334: 'Skippys Raw Metals', 41429: 'Skippys Supply Co Ltd', 34498: 'Skippys Propellent Processin', 24646: 'Skippys Newark Warehouse',
+    31376: 'Skippys HydroNitro Tank Farm', 32085: 'Skippys Water Store', 31889: 'Skippys Fuel Tank Farm', 37870: 'Skippys Oxides', 31649: 'Skippys Acid', 32661: 'Skippys Deliveries',
+    32779: 'Skippys Sulfur Dioxide 1', 32778: 'Skippys Sulfur Dioxide 3', 39277: 'Skippys Hydrogen II', 32305: 'Skippys Bare Rocks', 32307: 'Skippys Pyroxene Olivine',
+    30437: 'Skippys Farts', 25462: 'Skippys Store', 30438: 'Skippys Rock Storage', 4723: 'Skippys Steel Production', 22598: 'Skippys Ship Building', 41854: 'Skippys Barrels', 4623: 'Skippys Mixing WH1' };
+  const oldHere = () => onRock().filter((b) => OLD[b.id] && OLD[b.id] !== nm(b));
   function step2() {
     const { rows, order } = renamePlan();
     const types = [...new Set(onRock().map((b) => b.Building.buildingType))].filter((t) => t !== WAREHOUSE && t !== TANK).sort((a, b) => a - b);
@@ -441,8 +448,10 @@ ${on.map((b) => { const i = inv(b) || { mass: 0, volume: 0, contents: [] }, c = 
       : [['num', 'Numbered (' + P(BT[t] + ' 1') + ')'], ['make', 'By what it makes (' + P('Steel ' + BT[t] + ' 1') + ')'], ['keep', 'Keep current names']]);
     const changed = rows.filter((x) => x.change);
     const ready = order.length;
+    const oh = oldHere();
     return `<h3>Step 2: names</h3>
 ${guide()}
+${oh.length ? `<div class="st-w" style="margin:8px 0"><button class="st-next" id="st-old">↩ Put back your old names (${oh.length})</button> <span style="color:#8b9ab0;font-size:13px">The names before the 6 Nov tidy – check them below, then approve.</span></div>` : ''}
 <div class="st-opt">
 <label for="st-prefix">Your prefix</label><div><input type="text" id="st-prefix" maxlength="14" value="${esc(S.prefix)}" placeholder="e.g. your name – or leave empty"> <span style="color:${S.preWarn ? '#ff8a82' : '#8b9ab0'};font-size:13px">${S.preWarn ? RESV + '.' : 'goes in front of every new name'}</span></div>
 <label>Warehouses &amp; tank farms</label>${sel('st-s-store', [['job', 'By job (' + P('Rocks') + ', ' + P('Oxides 2') + ')'], ['main', 'By the main thing inside (' + P('Pyroxene') + ')'], ['keep', 'Keep current names']], S.style.store)}
@@ -546,6 +555,7 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
     if (pf) pf.addEventListener('change', () => { const v = pf.value.replace(/[^A-Za-z0-9 ]/g, '').trim(); S.preWarn = reserved(v); S.prefix = S.preWarn ? '' : v; S.edit = {}; page(m); });
     qa('select[id^="st-s-"]').forEach((s) => s.addEventListener('change', () => { S.style[s.id.slice(5)] = s.value; S.edit = {}; S.groups = null; page(m); }));
     qa('input[data-ed]').forEach((i) => i.addEventListener('change', () => { S.edit[i.dataset.ed] = i.value.trim(); page(m); }));
+    const ob = q('#st-old'); if (ob) ob.addEventListener('click', () => { Object.keys(S.style).forEach((k) => { S.style[k] = 'keep'; }); oldHere().forEach((b) => { S.edit[b.id] = OLD[b.id]; S.rtick[b.id] = true; }); page(m); });
     qa('input[data-rt]').forEach((c) => c.addEventListener('change', () => { S.rtick[c.dataset.rt] = c.checked; page(m); }));
     const rg = q('#st-rgo'); if (rg) rg.addEventListener('click', () => start(m, () => renamePlan().order.map((x) => ({ contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ChangeName'), '0x5', '0x5', hex(x.b.id), short(x.to), '0x1', hex(x.crew)] })), 'rename'));
     qa('select[id^="st-g-"]').forEach((s) => s.addEventListener('change', () => { const [, , g, k] = s.id.split('-'); S.groups[g][+k] = +s.value; S.mtick = {}; S.mtinit = false; page(m); }));
