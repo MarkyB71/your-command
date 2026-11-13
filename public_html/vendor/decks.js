@@ -104,6 +104,7 @@ function wNameBox(pen) {
       'html body #dktools [data-srch]{order:5!important}' +
       'html body #dktools #cdx,html body #dktools #dkhub{order:6!important}' +
       'html body #dktools:not(.c2) :is(#swbal,#cl-dc,#dkrf){visibility:hidden}' +
+      'html body #deckbar .dk-sub:has(.pg) #dktools{flex:1 1 100%!important}' + // decks with page buttons: the bar gets its own line, same as the Bridge (Mark, 13 Nov – Engineering was cramped)
       'html body #dktools #wc-top{order:7!important}html body #dktools #wc-nm{order:8!important}html body #dktools #dkhelp{order:9!important}';
     (document.body || document.documentElement).appendChild(st);
   };
@@ -682,8 +683,11 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
     }
   }
   window.addEventListener('resize', () => { const db = document.getElementById('deckbar'); if (db) midRf(db); });
+  let lastDeck = '';
   function tools(db) {
     bar2Css();
+    // another deck: hide the middle again and place it straight away, so it doesn't slide across (Mark, 13 Nov)
+    if (BAR2) { const on = (db.querySelector('.dk.on') || {}).textContent || ''; if (on !== lastDeck) { lastDeck = on; if (tray) { tray.classList.remove('c2'); const sw = document.getElementById('swbal'); if (sw) sw.style.removeProperty('margin-left'); } const t0 = Date.now(); const f = () => { centreDc(); if (Date.now() - t0 > 1500 && tray) tray.classList.add('c2'); else requestAnimationFrame(f); }; requestAnimationFrame(f); } }
     if (!tray) {
       tray = document.createElement('div');
       tray.id = 'dktools';
