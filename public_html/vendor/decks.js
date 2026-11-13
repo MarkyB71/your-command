@@ -89,7 +89,7 @@ function wNameBox(pen) {
   // TOP BAR LAYOUT (Mark, 11 Nov – built 13 Nov, TEST ONLY ?beta=1): left = Play Influence; middle = SWAY, Deck controls,
   // Refresh Game Data; right (personal corner) = Search, Command Deck, wallet + ✎, Help. Done with CSS order + auto margins
   // (sway.js skips its own centring and midRf() leaves Refresh in the row while this is on).
-  const BAR2 = /[?&]beta=1\b/.test(location.search);
+  const BAR2 = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   window.YICBAR2 = BAR2;
   // the page can rebuild <head>/<body> after this script runs (Mark saw it come and go in Brave), so tools() puts it back
   const bar2Css = () => {

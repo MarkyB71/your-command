@@ -19,7 +19,7 @@
       a.href = location.pathname + (location.search ? location.search + '&' : '?') + 'dock=1';
       a.style.cssText = 'display:inline-block;padding:5px 10px;border-radius:8px;border:1px solid #ffb03b;color:#ffd28a;background:#2a1d08;text-decoration:none;font-weight:600;font-size:12px;line-height:1.2;white-space:nowrap;order:8';
       // the deck bar's own Logistics Hub tab replaces it; it showed loose on the page for a moment on load (Mark, 13 Nov – TEST ONLY ?beta=1)
-      if (/[?&]beta=1\b/.test(location.search)) a.style.display = 'none';
+      a.style.display = 'none'; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
       document.body.appendChild(a);
     };
     setInterval(addLink, 1500); addLink();
@@ -180,7 +180,7 @@
       g.gain.setValueAtTime(0, a); g.gain.linearRampToValueAtTime(0.13, a + 0.05); g.gain.setValueAtTime(0.13, a + 0.65); g.gain.linearRampToValueAtTime(0, a + 0.75);
       o.connect(g); g.connect(out); o.start(a); o.stop(a + 0.8); }
     // spoken warning (the browser's own voice)
-    try { const v = new SpeechSynthesisUtterance(/[?&]beta=1\b/.test(location.search) ? 'Warning. Airlock cycling. Entering the Logistics Hub.' : 'Warning. Airlock cycling. Stand clear of the doors.'); v.rate = 1.1; v.pitch = 0.8; v.volume = 0.9; speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(v), 60); } catch (e) {} // starts (almost) at once and is short enough to finish before the doors open (2.8 s)
+    try { const v = new SpeechSynthesisUtterance('Warning. Airlock cycling. Entering the Logistics Hub.') /* Mark, 13 Nov – LIVE 13 Nov 2026 */; v.rate = 1.1; v.pitch = 0.8; v.volume = 0.9; speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(v), 60); } catch (e) {} // starts (almost) at once and is short enough to finish before the doors open (2.8 s)
     // pressure hum rising while it cycles
     const h = A.createOscillator(), hg = A.createGain(); h.type = 'sawtooth'; h.frequency.setValueAtTime(55, t0); h.frequency.linearRampToValueAtTime(110, t0 + 2.7);
     const lp = A.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
