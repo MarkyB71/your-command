@@ -406,7 +406,9 @@
         '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' +
         COL[l] +
         ';margin-right:7px;vertical-align:middle"></span>';
-    const total = SEC.reduce((n, [k]) => n + S[k].length, 0),
+    // Finishing soon is for information only – it doesn't count as needing you (Mark, 13 Nov – TEST ONLY ?beta=1)
+    const SOONX = /[?&]beta=1\b/.test(location.search);
+    const total = SEC.reduce((n, [k]) => n + (SOONX && k === 'soon' ? 0 : S[k].length), 0),
       pk = Object.keys(plan).sort(),
       pn_ = pk.reduce((n, k) => n + plan[k], 0);
     const planH = pn_
@@ -438,10 +440,11 @@
         );
       }).join('') +
       '</div>';
-    if (!total) {
+    if (!total && !(SOONX && S.soon.length)) {
       m.innerHTML = h + '<div class="note">Nothing needs your attention right now.</div>' + planH;
       return;
     }
+    if (!total) h += '<div class="note" style="padding:0 0 10px">Nothing needs your attention right now.</div>';
     SEC.forEach(([k, t, d]) => {
       const L = S[k];
       if (!L.length) return;
