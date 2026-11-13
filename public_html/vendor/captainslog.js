@@ -31,6 +31,7 @@
 .cl-note:hover{box-shadow:4px 7px 18px rgba(0,0,0,.6),0 0 18px -4px #8fe3ff}
 .cl-note.drag{cursor:grabbing;z-index:5;transform:rotate(0deg) scale(1.04);box-shadow:8px 12px 24px rgba(0,0,0,.7),0 0 22px -2px #8fe3ff;transition:none}
 .cl-note .t{display:block;color:#fff;font-size:13.5px;overflow-wrap:anywhere}
+.cl-note .cl-ed{display:block;width:100%;box-sizing:border-box;background:#0b0e14;color:#fff;border:1px solid #8fe3ff;border-radius:4px;font:inherit;font-size:13px;padding:4px;resize:vertical}
 .cl-note .rk{display:block;margin:-3px 0 4px;color:var(--rc);font:700 9.5px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cl-note .ft{position:absolute;left:6px;right:5px;bottom:5px;display:flex;align-items:center;gap:4px}
 .cl-note select{flex:1 1 auto;min-width:0;max-width:none;height:20px;margin:0;padding:0 2px;font:10.5px system-ui,sans-serif;color:#8b9ab0;background:transparent;border:1px solid transparent;border-radius:4px;cursor:pointer}
@@ -160,7 +161,7 @@
   const bName = (k) => { try { return window.YICBL[k][0]; } catch (e) { return 'Building'; } };
   const guessB = (t) => { t = String(t || '').toLowerCase(); return BTYPES.find((k) => t.includes(bName(k).toLowerCase())) || '9'; };
   const NDBETA = true; // 📦 / ⚙ boxes, white no-rock notes, Skippys Sticky Wall – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
-  let needsFor = null, procFor = null;
+  let needsFor = null, procFor = null, editFor = null; // editFor: note being edited (✎, Mark 13 Nov – TEST ONLY)
   // 🚚 notes → Logistics Hub (Mark, 13 Nov – TEST ONLY ?beta=1): a ⚙ box can open Production with its rock, product and
   // amount filled in; a 📦 box's short items each get a "make ›" link. The hub still goes through the airlock and sends
   // nothing until you approve.
@@ -283,11 +284,12 @@
       '<span class="ft"><span style="flex:1"></span><button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note">🔗</button><button type="button" class="rm" data-rm="' + esc(x.id) + '" title="Remove this box">✕</button></span></div>';
     const note = (x) => (x.kind === 'needs' || x.kind === 'proc') ? needCard(x) : '<div class="cl-note' + (x.done ? ' done' : '') + (linkFrom === x.id ? ' linking' : '') + '" data-n="' + esc(x.id) + '" title="' + (x.done ? 'Done ' + day(x.doneAt) : 'Added ' + day(x.added)) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:' + (x.rot || 0) + 'deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
       (x.rock ? '<span class="rk">' + esc((R.find((r) => r.id === x.rock) || {}).name || x.rockName || 'Asteroid #' + x.rock) + '</span>' : '') +
-      '<span class="t">' + esc(x.text) + '</span><span class="ft">' +
+      (editFor === x.id ? '<textarea class="cl-ed" data-edt="' + esc(x.id) + '" rows="3">' + esc(x.text) + '</textarea>' : '<span class="t">' + esc(x.text) + '</span>') + '<span class="ft">' +
       (R.length ? '<select data-rock="' + esc(x.id) + '" title="Which rock is this for?">' + opts(x.rock || null) + '</select>' : '<span style="flex:1"></span>') +
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
       (x.rock && NDBETA ? '<button type="button" class="nd" data-nd="' + esc(x.id) + '" title="Show what a building still needs on this rock">📦</button>' : '') +
       (x.rock && NDBETA ? '<button type="button" class="nd" data-pr="' + esc(x.id) + '" title="Show what a process still needs on this rock">⚙</button>' : '') +
+      (HUBLINK ? '<button type="button" class="ln" data-ed="' + esc(x.id) + '" title="' + (editFor === x.id ? 'Save' : 'Edit this note') + '">' + (editFor === x.id ? '✓' : '✎') + '</button>' : '') +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
       (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Type to search processes…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 70px">runs<span style="flex:1"></span><button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
       (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
@@ -317,6 +319,13 @@
       const a = load(), x = a.find((y) => y.id === c.dataset.id);
       if (x) { x.done = c.checked; x.doneAt = c.checked ? Date.now() : null; save(a); }
       draw(scr); label();
+    }));
+    // ✎ edit a note's text: Enter or ✓ saves, Esc cancels, Shift+Enter for a new line
+    const saveEd = (id, txt) => { const a = load(), x = a.find((y) => y.id === id); if (x && txt.trim()) { x.text = txt.trim(); save(a); } editFor = null; draw(scr); };
+    scr.querySelectorAll('button[data-ed]').forEach((b) => b.addEventListener('click', () => { const t = scr.querySelector('textarea[data-edt="' + b.dataset.ed + '"]'); if (t) saveEd(b.dataset.ed, t.value); else { editFor = b.dataset.ed; draw(scr); const n = scr.querySelector('textarea[data-edt]'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } } }));
+    scr.querySelectorAll('textarea[data-edt]').forEach((t) => t.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEd(t.dataset.edt, t.value); }
+      else if (e.key === 'Escape') { editFor = null; draw(scr); }
     }));
     scr.querySelectorAll('button[data-rm]').forEach((b) => b.addEventListener('click', () => {
       save(load().filter((y) => y.id !== b.dataset.rm)); saveL(loadL().filter((l) => !l.includes(b.dataset.rm))); if (linkFrom === b.dataset.rm) linkFrom = null; draw(scr); label();
@@ -376,7 +385,7 @@
     board.addEventListener('pointerenter', () => { if (linkFrom) return; /* header stays pinned (Mark, 10 Nov 22:02 – roll-up removed) */ const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
     if (false) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || e.target.closest('input,button,select,a')) return;
+      if (e.button !== 0 || e.target.closest('input,button,select,a,textarea')) return;
       e.preventDefault();
       if (linkFrom && linkFrom !== el.dataset.n) { // second click in link mode: link (or unlink) the two notes
         const A = linkFrom, B = el.dataset.n, L = loadL(), i = L.findIndex((l) => l.includes(A) && l.includes(B));
