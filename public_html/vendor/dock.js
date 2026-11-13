@@ -317,6 +317,12 @@ ${R.map(route).join('')}
   const crewReady = (c) => { const r = ((D() && D().crewsRaw) || []).find((x) => x.id === (c && c.id)); return (r && r.Crew && r.Crew.readyAt) || 0; };
   const procSecs = (name, runs) => { const t = PT[name]; return t ? Math.ceil((t[0] + runs * t[1]) / 24) : 0; };
   const laborSecs = (name, runs) => Math.ceil(procSecs(name, runs) / 8);
+  // MAX PROCESS TIME (Mark, 13 Nov – Natural Flavorings failed with 'E6049: max process time'): the game refuses a start
+  // whose processing time is over SDK Process.MAX_PROCESS_TIME (63,072,000 in-game s). Counted without crew bonuses, so
+  // the cap is on the safe side. Bigger jobs start this many runs now and the rest when it finishes.
+  const MAXPT = 63072000;
+  const maxRuns = (name) => { const t = PT[name]; return t && t[1] > 0 ? Math.floor(MAXPT / t[1]) : Infinity; };
+  const capRuns = (c) => { const mx = maxRuns(c.r.name); if (mx < 1) return false; if (c.runs > mx) { c.capTxt = 'game limit: ' + mx.toLocaleString('en-GB') + ' of ' + Math.ceil(c.runs).toLocaleString('en-GB') + ' runs now – start the rest when it finishes'; c.runs = mx; } return true; };
   // the best building of a type on the rock: free first, then nearest to a ready crew
   function pickBld(bt) {
     const cl = crews(), rd = cl.filter((c) => !c.busy), use = rd.length ? rd : cl;
@@ -874,6 +880,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
         cand.forEach((c) => {
           if (!c.full) return;
           if (!c.now) { after.push(c); return; }
+          if (!capRuns(c)) { c.why = 'one run takes longer than the game allows for a single process'; wait.push(c); return; }
           // Mark (9 Nov): processes that make a solid (Magnesium, Boric Acid, Ammonium Chloride, Nitric Acid…) were stuck
           // because their output was going to the tank farm where the next step's inputs wait. One output storage takes ALL
           // of a process's outputs, so pick the nearest storage that can take them all and has room (LIVE 9 Nov 2026)
@@ -915,7 +922,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
 <label style="margin:0 0 8px"><input type="checkbox" id="dk-start"${S.start ? ' checked' : ''}> Also start the processes that are ready, in the same approval</label>
 <div class="hint" style="margin-bottom:8px">This ties up your buildings and uses up the stock. Only processes whose inputs are ALREADY in their storage can start now – the rest start on a later visit, once moves have arrived or earlier steps have finished.</div>` +
           (S.start && ready.length && S.moverObj ? `<div class="hint" style="margin-bottom:8px">${esc(S.moverObj.name)} will be busy until about ${new Date(qEnd * 1000).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} (the game allows up to 24 hours of queued jobs).</div>` : '') +
-          (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div>${c.moved ? `<div class="dkp-ch">${esc(c.moved)}</div>` : ''}</div></div>`).join('')}</div>`
+          (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div>${c.moved ? `<div class="dkp-ch">${esc(c.moved)}</div>` : ''}${c.capTxt ? `<div class="dkp-ch">⏱ ${esc(c.capTxt)}</div>` : ''}</div></div>`).join('')}</div>`
             : '<div class="src">Nothing can start right now – no process has all its inputs sitting in its storage yet.</div>') +
             (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but can't start yet:${OUTFIX ? '<br>' + wait.map((c) => '• ' + esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('<br>') : ' ' + wait.map((c) => esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('; ') + '.'}</div>` : '') +
             (after.length ? `<div class="hint">${after.length} can start next time, once this approval's moves have arrived:${OUTFIX ? '<br>' + after.map((c) => '• ' + esc(c.r.name)).join('<br>') : ' ' + after.map((c) => esc(c.r.name)).join(', ') + '.'}</div>` : '') +
@@ -994,7 +1001,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
   // for vendor/shipload.js (test only) – the hub's own helpers, so both work the same way
   if (SHIPS) window.YICDOCK = { S, D, esc, nm, inv, isStore, rockOf, allB, pname, amt, grams, bulk, tonnes, astId, lotOf, kmBetween, tripSecs, tripTxt, kmTxt, crews, crewReady,
     holds: (b, p) => holds(b, p), recipes: () => R || [], mv: () => MV, render: () => render(), loadDeliveries: () => loadDeliveries(), wallets, account, sameAddr, isOwner, hex, short, DISPATCHER, SLOT, TANK, BTN, FBT,
-    canMine, onRock, procB, freeSlot, busyTxt, rocks, procSecs, incoming, GLk, TANKOK,
+    canMine, onRock, procB, freeSlot, busyTxt, rocks, procSecs, capRuns, incoming, GLk, TANKOK,
     approve: () => approve(), PID, BATCHES };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();

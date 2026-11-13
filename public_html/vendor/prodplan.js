@@ -200,9 +200,11 @@
       if (!b) { wait.push([i, st, 'no free ' + k.BTN[bt]]); return; }
       if (!st.to) { wait.push([i, st, 'no storage for its outputs']); return; }
       if (!k.PID[st.r.name]) { wait.push([i, st, 'can’t be started from here']); return; }
+      const one = { r: st.r, runs: st.runs }; // game's max process time (dock.js capRuns, Mark 13 Nov)
+      if (k.capRuns && !k.capRuns(one)) { wait.push([i, st, 'one run takes longer than the game allows']); return; }
       used.add(b.id);
-      Object.keys(st.r.inp).forEach((ip) => { pool[ip] -= st.r.inp[ip] * st.runs; });
-      ready.push({ i, b, slot: k.freeSlot(b), r: st.r, p: st.p, runs: st.runs, from: mat, to: st.to, crew: P.runner || S.mover });
+      Object.keys(st.r.inp).forEach((ip) => { pool[ip] -= st.r.inp[ip] * one.runs; });
+      ready.push({ i, b, slot: k.freeSlot(b), r: st.r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: mat, to: st.to, crew: P.runner || S.mover });
     });
     S.calls = moves.map((x) => ({ from: x.from, to: x.to, items: x.items }));
     S.startList = P.start ? ready : [];
@@ -260,7 +262,7 @@
       `<label style="margin:0 0 8px"><input type="checkbox" id="pp-start"${P.start ? ' checked' : ''}> Start the ones that are ready in the same approval (${ready.length})</label>` +
       `<table><thead><tr><th>#</th><th>Process</th><th>Building</th><th>Status</th><th class="num">Takes</th><th class="num">Finishes about</th></tr></thead><tbody>` +
       W.steps.map((st, i) => { const c = ready.find((x) => x.i === i), w = wait.find((x) => x[0] === i);
-        return c ? `<tr><td>${i + 1}</td><td>▶ ${esc(c.r.name)}</td><td>${esc(k.nm(c.b))}</td><td class="ok">ready now</td>${tcells(i)}</tr>`
+        return c ? `<tr><td>${i + 1}</td><td>▶ ${esc(c.r.name)}</td><td>${esc(k.nm(c.b))}</td><td class="ok">ready now${c.capTxt ? `<br><span class="src">⏱ ${esc(c.capTxt)}</span>` : ''}</td>${tcells(i)}</tr>`
           : `<tr><td>${i + 1}</td><td class="src">⏳ ${esc(st.r.name)}</td><td></td><td class="src">${esc(w ? w[2] : '')}</td>${tcells(i)}</tr>`; }).join('') + '</tbody></table>' +
       `<div class="hint">All done about <b>${when(Math.max(...T.map((x) => x.fin)))}</b>. Times use ${runner ? esc(runner.name) + '’s' : 'no'} speed bonus, without building bonuses; moves still to finish in the game can add to it.</div>` +
       '<div class="hint">A process can only start once its inputs are in the materials warehouse – moves have to be finished in the game first. The rest wait their turn.</div></div>';
