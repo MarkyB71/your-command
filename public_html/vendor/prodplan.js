@@ -426,8 +426,10 @@
         const away = there ? 0 : f && f.ok ? f.h : null;
         const leg = rt(x.r) < 1e6 ? rt(x.r) : null;
         const done = away == null || leg == null ? null : away + trips * leg + (trips - 1) * leg;
-        return { s, there, trips, away, refuel: f && f.refuel, done };
-      }).sort((a, b) => (a.done ?? 1e9) - (b.done ?? 1e9) || (b.there - a.there));
+        // full already (Mark, 13 Nov – Skippys Last LT had 2,000 t of Sulfur Dioxide on board: "0 t in 0 moves") – TEST ONLY
+        const full = MAXB && ((s.capM - s.useM) < s.capM * 0.01 || (s.capV - s.useV) < s.capV * 0.01);
+        return { s, there, trips, away, refuel: f && f.refuel, done, full };
+      }).sort((a, b) => (a.full - b.full) || (a.done ?? 1e9) - (b.done ?? 1e9) || (b.there - a.there));
       x.opts = opts;
       // Mark (13 Nov, TEST ONLY ?beta=1): the ship was picked before the flight times were worked out and then kept –
       // now the best ship is picked again as the times come in, until you pick one yourself; when it changes, a warning
@@ -454,11 +456,11 @@
     h += pk.map((x) => {
       const b = x.best, sel = x.r === C.src;
       const shipLine = !b ? `<span style="color:var(--amber)">${shipsTxt || 'No ship can get there.'}</span>`
-        : b.there ? `🚀 <b>${esc(b.s.name)}</b> is there · ${SHIPT[b.s.st]}`
+        : b.there ? `🚀 <b>${esc(b.s.name)}</b> is there · ${SHIPT[b.s.st]}${b.full ? ' <span style="color:var(--amber)">(full – unload it first)</span>' : ''}`
           : `🚀 Nearest: <b>${esc(b.s.name)}</b> · ${b.s.sst === 'f' ? 'flying to ' : 'at '}${esc(astName(b.s.dId))} · ${b.away == null ? '…' : hrsTxt(b.away) + ' away'}${b.refuel ? ' <span style="color:var(--amber)">(refuel first)</span>' : ''}`;
       return `<div class="dkp-t${sel ? ' fin' : ''}" data-src="${esc(x.r)}" style="cursor:pointer;margin-bottom:8px;display:block">
 <div class="dkp-n">${esc(x.r)} <span class="src" style="font-weight:400">· ${k.tonnes(x.G / 1000)} · ${hrsTxt(rt(x.r) < 1e6 ? rt(x.r) : null)} flight to ${esc(dest)}</span></div>
-<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}${MAXB && b ? (b.there ? `<div style="margin-top:8px"><span class="dk-shipbtn" style="display:inline-block;padding:4px 12px;border-radius:8px;background:${sel ? '#ffb03b' : '#2a1d08'};color:${sel ? '#1a1000' : '#ffd28a'};border:1px solid #ffb03b;font-weight:700">📦 ${sel ? 'Loading list below ↓' : 'Click to load ' + esc(b.s.name) + ' now'}</span></div>` : `<div class="src" style="margin-top:8px;color:var(--dim)">✈ No ship here yet – fly one here in the game first</div>`) : ''}
+<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}${MAXB && b ? (b.there && b.full ? `<div class="src" style="margin-top:8px;color:var(--amber)">⚠ ${esc(b.s.name)} is full – unload it in the game first</div>` : b.there ? `<div style="margin-top:8px"><span class="dk-shipbtn" style="display:inline-block;padding:4px 12px;border-radius:8px;background:${sel ? '#ffb03b' : '#2a1d08'};color:${sel ? '#1a1000' : '#ffd28a'};border:1px solid #ffb03b;font-weight:700">📦 ${sel ? 'Loading list below ↓' : 'Click to load ' + esc(b.s.name) + ' now'}</span></div>` : `<div class="src" style="margin-top:8px;color:var(--dim)">✈ No ship here yet – fly one here in the game first</div>`) : ''}
 <div class="dkp-s" style="margin-top:4px">${Object.keys(x.got).sort((p1, p2) => x.got[p2] * g(p2) - x.got[p1] * g(p1)).map((p) => esc(k.pname(+p))).slice(0, 6).join(', ')}${Object.keys(x.got).length > 6 ? ' and ' + (Object.keys(x.got).length - 6) + ' more' : ''}</div></div>`;
     }).join('');
     // folded details: by material, and what to buy
@@ -468,7 +470,7 @@
     if (!pk.find((x) => x.r === C.src)) C.src = pk[0].r;
     const X = pk.find((x) => x.r === C.src), pick = X.best;
     S.calls = []; S.startList = []; S.feed = false; S.srcRock = C.src;
-    h += `<div style="margin-top:12px;padding-top:10px;border-top:1px solid #3a2c18"><div class="row"><span class="src"><b>${esc(C.src)}</b> – ship</span><select id="pp-cship">${X.opts.map((o) => `<option value="${o.s.id}"${o.s.id === C.pick[C.src] ? ' selected' : ''}>${esc(o.s.name)} · ${o.there ? 'there now' : o.away == null ? '…' : hrsTxt(o.away) + ' away'} · ${o.trips} trip${o.trips === 1 ? '' : 's'}${o.done != null ? ' · done in ' + hrsTxt(o.done) : ''}</option>`).join('')}</select></div>`;
+    h += `<div style="margin-top:12px;padding-top:10px;border-top:1px solid #3a2c18"><div class="row"><span class="src"><b>${esc(C.src)}</b> – ship</span><select id="pp-cship">${X.opts.map((o) => `<option value="${o.s.id}"${o.s.id === C.pick[C.src] ? ' selected' : ''}>${esc(o.s.name)} · ${o.full ? 'FULL · ' : ''}${o.there ? 'there now' : o.away == null ? '…' : hrsTxt(o.away) + ' away'} · ${o.trips} trip${o.trips === 1 ? '' : 's'}${o.done != null ? ' · done in ' + hrsTxt(o.done) : ''}</option>`).join('')}</select></div>`;
     if (pick && pick.there) {
       const cl = k.crews(C.src);
       if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
@@ -484,7 +486,8 @@
       S.calls = Object.keys(mv).map((id) => ({ from: +id, to: pick.s.id, ship: true, slot: 2, items: mv[id].items }));
       const lg = S.calls.reduce((t, c) => t + c.items.reduce((u, [p, a]) => u + a * g(p), 0), 0);
       // what will be loaded, shown before the wallet asks (Mark, 9 Nov): storage → ship, item by item
-      h += `<div class="src" style="margin-top:8px">Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}: <b>${k.tonnes(lg / 1000)}</b> in ${S.calls.length} move${S.calls.length === 1 ? '' : 's'}:</div>` +
+      if (MAXB && !S.calls.length) h += `<div class="src" style="margin-top:8px;color:var(--amber)">⚠ Nothing fits – ${esc(pick.s.name)} is full (${k.tonnes(pick.s.useM / 1000)} on board${pick.s.carry ? ', ' + esc(pick.s.carry) : ''}). Unload it in the game first, or pick another ship.</div>`;
+      else h += `<div class="src" style="margin-top:8px">Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}: <b>${k.tonnes(lg / 1000)}</b> in ${S.calls.length} move${S.calls.length === 1 ? '' : 's'}:</div>` +
         `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🚀 ${esc(pick.s.name)}` +
           mv[id].items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>').join('') + '</div>' +
         (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Moved by</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--red)">No crew on ${esc(C.src)} to do the loading.</div>`) +
