@@ -237,7 +237,7 @@ ${R.map(route).join('')}
     setTimeout(() => { minDone = true; maybe(); }, 4500);
     try {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(/[?&]beta=1\b/.test(location.search) ? 'Welcome to the centre where all the moves come together.' : 'Entering the Logistics Hub. The centre where all the moves come together.') /* the airlock now says 'Entering the Logistics Hub' (Mark, 13 Nov – TEST ONLY) */; u.rate = 0.95; u.pitch = 0.8; u.volume = 0.9;
+      const u = new SpeechSynthesisUtterance('Welcome to the centre where all the moves come together.') /* LIVE 13 Nov 2026 */ /* the airlock now says 'Entering the Logistics Hub' (Mark, 13 Nov – TEST ONLY) */; u.rate = 0.95; u.pitch = 0.8; u.volume = 0.9;
       u.onstart = () => { spoke = true; }; u.onend = () => setTimeout(() => { said = true; maybe(); }, 400); u.onerror = () => { said = true; maybe(); };
       setTimeout(() => speechSynthesis.speak(u), 350); // Chrome/Brave drop a speak() made straight after cancel()
     } catch (e) { said = true; }

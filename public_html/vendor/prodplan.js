@@ -23,7 +23,7 @@
   // A plan is saved (this browser only – Mark: "fine for now") when its approval is sent. Reopening Production lists the
   // plans; one shows each process as ✓ done / ⚙ running / ▶ ready / ⏳ waiting, read from the game (processors running
   // that process in the buildings this plan started it in), and the ready ones can be started from there.
-  const TRACK = /[?&]beta=1\b/.test(location.search);
+  const TRACK = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   const PKEY = 'sk_prod_plans';
   function plansGet() { try { return JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { return []; } }
   function plansPut(a) { try { localStorage.setItem(PKEY, JSON.stringify(a)); } catch (e) {} }
@@ -189,7 +189,7 @@
   // ---------- MAX (Mark, 13 Nov – TEST ONLY, ?beta=1): "use all the Pyroxene I have to make Sodium Tungstate" ----------
   // The most of the target that can be made from what's on the rock now (storage, deliveries on the way, by-products) –
   // nothing to fly in, buy or mine. Found by doubling then halving the amount. Says which input runs out first.
-  const MAXB = /[?&]beta=1\b/.test(location.search);
+  const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
     if (!ok(1)) { const W = work(target, 1); return { q: 0, by: Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number) }; }
