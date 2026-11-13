@@ -107,6 +107,7 @@ function wNameBox(pen) {
     (document.body || document.documentElement).appendChild(st);
   };
   bar2Css();
+  if (BAR2) setInterval(bar2Css, 1000); // cheap check – one getElementById a second
   if (HUBTAB) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
