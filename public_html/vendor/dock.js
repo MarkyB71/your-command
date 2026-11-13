@@ -180,7 +180,7 @@
       g.gain.setValueAtTime(0, a); g.gain.linearRampToValueAtTime(0.13, a + 0.05); g.gain.setValueAtTime(0.13, a + 0.65); g.gain.linearRampToValueAtTime(0, a + 0.75);
       o.connect(g); g.connect(out); o.start(a); o.stop(a + 0.8); }
     // spoken warning (the browser's own voice)
-    try { const v = new SpeechSynthesisUtterance('Warning. Airlock cycling. Stand clear of the doors.'); v.rate = 1.1; v.pitch = 0.8; v.volume = 0.9; speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(v), 60); } catch (e) {} // starts (almost) at once and is short enough to finish before the doors open (2.8 s)
+    try { const v = new SpeechSynthesisUtterance(/[?&]beta=1\b/.test(location.search) ? 'Warning. Airlock cycling. Entering the Logistics Hub.' : 'Warning. Airlock cycling. Stand clear of the doors.'); v.rate = 1.1; v.pitch = 0.8; v.volume = 0.9; speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(v), 60); } catch (e) {} // starts (almost) at once and is short enough to finish before the doors open (2.8 s)
     // pressure hum rising while it cycles
     const h = A.createOscillator(), hg = A.createGain(); h.type = 'sawtooth'; h.frequency.setValueAtTime(55, t0); h.frequency.linearRampToValueAtTime(110, t0 + 2.7);
     const lp = A.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
