@@ -107,7 +107,22 @@ function wNameBox(pen) {
     (document.body || document.documentElement).appendChild(st);
   };
   bar2Css();
-  if (BAR2) setInterval(bar2Css, 1000); // cheap check – one getElementById a second
+  // Deck controls dead centre of the bar (Mark, 13 Nov): SWAY's left margin is worked out so the middle of Deck controls
+  // sits at the middle of the bar; Refresh's auto margin pushes the right-hand group over. Only when the row is on one line.
+  const centreDc = () => {
+    if (!BAR2) return;
+    const t = document.getElementById('dktools'), sw = document.getElementById('swbal'), dc = document.getElementById('cl-dc'), pl = document.getElementById('play');
+    if (!t || !sw || !dc || !pl || !t.parentNode) return;
+    const bar = t.parentNode.getBoundingClientRect(), r = dc.getBoundingClientRect(), p = pl.getBoundingClientRect();
+    if (Math.abs(r.top - p.top) > 12) { sw.style.removeProperty('margin-left'); return; }
+    const cur = parseFloat(sw.style.marginLeft) || (sw.getBoundingClientRect().left - p.right - 6);
+    let shift = (bar.left + bar.width / 2) - (r.left + r.width / 2);
+    const sr = t.querySelector('[data-srch]'), rf = document.getElementById('dkrf');
+    if (shift > 0 && sr && rf) shift = Math.min(shift, sr.getBoundingClientRect().left - rf.getBoundingClientRect().right - 8); // never push the right side onto a new line
+    const want = Math.max(8, Math.round(cur + shift));
+    if (Math.abs(want - cur) > 1) sw.style.setProperty('margin-left', want + 'px', 'important');
+  };
+  if (BAR2) { setInterval(() => { bar2Css(); centreDc(); }, 1000); window.addEventListener('resize', centreDc); } // cheap checks once a second
   if (HUBTAB) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
