@@ -45,6 +45,10 @@
 .dc-msg{padding:14px;border:1px solid #2a3646;border-radius:8px;background:#0c1320;margin-top:10px}
 .dc-get{display:inline-block;margin-top:10px;padding:7px 14px;border:1px solid #8fe3ff;border-radius:6px;color:#8fe3ff;text-decoration:none;font-weight:600}
 .dc-get:hover{background:rgba(143,227,255,.12)}
+.dc-voice{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.dc-voice select{flex:1 1 220px!important;min-width:0;height:30px;font:inherit;font-size:12.5px;background:#0d2933;color:#fff;border:1px solid #2a3a50;border-radius:5px;padding:0 6px}
+.dc-voice button{height:30px;padding:0 12px;font:inherit;font-size:12.5px;background:#0d2933;color:#8fe3ff;border:1px solid #8fe3ff;border-radius:5px;cursor:pointer}
+.dc-voice button:hover{background:rgba(143,227,255,.12)}
 @media (prefers-reduced-motion:reduce){.dc-holo{transition:none}}
 `;
 
@@ -130,7 +134,9 @@
       });
       h += '</div>';
     }
+    if (window.YICvoice && YICvoice.on) h = h.replace('<div class="dc-in">', '<div class="dc-in">' + voiceRow());
     scr.innerHTML = h + '</div>';
+    wireVoice(scr);
     scr.querySelectorAll('input[data-k]').forEach((i) =>
       i.addEventListener('change', () => {
         const v = i.type === 'checkbox' ? i.checked : i.value;
@@ -147,6 +153,33 @@
       b.addEventListener('click', () => { delete data.tags[b.dataset.rm]; putTags(); draw(scr); }),
     );
   }
+
+  // ---- Site voice (Mark, 14 Nov – TEST ONLY): which voice the Logistics Hub speaks with. Saved in this browser;
+  // works without the extension. See vendor/voice.js.
+  function voiceRow() {
+    const V = window.YICvoice, c = V.get(), b = V.best();
+    const vs = V.list().filter((v) => /^en/i.test(v.lang)).sort((x, y) => x.name.localeCompare(y.name));
+    let o = '<option value=""' + (c === '' ? ' selected' : '') + '>Pick a good one for me' + (b ? ' (' + esc(b.name) + ')' : '') + '</option>' +
+      '<option value="-"' + (c === '-' ? ' selected' : '') + '>No voice</option>';
+    vs.forEach((v) => { o += '<option value="' + esc(v.name) + '"' + (c === v.name ? ' selected' : '') + '>' + esc(v.name) + ' – ' + esc(v.lang) + '</option>'; });
+    return '<h3>Site voice</h3><div class="dc-row"><b>Logistics Hub voice</b><span style="display:block;color:#9fb0c4;font-size:12px">The voice for the airlock and the welcome. These are the voices your browser offers – saved in this browser only. Doesn\'t need the extension.</span>' +
+      '<div class="dc-voice"><select data-voice>' + o + '</select><button type="button" data-vtest>▶ Test</button></div></div>';
+  }
+  function wireVoice(scr) {
+    const sel = scr.querySelector('select[data-voice]'), t = scr.querySelector('button[data-vtest]');
+    if (!sel) return;
+    sel.addEventListener('change', () => { YICvoice.set(sel.value); saved(); });
+    if (t) t.addEventListener('click', () => {
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance('Welcome to the centre where all the moves come together.');
+        u.rate = 0.95; u.pitch = 0.8; u.volume = 0.9;
+        if (YICvoice.apply(u)) setTimeout(() => speechSynthesis.speak(u), 120);
+      } catch (e) {}
+    });
+  }
+  // Chrome/Brave fill the voice list a moment after the page loads – redraw the controls when it arrives.
+  try { speechSynthesis.addEventListener('voiceschanged', () => { const scr = document.querySelector('.dc-scr'); if (scr && !scr.querySelector('select[data-voice]:focus')) draw(scr); }); } catch (e) {}
 
   function setOn(br, want) {
     const vs = br.querySelector('.brs-vs'),
