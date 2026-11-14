@@ -73,7 +73,7 @@
   const sameAddr = (a, b) => { try { return BigInt(a) === BigInt(b); } catch (e) { return false; } };
   const pname = (p) => { try { return (Y().pn && Y().pn(p)) || '#' + p; } catch (e) { return '#' + p; } };
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (kg / 1000).toLocaleString('en-GB', { maximumFractionDigits: 1 })) + ' t';
-  const amt = (p, a) => ((MV[p] || [1000])[0] === 1000 ? tonnes(a) : /[?&]beta=1\b/.test(location.search) ? a.toLocaleString('en-GB') + (a === 1 ? ' unit' : ' units') : '× ' + a.toLocaleString('en-GB')); // "units" (Mark, 14 Nov – TEST ONLY, ?beta=1)
+  const amt = (p, a) => ((MV[p] || [1000])[0] === 1000 ? tonnes(a) : true ? a.toLocaleString('en-GB') + (a === 1 ? ' unit' : ' units') : '× ' + a.toLocaleString('en-GB')); // "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   const lotIdx = (b) => { const l = ((b.Location && b.Location.locations) || []).find((x) => x.label === 4); return l ? Math.floor(l.id / 4294967296) : 0; };
   const nm = (b) => (b && b.Name && b.Name.name) || '';
   const inv = (b) => (b.Inventories || []).find((x) => x.slot === SLOT && x.status === 1);

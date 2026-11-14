@@ -209,7 +209,7 @@
   // The most of the target that can be made from what's on the rock now (storage, deliveries on the way, by-products) –
   // nothing to fly in, buy or mine. Found by doubling then halving the amount. Says which input runs out first.
   const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
-  const QLB = /[?&]beta=1\b/.test(location.search); // Cargo bay: "put stuff to make X into ship Y on asteroid Z" + clearer words (Mark, 14 Nov – TEST ONLY, ?beta=1)
+  const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
     if (!ok(1)) { const W = work(target, 1); return { q: 0, by: Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number) }; }

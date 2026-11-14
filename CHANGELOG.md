@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 14 Nov 2026 – Logistics Hub Cargo bay: new step 4 "Load a ship" – put what your rock is missing to make something into a ship parked on the asteroid you pick; new "📦 Load straight from stock" – pick a rock, a ship parked there, and what to load from its storage; clearer explanations on each step. Things counted one by one now show "units" instead of ×. Help page updated. Asked for by Mark.
+
 ## 14 Nov 2026 – New: Site voice – the Logistics Hub airlock and welcome use the most natural-sounding voice your browser offers. Choose another, or no voice, in Deck controls › Site voice (with a ▶ Test button; saved in your browser, no extension needed). Help page updated.
 
 ## 14 Nov 2026 – Help page: the Logistics Hub airlock and welcome use your browser's own voice – how to change it.
