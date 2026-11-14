@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 14 Nov 2026 – Help page: the Logistics Hub airlock and welcome use your browser's own voice – how to change it.
+
 ## 14 Nov 2026 – Logistics Hub Production: a saved plan now shows 🚚 Moves on their way – deliveries still arriving at its materials warehouse, with when they arrive, and links to finish them in the game with the crew that sent them (or at the warehouse, where any crew can). Help page updated.
 
 ## 14 Nov 2026 – Fix: Production and Construction planners now mine a raw resource on the rock if it can be mined there, instead of flying it in because another rock has some in stock (e.g. Sulfur Dioxide on TRCS Leisure Potato). Reported by Mark.
