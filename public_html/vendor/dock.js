@@ -698,6 +698,7 @@ ${R.map(route).join('')}
     if (LB) { m = LB.screen(m, S, render); if (!m) return; }
     // new Production screen (Mark, 9 Nov – TEST ONLY, vendor/prodplan.js): rock → what to make + amount → what you need → processes
     // 🗄 Storage tidy (Mark, 10 Nov – moved into the hub; LIVE 13 Nov 2026)
+    if (LB && S.mode === 'tidy' && LB.storage) { LB.storage(m, S, render); return; } // Storage console: tidy · Storage Management · Deliveries (Mark, 14 Nov – TEST ONLY ?beta=1)
     if (LB && S.mode === 'tidy' && window.YICTIDY) { window.YICTIDY.render(m); return; }
     if (LB && window.YICPROD && S.mode !== 'feed') { window.YICPROD.render(m, S.mode === 'ship' ? 'ship' : 'make'); return; } // Cargo bay uses it too (Mark, 9 Nov)
     if (S.mode === 'feed' && window.YICFEED) {

@@ -24,6 +24,7 @@
 #dk-ov .lb-scr .dk-shipbtn{padding:4px 10px;border-radius:7px;border:1px solid #6b4e24;background:#140e06;color:#ffd28a;font:600 14px system-ui,sans-serif;cursor:pointer}
 #dk-ov .lb-scr .dk-shipbtn.on{background:#ffb03b;border-color:#ffb03b;color:#1a1000}
 #dk-ov .lb-deck{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,.8fr) repeat(3,minmax(0,1fr));gap:10px;align-items:end;padding:20px 4% 0;perspective:1100px}
+@media (min-width:761px){#dk-ov .lb-deck.lb4{grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,.8fr) repeat(2,minmax(0,1fr));padding:20px 12% 0}}
 #dk-ov .lb-st{all:unset;box-sizing:border-box;cursor:pointer;display:block;transform:rotateY(var(--ry)) rotateX(18deg);transform-origin:50% 100%;transition:transform .2s,filter .2s}
 #dk-ov .lb-st:hover,#dk-ov .lb-st:focus-visible,#dk-ov .lb-st.on{transform:rotateY(var(--ry)) rotateX(8deg) translateY(-4px);filter:drop-shadow(0 0 14px var(--dc))}
 #dk-ov .lb-sc{display:block;position:relative;padding:10px 12px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#120d07;border:2px solid #3a2c18;border-top:3px solid var(--dc);box-shadow:0 0 16px -6px var(--dc),inset 0 0 22px -10px var(--dc)}
@@ -120,6 +121,14 @@
     return { idle, docked, ships: ships.length, feed, hungry, dels, now };
   }
 
+  // Hub tidy-up (Mark, 14 Nov – TEST ONLY ?beta=1): 4 consoles, 2 each side. Deliveries + Storage Management go into Storage.
+  const ORG = /[?&]beta=1\b/.test(location.search);
+  const STATIONS4 = [
+    { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: 13 },
+    { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: 8 },
+    { m: 'feed', name: 'Galley', ico: '🍽', col: '#ffc45e', ry: -8 },
+    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -13, k: 'store' },
+  ];
   const STATIONS = [
     { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: 15 },
     { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: 11 },
@@ -128,7 +137,7 @@
     { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -11 }, // Storage tidy (LIVE 13 Nov 2026 – switched off when tidy.js isn't loaded)
     { m: '', name: 'Spare', ico: '·', col: '#8a6a3a', ry: -15, off: 'Kept free for future tools' },
   ];
-  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: 'STORAGE TIDY' };
+  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: ORG ? 'STORAGE' : 'STORAGE TIDY' };
 
   function station(s, N, mode) {
     let n = '', l = '', sub = '', go = 'Open ▸';
@@ -136,9 +145,10 @@
     else if (s.m === 'ship') { n = N.docked; l = N.docked === 1 ? 'ship docked' : 'ships docked'; sub = 'Load a ship'; }
     else if (s.m === 'feed') { n = N.feed == null ? N.hungry : N.feed; l = n === 1 ? 'crew to feed' : 'crews to feed'; sub = N.hungry ? '<b>' + N.hungry + ' hungry</b>' : 'Feed crews'; }
     else if (s.k === 'dels') { n = N.dels; l = N.dels === 1 ? 'delivery on its way' : 'deliveries on their way'; sub = 'Finish them in the game'; go = 'Show ▸'; }
+    else if (s.k === 'store') { n = N.dels; l = N.dels === 1 ? 'delivery on its way' : 'deliveries on their way'; sub = 'Tidy · move · deliveries'; }
     else if (s.m === 'tidy') { if (!window.YICTIDY) { s = Object.assign({}, s, { m: '', off: 'Storage tidy – coming soon' }); n = s.ico; l = s.off; go = 'Coming soon'; } else { n = s.ico; l = 'Storage tidy'; sub = 'Names · moves'; } }
     else { n = s.ico; l = s.off; sub = ''; go = 'Coming soon'; }
-    const on = s.m && s.m === mode && !s.k;
+    const on = s.m && s.m === mode && s.k !== 'dels';
     return `<button type="button" class="lb-st${s.off ? ' off' : ''}${on ? ' on' : ''}"${s.m ? ` data-lb="${s.m}"` : ' tabindex="-1"'} style="--dc:${s.col};--ry:${s.ry}deg" title="${esc(s.off || sub.replace(/<[^>]+>/g, ''))}"><span class="lb-sc"><span class="lb-h">${s.ico} ${esc(s.name)}<i class="lb-led"></i></span><span class="lb-n">${n}</span><span class="lb-l">${esc(l)}</span><span class="lb-s">${sub}</span><span class="lb-go">${go}</span></span><span class="lb-base"><i></i><i></i><i></i><i></i></span></button>`;
   }
 
@@ -152,10 +162,28 @@
       t('feed', N.feed == null ? N.hungry : N.feed, (N.hungry ? N.hungry + ' hungry · ' : '') + 'crews that could be fed', 'Feed crews ▸', N.hungry > 0) +
       t('make', N.idle, 'idle refineries, factories, bioreactors and shipyards', 'Make on this rock ▸', false) +
       t('ship', N.docked, 'ships docked – ready to load', 'Load a ship ▸', false) +
-      `</div></div><div class="card"><h2><span class="n">🚚</span>Deliveries on their way (${del})</h2>` +
+      '</div></div>' + delsCard(S);
+    wire(scr, S, render);
+  }
+
+  function delsCard(S) {
+    const del = (S.incList || []).length;
+    return `<div class="card"><h2><span class="n">🚚</span>Deliveries on their way (${del})</h2>` +
       (S.incErr ? `<div class="src" style="color:var(--red)">${esc(S.incErr)}</div>` : del ? '<div class="src">Each one shows up in the game as a Surface Transfer for the crew that sent it. When it says Ready, use <b>Finish All Ready Items</b> on that crew.</div>' : '<div class="src">Nothing on its way right now.</div>') +
       '</div>';
-    wire(scr, S, render);
+  }
+  // Storage console (TEST ONLY): 🗄 Storage tidy · 📦 Storage Management · 🚚 Deliveries
+  function storage(m, S, render) {
+    const t = S.smode || 'tidy';
+    const b = (v, x) => `<button type="button" class="dk-shipbtn${t === v ? ' on' : ''}" data-smode="${v}" style="cursor:pointer">${x}</button>`;
+    m.innerHTML = `<div class="card"><div class="row" style="gap:8px">${b('tidy', '🗄 Storage tidy')}${b('move', '📦 Storage Management')}${b('dels', '🚚 Deliveries (' + (S.incList || []).length + ')')}</div>` +
+      `<div class="hint" style="margin:8px 0 0">${t === 'tidy' ? 'Rename your buildings and gather your stock into tidy storage.' : t === 'move' ? 'Pick a rock, the warehouse or tank farm to send to, and what to move from its other storage.' : 'Moves on their way between buildings on your rocks.'}</div></div><div id="lb-sub"></div>`;
+    m.querySelectorAll('[data-smode]').forEach((x) => x.addEventListener('click', () => { S.smode = x.dataset.smode; S.msg = ''; render(); }));
+    const sub = m.querySelector('#lb-sub');
+    if (t === 'dels') sub.innerHTML = delsCard(S);
+    else if (t === 'move' && window.YICPROD && window.YICPROD.store) window.YICPROD.store(sub);
+    else if (window.YICTIDY) window.YICTIDY.render(sub);
+    else sub.innerHTML = '<div class="card"><div class="src">Storage tidy – coming soon</div></div>';
   }
 
   function wire(root, S, render) {
@@ -176,10 +204,11 @@
       lb = main.querySelector('.lb');
     }
     const N = nums(S);
-    const st = STATIONS.map((s) => station(s, N, mode));
-    lb.querySelector('.lb-deck').innerHTML = st.slice(0, 3).join('') +
+    const st = (ORG ? STATIONS4 : STATIONS).map((s) => station(s, N, mode)), half = ORG ? 2 : 3;
+    lb.querySelector('.lb-deck').classList.toggle('lb4', ORG);
+    lb.querySelector('.lb-deck').innerHTML = st.slice(0, half).join('') +
       `<button type="button" class="lb-chair${mode === 'home' ? ' on' : ''}" data-lb="home" title="The logistics officer's chair – what needs doing">${CHAIR}<span class="lb-cl">What needs doing</span></button>` +
-      st.slice(3).join('');
+      st.slice(half).join('');
     lb.querySelector('.lb-plate').textContent = TITLE[mode];
     wire(lb.querySelector('.lb-deck'), S, render);
     const scr = lb.querySelector('#lb-scr');
@@ -187,5 +216,5 @@
     return scr;
   }
 
-  window.YICHUBBRIDGE = { screen };
+  window.YICHUBBRIDGE = { screen, storage: ORG ? storage : null };
 })();

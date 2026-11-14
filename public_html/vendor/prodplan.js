@@ -631,7 +631,6 @@
     if (!rl.includes(S.rock)) S.rock = rl[0];
     // Cargo bay, TEST ONLY (?beta=1): load for making something, or just pick what's in stock and put it on a ship (Mark, 14 Nov)
     if (cargo && QLB && P.cmode === 'stock') return stockPage(m);
-    if (cargo && SMB && P.cmode === 'store') return storePage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
     if (TRACK && !cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
@@ -737,8 +736,8 @@
   // ---------- Cargo bay: two ways to load (Mark, 14 Nov – TEST ONLY, ?beta=1) ----------
   function cmodeBar() {
     const b = (v, t) => `<button type="button" class="dk-shipbtn${(P.cmode || 'make') === v ? ' on' : ''}" data-cmode="${v}" style="cursor:pointer">${t}</button>`;
-    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}${SMB ? b('store', '🗄 Storage Management') : ''}</div>` +
-      `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : P.cmode === 'store' ? 'Pick a rock, what to move from its storage, and the warehouse or tank farm to send it to.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
+    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}</div>` +
+      `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
   }
   // "I'd also like to be able to just pick what's in stock on a rock and send it to a ship" (Mark, 14 Nov)
   function stockPage(m) {
@@ -832,7 +831,7 @@
     const tot = (p) => (stock[p] || []).reduce((t, z) => t + z[1], 0);
     P.mq = P.mq || {};
     const want = (p) => { const x = P.mq[p]; if (!x || !(+x.q > 0)) return 0; return Math.min(tot(p), k.bulk(+p) ? Math.round(+x.q * UNITS[x.unit || 't']) : Math.floor(+x.q)); };
-    let h = cmodeBar();
+    let h = '';
     h += `<div class="card"><h2><span class="n">1</span>Rock</h2><div class="src" style="margin-bottom:8px">The rock whose storage you’re sorting out. Everything stays on this rock.</div><select id="pp-mr">${rl.map((x) => `<option${x === r ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>Send it to</h2><div class="src" style="margin-bottom:8px">The warehouse or tank farm on ${esc(r)} to move things into.</div>` +
       (stores.length ? `<select id="pp-md">${stores.map((b) => `<option value="${b.id}"${b.id === P.mdest ? ' selected' : ''}>${esc(k.nm(b))} · ${b.Building.buildingType === TANK ? 'tank farm' : 'warehouse'} · ${Math.round(full(b) * 100)}% full</option>`).join('')}</select>` +
@@ -881,7 +880,6 @@
     }
     m.innerHTML = h;
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
-    m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
     on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; S.msg = ''; k.render(); });
     on('pp-md', 'change', (e) => { P.mdest = +e.target.value; S.msg = ''; k.render(); });
     on('pp-mfind', 'input', (e) => { P.mfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-mfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
@@ -934,5 +932,5 @@
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
   }
 
-  window.YICPROD = { render, work, planStatus, maxMake };
+  window.YICPROD = { render, work, planStatus, maxMake, store: SMB ? storePage : null };
 })();
