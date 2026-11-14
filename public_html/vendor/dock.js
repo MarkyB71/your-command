@@ -54,7 +54,8 @@
   const grams = (p) => (MV[p] || [1000, 1000])[0];
   const bulk = (p) => grams(p) === 1000;
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
-  const amt = (p, u) => (bulk(p) ? tonnes(u) : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
+  const UNITB = /[?&]beta=1\b/.test(location.search); // "units" instead of × for things counted one by one (Mark, 14 Nov – TEST ONLY, ?beta=1)
+  const amt = (p, u) => (bulk(p) ? tonnes(u) : UNITB ? Math.ceil(u).toLocaleString('en-GB') + (Math.ceil(u) === 1 ? ' unit' : ' units') : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
 
   // Load a ship (Mark, 9 Nov 2026) – LIVE 9 Nov 2026: vendor/shipload.js fills #dk-ship under "Short on this rock"
   const SHIPS = true; // LIVE 9 Nov 2026

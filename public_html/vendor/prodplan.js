@@ -654,7 +654,7 @@
 <select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
       (f && !P.p ? `<div class="dkp-chips" style="margin-top:8px">${shown.slice(0, 40).map((p) => { const v = via(p); return `<button type="button" data-pp="${p}" class="dk-shipbtn" style="cursor:pointer"${v ? ` title="${esc(v.name)}"` : ''}>${esc(k.pname(p))}${v ? ` <span class="src" style="font-size:.85em">← ${esc(v.name)}</span>` : ''}</button>`; }).join('') || '<span class="src">Nothing matches.</span>'}</div>` : '') +
       (P.p ? `<div class="row" style="margin-top:10px"><span class="src">How much</span><input type="number" id="pp-q" min="0" step="any" value="${esc(P.q)}">` +
-        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') +
+        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : (QLB ? '<span class="src" style="display:inline-block;min-width:4.2em">units</span>' : '<span class="src">×</span>')) +
         (MAXB ? `<button type="button" class="dk-shipbtn" id="pp-max" style="cursor:pointer" title="As much as you can make from what’s on this rock now">MAX</button>` : '') + '</div>' +
         (MAXB && P.maxTxt ? `<div class="hint">${P.maxTxt}</div>` : '') + forHTML() : '') + '</div>';
 
@@ -766,7 +766,7 @@
       (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Load</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.sq[p] || {}, bulk = k.bulk(p);
         return `<tr><td>${esc(k.pname(p))}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-sq="${p}" value="${esc(x.q || '')}" placeholder="0">` +
-          (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') +
+          (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : (QLB ? '<span class="src" style="display:inline-block;min-width:4.2em">units</span>' : '<span class="src">×</span>')) +
           `<button type="button" class="dk-shipbtn" data-sall="${p}" style="cursor:pointer">ALL</button></div></td></tr>`;
       }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing in storage on ' + esc(r) + '.'}</div>`) + '</div>';
     // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
