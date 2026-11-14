@@ -25,7 +25,7 @@
   // that process in the buildings this plan started it in), and the ready ones can be started from there.
   const TRACK = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   const PKEY = 'sk_prod_plans';
-  const MVLINK = /[?&]beta=1\b/.test(location.search); // 🚚 moves + crew links on a plan – TEST ONLY (Mark, 14 Nov)
+  const MVLINK = true; // 🚚 moves + crew links on a plan – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function plansGet() { try { return JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { return []; } }
   function plansPut(a) { try { localStorage.setItem(PKEY, JSON.stringify(a)); } catch (e) {} }
   const myPlans = () => { const k = K(), w = String((k.D() && k.D().wallet) || '').toLowerCase(); return plansGet().filter((x) => !x.wallet || x.wallet === w); };
