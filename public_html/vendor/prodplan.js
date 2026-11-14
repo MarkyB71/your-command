@@ -627,6 +627,8 @@
       if (k.bulk(P.p)) { const q = go.q || 100000; P.unit = q >= 1e6 ? 'kt' : q >= 1000 ? 't' : 'kg'; P.q = Math.ceil(q / UNITS[P.unit] * 1000) / 1000; } else P.q = go.q || 1;
     }
     if (!rl.includes(S.rock)) S.rock = rl[0];
+    // Cargo bay, TEST ONLY (?beta=1): load for making something, or just pick what's in stock and put it on a ship (Mark, 14 Nov)
+    if (cargo && QLB && P.cmode === 'stock') return stockPage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
     if (TRACK && !cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
@@ -645,6 +647,7 @@
     const qty = P.p ? Math.max(0, bulk ? Math.round((+P.q || 0) * UNITS[P.unit]) : Math.ceil(+P.q || 0)) : 0;
 
     let h = TRACK && !cargo ? plansListHTML() : '';
+    if (cargo && QLB) h += cmodeBar();
     h += `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2>${cargo && QLB ? '<div class="src" style="margin-bottom:8px">The rock where you’ll make it. The ship brings what this rock is missing here.</div>' : ''}<select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2>${cargo && QLB ? '<div class="src" style="margin-bottom:8px">What you want to make there, and how much. The page works out everything it needs and what that rock is short of.</div>' : ''}<div class="row">
 <input type="search" id="pp-find" placeholder="${MAXB ? '🔍 Product, input or process…' : '🔍 Search…'}" value="${esc(P.find)}">
@@ -728,12 +731,95 @@
     P.shipItems = null;
     finish(m, h);
   }
+  // ---------- Cargo bay: two ways to load (Mark, 14 Nov – TEST ONLY, ?beta=1) ----------
+  function cmodeBar() {
+    const b = (v, t) => `<button type="button" class="dk-shipbtn${(P.cmode || 'make') === v ? ' on' : ''}" data-cmode="${v}" style="cursor:pointer">${t}</button>`;
+    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}</div>` +
+      `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
+  }
+  // "I'd also like to be able to just pick what's in stock on a rock and send it to a ship" (Mark, 14 Nov)
+  function stockPage(m) {
+    const k = K(), esc = k.esc, S = k.S, d = k.D() || {}, rl = k.rocks();
+    const SHIPT = { 2: 'Light Transport', 3: 'Heavy Transport' };
+    const g = (p) => k.grams(+p), v = (p) => (k.mv()[p] || [1000, 1000])[1];
+    if (!rl.includes(P.sr)) P.sr = S.rock;
+    const r = P.sr, ast = k.astId(r);
+    const stores = k.allB().filter((b) => k.isStore(b) && k.rockOf(b) === r);
+    const stock = {}; // product → [[building, amount]]
+    stores.forEach((b) => ((k.inv(b) || { contents: [] }).contents || []).forEach((c) => { if (c.amount > 0) (stock[c.product] = stock[c.product] || []).push([b, c.amount]); }));
+    const tot = (p) => (stock[p] || []).reduce((t, z) => t + z[1], 0);
+    const ships = (d.ships || []).filter((s) => SHIPT[s.st] && s.capM && s.sst === 'd' && s.dId === ast);
+    const room = (s) => Math.min((s.capM - s.useM) / s.capM, (s.capV - s.useV) / s.capV);
+    if (!ships.find((s) => s.id === P.ss)) P.ss = (ships.slice().sort((a, b) => room(b) - room(a))[0] || {}).id || 0;
+    const ship = ships.find((s) => s.id === P.ss);
+    P.sq = P.sq || {};
+    const want = (p) => { const x = P.sq[p]; if (!x || !(+x.q > 0)) return 0; return Math.min(tot(p), k.bulk(+p) ? Math.round(+x.q * UNITS[x.unit || 't']) : Math.floor(+x.q)); };
+    let h = cmodeBar();
+    h += `<div class="card"><h2><span class="n">1</span>Rock the ship is on</h2><div class="src" style="margin-bottom:8px">The rock whose storage you’re loading from.</div><select id="pp-sr">${rl.map((x) => `<option${x === r ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`;
+    h += `<div class="card"><h2><span class="n">2</span>Ship to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}.</div>` +
+      (ships.length ? `<select id="pp-ss">${ships.map((s) => `<option value="${s.id}"${s.id === P.ss ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</option>`).join('')}</select>`
+        : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
+    const f = (P.sfind || '').trim().toLowerCase();
+    const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
+    h += `<div class="card"><h2><span class="n">3</span>What to put on it</h2><div class="src" style="margin-bottom:8px">Everything in storage on ${esc(r)}. Type how much of each to load, or press ALL.</div>` +
+      `<input type="search" id="pp-sfind" placeholder="🔍 Search…" value="${esc(P.sfind || '')}">` +
+      (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Load</th></tr></thead><tbody>` + prods.map((p) => {
+        const x = P.sq[p] || {}, bulk = k.bulk(p);
+        return `<tr><td>${esc(k.pname(p))}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-sq="${p}" value="${esc(x.q || '')}" placeholder="0">` +
+          (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src">×</span>') +
+          `<button type="button" class="dk-shipbtn" data-sall="${p}" style="cursor:pointer">ALL</button></div></td></tr>`;
+      }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing in storage on ' + esc(r) + '.'}</div>`) + '</div>';
+    // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
+    S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
+    const picked = Object.keys(P.sq).map(Number).filter((p) => want(p) > 0);
+    if (ship && picked.length) {
+      const cl = k.crews(r);
+      if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
+      S.moverObj = cl.find((c) => c.id === S.mover);
+      let fg = (ship.capM - ship.useM) * 0.995, fv = (ship.capV - ship.useV) * 0.995, cut = false; const mv = {};
+      picked.forEach((p) => {
+        let n = Math.min(want(p), Math.floor(fg / g(p)), Math.floor(fv / v(p))); if (n < want(p)) cut = true; if (n <= 0) return;
+        fg -= n * g(p); fv -= n * v(p);
+        stock[p].map(([b, hv]) => [b, hv, k.kmBetween(k.lotOf(b), ship.lot, ast) ?? 1e9]).sort((a, b) => a[2] - b[2]).forEach(([b, hv]) => {
+          if (n <= 0) return; const q = Math.min(n, hv); n -= q; (mv[b.id] = mv[b.id] || { b, items: [] }).items.push([p, q]);
+        });
+      });
+      S.calls = Object.keys(mv).map((id) => ({ from: +id, to: ship.id, ship: true, slot: 2, items: mv[id].items }));
+      const lg = S.calls.reduce((t, c) => t + c.items.reduce((u, [p, a]) => u + a * g(p), 0), 0);
+      h += `<div class="card"><h2><span class="n">4</span>Load it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(ship.name)} is full. Unload it in the game first, or pick another ship.</div>` :
+        `<div class="src">These moves put <b>${k.tonnes(lg / 1000)}</b> from your storage on ${esc(r)} into ${esc(ship.name)}:</div>` +
+        (cut ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ Not all of it fits – ${esc(ship.name)} takes what it has room for.</div>` : '') +
+        `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🚀 ${esc(ship.name)}` +
+          mv[id].items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>').join('') + '</div>' +
+        (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Crew doing the loading</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--red)">No crew on ${esc(r)} to do the loading.</div>`) +
+        `<button class="approve" id="pp-cgo" style="margin-top:10px"${cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (load ' + esc(ship.name) + ')'}</button>` +
+        `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
+        `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) +
+        `<div class="hint">This only loads the ship. You fly it and unload it in the game yourself.</div></div>`;
+    }
+    m.innerHTML = h;
+    const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
+    m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
+    on('pp-sr', 'change', (e) => { P.sr = e.target.value; P.ss = 0; P.sq = {}; S.msg = ''; k.render(); });
+    on('pp-ss', 'change', (e) => { P.ss = +e.target.value; k.render(); });
+    on('pp-sfind', 'input', (e) => { P.sfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-sfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
+    m.querySelectorAll('[data-sq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.sq; P.sq[p] = Object.assign(P.sq[p] || {}, { q: e.value }); k.render(); }));
+    m.querySelectorAll('[data-su]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.su; P.sq[p] = Object.assign(P.sq[p] || {}, { unit: e.value }); k.render(); }));
+    m.querySelectorAll('[data-sall]').forEach((e) => e.addEventListener('click', () => {
+      const p = +e.dataset.sall, n = tot(p);
+      if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.sq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n };
+      k.render();
+    }));
+    on('pp-ccrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
+    on('pp-cgo', 'click', () => k.approve());
+  }
   function finish(m, h) {
     const k = K(), S = k.S;
     m.innerHTML = h;
     const sh = m.querySelector('#pp-ship');
     if (sh && P.shipItems) cargoPanel(sh, P.shipItems);
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
+    m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
     on('pp-rock', 'change', (e) => { S.rock = e.target.value; P.moverSet = false; P.runner = 0; k.render(); });
     on('pp-p', 'change', (e) => { const was = P.p; P.p = +e.target.value; P.use = ''; P.maxTxt = ''; if (P.p && (!was || k.bulk(was) !== k.bulk(P.p))) { P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; } k.render(); });
     on('pp-find', 'input', (e) => { P.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-find'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
