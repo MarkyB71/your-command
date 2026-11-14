@@ -25,13 +25,14 @@
   // that process in the buildings this plan started it in), and the ready ones can be started from there.
   const TRACK = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   const PKEY = 'sk_prod_plans';
+  const MVLINK = /[?&]beta=1\b/.test(location.search); // 🚚 moves + crew links on a plan – TEST ONLY (Mark, 14 Nov)
   function plansGet() { try { return JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { return []; } }
   function plansPut(a) { try { localStorage.setItem(PKEY, JSON.stringify(a)); } catch (e) {} }
   const myPlans = () => { const k = K(), w = String((k.D() && k.D().wallet) || '').toLowerCase(); return plansGet().filter((x) => !x.wallet || x.wallet === w); };
   function snapPlan(W, ST, qty) {
     const k = K();
     return { id: 'p' + Date.now(), wallet: String((k.D() && k.D().wallet) || '').toLowerCase(), rock: k.S.rock, p: P.p, qty, mat: ST.mat, made: Date.now(),
-      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0 })), started: {} };
+      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0 })), started: {}, mover: k.S.mover || 0 };
   }
   function noteStarts(plan, list) {
     (list || []).forEach((c) => { if (c.i == null) return; (plan.started[c.i] = plan.started[c.i] || []).push({ b: c.b.id, runs: c.runs, at: Math.floor(Date.now() / 1000) }); });
@@ -106,6 +107,24 @@
         return `<tr><td>${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : ''}</td></tr>`;
       }).join('') + '</tbody></table>' +
       (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
+    // 🚚 the moves for this plan, with in-game links to finish them (Mark, 14 Nov – TEST ONLY, ?beta=1): processes sat
+    // "waiting for stock" and there was no quick way to the crew that sent the moves. Deliveries into the materials
+    // warehouse that aren't finished yet; the crew that sent them is saved on the plan from now on (older plans
+    // just get the warehouse link – any crew can finish a delivery there).
+    if (MVLINK) {
+      const now = Date.now() / 1000, ow = (S.incList || []).filter((r) => r[4][0] === 5 && r[4][1] === +plan.mat);
+      if (ow.length) {
+        const mv = k.crews(plan.rock).find((c) => c.id === plan.mover), matB = byId(plan.mat), ready = ow.filter((r) => r[2] <= now).length;
+        const gl = (path, t) => (window.GL && window.GL.on() ? window.GL(path, t) : ' <a href="https://game.influenceth.io' + path + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="' + esc(t) + '">in game ↗</a>');
+        h += `<div class="card"><h2><span class="n">🚚</span>Moves on their way (${ow.length})</h2>` +
+          `<div class="row" style="flex-wrap:wrap;gap:6px 14px">` +
+          (mv ? `<span>Finish them with <b>${esc(mv.name)}</b>${gl('/crew/' + mv.id, 'Open ' + mv.name + ' in the game')}</span>` : '') +
+          (matB ? `<span class="src">or at <b>${esc(k.nm(matB))}</b>${gl('/building/' + matB.id, 'Open ' + k.nm(matB) + ' in the game – any crew can finish the delivery there')}</span>` : '') + '</div>' +
+          `<table style="margin-top:8px"><thead><tr><th>Goods</th><th>From</th><th>Status</th></tr></thead><tbody>` +
+          ow.map((r) => `<tr><td>${r[5].map((x) => esc(k.pname(x[0])) + ' ' + k.amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(r[3][0] === 5 ? (byId(r[3][1]) ? k.nm(byId(r[3][1])) : 'Building #' + r[3][1]) : 'elsewhere')}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
+          `</tbody></table>${ready ? '<div class="hint">Once they’re finished in the game, press ↻ Check the game again.</div>' : ''}</div>`;
+      }
+    }
     if (t.done === plan.steps.length) return h + '<div class="card"><div class="src"><span class="ok">✓ All done.</span> You can forget this plan from the list.</div></div>';
     h += `<div class="card"><h2><span class="n">▶</span>Start the next ones</h2>` + (cl.length
       ? `<div class="row"><span class="src" style="min-width:150px">⚙ Runs the processes</span><select id="pp-trun">${cl.map((c) => `<option value="${c.id}"${c.id === P.runner ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready now'}</option>`).join('')}</select></div>`
