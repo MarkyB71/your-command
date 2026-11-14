@@ -4,6 +4,7 @@ The browser extension for https://your-command.adalia.academy and the Influence 
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
 ## 0.6.8 – coming soon
+- **No more stray food bar** – crews with no crewmates (the game doesn't show them) no longer leave a food bar floating in the My Crews list.
 - **Deck strip** (on by default – switch off in Options) – your Command Deck's six stations (Crew Quarters, Flight Deck, Mining, Engineering, Science Lab, Trade Deck) along the bottom of the game, in the empty space between the game's buttons and the clock, each with its number and anything that needs you (hungry crews, ships low on propellant, jobs ready to collect…). Click one to open that deck on your Command Deck tab. It moves out of the way of the game's own buttons and hides when there isn't room.
 - **SkippyChain button on the side bar** – a gold chain-link button in the game's side bar opens The SkippyChain on your Command Deck. While the deck strip is on, the S button is tucked away (the strip does its job).
 

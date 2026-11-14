@@ -62,7 +62,8 @@
       if (!k || (k[0] !== 'entities' && k[0] !== 'entity') || (k[1] !== 1 && k[1] !== 2) || !d) return;
       (Array.isArray(d) ? d : [d]).forEach(e => {
         if (!e) return;
-        if (e.label === 1 && e.Crew && e.Crew.lastFed) crews.push(e);
+        // empty crews (no crewmates) are skipped – the game never draws them, so their bar had nowhere to go
+        if (e.label === 1 && e.Crew && e.Crew.lastFed && (e.Crew.roster || []).length) crews.push(e);
         else if (e.label === 2 && e.Crewmate) mates[e.id] = e.Crewmate;
       });
     });
@@ -99,10 +100,11 @@
     r.append(l, bar, n);
     return r;
   }
-  // the crew's card = the first box above the name that also holds the crewmate faces
+  // the crew's card = the first box above the name that also holds the crewmate faces.
+  // A crew has at most 5 faces – a box with more is a whole group of cards, so no bar there.
   function cardOf(el) {
     for (let x = el.parentElement, i = 0; x && x !== document.body && i < 8; x = x.parentElement, i++)
-      if (x.querySelector('img')) return x;
+      if (x.querySelector('img')) return x.querySelectorAll('img').length <= 5 ? x : null;
     return null;
   }
 
@@ -142,14 +144,18 @@
     }
     // tidy any bar left outside the list (e.g. the top-left crew panel)
     document.querySelectorAll('.yic-food').forEach(b => { if (!panel.contains(b)) b.remove(); });
+    const used = new Set();
     for (const [el, pct] of hits) {
       const card = cardOf(el); if (!card) continue;
+      used.add(card);
       const old = card.querySelector(':scope > .yic-food');
       if (old && old.dataset.pct === String(pct)) { n++; continue; }
       if (old) old.remove();
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       card.appendChild(tag(pct)); n++;
     }
+    // tidy any stray bar not on a crew card this time round (e.g. one left by an empty crew)
+    panel.querySelectorAll('.yic-food').forEach(b => { if (!used.has(b.parentElement)) b.remove(); });
     note(n + ' crews labelled');
   }
 
