@@ -154,7 +154,7 @@
     );
   }
 
-  // ---- Site voice (Mark, 14 Nov – TEST ONLY): which voice the Logistics Hub speaks with. Saved in this browser;
+  // ---- Site voice (Mark, 14 Nov – LIVE 14 Nov 2026): which voice the Logistics Hub speaks with. Saved in this browser;
   // works without the extension. See vendor/voice.js.
   function voiceRow() {
     const V = window.YICvoice, c = V.get(), b = V.best();

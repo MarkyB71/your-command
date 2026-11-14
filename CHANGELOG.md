@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 14 Nov 2026 – New: Site voice – the Logistics Hub airlock and welcome use the most natural-sounding voice your browser offers. Choose another, or no voice, in Deck controls › Site voice (with a ▶ Test button; saved in your browser, no extension needed). Help page updated.
+
 ## 14 Nov 2026 – Help page: the Logistics Hub airlock and welcome use your browser's own voice – how to change it.
 
 ## 14 Nov 2026 – Logistics Hub Production: a saved plan now shows 🚚 Moves on their way – deliveries still arriving at its materials warehouse, with when they arrive, and links to finish them in the game with the crew that sent them (or at the warehouse, where any crew can). Help page updated.

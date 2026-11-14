@@ -2,9 +2,9 @@
 // Left alone, Brave/Chrome often give a robotic default (newer Mac Siri voices aren't offered to browsers, and
 // Brave's fingerprint protection can change the list). So the site picks the best-sounding voice the browser
 // offers, and the player can choose another (or none) in Deck controls. Choice saved in this browser only.
-// TEST ONLY (?beta=1) – window.YICvoice.on is false on the live site, and nothing changes there.
+// LIVE 14 Nov 2026.
 (function () {
-  const ON = /[?&]beta=1\b/.test(location.search);
+  const ON = true; // LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   const KEY = 'yic-voice'; // '' = pick for me, '-' = no voice, else a voice name
   // Novelty / old voices that sound robotic – never picked automatically (can still be chosen by hand).
   const ODD = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandma|Grandpa|Rocko|Shelley|Sandy|Flo|Eddy|Reed)\b/i;
