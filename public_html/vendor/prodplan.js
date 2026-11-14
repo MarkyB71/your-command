@@ -93,7 +93,12 @@
     const cl = k.crews(plan.rock);
     if (!cl.find((c) => c.id === P.runner)) P.runner = ((cl.find((c) => !c.busy) || cl[0]) || {}).id || 0;
     const runner = cl.find((c) => c.id === P.runner);
-    const ready = ss.filter((x) => x.s === 'ready').map((x) => Object.assign(x.start, { crew: P.runner }));
+    // pick which ready process(es) to start (Mark, 14 Nov – TEST ONLY, ?beta=1): each ready one gets a tick box,
+    // ticked by default; only the ticked ones go in the approval. "Ready" already means its inputs are there and a building
+    // is free, so nothing ticked here waits on another process finishing.
+    P.noStart = P.noStart || {};
+    const pick = (i) => !(PKB && P.noStart[plan.id + ':' + i]);
+    const ready = ss.filter((x) => x.s === 'ready' && pick(x.i)).map((x) => Object.assign(x.start, { crew: P.runner }));
     S.rock = plan.rock; S.calls = []; S.feedCalls = []; S.feed = false; S.mover = P.runner; S.moverObj = runner;
     S.startList = ready;
     const ICON = { done: '<span class="ok">✓ done</span>', run: '⚙ running', collect: '<span style="color:var(--amber)">✓ finished – collect it in the game</span>', ready: '<span class="ok">▶ ready to start</span>', wait: '<span class="src">⏳ waiting</span>' };
@@ -104,8 +109,10 @@
       ss.map((x) => {
         const st = x.st, b = x.start && x.start.b;
         const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + (x.start.capTxt ? '<br><span class="src">⏱ ' + esc(x.start.capTxt) + '</span>' : '') : '';
-        return `<tr><td>${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : ''}</td></tr>`;
+        const tick = PKB && x.s === 'ready' ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
+        return `<tr><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : ''}</td></tr>`;
       }).join('') + '</tbody></table>' +
+      (PKB && t.ready > 1 ? '<div class="hint">Tick the ready processes you want to start – only those go in the approval.</div>' : '') +
       (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
     // 🚚 the moves for this plan, with in-game links to finish them (Mark, 14 Nov – TEST ONLY, ?beta=1): processes sat
     // "waiting for stock" and there was no quick way to the crew that sent the moves. Deliveries into the materials
@@ -225,6 +232,7 @@
     return '<div class="hint">⛏ You’ll mine these, not make them: ' +
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
+  const PKB = /[?&]beta=1\b/.test(location.search); // pick which ready process to start next (Mark, 14 Nov – TEST ONLY)
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -945,6 +953,7 @@
     on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });
     on('pp-n', 'change', (e) => { P.n = e.target.value; fillFor(); k.render(); });
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
+    m.querySelectorAll('[data-pick]').forEach((e) => e.addEventListener('change', () => { if (e.checked) delete P.noStart[e.dataset.pick]; else P.noStart[e.dataset.pick] = 1; k.render(); }));
     m.querySelectorAll('[data-illmine]').forEach((b) => b.addEventListener('click', () => { const n = mineGet(), p = +b.dataset.illmine; if (!n.includes(p)) n.push(p); minePut(n); P.maxTxt = ''; k.render(); }));
     m.querySelectorAll('[data-mkagain]').forEach((b) => b.addEventListener('click', () => { minePut(mineGet().filter((x) => x !== +b.dataset.mkagain)); P.maxTxt = ''; k.render(); }));
   }
