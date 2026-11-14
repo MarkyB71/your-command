@@ -146,6 +146,7 @@
     on.filter(k.isStore).forEach((b) => { ((k.inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) pool[c.product] = (pool[c.product] || 0) + c.amount; }); ((k.S.inc && k.S.inc[b.id]) || []).forEach((x) => { pool[x[0]] = (pool[x[0]] || 0) + x[1]; }); });
     const haveTarget = pool[target] || 0;
     const steps = [], key = {}, fly = {}, mine = {}, made = {}, byUsed = {}, stock = {}, noBld = {};
+    const illMine = new Set(mineGet());
     const all = (p) => R.filter((x) => x.out[p] && !/Unbundling/.test(x.name));
     const here = (p) => all(p).filter((x) => types.has(k.FBT[x.type]));
     // rough cost of one unit of p made here: [kg to fly in, processes] – used only to pick between recipes
@@ -174,7 +175,7 @@
         // by-products of earlier steps first, then stock on the rock (Mark: "using byproducts if available")
         if (made[p] > 0) { const u = Math.min(made[p], q); made[p] -= u; q -= u; byUsed[p] = (byUsed[p] || 0) + u; if (q <= 0) return; }
         if (pool[p] > 0) { const u = Math.min(pool[p], q); pool[p] -= u; q -= u; stock[p] = (stock[p] || 0) + u; if (q <= 0) return; }
-        if (k.canMine(p)) { mine[p] = (mine[p] || 0) + q; return; }
+        if (k.canMine(p) || illMine.has(p)) { mine[p] = (mine[p] || 0) + q; return; }
       }
       const rs = here(p).filter((r) => !Object.keys(r.inp).some((ip) => path.includes(+ip)));
       if (!rs.length || depth > 10) {
@@ -211,6 +212,19 @@
   const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY, ?beta=1): pick what's in storage on a rock and send it to one of its warehouses / tank farms
   const SMB = /[?&]beta=1\b/.test(location.search);
+  // ⛏ "No, don't do that – I'll mine it" (Mark, 14 Nov – TEST ONLY, ?beta=1): when the plan makes a raw resource
+  // (e.g. Sulfur Dioxide from Sulfuric Acid), the player can say they'll mine it instead. The planner then puts it on
+  // the mine list rather than making it. Remembered in this browser; "make it again" undoes it.
+  const IMB = /[?&]beta=1\b/.test(location.search);
+  const MKEY = 'sk_prod_illmine';
+  function mineGet() { if (!IMB) return []; try { return JSON.parse(localStorage.getItem(MKEY) || '[]'); } catch (e) { return []; } }
+  function minePut(a) { try { localStorage.setItem(MKEY, JSON.stringify(a)); } catch (e) {} }
+  function illMineHTML() {
+    const n = mineGet(), k = K();
+    if (!n.length) return '';
+    return '<div class="hint">⛏ You’ll mine these, not make them: ' +
+      n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
+  }
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -677,12 +691,13 @@
           const parts = [], tot = (W.fly[p] || 0) + (W.mine[p] || 0) + (W.stock[p] || 0) + (W.byUsed[p] || 0);
           if (W.stock[p]) parts.push('<span class="ok">✓ ' + k.amt(p, W.stock[p]) + ' in storage here</span>');
           if (W.byUsed[p]) parts.push('♻ ' + k.amt(p, W.byUsed[p]) + ' by-product of an earlier step');
-          if (W.mine[p]) parts.push('⛏ ' + k.amt(p, W.mine[p]) + ' to mine here');
+          if (W.mine[p]) parts.push('⛏ ' + k.amt(p, W.mine[p]) + (k.canMine(p) ? ' to mine here' : ' – you’ll mine it and bring it here'));
           if (W.fly[p]) parts.push('<span class="short">✈ ' + k.amt(p, W.fly[p]) + ' to fly in or buy</span>' + (W.noBld[p] ? ' <span class="hint" style="margin:0">(needs a ' + esc(W.noBld[p].join(' or ')) + ' to make here)</span>' : '') + (window.YICSRCTXT ? '<br>' + (window.YICSRCTXT(p, W.fly[p], k.astId(S.rock)) || '') : ''));
           t += row(p, tot, parts.join('<br>'));
         });
         h += `<div class="card"><h2><span class="n">3</span>What you need</h2>` +
           `<div class="dkp-sum"><div><b>${W.steps.length}</b>processes</div><div class="good"><b>${st.length}</b>from storage</div><div><b>${mi.length}</b>to mine here</div><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length}</b>to fly in or buy</div></div>` +
+          illMineHTML() +
           (W.haveTarget ? `<div class="hint">You already have ${k.amt(P.p, W.haveTarget)} of ${esc(k.pname(P.p))} on this rock – this plan makes ${k.amt(P.p, qty)} more.</div>` : '') +
           // the inputs list folds away if the player wants (Mark, 9 Nov) – remembered while the page is open
           `<details id="pp-inputs" class="dkp-fold"${P.inOpen ? ' open' : ''}><summary>Inputs (${prods.length})</summary><table style="margin-top:4px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table></details>` +
@@ -708,7 +723,7 @@
         h += `<div class="card"><h2><span class="n">4</span>Processes to run (${W.steps.length}), in order</h2><table><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Building</th><th>Outputs go to</th><th class="num">Time</th></tr></thead><tbody>` +
           W.steps.map((s, i) => {
             const bt = k.FBT[s.r.type], bs = blds(bt), free = bs.filter((b) => k.freeSlot(b)).length;
-            return `<tr><td>${i + 1}</td><td>${esc(s.r.name)}</td><td>${esc(k.pname(s.p))} ${k.amt(s.p, s.r.out[s.p] * s.runs)}</td><td class="num">${s.runs.toLocaleString('en-GB')}</td>` +
+            return `<tr><td>${i + 1}</td><td>${esc(s.r.name)}</td><td>${esc(k.pname(s.p))} ${k.amt(s.p, s.r.out[s.p] * s.runs)}${IMB && s.p <= 22 ? ` <button type="button" class="dk-shipbtn" data-illmine="${s.p}" style="cursor:pointer;padding:1px 6px" title="Don’t make it – put it on the mine list instead">⛏ No, I’ll mine it</button>` : ''}</td><td class="num">${s.runs.toLocaleString('en-GB')}</td>` +
               `<td>${esc(k.BTN[bt])} <span class="${free ? 'ok' : 'src'}">· ${free} of ${bs.length} free</span></td><td>${s.to ? esc(k.nm(s.to)) : '<span style="color:var(--red)">no storage</span>'}</td><td class="num">${hrs(k.procSecs(s.r.name, s.runs) || 0)}</td></tr>`;
           }).join('') + '</tbody></table>' +
           '<div class="hint">Earlier steps make what later steps need. Times are without crew or building bonuses.</div></div>';
@@ -930,6 +945,8 @@
     on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });
     on('pp-n', 'change', (e) => { P.n = e.target.value; fillFor(); k.render(); });
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
+    m.querySelectorAll('[data-illmine]').forEach((b) => b.addEventListener('click', () => { const n = mineGet(), p = +b.dataset.illmine; if (!n.includes(p)) n.push(p); minePut(n); P.maxTxt = ''; k.render(); }));
+    m.querySelectorAll('[data-mkagain]').forEach((b) => b.addEventListener('click', () => { minePut(mineGet().filter((x) => x !== +b.dataset.mkagain)); P.maxTxt = ''; k.render(); }));
   }
 
   window.YICPROD = { render, work, planStatus, maxMake, store: SMB ? storePage : null };
