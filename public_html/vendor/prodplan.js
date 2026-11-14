@@ -209,6 +209,8 @@
   // The most of the target that can be made from what's on the rock now (storage, deliveries on the way, by-products) –
   // nothing to fly in, buy or mine. Found by doubling then halving the amount. Says which input runs out first.
   const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
+  // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY, ?beta=1): pick what's in storage on a rock and send it to one of its warehouses / tank farms
+  const SMB = /[?&]beta=1\b/.test(location.search);
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -629,6 +631,7 @@
     if (!rl.includes(S.rock)) S.rock = rl[0];
     // Cargo bay, TEST ONLY (?beta=1): load for making something, or just pick what's in stock and put it on a ship (Mark, 14 Nov)
     if (cargo && QLB && P.cmode === 'stock') return stockPage(m);
+    if (cargo && SMB && P.cmode === 'store') return storePage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
     if (TRACK && !cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
@@ -734,8 +737,8 @@
   // ---------- Cargo bay: two ways to load (Mark, 14 Nov – TEST ONLY, ?beta=1) ----------
   function cmodeBar() {
     const b = (v, t) => `<button type="button" class="dk-shipbtn${(P.cmode || 'make') === v ? ' on' : ''}" data-cmode="${v}" style="cursor:pointer">${t}</button>`;
-    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}</div>` +
-      `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
+    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}${SMB ? b('store', '🗄 Storage Management') : ''}</div>` +
+      `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : P.cmode === 'store' ? 'Pick a rock, what to move from its storage, and the warehouse or tank farm to send it to.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
   }
   // "I'd also like to be able to just pick what's in stock on a rock and send it to a ship" (Mark, 14 Nov)
   function stockPage(m) {
@@ -812,6 +815,85 @@
     }));
     on('pp-ccrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
     on('pp-cgo', 'click', () => k.approve());
+  }
+  // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY): "select resources on a rock and send them to a storage" – same rock, a surface move
+  function storePage(m) {
+    const k = K(), esc = k.esc, S = k.S, rl = k.rocks(), TANK = k.TANK, CAP = k.CAP;
+    const g = (p) => k.grams(+p), v = (p) => (k.mv()[p] || [1000, 1000])[1];
+    if (!rl.includes(S.rock)) S.rock = rl[0] || '';
+    const r = S.rock, ast = k.astId(r);
+    const stores = k.allB().filter((b) => k.isStore(b) && k.rockOf(b) === r).sort((a, b) => k.nm(a).localeCompare(k.nm(b)));
+    const used = (b) => { const i = k.inv(b) || { mass: 0, volume: 0 }; return [i.mass + (i.reservedMass || 0), i.volume + (i.reservedVolume || 0)]; };
+    const full = (b) => { const u = used(b), c = CAP[b.Building.buildingType]; return Math.max(u[0] / c[0], u[1] / c[1]); };
+    if (!stores.find((b) => b.id === P.mdest)) P.mdest = (stores.slice().sort((a, b) => full(a) - full(b))[0] || {}).id || 0;
+    const dest = stores.find((b) => b.id === P.mdest), tank = dest && dest.Building.buildingType === TANK;
+    const stock = {}; // product → [[building, amount]] – everything except what's already in the storage it goes to
+    stores.filter((b) => b !== dest).forEach((b) => ((k.inv(b) || { contents: [] }).contents || []).forEach((c) => { if (c.amount > 0) (stock[c.product] = stock[c.product] || []).push([b, c.amount]); }));
+    const tot = (p) => (stock[p] || []).reduce((t, z) => t + z[1], 0);
+    P.mq = P.mq || {};
+    const want = (p) => { const x = P.mq[p]; if (!x || !(+x.q > 0)) return 0; return Math.min(tot(p), k.bulk(+p) ? Math.round(+x.q * UNITS[x.unit || 't']) : Math.floor(+x.q)); };
+    let h = cmodeBar();
+    h += `<div class="card"><h2><span class="n">1</span>Rock</h2><div class="src" style="margin-bottom:8px">The rock whose storage you’re sorting out. Everything stays on this rock.</div><select id="pp-mr">${rl.map((x) => `<option${x === r ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`;
+    h += `<div class="card"><h2><span class="n">2</span>Send it to</h2><div class="src" style="margin-bottom:8px">The warehouse or tank farm on ${esc(r)} to move things into.</div>` +
+      (stores.length ? `<select id="pp-md">${stores.map((b) => `<option value="${b.id}"${b.id === P.mdest ? ' selected' : ''}>${esc(k.nm(b))} · ${b.Building.buildingType === TANK ? 'tank farm' : 'warehouse'} · ${Math.round(full(b) * 100)}% full</option>`).join('')}</select>` +
+        (tank ? '<div class="src" style="margin-top:6px">A tank farm only takes fluids – anything else is left out.</div>' : '')
+        : `<div class="src" style="color:var(--amber)">No warehouse or tank farm on ${esc(r)}.</div>`) + '</div>';
+    const f = (P.mfind || '').trim().toLowerCase();
+    const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
+    h += `<div class="card"><h2><span class="n">3</span>What to move</h2><div class="src" style="margin-bottom:8px">Everything in the other storage on ${esc(r)}. Type how much of each to move, or press ALL.</div>` +
+      `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
+      (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Move</th></tr></thead><tbody>` + prods.map((p) => {
+        const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
+        return `<tr><td>${esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
+          (bulk ? `<select data-mu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
+          `<button type="button" class="dk-shipbtn" data-mall="${p}" style="cursor:pointer"${no ? ' disabled' : ''}>ALL</button></div></td></tr>`;
+      }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing else in storage on ' + esc(r) + '.'}</div>`) + '</div>';
+    // step 4: the moves – nearest storage to the destination first; fills it to 95% at most
+    S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
+    const picked = Object.keys(P.mq).map(Number).filter((p) => want(p) > 0 && !(tank && !k.TANKOK.has(p)));
+    if (dest && picked.length) {
+      const cl = k.crews(r);
+      if (!cl.find((c) => c.id === S.mover)) S.mover = (cl[0] || {}).id || 0; // best free crew first (hub's own order)
+      S.moverObj = cl.find((c) => c.id === S.mover);
+      const cp = CAP[dest.Building.buildingType], u = used(dest);
+      let fg = cp[0] * 0.95 - u[0], fv = cp[1] * 0.95 - u[1], cut = false; const mv = {};
+      picked.forEach((p) => {
+        let n = Math.min(want(p), Math.floor(fg / g(p)), Math.floor(fv / v(p))); if (n < want(p)) cut = true; if (n <= 0) return;
+        fg -= n * g(p); fv -= n * v(p);
+        stock[p].map(([b, hv]) => [b, hv, k.kmBetween(k.lotOf(b), k.lotOf(dest), ast) ?? 1e9]).sort((a, b) => a[2] - b[2]).forEach(([b, hv]) => {
+          if (n <= 0) return; const q = Math.min(n, hv); n -= q; (mv[b.id] = mv[b.id] || { b, items: [] }).items.push([p, q]);
+        });
+      });
+      S.calls = Object.keys(mv).map((id) => ({ from: +id, to: dest.id, items: mv[id].items }));
+      const lg = S.calls.reduce((t, c) => t + c.items.reduce((s2, [p, a]) => s2 + a * g(p), 0), 0);
+      const after = Math.round(Math.max((u[0] + lg) / cp[0], (u[1] + S.calls.reduce((t, c) => t + c.items.reduce((s2, [p, a]) => s2 + a * v(p), 0), 0)) / cp[1]) * 100);
+      const crewTxt = (c) => esc(c.name) + (c.busy ? ' – busy until ' + esc(c.busy) : ' – ready') + (c.food < 0.5 ? ' – food ' + Math.round(c.food * 100) + '% (hungry, slower)' : '');
+      h += `<div class="card"><h2><span class="n">4</span>Move it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(k.nm(dest))} is full. Pick another storage.</div>` :
+        `<div class="src">These moves put <b>${k.tonnes(lg / 1000)}</b> into ${esc(k.nm(dest))} (${Math.round(full(dest) * 100)}% → <b>${after}%</b> full):</div>` +
+        (cut ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ Not all of it fits – ${esc(k.nm(dest))} takes what it has room for (up to 95%).</div>` : '') +
+        `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => { const km = k.kmBetween(k.lotOf(mv[id].b), k.lotOf(dest), ast); return `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🗄 ${esc(k.nm(dest))}${km != null ? ' <span class="src">· ' + k.kmTxt(km) + '</span>' : ''}` +
+          mv[id].items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>'; }).join('') + '</div>' +
+        (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Crew doing the moving</span><select id="pp-mcrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${crewTxt(c)}</option>`).join('')}</select></div>` +
+          (S.moverObj && S.moverObj.food < 0.5 ? '<div class="src" style="color:var(--amber)">⚠ This crew is hungry – moves will be slower.</div>' : '') : `<div class="src" style="color:var(--red)">No crew on ${esc(r)} to do the moving.</div>`) +
+        `<button class="approve" id="pp-mgo" style="margin-top:10px"${cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (move to ' + esc(k.nm(dest)) + ')'}</button>` +
+        `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
+        `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) + '</div>';
+    }
+    m.innerHTML = h;
+    const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
+    m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
+    on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; S.msg = ''; k.render(); });
+    on('pp-md', 'change', (e) => { P.mdest = +e.target.value; S.msg = ''; k.render(); });
+    on('pp-mfind', 'input', (e) => { P.mfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-mfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
+    m.querySelectorAll('[data-mq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.mq; P.mq[p] = Object.assign(P.mq[p] || {}, { q: e.value }); k.render(); }));
+    m.querySelectorAll('[data-mu]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.mu; P.mq[p] = Object.assign(P.mq[p] || {}, { unit: e.value }); k.render(); }));
+    m.querySelectorAll('[data-mall]').forEach((e) => e.addEventListener('click', () => {
+      const p = +e.dataset.mall, n = tot(p);
+      if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.mq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.mq[p] = { q: n };
+      k.render();
+    }));
+    on('pp-mcrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
+    on('pp-mgo', 'click', () => k.approve());
   }
   function finish(m, h) {
     const k = K(), S = k.S;
