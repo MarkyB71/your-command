@@ -146,7 +146,8 @@
     on.filter(k.isStore).forEach((b) => { ((k.inv(b) || { contents: [] }).contents).forEach((c) => { if (c.amount > 0) pool[c.product] = (pool[c.product] || 0) + c.amount; }); ((k.S.inc && k.S.inc[b.id]) || []).forEach((x) => { pool[x[0]] = (pool[x[0]] || 0) + x[1]; }); });
     const haveTarget = pool[target] || 0;
     const steps = [], key = {}, fly = {}, mine = {}, made = {}, byUsed = {}, stock = {}, noBld = {};
-    const all = (p) => R.filter((x) => x.out[p] && !/Unbundling/.test(x.name));
+    const off = new Set(noGet());
+    const all = (p) => R.filter((x) => x.out[p] && !/Unbundling/.test(x.name) && !off.has(x.name));
     const here = (p) => all(p).filter((x) => types.has(k.FBT[x.type]));
     // rough cost of one unit of p made here: [kg to fly in, processes] – used only to pick between recipes
     const memo = {};
@@ -211,6 +212,21 @@
   const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY, ?beta=1): pick what's in storage on a rock and send it to one of its warehouses / tank farms
   const SMB = /[?&]beta=1\b/.test(location.search);
+  // ⛏ Mine, don't break down (Mark, 14 Nov – TEST ONLY, ?beta=1): "I would rather mine the resources" – the player can
+  // refuse the processes that just break a made product back down (e.g. Sulfuric Acid → Sulfur Dioxide). A refused one is
+  // never used by the planner; what it made comes from stock, mining, another process or flying in instead. Remembered in this browser.
+  const BDB = /[?&]beta=1\b/.test(location.search);
+  const BRK = ['Sulfuric Acid Hot Catalytic Reduction', 'Ammonia Catalytic Cracking', 'Water Electrolysis', 'Carbon Dioxide Ferrocatalysis',
+    'Carbon Monoxide Arc Decomposition', 'Hydrofluoric Acid Cold Electrolysis', 'Boric Acid Thermal Decomposition'];
+  const NKEY = 'sk_prod_nobreak';
+  function noGet() { if (!BDB) return []; try { return JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { return []; } }
+  function noPut(a) { try { localStorage.setItem(NKEY, JSON.stringify(a)); } catch (e) {} }
+  function noBrkHTML() {
+    const n = noGet(), esc = K().esc;
+    if (!n.length) return '';
+    return '<div class="hint">⛏ Not breaking down (you chose to mine or fly in instead): ' +
+      n.map((x) => `${esc(x)} <button type="button" class="dk-shipbtn" data-yesbrk="${esc(x)}" style="cursor:pointer;padding:1px 6px">use again</button>`).join(' · ') + '</div>';
+  }
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -683,6 +699,7 @@
         });
         h += `<div class="card"><h2><span class="n">3</span>What you need</h2>` +
           `<div class="dkp-sum"><div><b>${W.steps.length}</b>processes</div><div class="good"><b>${st.length}</b>from storage</div><div><b>${mi.length}</b>to mine here</div><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length}</b>to fly in or buy</div></div>` +
+          noBrkHTML() +
           (W.haveTarget ? `<div class="hint">You already have ${k.amt(P.p, W.haveTarget)} of ${esc(k.pname(P.p))} on this rock – this plan makes ${k.amt(P.p, qty)} more.</div>` : '') +
           // the inputs list folds away if the player wants (Mark, 9 Nov) – remembered while the page is open
           `<details id="pp-inputs" class="dkp-fold"${P.inOpen ? ' open' : ''}><summary>Inputs (${prods.length})</summary><table style="margin-top:4px"><thead><tr><th>Input</th><th class="num">Amount</th><th>Where from</th></tr></thead><tbody>${t}</tbody></table></details>` +
@@ -708,7 +725,7 @@
         h += `<div class="card"><h2><span class="n">4</span>Processes to run (${W.steps.length}), in order</h2><table><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Building</th><th>Outputs go to</th><th class="num">Time</th></tr></thead><tbody>` +
           W.steps.map((s, i) => {
             const bt = k.FBT[s.r.type], bs = blds(bt), free = bs.filter((b) => k.freeSlot(b)).length;
-            return `<tr><td>${i + 1}</td><td>${esc(s.r.name)}</td><td>${esc(k.pname(s.p))} ${k.amt(s.p, s.r.out[s.p] * s.runs)}</td><td class="num">${s.runs.toLocaleString('en-GB')}</td>` +
+            return `<tr><td>${i + 1}</td><td>${esc(s.r.name)}${BDB && BRK.includes(s.r.name) ? ` <button type="button" class="dk-shipbtn" data-nobrk="${esc(s.r.name)}" style="cursor:pointer;padding:1px 6px" title="This breaks a made product back down. Don’t use it – mine or fly in what it makes instead.">⛏ Don’t break down</button>` : ''}</td><td>${esc(k.pname(s.p))} ${k.amt(s.p, s.r.out[s.p] * s.runs)}</td><td class="num">${s.runs.toLocaleString('en-GB')}</td>` +
               `<td>${esc(k.BTN[bt])} <span class="${free ? 'ok' : 'src'}">· ${free} of ${bs.length} free</span></td><td>${s.to ? esc(k.nm(s.to)) : '<span style="color:var(--red)">no storage</span>'}</td><td class="num">${hrs(k.procSecs(s.r.name, s.runs) || 0)}</td></tr>`;
           }).join('') + '</tbody></table>' +
           '<div class="hint">Earlier steps make what later steps need. Times are without crew or building bonuses.</div></div>';
@@ -930,6 +947,8 @@
     on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });
     on('pp-n', 'change', (e) => { P.n = e.target.value; fillFor(); k.render(); });
     on('pp-u', 'change', (e) => { P.unit = e.target.value; k.render(); });
+    m.querySelectorAll('[data-nobrk]').forEach((b) => b.addEventListener('click', () => { const n = noGet(); if (!n.includes(b.dataset.nobrk)) n.push(b.dataset.nobrk); noPut(n); P.maxTxt = ''; k.render(); }));
+    m.querySelectorAll('[data-yesbrk]').forEach((b) => b.addEventListener('click', () => { noPut(noGet().filter((x) => x !== b.dataset.yesbrk)); P.maxTxt = ''; k.render(); }));
   }
 
   window.YICPROD = { render, work, planStatus, maxMake, store: SMB ? storePage : null };
