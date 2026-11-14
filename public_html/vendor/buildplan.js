@@ -118,7 +118,9 @@ export function drawBuildPlan(m){
     (D.owned||[]).forEach(a=>{if(a.id===S.ast)return;const c=a.Celestial||{},ab2=(c.scanStatus||0)>=4&&c.abundances&&Y.astAbund?Y.astAbund(c.abundances):null,sp=(Y.SPEC||{})[c.celestialType];for(let k=1;k<=22;k++)if(ab2?(ab2[k]||0)>0:sp&&sp[1].includes(k))AWAY[k]=1})}
   const UC1={},AW=AWAY;
   const ucOK=UC1,vis=(o,k)=>isCnt(k)?o[k]>=0.5:kgOf(k,o[k])>=0.5;
-  const makeOK=r=>{const E=expand(stk,canMine,[[r.id,r.short]],ucOK,AW);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
+  /* beta (Mark, 14 Nov): a raw this rock can mine is mined here, not flown in because another rock holds some (SO2 on TRCS Leisure Potato) */
+  const MNH=/[?&]beta=1/.test(location.search);
+  const makeOK=r=>{if(MNH&&+r.id<=22&&canMine(r.id))return true;const E=expand(stk,canMine,[[r.id,r.short]],ucOK,AW);return!!E.USED[r.id]&&!Object.keys(E.fly).some(k=>vis(E.fly,k))&&Object.keys(E.fac).every(t=>myFac(t))};
   /* what each building needs for ONE of it on this asteroid */
   const ucB={},canBadge=k=>{const need=BL[k][1],dd=isShip(k)&&!myFac(5);const sh=Object.keys(need).map(id=>[id,Math.max(0,need[id]-(stk[id]||0))]).filter(x=>x[1]>0);
     if(!sh.length&&!dd){const n=Math.min(...Object.keys(need).map(id=>Math.floor((stk[id]||0)/need[id])));return'<em class="bp-cb ok">✓ Stock for '+n.toLocaleString()+'</em>'}
