@@ -216,9 +216,8 @@
   // refuse the processes that just break a made product back down (e.g. Sulfuric Acid → Sulfur Dioxide). A refused one is
   // never used by the planner; what it made comes from stock, mining, another process or flying in instead. Remembered in this browser.
   const BDB = /[?&]beta=1\b/.test(location.search);
-  // only the exact reverse of another process (Mark, 14 Nov: "only processes like sulfuric acid"):
-  // Wet Sulfuric Acid Process · Haber-Bosch · Boria Hydration · Carbon Monoxide Combustion, run backwards
-  const BRK = ['Sulfuric Acid Hot Catalytic Reduction', 'Ammonia Catalytic Cracking', 'Boric Acid Thermal Decomposition', 'Carbon Dioxide Ferrocatalysis'];
+  const BRK = ['Sulfuric Acid Hot Catalytic Reduction', 'Ammonia Catalytic Cracking', 'Water Electrolysis', 'Carbon Dioxide Ferrocatalysis',
+    'Carbon Monoxide Arc Decomposition', 'Hydrofluoric Acid Cold Electrolysis', 'Boric Acid Thermal Decomposition'];
   const NKEY = 'sk_prod_nobreak';
   function noGet() { if (!BDB) return []; try { return JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { return []; } }
   function noPut(a) { try { localStorage.setItem(NKEY, JSON.stringify(a)); } catch (e) {} }
