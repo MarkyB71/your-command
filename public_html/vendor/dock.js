@@ -325,7 +325,7 @@ ${R.map(route).join('')}
   // whose processing time is over SDK Process.MAX_PROCESS_TIME (63,072,000 in-game s). Counted without crew bonuses, so
   // the cap is on the safe side. Bigger jobs start this many runs now and the rest when it finishes.
   const MAXPT = 63072000;
-  const maxRuns = (name) => { const t = PT[name]; return t && t[1] > 0 ? Math.floor(MAXPT / t[1]) : Infinity; };
+  const maxRuns = (name) => { const t = PT[name]; return t && t[1] > 0 ? Math.floor((MAXPT - (t[0] || 0)) / t[1]) : Infinity; }; // setup time counts too (Mark, 15 Nov: 2 Natural Flavorings runs + setup failed E6049)
   const capRuns = (c) => { const mx = maxRuns(c.r.name); if (mx < 1) return false; if (c.runs > mx) { c.capTxt = 'game limit: ' + mx.toLocaleString('en-GB') + ' of ' + Math.ceil(c.runs).toLocaleString('en-GB') + ' runs now – start the rest when it finishes'; c.runs = mx; } return true; };
   // the best building of a type on the rock: free first, then nearest to a ready crew
   function pickBld(bt) {
