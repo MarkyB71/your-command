@@ -10,7 +10,11 @@ const CSS=`.hl-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .hl-what b{color:#e6ebf2}
 .hl-what .s{color:#8b9ab0;font-size:13px}
 .hl-crew{color:#8fe3ff;font-size:13px;text-align:right;overflow:hidden;text-overflow:ellipsis}
-.hl-more{margin:14px 0}`;
+.hl-more{margin:14px 0}
+.hl-tabs{display:flex;gap:6px;margin:4px 0 8px}
+.hl-tabs button{padding:6px 14px;border-radius:6px;border:1px solid #5fc3e4;background:#14202c;color:#8fe3ff;cursor:pointer;font-weight:bold;font-size:14px}
+.hl-tabs button.on{background:#5fc3e4;color:#05070a}
+.hl-me td{background:rgba(95,195,228,.08)}`;
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* Adalia stardate (Mark, 10 Nov 2026 – Captain's log): the game's own clock in Adalian days, as the game client works it out
@@ -29,7 +33,11 @@ const CATS=[
   ['other','Other','•',()=>true]];
 const cat=n=>CATS.find(c=>c[3](n));
 const words=n=>n.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()).toLowerCase().replace(/^./,c=>c.toUpperCase());
-const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100'};
+const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100',belt:false,bq:''};
+/* Whole belt – ships in flight now (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1). From flights.php: every ship in
+   flight across the belt (Escape Modules too), shared by all visitors and rebuilt at most every 5 minutes. */
+const BELT=/[?&]beta=1\b/.test(location.search);let FL=null,FLL=null;
+const STYPE={1:'Escape Module',2:'Light Transport',3:'Heavy Transport',4:'Shuttle'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
 export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere else (Captain's log on the Bridge, Mark 10 Nov – beta); opt.noTitle: no heading */
@@ -97,6 +105,9 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
   function draw(){
     m.innerHTML='';
     if(!opt.noTitle)m.appendChild(el('h2','hl-title','Activity log'));
+    if(BELT&&!opt.noTitle){const tb=el('div','hl-tabs');const b1=el('button',S.belt?'':'on','Your crews'),b2=el('button',S.belt?'on':'','🚀 Whole belt – in flight now');
+      b1.addEventListener('click',()=>{S.belt=false;draw()});b2.addEventListener('click',()=>{S.belt=true;draw()});tb.appendChild(b1);tb.appendChild(b2);m.appendChild(tb);
+      if(S.belt){drawBelt();return}}
     const H=HC[S.range];
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
     rs.addEventListener('change',()=>{S.range=rs.value;S.show=300;S.crew='';fetchRange();draw()});
@@ -130,6 +141,27 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
       box.appendChild(el('div','hl-row','<span class="hl-tm">'+(opt.stardate?'<b class="hl-sd">'+esc(SD(r.t,2))+'</b><span class="hl-real">'+tm+'</span>':tm)+'</span><span class="hl-ic" title="'+esc(cat(r.n)[1])+'">'+cat(r.n)[2]+'</span><span class="hl-what">'+d+'</span><span class="hl-crew">'+esc(crewName[r.c]||('Crew #'+r.c))+'</span>'))});
     m.appendChild(box);
     if(list.length>S.show){const b=el('button','hl-more','Show more ('+(list.length-S.show).toLocaleString()+' left)');b.addEventListener('click',()=>{S.show+=500;draw()});m.appendChild(b)}
+  }
+  function drawBelt(){
+    if(!FL){m.appendChild(el('div','note','Loading every ship in flight across the belt…'));
+      if(!FLL)FLL=fetch('flights.php').then(r=>r.json()).then(j=>{FL=j.error?{error:j.error}:j}).catch(e=>{FL={error:String(e&&e.message||e)}}).finally(()=>{FLL=null;if(m.isConnected&&S.belt)draw()});return}
+    if(FL.error){m.appendChild(el('div','note','Could not load the flights: '+esc(FL.error)));return}
+    const now=Date.now()/1000,nm=FL.names||{},an=id=>esc(aName[id]||nm[id]||('Asteroid #'+id));
+    const left=s=>{const h=s/3600;return h<1?Math.max(1,Math.round(h*60))+' m':h<48?Math.round(h)+' h':(h/24).toFixed(1)+' d'};
+    const when=t=>new Date(t*1000).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const rows=(FL.ships||[]).filter(x=>x[8]>now).sort((a,b)=>a[8]-b[8]);
+    m.appendChild(el('div','note','Every ship flying right now across the whole belt, landing soonest first – '+rows.length.toLocaleString()+' ship'+(rows.length===1?'':'s')+
+      '. Your own ships are highlighted. Updated '+esc(new Date((FL.fetched||now)*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+' (the site checks at most every 5 minutes). Times are in your local time.'));
+    const bar=el('div','hl-bar'),q=el('input');q.placeholder='Search ship, type, crew or asteroid';q.value=S.bq;bar.appendChild(q);m.appendChild(bar);
+    const box=el('div');m.appendChild(box);
+    const fill=()=>{const qq=S.bq.trim().toLowerCase();
+      const tr=rows.map(x=>{const me=mine.has(x[4]),cn=crewName[x[4]]||('Crew #'+x[4]);
+        const txt=[x[1]||'',STYPE[x[2]]||'',cn,aName[x[5]]||nm[x[5]]||'',aName[x[6]]||nm[x[6]]||''].join(' ').toLowerCase();
+        if(qq&&!txt.includes(qq))return '';
+        return '<tr'+(me?' class="hl-me"':'')+'><td><b>'+esc(x[1]||('Ship #'+x[0]))+'</b>'+(window.GL?window.GL('/ship/'+x[0],'Open this ship in the game'):'')+'</td><td>'+esc(STYPE[x[2]]||'Ship')+'</td><td>'+esc(cn)+(me?' <span class="s">(yours)</span>':'')+'</td>'+
+          '<td>'+an(x[5])+'</td><td>'+an(x[6])+'</td><td data-sort="'+x[7]+'">'+esc(when(x[7]))+'</td><td data-sort="'+x[8]+'">'+esc(when(x[8]))+' <span class="s">(in '+left(x[8]-now)+')</span></td></tr>'}).join('');
+      box.innerHTML=tr?'<div class="wrap"><table><thead><tr><th>Ship</th><th>Type</th><th>Crew</th><th>From</th><th>To</th><th>Left</th><th>Lands</th></tr></thead><tbody>'+tr+'</tbody></table></div>':'<div class="note">Nothing matches.</div>'};
+    q.addEventListener('input',()=>{S.bq=q.value;fill()});fill();
   }
   draw();
   function fetchRange(){const k=S.range;if(HC[k]||LD[k])return;
