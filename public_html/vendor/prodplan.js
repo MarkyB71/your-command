@@ -902,8 +902,8 @@
       h += `<div class="card"><h2><span class="n">4</span>Load them</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – the ticked ships are full. Unload them in the game first, or tick another ship.</div>` :
         `<div class="src">Spread over <b>${fleet.length} ship${fleet.length === 1 ? '' : 's'}</b>:</div>` +
         // products down the side, ships across the top (Mark, 15 Nov – long names were messy in one Goods column)
-        `<div class="wrap" style="margin-top:6px"><table class="nosort"><thead><tr><th>Product</th>` +
-        free.map((f) => `<th class="num" style="white-space:normal;min-width:90px">${esc(f.s.name)}<br><span class="src" style="font-weight:400">${SHIPT[f.s.st]}</span></th>`).join('') + `<th class="num">Total</th></tr></thead><tbody>` +
+        `<div style="margin-top:6px;overflow-x:auto"><table class="nosort"><tbody><tr><th>Product</th>` +
+        free.map((f) => `<th class="num" style="white-space:normal;min-width:90px">${esc(f.s.name)}<br><span class="src" style="font-weight:400">${SHIPT[f.s.st]}</span></th>`).join('') + `<th class="num">Total</th></tr>` +   // no <thead>: the site's sticky headings (tables.js) pushed it down inside the Hub
         picked.filter((p) => load.some((L) => L[p] > 0)).sort((a, b) => k.pname(a).localeCompare(k.pname(b))).map((p) => `<tr><td>${esc(k.pname(p))}</td>` +
           free.map((f, i) => `<td class="num">${load[i][p] ? k.amt(p, load[i][p]) : '<span class="src">–</span>'}</td>`).join('') +
           `<td class="num"><b>${k.amt(p, load.reduce((t, L) => t + (L[p] || 0), 0))}</b></td></tr>`).join('') +
