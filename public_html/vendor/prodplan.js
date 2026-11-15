@@ -792,13 +792,19 @@
     h += `<div class="card"><h2><span class="n">1</span>Rock the ship is on</h2><div class="src" style="margin-bottom:8px">The rock whose storage you’re loading from.</div><select id="pp-sr">${rl.map((x) => `<option${x === r ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`;
     // Fleet (community idea, Mark 15 Nov – TEST ONLY, ?beta=1): tick several ships parked here; what you pick is spread
     // so each ship leaves with about the same weight (a ship with less room just takes what fits; the rest share the extra).
+    // full = under 1% room left (same rule as the Cargo bay) – greyed out and can't be ticked (Mark, 15 Nov)
+    const isFull = (s) => room(s) < 0.01;
+    const usedPc = (s) => Math.min(100, Math.round(Math.max(s.useM / s.capM, s.useV / s.capV) * 100));
     if (FLEET) {
       if (!P.fl) P.fl = P.ss ? [P.ss] : [];
-      P.fl = P.fl.filter((id) => ships.some((s) => s.id === id));
+      P.fl = P.fl.filter((id) => ships.some((s) => s.id === id && !isFull(s)));
     }
     if (FLEET) h += `<div class="card"><h2><span class="n">2</span>Ships to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}. Tick one, or several – the load is spread so each ship carries about the same weight.</div>` +
       (ships.length ? `<div class="row" style="margin:0 0 6px;gap:8px"><button type="button" class="dk-shipbtn" id="pp-flall">Tick all</button><button type="button" class="dk-shipbtn" id="pp-flnone">Untick all</button></div>` +
-        ships.map((s) => `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;cursor:pointer"><input type="checkbox" data-fl="${s.id}"${P.fl.includes(s.id) ? ' checked' : ''}><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</span></label>`).join('')
+        ships.map((s) => isFull(s)
+          ? `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;opacity:.45;cursor:not-allowed" title="Full – unload it in the game first"><input type="checkbox" disabled><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · <b style="color:var(--amber)">Full</b> (${k.tonnes(s.useM / 1000)} on board)</span></label>`
+          : `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;cursor:pointer"><input type="checkbox" data-fl="${s.id}"${P.fl.includes(s.id) ? ' checked' : ''}><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · ` +
+            (s.useM > 0 || s.useV > 0 ? `<b style="color:var(--amber)">${usedPc(s)}% loaded</b> (${k.tonnes(s.useM / 1000)} on board) · ` : 'empty · ') + `${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)} free</span></label>`).join('')
         : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
     else h += `<div class="card"><h2><span class="n">2</span>Ship to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}.</div>` +
       (ships.length ? `<select id="pp-ss">${ships.map((s) => `<option value="${s.id}"${s.id === P.ss ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</option>`).join('')}</select>`
@@ -906,7 +912,7 @@
     on('pp-sr', 'change', (e) => { P.sr = e.target.value; P.ss = 0; P.sq = {}; P.fl = null; S.msg = ''; k.render(); });
     on('pp-ss', 'change', (e) => { P.ss = +e.target.value; k.render(); });
     m.querySelectorAll('[data-fl]').forEach((e) => e.addEventListener('change', () => { const id = +e.dataset.fl; P.fl = (P.fl || []).filter((x) => x !== id); if (e.checked) P.fl.push(id); k.render(); }));
-    on('pp-flall', 'click', () => { P.fl = ships.map((s) => s.id); k.render(); });
+    on('pp-flall', 'click', () => { P.fl = ships.filter((s) => room(s) >= 0.01).map((s) => s.id); k.render(); });
     on('pp-flnone', 'click', () => { P.fl = []; k.render(); });
     on('pp-sfind', 'input', (e) => { P.sfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-sfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-sq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.sq; P.sq[p] = Object.assign(P.sq[p] || {}, { q: e.value }); k.render(); }));
