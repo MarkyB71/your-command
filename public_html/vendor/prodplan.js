@@ -241,6 +241,7 @@
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
   const PKB = /[?&]beta=1\b/.test(location.search); // pick which ready process to start next (Mark, 14 Nov – TEST ONLY)
+  const FLEET = /[?&]beta=1\b/.test(location.search); // Load straight from stock: several ships, same weight each (Mark, 15 Nov – TEST ONLY)
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -789,7 +790,17 @@
     const want = (p) => { const x = P.sq[p]; if (!x || !(+x.q > 0)) return 0; return Math.min(tot(p), k.bulk(+p) ? Math.round(+x.q * UNITS[x.unit || 't']) : Math.floor(+x.q)); };
     let h = cmodeBar();
     h += `<div class="card"><h2><span class="n">1</span>Rock the ship is on</h2><div class="src" style="margin-bottom:8px">The rock whose storage you’re loading from.</div><select id="pp-sr">${rl.map((x) => `<option${x === r ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`;
-    h += `<div class="card"><h2><span class="n">2</span>Ship to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}.</div>` +
+    // Fleet (community idea, Mark 15 Nov – TEST ONLY, ?beta=1): tick several ships parked here; what you pick is spread
+    // so each ship leaves with about the same weight (a ship with less room just takes what fits; the rest share the extra).
+    if (FLEET) {
+      if (!P.fl) P.fl = P.ss ? [P.ss] : [];
+      P.fl = P.fl.filter((id) => ships.some((s) => s.id === id));
+    }
+    if (FLEET) h += `<div class="card"><h2><span class="n">2</span>Ships to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}. Tick one, or several – the load is spread so each ship carries about the same weight.</div>` +
+      (ships.length ? `<div class="row" style="margin:0 0 6px;gap:8px"><button type="button" class="dk-shipbtn" id="pp-flall">Tick all</button><button type="button" class="dk-shipbtn" id="pp-flnone">Untick all</button></div>` +
+        ships.map((s) => `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;cursor:pointer"><input type="checkbox" data-fl="${s.id}"${P.fl.includes(s.id) ? ' checked' : ''}><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</span></label>`).join('')
+        : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
+    else h += `<div class="card"><h2><span class="n">2</span>Ship to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}.</div>` +
       (ships.length ? `<select id="pp-ss">${ships.map((s) => `<option value="${s.id}"${s.id === P.ss ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</option>`).join('')}</select>`
         : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
     const f = (P.sfind || '').trim().toLowerCase();
@@ -805,7 +816,66 @@
     // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
     S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
     const picked = Object.keys(P.sq).map(Number).filter((p) => want(p) > 0);
-    if (ship && picked.length) {
+    const fleet = FLEET ? ships.filter((s) => P.fl.includes(s.id)) : [];
+    if (FLEET && fleet.length && picked.length) {
+      const cl = k.crews(r);
+      if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
+      S.moverObj = cl.find((c) => c.id === S.mover);
+      // each ship's share of the weight: equal, but never more than it has room for (water-filling)
+      const free = fleet.map((s) => ({ s, g: Math.max(0, (s.capM - s.useM) * 0.995), v: Math.max(0, (s.capV - s.useV) * 0.995) }));
+      const W = picked.reduce((t, p) => t + want(p) * g(p), 0);
+      let rest = Math.min(W, free.reduce((t, f) => t + f.g, 0)), open = free.slice();
+      free.forEach((f) => { f.t = 0; });
+      while (rest > 1 && open.length) {
+        const each = rest / open.length, small = open.filter((f) => f.g - f.t <= each);
+        if (small.length) { small.forEach((f) => { rest -= f.g - f.t; f.t = f.g; }); open = open.filter((f) => !small.includes(f)); }
+        else { open.forEach((f) => { f.t += each; }); rest = 0; }
+      }
+      const tt = free.reduce((t, f) => t + f.t, 0) || 1;
+      const load = free.map(() => ({}));
+      // every material is shared out in the same proportion, so each ship gets a bit of everything (biggest items first)
+      picked.slice().sort((a, b) => want(b) * g(b) - want(a) * g(a)).forEach((p) => {
+        let left = want(p);
+        const share = free.map((f) => Math.floor(want(p) * f.t / tt));
+        free.forEach((f, i) => {
+          const n = Math.min(share[i], left, Math.floor((f.g - (f.ug || 0)) / g(p)), Math.floor((f.v - (f.uv || 0)) / v(p)));
+          if (n > 0) { load[i][p] = n; left -= n; f.ug = (f.ug || 0) + n * g(p); f.uv = (f.uv || 0) + n * v(p); }
+        });
+        // round-off and anything a full ship couldn't take: to the ship furthest below its share that has room
+        while (left > 0) {
+          const i = free.map((f, j) => [j, f.t - (f.ug || 0), Math.min(Math.floor((f.g - (f.ug || 0)) / g(p)), Math.floor((f.v - (f.uv || 0)) / v(p)))])
+            .filter((z) => z[2] > 0).sort((a, b) => b[1] - a[1])[0];
+          if (!i) break;
+          const n = Math.min(left, i[2], i[1] > 0 ? Math.max(1, Math.ceil(i[1] / g(p))) : Infinity);
+          load[i[0]][p] = (load[i[0]][p] || 0) + n; left -= n; free[i[0]].ug = (free[i[0]].ug || 0) + n * g(p); free[i[0]].uv = (free[i[0]].uv || 0) + n * v(p);
+        }
+      });
+      const cut = picked.some((p) => load.reduce((t, L) => t + (L[p] || 0), 0) < want(p));
+      // storage → ship moves, nearest storage first; one store's stock is shared between the ships
+      const taken = {}, mv = {};
+      free.forEach((f, i) => Object.keys(load[i]).forEach((p) => {
+        let n = load[i][p];
+        stock[p].map(([b, hv]) => [b, hv - (taken[b.id + ':' + p] || 0), k.kmBetween(k.lotOf(b), f.s.lot, ast) ?? 1e9]).filter((z) => z[1] > 0).sort((a, b) => a[2] - b[2]).forEach(([b, hv]) => {
+          if (n <= 0) return; const q = Math.min(n, hv); n -= q; taken[b.id + ':' + p] = (taken[b.id + ':' + p] || 0) + q;
+          const key = b.id + '>' + f.s.id; (mv[key] = mv[key] || { b, s: f.s, items: [] }).items.push([+p, q]);
+        });
+      }));
+      S.calls = Object.values(mv).map((x) => ({ from: x.b.id, to: x.s.id, ship: true, slot: 2, items: x.items }));
+      const kg = (i) => Object.keys(load[i]).reduce((t, p) => t + load[i][p] * g(p), 0) / 1000;
+      h += `<div class="card"><h2><span class="n">4</span>Load them</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – the ticked ships are full. Unload them in the game first, or tick another ship.</div>` :
+        `<div class="src">Spread over <b>${fleet.length} ship${fleet.length === 1 ? '' : 's'}</b>:</div>` +
+        `<table style="margin-top:6px"><thead><tr><th>Ship</th><th class="num">Loading</th><th class="num">On board after</th><th>Goods</th></tr></thead><tbody>` +
+        free.map((f, i) => `<tr><td><b>${esc(f.s.name)}</b> <span class="src">${SHIPT[f.s.st]}</span></td><td class="num">${k.tonnes(kg(i))}</td><td class="num">${k.tonnes(f.s.useM / 1000 + kg(i))}</td>` +
+          `<td class="src">${Object.keys(load[i]).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, load[i][p])).join(', ') || '–'}</td></tr>`).join('') + '</tbody></table>' +
+        (cut ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ Not all of it fits in the ticked ships – tick another ship or send the rest on a second trip.</div>` : '') +
+        `<details class="dkp-fold" style="margin-top:6px"><summary>The ${S.calls.length} move${S.calls.length === 1 ? '' : 's'} – storage → ship</summary><div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` +
+        Object.values(mv).map((x) => `<div style="margin:6px 0"><b>${esc(k.nm(x.b))}</b> → 🚀 ${esc(x.s.name)}` + x.items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>').join('') + '</div></details>' +
+        (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Crew doing the loading</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(r)} to do the loading.</div>`) +
+        `<button class="approve" id="pp-cgo" style="margin-top:10px"${cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (load ' + fleet.length + ' ship' + (fleet.length === 1 ? '' : 's') + ')'}</button>` +
+        `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
+        `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) +
+        `<div class="hint">This only loads the ships. You fly them and unload them in the game yourself.</div></div>`;
+    } else if (!FLEET && ship && picked.length) {
       const cl = k.crews(r);
       if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
       S.moverObj = cl.find((c) => c.id === S.mover);
@@ -833,8 +903,11 @@
     m.innerHTML = h;
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
-    on('pp-sr', 'change', (e) => { P.sr = e.target.value; P.ss = 0; P.sq = {}; S.msg = ''; k.render(); });
+    on('pp-sr', 'change', (e) => { P.sr = e.target.value; P.ss = 0; P.sq = {}; P.fl = null; S.msg = ''; k.render(); });
     on('pp-ss', 'change', (e) => { P.ss = +e.target.value; k.render(); });
+    m.querySelectorAll('[data-fl]').forEach((e) => e.addEventListener('change', () => { const id = +e.dataset.fl; P.fl = (P.fl || []).filter((x) => x !== id); if (e.checked) P.fl.push(id); k.render(); }));
+    on('pp-flall', 'click', () => { P.fl = ships.map((s) => s.id); k.render(); });
+    on('pp-flnone', 'click', () => { P.fl = []; k.render(); });
     on('pp-sfind', 'input', (e) => { P.sfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-sfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-sq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.sq; P.sq[p] = Object.assign(P.sq[p] || {}, { q: e.value }); k.render(); }));
     m.querySelectorAll('[data-su]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.su; P.sq[p] = Object.assign(P.sq[p] || {}, { unit: e.value }); k.render(); }));
