@@ -901,9 +901,15 @@
       const kg = (i) => Object.keys(load[i]).reduce((t, p) => t + load[i][p] * g(p), 0) / 1000;
       h += `<div class="card"><h2><span class="n">4</span>Load them</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – the ticked ships are full. Unload them in the game first, or tick another ship.</div>` :
         `<div class="src">Spread over <b>${fleet.length} ship${fleet.length === 1 ? '' : 's'}</b>:</div>` +
-        `<table style="margin-top:6px"><thead><tr><th>Ship</th><th class="num">Loading</th><th class="num">On board after</th><th>Goods</th></tr></thead><tbody>` +
-        free.map((f, i) => `<tr><td><b>${esc(f.s.name)}</b> <span class="src">${SHIPT[f.s.st]}</span></td><td class="num">${k.tonnes(kg(i))}</td><td class="num">${k.tonnes(f.s.useM / 1000 + kg(i))}</td>` +
-          `<td class="src">${Object.keys(load[i]).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, load[i][p])).join(', ') || '–'}</td></tr>`).join('') + '</tbody></table>' +
+        // products down the side, ships across the top (Mark, 15 Nov – long names were messy in one Goods column)
+        `<div class="wrap" style="margin-top:6px"><table class="nosort"><thead><tr><th>Product</th>` +
+        free.map((f) => `<th class="num" style="white-space:normal;min-width:90px">${esc(f.s.name)}<br><span class="src" style="font-weight:400">${SHIPT[f.s.st]}</span></th>`).join('') + `<th class="num">Total</th></tr></thead><tbody>` +
+        picked.filter((p) => load.some((L) => L[p] > 0)).sort((a, b) => k.pname(a).localeCompare(k.pname(b))).map((p) => `<tr><td>${esc(k.pname(p))}</td>` +
+          free.map((f, i) => `<td class="num">${load[i][p] ? k.amt(p, load[i][p]) : '<span class="src">–</span>'}</td>`).join('') +
+          `<td class="num"><b>${k.amt(p, load.reduce((t, L) => t + (L[p] || 0), 0))}</b></td></tr>`).join('') +
+        `<tr style="border-top:2px solid #ffb03b55"><td><b>Loading</b></td>${free.map((f, i) => `<td class="num"><b>${k.tonnes(kg(i))}</b></td>`).join('')}<td class="num"><b>${k.tonnes(free.reduce((t, f, i) => t + kg(i), 0))}</b></td></tr>` +
+        `<tr><td class="src">On board after</td>${free.map((f, i) => `<td class="num src">${k.tonnes(f.s.useM / 1000 + kg(i))}</td>`).join('')}<td></td></tr>` +
+        '</tbody></table></div>' +
         (cut ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ Not all of it fits in the ticked ships – tick another ship or send the rest on a second trip.</div>` : '') +
         `<details class="dkp-fold" style="margin-top:6px"><summary>The ${S.calls.length} move${S.calls.length === 1 ? '' : 's'} – storage → ship</summary><div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` +
         Object.values(mv).map((x) => `<div style="margin:6px 0"><b>${esc(k.nm(x.b))}</b> → 🚀 ${esc(x.s.name)}` + x.items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>').join('') + '</div></details>' +
