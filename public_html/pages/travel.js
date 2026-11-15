@@ -45,9 +45,29 @@
       Object.keys(inp).every(k => (out && out[k]) || canMake(Y, D, ast, k, seen)));   // catalysts that come back are fine
   }
   let REF = {};
+  // Refuel check with stock (community idea + Mark, 15 Nov 2026 – TEST ONLY, ?beta=1): a rock also counts as a refuel
+  // stop if it has Hydrogen Propellant in storage. And a rock with a working Refinery that can get Hydrogen is flagged
+  // "can make it if you bring the powders" (Silica Powder + Tungsten Powder) – still the half-propellant rule there.
+  const RFS = /[?&]beta=1\b/.test(location.search);
+  const RST = {};   // id -> 'make' | 'stock' | 'powders' | 'no'
+  const STK = {};   // id -> kg of Hydrogen Propellant stored
   function refuelMap(Y, D, asts) {
     REF = {};
-    asts.forEach(a => { REF[a.id] = canMake(Y, D, (D.owned || []).find(x => x.id === a.id) || {}, '170', {}); });
+    asts.forEach(a => {
+      const ast = (D.owned || []).find(x => x.id === a.id) || {};
+      const mk = canMake(Y, D, ast, '170', {});
+      REF[a.id] = mk; RST[a.id] = mk ? 'make' : 'no';
+      if (!RFS || mk) return;
+      const as = (D.asteroids || []).find(x => +x.id === +a.id);
+      let n = 0; ((as && as.buildings) || []).forEach(b => { n += +((b.items || {})[170] || 0); });
+      const kg = n && Y.kg ? Y.kg(170, n) : n;
+      STK[a.id] = kg;
+      if (kg >= 1000) { REF[a.id] = true; RST[a.id] = 'stock'; return; }
+      const R = window.YICREC, pt = R && R.MK && R.MK['170'] && R.MK['170'][0] && R.MK['170'][0][1];
+      const refinery = pt != null && (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[pt] && b.Building.status === 3 &&
+        (((b.Location || {}).locations || []).find(x => x.label === 3) || {}).id === a.id);
+      if (refinery && canMake(Y, D, ast, '2', {})) RST[a.id] = 'powders';
+    });
     return REF;
   }
   const WDAYS = 30, WSTEP = 12;                       // next 30 days, a sample every 12 hours
@@ -125,9 +145,20 @@
 
     const ref = refuelMap(Y, D, asts);
     {
+      if (RFS) {
+        const of = k => asts.filter(a => RST[a.id] === k);
+        const mk = of('make'), st = of('stock'), pw = of('powders'), no = of('no');
+        const t = kg => Y.fmtT ? Y.fmtT(kg / 1000) : Math.round(kg / 1000) + ' t';
+        h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (mk.map(a => esc(a.name)).join(', ') || 'none') +
+          (st.length ? '<br>⛽ <b>Has propellant in storage:</b> ' + st.map(a => esc(a.name) + ' (' + t(STK[a.id]) + ')').join(', ') : '') +
+          (pw.length ? '<br>⛽ <b>Can make it if you bring Silica Powder and Tungsten Powder:</b> ' + pw.map(a => esc(a.name)).join(', ') : '') +
+          (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.map(a => esc(a.name)).join(', ') : '') +
+          (pw.length || no.length ? '<br><span class="a">Flying to a rock that can\'t refuel yet, the ship only uses half its propellant so it can get back.</span>' : '') + '</div>';
+      } else {
       const yes = asts.filter(a => ref[a.id]).map(a => esc(a.name)), no = asts.filter(a => !ref[a.id]).map(a => esc(a.name));
       h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (yes.join(', ') || 'none') +
         (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.join(', ') + ' – flying there, the ship only uses half its propellant so it can get back.' : '') + '</div>';
+      }
     }
     h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div class="wrap"><table id="trT"><thead><tr><th>From \\ To</th>' +
       asts.map(a => '<th class="num">' + esc(a.name) + '</th>').join('') + '</tr></thead><tbody>' +
