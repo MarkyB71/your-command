@@ -10,6 +10,20 @@
   const S = { ship: null, prop: 'full', cargo: 'empty', leave: 0, allAst: false };
   let run = 0;   // stops an old calculation when the page redraws
 
+  // Adalia Prime option (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): a tick box adds Adalia Prime (#1) to the
+  // table even though it isn't yours – everyone starts there and most players still fly out from it. Off to start with;
+  // the choice is remembered in this browser, so ticking it makes it your default.
+  const APT = /[?&]beta=1\b/.test(location.search);
+  const AP_ID = 1, APKEY = 'yic-travel-ap';
+  let apOrbit = null, apBusy = false;
+  const apOn = () => { try { return localStorage.getItem(APKEY) === '1'; } catch (e) { return false; } };
+  const apSet = v => { try { localStorage.setItem(APKEY, v ? '1' : '0'); } catch (e) {} };
+  const apBox = () => APT ? ' <label style="margin-left:8px;white-space:nowrap;cursor:pointer"><input type="checkbox" id="trAP"' +
+    (apOn() ? ' checked' : '') + '> Include Adalia Prime</label>' : '';
+  function apWire(m) {
+    const cb = m.querySelector('#trAP'); if (cb) cb.onchange = () => { apSet(cb.checked); drawTravel(m); };
+  }
+
   const TYPE_NAME = { 2: 'Light Transport', 3: 'Heavy Transport', 4: 'Shuttle' };
 
   // Launch windows chart
@@ -65,7 +79,21 @@
     const asts = (D.owned || []).filter(a => a.Orbit && a.Orbit.a)
       .map(a => ({ id: a.id, name: (a.Name && a.Name.name) || ('Asteroid #' + a.id), o: a.Orbit }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    if (asts.length < 2) { m.innerHTML = '<div class="note">You need at least two asteroids for a travel table.</div>'; return; }
+    // Adalia Prime added when ticked (its orbit is fetched once, then the page redraws)
+    let apAdd = false;
+    if (APT && apOn() && !asts.some(a => a.id === AP_ID)) {
+      if (!apOrbit) {
+        if (!apBusy) {
+          apBusy = true;
+          fetch('orbits.php?ids=' + AP_ID).then(r => r.json()).then(j => {
+            const x = j && j.orbits && j.orbits[AP_ID]; if (x && x.o) apOrbit = x.o;
+          }).catch(() => {}).then(() => { apBusy = false; if (apOrbit && m.isConnected) drawTravel(m); });
+        }
+      } else apAdd = true;
+    }
+    if (asts.length + (apAdd ? 1 : 0) < 2) {
+      m.innerHTML = '<div class="note">You need at least two asteroids for a travel table.' + apBox() + '</div>'; apWire(m); return;
+    }
     // Test (?beta=1): only asteroids with a crew on them (a button shows them all)
     let hidden = 0;
     {
@@ -74,6 +102,7 @@
       const few = asts.filter(a => crewed.has(a.id));
       if (!S.allAst && few.length >= 2) { hidden = asts.length - few.length; asts.splice(0, asts.length, ...few); }
     }
+    if (apAdd) asts.unshift({ id: AP_ID, name: 'Adalia Prime', o: apOrbit });
 
     // Ship choices: your transports and shuttles, plus generic ones
     const ships = (D.ships || []).filter(s => s.st >= 2 && s.st <= 4).sort((a, b) => a.name.localeCompare(b.name));
@@ -92,7 +121,7 @@
       ' Propellant ' + sel('trP', S.prop, [['full', 'Full tank'], ['now', 'What it has now']]) +
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
-      ((hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + '</div>';
+      ((hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + apBox() + '</div>';
 
     const ref = refuelMap(Y, D, asts);
     {
@@ -119,6 +148,7 @@
     }));
 
     const ab = m.querySelector('#trAll'); if (ab) ab.onclick = () => { S.allAst = !S.allAst; drawTravel(m); };
+    apWire(m);
 
     // Ship figures
     let st = 2, variant = 1, mates = null, propKg = 0, cargoKg = 0, label;
