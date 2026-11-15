@@ -309,13 +309,19 @@
           'font:bold 15px/28px system-ui,sans-serif;color:#8fe3ff;background:rgba(20,32,44,.85);border:1px solid #5fc3e4;border-radius:6px}' +
           '.bm-ctl button:hover,.bm-ctl button:focus-visible{background:#1d3346;box-shadow:0 0 10px -2px #5fc3e4}' +
           '.bm-box:fullscreen{clip-path:none!important;border:0!important;border-radius:0!important;background:#05070a}' +
-          '.bm-box:fullscreen canvas{height:100vh!important}.bm-box:fullscreen .bm-ctl{right:16px;top:14px}';
+          '.bm-box:fullscreen canvas{height:100vh!important}.bm-box:fullscreen .bm-ctl{right:16px;top:14px}' +
+          '.bm-card{position:absolute;left:6%;top:46px;z-index:3;min-width:190px;max-width:260px;padding:9px 30px 10px 12px;font-size:13px;line-height:1.45;' +
+          'color:#e6ebf2;background:rgba(14,24,34,.92);border:1px solid #5fc3e4;border-radius:8px;box-shadow:0 0 18px -6px #5fc3e4}' +
+          '.bm-card b{color:#8fe3ff;font-size:14px}.bm-card .bm-x{all:unset;cursor:pointer;position:absolute;right:8px;top:5px;color:#9aa8bb;font-size:15px}' +
+          '.bm-card .bm-x:hover{color:#fff}.bm-card a{color:#8fe3ff}.bm-box:fullscreen .bm-card{left:16px;top:16px}';
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
       c.innerHTML = '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
         '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
       box.appendChild(c);
+      const cd = document.createElement('div'); cd.className = 'bm-card'; cd.hidden = true;
+      box.appendChild(cd);
     }
     const cv = box.querySelector('canvas'),
       ctx = cv.getContext('2d');
@@ -383,7 +389,8 @@
         });
         R = R || 4;
         const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let zf = 1,
+        let sel = null,
+          zf = 1,
           paused = false,
           az = 0.6,
           tilt = 1.05,
@@ -436,6 +443,13 @@
           });
           me.forEach((a) => {
             const q = proj(a.p);
+            if (sel === a.id) {
+              ctx.strokeStyle = '#ffd24a';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(q[0], q[1], 10, 0, 6.283);
+              ctx.stroke();
+            }
             ctx.fillStyle = '#5fc3e4';
             ctx.save();
             ctx.translate(q[0], q[1]);
@@ -503,6 +517,30 @@
             e.preventDefault();
             zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
           }, { passive: false });
+          // Select (Mark, 15 Nov): click one of your rocks → a small card; click empty space or ✕ to close.
+          const card = box.querySelector('.bm-card');
+          const show = (a) => {
+            sel = a ? a.id : null;
+            if (!a) { card.hidden = true; frame(); return; }
+            const au = Math.hypot(a.p[0], a.p[1], a.p[2]);
+            const gl = (window.GL && window.GL('/asteroids/' + a.id, 'Open this asteroid in the game')) ||
+              ' <a href="https://game.influenceth.io/asteroids/' + a.id + '" target="influencegame" rel="noopener">Open in the game ↗</a>';
+            card.innerHTML = '<button type="button" class="bm-x" title="Close">✕</button><b>' + APP.esc(a.name) + '</b><br>' +
+              au.toFixed(2) + ' AU from the Adalia Star<br>' + gl;
+            card.querySelector('.bm-x').onclick = () => show(null);
+            card.hidden = false;
+            frame();
+          };
+          let down = null;
+          cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+          cv.addEventListener('pointerup', (e) => {
+            if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) { down = null; return; }   // that was a drag
+            down = null;
+            const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+            let hit = null, bd = 14;
+            me.forEach((a) => { const q = proj(a.p), d = Math.hypot(q[0] - x, q[1] - y); if (d < bd) { bd = d; hit = a; } });
+            show(hit);
+          });
         }
       })
       .catch((e) => {
