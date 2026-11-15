@@ -14,7 +14,7 @@ const BL=Object.assign({},BLDS,SHP),isShip=k=>/^s\d$/.test(k); window.YICBL=BL; 
 const PTYPE={1:'Refinery',2:'Factory',3:'Bioreactor',4:'Shipyard',5:'Dry dock'};
 /* flight time in weeks / days / hours (1 game day = 1 real hour) */
 const HW=h=>{;h=Math.round(h);const w=Math.floor(h/168),d=Math.floor(h%168/24),r=h%24;return[w?w+(w>1?' weeks':' week'):'',d?d+(d>1?' days':' day'):'',r?r+(r>1?' hours':' hour'):''].filter(Boolean).join(' ')||'0 hours'}; /* TEST: only the 'First send' line at the top of Fewest flights, no summary box */
-const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10,unit:'t'};
+const S={ast:null,bld:9,n:1,cnt:{},fuel:'full',mode:'bld',ptab:1,prod:null,rec:0,amt:10,unit:'t',rawAny:false};
 /* Production planner (Mark, 29 Oct): same planner, but for one product made in a Refinery / Factory / Bioreactor */
 const PPCSS='#bpw .bp-pp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px;font-size:15px}#bpw .bp-tabs{display:flex;gap:6px;width:100%}#bpw .bp-tab{padding:7px 14px;border-radius:8px;border:1px solid #2a3646;background:#121a24;color:#c4cdd9;font-weight:700;cursor:pointer}#bpw .bp-tab.on{background:#e8645a;border-color:#e8645a;color:#fff;box-shadow:0 0 12px -2px #e8645a}#bpw .bp-pp select{font-size:15px;padding:5px 8px;min-width:0!important;max-width:100%}#bpw .bp-pp input{width:110px!important;min-width:0!important;flex:none!important;font-size:15px;padding:5px 8px}';
 const TALCSS='#bpw .bp-pk .bp-cb{white-space:nowrap;font-size:10px;padding:1px 4px;letter-spacing:-.1px}#bpw .bp-pk input{margin-top:auto!important}';
@@ -132,8 +132,9 @@ export function drawBuildPlan(m){
      raws to fly in). Otherwise it's flagged as missing – buy it, or make it on a rock that can. */
   const NFC=/[?&]beta=1\b/.test(location.search);
   const facNeed=r=>{const E=expand(stk,canMine,[[r.id,r.short]],UC1,AW);return E.USED[r.id]?Object.keys(E.fac).filter(t=>!myFac(t)):null};
-  const chainRows=rows.filter(r=>r.short&&(NFC?((!r.others.length&&(facNeed(r)||[1]).length===0)||makeOK(r)):(!r.others.length||makeOK(r))));
-  const missRows=NFC?rows.filter(r=>r.short&&!r.others.length&&!chainRows.includes(r)):[];
+  /* Mark (21:32): keep the option to fly in the raw materials anyway (S.rawAny – a button in the Missing box) */
+  const chainRows=rows.filter(r=>r.short&&(NFC&&!S.rawAny?((!r.others.length&&(facNeed(r)||[1]).length===0)||makeOK(r)):(!r.others.length||makeOK(r))));
+  const missRows=NFC?rows.filter(r=>r.short&&!r.others.length&&(!chainRows.includes(r)||(S.rawAny&&(facNeed(r)||[1]).length))):[];
   const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),UC1,AW),{USED,pool,fly,mine,fac,made}=EX;if(PM)fac[PR[1]]=1;else if(Object.keys(S.cnt).some(k=>isShip(k)&&S.cnt[k]>0))fac[5]=1;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
@@ -244,11 +245,14 @@ export function drawBuildPlan(m){
   const FEW=(shortRows.length?(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''):'');
   /* NFC: what's needed first, then what's missing and can't be made here, then what to fly in */
   const MISS=missRows.length?'<div class="bp-miss" style="margin:14px 0;padding:10px 12px;border:1px solid #ffb54766;border-radius:8px;background:rgba(255,181,71,.06)"><h2 style="margin:0 0 6px;color:#ffb547">⚠ Missing – none of your rocks has it</h2>'+
-    missRows.map(r=>{const nf=facNeed(r);return'<div style="margin:5px 0"><b>'+esc(nm(r.id))+'</b> '+amt(r.id,r.short)+' <span class="a">– '+(nf===null?'no way to make it here':'can\'t be made on '+esc(here.name)+': needs a '+nf.map(t=>esc(PTYPE[t])).join(' and ')+' here')+'. Buy it (Trade Deck › Where to buy), or make it on a rock that has '+(nf&&nf.length?'a '+nf.map(t=>esc(PTYPE[t])).join(' and '):'what it needs')+'.</span></div>'}).join('')+'</div>':'';
+    missRows.map(r=>{const nf=facNeed(r);return'<div style="margin:5px 0"><b>'+esc(nm(r.id))+'</b> '+amt(r.id,r.short)+' <span class="a">– '+(nf===null?'no way to make it here':'can\'t be made on '+esc(here.name)+': needs a '+nf.map(t=>esc(PTYPE[t])).join(' and ')+' here')+'. Buy it (Trade Deck › Where to buy), or make it on a rock that has '+(nf&&nf.length?'a '+nf.map(t=>esc(PTYPE[t])).join(' and '):'what it needs')+'.</span></div>'}).join('')+
+    '<div style="margin-top:8px"><button type="button" class="bp-rawany" style="padding:5px 12px;border-radius:6px;border:1px solid #ffb547;background:#1d1709;color:#ffd28a;cursor:pointer;font-weight:bold">'+
+    (S.rawAny?'✕ Don\'t fly in the raw materials':'✈ Fly in the raw materials anyway')+'</button> <span class="a">'+(S.rawAny?'Showing the raw materials to fly in below – you\'ll still need the building(s) above on '+esc(here.name)+' to make it.':'Adds the raw materials to the Fly in list, for when you\'ll build the missing building first.')+'</span></div></div>':'';
   if(NFC&&Object.keys(inp).length)h+=MAT+MISS+(shortRows.length?'<div class="bp-two" style="margin-top:14px"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div>':'')+chainHTML+'</div>';
   else if(Object.keys(inp).length)h+=(shortRows.length?'<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div><div style="margin-top:14px">'+MAT+'</div>'
     :'<div class="bp-two"><div class="bp-l">'+MAT+'</div>'+FEW+'</div>'+(shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:''))+chainHTML+'</div>';
   m.innerHTML=h;
+  {const rb=m.querySelector('.bp-rawany');if(rb)rb.onclick=()=>{S.rawAny=!S.rawAny;drawBuildPlan(m)}}
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
   /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
   const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')],th=[...m.querySelectorAll('.bp-then')];if(!sp.length&&!th.length)return;
