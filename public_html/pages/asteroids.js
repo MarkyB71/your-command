@@ -297,6 +297,26 @@
     box.innerHTML =
       '<canvas style="display:block;width:100%;height:clamp(260px,46vw,440px)"></canvas><div class="a" style="position:absolute;left:12px;top:8px;font-size:12px;pointer-events:none">The Adalia system right now · your asteroids in blue · drag to turn</div><div class="bm-load a" style="position:absolute;left:12px;bottom:8px;font-size:12px">Loading orbits…</div>';
     m.prepend(box);
+    // Map controls (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): full screen, pause the turning, zoom
+    // (buttons, or the mouse wheel while full screen so the page still scrolls normally).
+    const MC = /[?&]beta=1\b/.test(location.search);
+    if (MC) {
+      box.classList.add('bm-box');
+      if (!document.getElementById('bm-css')) {
+        const st = document.createElement('style'); st.id = 'bm-css';
+        st.textContent = '.bm-ctl{position:absolute;top:10px;right:6%;display:flex;gap:5px;z-index:3}' +
+          '.bm-ctl button{all:unset;box-sizing:border-box;cursor:pointer;min-width:30px;height:28px;padding:0 7px;text-align:center;' +
+          'font:bold 15px/28px system-ui,sans-serif;color:#8fe3ff;background:rgba(20,32,44,.85);border:1px solid #5fc3e4;border-radius:6px}' +
+          '.bm-ctl button:hover,.bm-ctl button:focus-visible{background:#1d3346;box-shadow:0 0 10px -2px #5fc3e4}' +
+          '.bm-box:fullscreen{clip-path:none!important;border:0!important;border-radius:0!important;background:#05070a}' +
+          '.bm-box:fullscreen canvas{height:100vh!important}.bm-box:fullscreen .bm-ctl{right:16px;top:14px}';
+        document.head.appendChild(st);
+      }
+      const c = document.createElement('div'); c.className = 'bm-ctl';
+      c.innerHTML = '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
+        '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
+      box.appendChild(c);
+    }
     const cv = box.querySelector('canvas'),
       ctx = cv.getContext('2d');
     const mine = (APP.D.owned || [])
@@ -363,7 +383,9 @@
         });
         R = R || 4;
         const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let az = 0.6,
+        let zf = 1,
+          paused = false,
+          az = 0.6,
           tilt = 1.05,
           drag = null,
           W = 0,
@@ -378,7 +400,7 @@
         };
         size();
         const proj = (p) => {
-          const s = (Math.min(W, H * 1.6) * 0.46) / R,
+          const s = ((Math.min(W, H * 1.6) * 0.46) / R) * zf,
             ca = Math.cos(az),
             sa = Math.sin(az),
             x = p[0] * ca - p[1] * sa,
@@ -432,7 +454,7 @@
             return;
           }
           raf = requestAnimationFrame(loop);
-          if (!drag && !calm) az += 0.0012;
+          if (!drag && !calm && !paused) az += 0.0012;
           frame();
         };
         if (calm) frame();
@@ -457,6 +479,31 @@
         });
         cv.style.touchAction = 'none';
         cv.style.cursor = 'grab';
+        if (MC) {
+          const zoom = (k) => { zf = Math.max(1, Math.min(12, zf * k)); frame(); };
+          const pb = box.querySelector('[data-bm="pause"]'), fb = box.querySelector('[data-bm="fs"]');
+          box.querySelector('[data-bm="in"]').onclick = () => zoom(1.3);
+          box.querySelector('[data-bm="out"]').onclick = () => zoom(1 / 1.3);
+          pb.onclick = () => {
+            paused = !paused;
+            pb.textContent = paused ? '▶' : '⏸';
+            pb.title = paused ? 'Start the turning again' : 'Pause the turning';
+          };
+          fb.onclick = () => {
+            if (document.fullscreenElement === box) document.exitFullscreen();
+            else if (box.requestFullscreen) box.requestFullscreen().catch(() => {});
+          };
+          document.addEventListener('fullscreenchange', () => {
+            const on = document.fullscreenElement === box;
+            fb.title = on ? 'Leave full screen (or press Esc)' : 'Full screen';
+            requestAnimationFrame(() => { size(); frame(); });
+          });
+          cv.addEventListener('wheel', (e) => {
+            if (document.fullscreenElement !== box) return;   // normal page scrolling when not full screen
+            e.preventDefault();
+            zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
+          }, { passive: false });
+        }
       })
       .catch((e) => {
         const l = box.querySelector('.bm-load');
