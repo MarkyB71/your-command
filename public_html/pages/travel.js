@@ -7,7 +7,7 @@
   'use strict';
 
   // Chosen options (kept while you move between pages)
-  const S = { ship: null, prop: 'full', cargo: 'empty', leave: 0, allAst: false };
+  const S = { ship: null, prop: 'full', cargo: 'empty', leave: 0, allAst: false, fuel: false, from: null };
   let run = 0;   // stops an old calculation when the page redraws
 
   // Adalia Prime option (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): a tick box adds Adalia Prime (#1) to the
@@ -62,8 +62,12 @@
     const mk = B.markets || {};
     (B.orders || []).forEach(o => {
       if (String(o[0]) !== '170' || o[1] !== 2 || !(o[2] > 0)) return;
-      const x = SELL[o[5]] = SELL[o[5]] || { kg: 0, name: (mk[o[4]] && mk[o[4]].ast) || ('Asteroid #' + o[5]) };
+      const x = SELL[o[5]] = SELL[o[5]] || { kg: 0, name: (mk[o[4]] && mk[o[4]].ast) || ('Asteroid #' + o[5]), pt: null };
       x.kg += Y.kg ? Y.kg(170, o[2]) : o[2];
+      // SWAY per tonne, market fee included (same sum as Trade Deck › Where to buy)
+      const ex = mk[o[4]] && mk[o[4]].ex, fee = ex ? (ex.takerFee || 0) / 10000 : 0, uM = (Y.PR && Y.PR[170] && Y.PR[170][2]) || 1000;
+      const pt = o[3] * (1 + fee) / 1e6 * 1000 / uM * 1000;
+      if (x.pt === null || pt < x.pt) x.pt = pt;
     });
     return SELL;
   }
@@ -113,6 +117,47 @@
     '.lwb{padding:5px 12px;border-radius:6px;border:1px solid #5fc3e4;background:#14202c;color:#8fe3ff;cursor:pointer;font-weight:bold}' +
     '@media(max-width:700px){.lw .n{width:110px}.lw .b{display:none}.lw .ax{margin-left:118px;margin-right:0}}</style>';
 
+  const FORB = {};   // belt orbits for Fuel on the belt
+  async function fillFuel(m, T, me, dep, maxDv, from, Y, esc) {
+    const box = m.querySelector('#trFT');
+    if (!box || !SELL) return;
+    if (!from || !from.o) {
+      if (from && from.id === AP_ID && !apOrbit && !apBusy) {
+        apBusy = true;
+        fetch('orbits.php?ids=' + AP_ID).then(r => r.json()).then(j => { const x = j && j.orbits && j.orbits[AP_ID]; if (x && x.o) apOrbit = x.o; })
+          .catch(() => {}).then(() => { apBusy = false; if (apOrbit && m.isConnected) drawTravel(m); });
+      }
+      box.innerHTML = '<div class="note">Loading…</div>'; return;
+    }
+    const ids = Object.keys(SELL).map(Number).filter(id => SELL[id].kg >= 1000);
+    if (!ids.length) { box.innerHTML = '<div class="note">Nobody is selling Hydrogen Propellant on the belt right now.</div>'; return; }
+    const need = ids.filter(id => !FORB[id]);
+    for (let i = 0; i < need.length; i += 200) {
+      const j = await fetch('orbits.php?ids=' + need.slice(i, i + 200).join(',')).then(r => r.json()).catch(() => ({}));
+      Object.entries((j && j.orbits) || {}).forEach(([k, v]) => { if (v && v.o) FORB[k] = v.o; });
+    }
+    if (me !== run || !m.isConnected) return;
+    const t = kg => Y.fmtT ? Y.fmtT(kg / 1000) : Math.round(kg / 1000) + ' t';
+    const rows = ids.filter(id => FORB[id]).map(id => ({ id, o: FORB[id], au: id === from.id ? 0 : T.distance(from.o, FORB[id], dep) / 1.495978707e11 }))
+      .sort((a, b) => a.au - b.au);
+    box.innerHTML = '<div class="wrap"><table id="trFTt"><thead><tr><th>Asteroid</th><th class="num">For sale</th><th class="num">Cheapest</th>' +
+      '<th class="num">Trip from ' + esc(from.name) + '</th><th class="num">Distance now</th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td><b>' + esc(SELL[r.id].name) + '</b>' + (window.GL ? window.GL('/asteroids/' + r.id, 'Open this asteroid in the game') : '') + '</td>' +
+        '<td class="num" data-sort="' + Math.round(SELL[r.id].kg) + '">' + t(SELL[r.id].kg) + '</td>' +
+        '<td class="num" data-sort="' + SELL[r.id].pt.toFixed(2) + '">' + Math.round(SELL[r.id].pt).toLocaleString() + ' SWAY/t</td>' +
+        '<td class="num" data-fu="' + r.id + '" data-sort="">' + (r.id === from.id ? '<span class="a">you\'re there</span>' : '<span class="a">…</span>') + '</td>' +
+        '<td class="num" data-sort="' + r.au.toFixed(3) + '">' + r.au.toFixed(2) + ' AU</td></tr>').join('') + '</tbody></table></div>';
+    for (const r of rows) {
+      if (r.id === from.id) continue;
+      if (me !== run || !m.isConnected) return;
+      const td = m.querySelector('td[data-fu="' + r.id + '"]'); if (!td) continue;
+      const f = await T.fastest(from.o, r.o, dep, maxDv);
+      td.innerHTML = f ? '<b>' + f.tof + ' h</b>' + (f.tof >= 48 ? ' <span class="a">(' + (f.tof / 24).toFixed(1) + ' d)</span>' : '') : '<span class="a">out of range</span>';
+      td.dataset.sort = f ? f.tof : '';
+      await new Promise(res => setTimeout(res, 0));
+    }
+  }
+
   function drawTravel(m) {
     const Y = window.YIC, D = Y.D, esc = Y.esc;
 
@@ -143,6 +188,12 @@
       if (!S.allAst && few.length >= 2) { hidden = asts.length - few.length; asts.splice(0, asts.length, ...few); }
     }
     if (apAdd) asts.unshift({ id: AP_ID, name: 'Adalia Prime', o: apOrbit });
+    // Fuel on the belt (Mark, 15 Nov – ?beta=1): trips start from one of your rocks or Adalia Prime
+    const fromList = (D.owned || []).filter(a => a.Orbit && a.Orbit.a)
+      .map(a => ({ id: a.id, name: (a.Name && a.Name.name) || ('Asteroid #' + a.id), o: a.Orbit }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (!fromList.some(a => a.id === AP_ID)) fromList.push({ id: AP_ID, name: 'Adalia Prime', o: apOrbit });
+    if (!S.from || !fromList.some(a => a.id === +S.from)) S.from = fromList[0].id;
 
     // Ship choices: your transports and shuttles, plus generic ones
     const ships = (D.ships || []).filter(s => s.st >= 2 && s.st <= 4).sort((a, b) => a.name.localeCompare(b.name));
@@ -161,14 +212,21 @@
       ' Propellant ' + sel('trP', S.prop, [['full', 'Full tank'], ['now', 'What it has now']]) +
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
-      ((hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + apBox() + '</div>';
+      (RFS ? ' <button class="lwb" id="trFuel" style="margin-left:8px">' + (S.fuel ? '← Back to Travel' : '⛽ Fuel on the belt') + '</button>' : '') +
+      (RFS && S.fuel ? ' From ' + sel('trF', S.from, fromList.map(a => [a.id, a.name])) : '') +
+      (!S.fuel && (hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + (S.fuel ? '' : apBox()) + '</div>';
 
     if (RFS) {
       const B = window.BELTDATA && window.BELTDATA.get(() => { if (SELL) return; beltFuel(Y, window.BELTDATA.data); if (m.isConnected) drawTravel(m); });
       if (B) beltFuel(Y, B); else if (!window.BELTDATA) SELL = {};
     }
     const ref = refuelMap(Y, D, asts);
-    {
+    if (S.fuel) {
+      h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div id="trFT">' +
+        (SELL ? '' : '<div class="note">Checking the belt markets for propellant…</div>') + '</div>' +
+        '<div class="note" style="padding:10px 0 0">Every asteroid with at least 1 t of Hydrogen Propellant for sale. Price = cheapest listing, market fee included. ' +
+        'Trip = quickest flight there leaving at the chosen time with the ship above (it can refuel when it arrives). Click a heading to sort.</div>';
+    } else { {
       if (RFS) {
         const of = k => asts.filter(a => RST[a.id] === k);
         const mk = of('make'), st = of('stock'), mkt = of('market'), pw = of('powders'), no = of('no');
@@ -181,7 +239,7 @@
           (SELL ? (() => {
             const shown = new Set(asts.map(a => +a.id)), more = Object.keys(SELL).filter(id => !shown.has(+id) && SELL[id].kg >= 1000)
               .sort((x, y) => SELL[y].kg - SELL[x].kg);
-            return more.length ? '<br>⛽ <b>Also for sale across the belt:</b> ' + more.map(id => esc(SELL[id].name) + ' (' + t(SELL[id].kg) + ')').join(', ') : '';
+            return more.length ? '<br>⛽ Propellant is also for sale on <b>' + more.length + '</b> other asteroid' + (more.length === 1 ? '' : 's') + ' across the belt – see <b>⛽ Fuel on the belt</b>.' : '';
           })() : '<br><span class="a">⛽ Checking the belt markets for propellant…</span>') +
           (pw.length || no.length ? '<br><span class="a">Flying to a rock that can\'t refuel yet, the ship only uses half its propellant so it can get back.</span>' : '') + '</div>';
       } else {
@@ -199,6 +257,7 @@
       '(1 game day = 1 real hour). The fastest in each row is highlighted. Small grey figure = distance between the two asteroids right now. ' +
       'Food, emergency mode and waiting for a better launch window are not included.</div>';
     h += '<div class="lw" id="trW"></div>';
+    }
     m.innerHTML = h;
 
     // Changing an option redraws the page
@@ -209,6 +268,8 @@
     }));
 
     const ab = m.querySelector('#trAll'); if (ab) ab.onclick = () => { S.allAst = !S.allAst; drawTravel(m); };
+    const fb = m.querySelector('#trFuel'); if (fb) fb.onclick = () => { S.fuel = !S.fuel; drawTravel(m); };
+    const fs = m.querySelector('#trF'); if (fs) fs.onchange = () => { S.from = +fs.value; drawTravel(m); };
     apWire(m);
 
     // Ship figures
@@ -245,6 +306,7 @@
       info.innerHTML = label + ' · ' + Y.fmtT(pk / 1000) + ' propellant · ' + (ck ? Y.fmtT(ck / 1000) + ' cargo' : 'no cargo') +
         ' · up to ' + (maxDv / 1000).toFixed(1) + ' km/s' + (' (' + (halfDv / 1000).toFixed(1) + ' km/s to places you can\'t refuel)');
 
+      if (S.fuel) { await fillFuel(m, T, me, dep, maxDv, fromList.find(a => a.id === +S.from), Y, esc); return; }
       // Fill each cell, then highlight the fastest in each row
       const best = {};
       for (const a of asts) for (const b of asts) {
