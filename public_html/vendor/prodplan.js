@@ -818,6 +818,26 @@
     else h += `<div class="card"><h2><span class="n">2</span>Ship to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}.</div>` +
       (ships.length ? `<select id="pp-ss">${ships.map((s) => `<option value="${s.id}"${s.id === P.ss ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</option>`).join('')}</select>`
         : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
+    // Load a fleet (Mark, 15 Nov): how the picked amounts compare with the room in the ticked ships, and a button that
+    // scales every item down by the same fraction to fit – the player can then change any amount (more of one, less of another)
+    const fitInfo = () => {
+      const fl = ships.filter((s) => (P.fl || []).includes(s.id));
+      const pk = Object.keys(P.sq).map(Number).filter((p) => want(p) > 0);
+      const W = pk.reduce((t, p) => t + want(p) * g(p), 0), V = pk.reduce((t, p) => t + want(p) * v(p), 0);
+      const cg = fl.reduce((t, s) => t + Math.max(0, (s.capM - s.useM) * 0.995), 0), cv = fl.reduce((t, s) => t + Math.max(0, (s.capV - s.useV) * 0.995), 0);
+      return { fl, pk, W, V, cg, cv, k: Math.min(1, W ? cg / W : 1, V ? cv / V : 1) };
+    };
+    const fitBar = () => {
+      if (!FL) return '';
+      const x = fitInfo();
+      if (!x.pk.length) return '';
+      if (!x.fl.length) return '<div class="src" style="margin-top:8px;color:var(--amber)">Tick at least one ship in step 2.</div>';
+      const over = x.k < 0.999;
+      return `<div class="row" style="margin-top:10px;gap:10px;align-items:center"><span class="src">Picked <b>${k.tonnes(x.W / 1000)}</b> · room in the ticked ships <b>${k.tonnes(x.cg / 1000)}</b> · ` +
+        (over ? `<b style="color:var(--amber)">⚠ ${Math.round((1 - x.k) * 100)}% too much</b></span><button type="button" class="dk-shipbtn" id="pp-fit" style="cursor:pointer">⚖ Scale everything to fit</button>`
+          : `<b style="color:var(--green)">✓ fits</b></span>`) + '</div>' +
+        (over ? '<div class="hint">Scaling cuts every item by the same amount. Then change any amount above – more of one, less of another – until it fits.</div>' : '');
+    };
     const f = (P.sfind || '').trim().toLowerCase();
     const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
     h += `<div class="card"><h2><span class="n">3</span>What to put on it</h2><div class="src" style="margin-bottom:8px">Everything in storage on ${esc(r)}. Type how much of each to load, or press ALL.</div>` +
@@ -827,7 +847,7 @@
         return `<tr><td>${esc(k.pname(p))}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-sq="${p}" value="${esc(x.q || '')}" placeholder="0">` +
           (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : (QLB ? '<span class="src" style="display:inline-block;min-width:4.2em">units</span>' : '<span class="src">×</span>')) +
           `<button type="button" class="dk-shipbtn" data-sall="${p}" style="cursor:pointer">ALL</button></div></td></tr>`;
-      }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing in storage on ' + esc(r) + '.'}</div>`) + '</div>';
+      }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing in storage on ' + esc(r) + '.'}</div>`) + fitBar() + '</div>';
     // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
     S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
     const picked = Object.keys(P.sq).map(Number).filter((p) => want(p) > 0);
@@ -851,7 +871,7 @@
       // every material is shared out in the same proportion, so each ship gets a bit of everything (biggest items first)
       picked.slice().sort((a, b) => want(b) * g(b) - want(a) * g(a)).forEach((p) => {
         let left = want(p);
-        const share = free.map((f) => Math.floor(want(p) * f.t / tt));
+        const share = free.map((f) => Math.floor(want(p) * f.t / Math.max(tt, W)));   // too much picked: every item cut by the same fraction
         free.forEach((f, i) => {
           const n = Math.min(share[i], left, Math.floor((f.g - (f.ug || 0)) / g(p)), Math.floor((f.v - (f.uv || 0)) / v(p)));
           if (n > 0) { load[i][p] = n; left -= n; f.ug = (f.ug || 0) + n * g(p); f.uv = (f.uv || 0) + n * v(p); }
@@ -923,6 +943,14 @@
     m.querySelectorAll('[data-fl]').forEach((e) => e.addEventListener('change', () => { const id = +e.dataset.fl; P.fl = (P.fl || []).filter((x) => x !== id); if (e.checked) P.fl.push(id); k.render(); }));
     on('pp-flall', 'click', () => { P.fl = ships.filter((s) => room(s) >= 0.01).map((s) => s.id); k.render(); });
     on('pp-flnone', 'click', () => { P.fl = []; k.render(); });
+    on('pp-fit', 'click', () => {
+      const x = fitInfo();
+      x.pk.forEach((p) => {
+        const n = Math.floor(want(p) * x.k);
+        if (k.bulk(p)) { const u = (P.sq[p] && P.sq[p].unit) || 't'; P.sq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n };
+      });
+      k.render();
+    });
     on('pp-sfind', 'input', (e) => { P.sfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-sfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-sq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.sq; P.sq[p] = Object.assign(P.sq[p] || {}, { q: e.value }); k.render(); }));
     m.querySelectorAll('[data-su]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.su; P.sq[p] = Object.assign(P.sq[p] || {}, { unit: e.value }); k.render(); }));
