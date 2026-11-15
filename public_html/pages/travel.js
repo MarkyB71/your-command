@@ -29,7 +29,10 @@
   // Launch windows chart
   // Can this rock make its own propellant? Every step of the chain needs a raw it can mine or a working
   // facility on it (no stock counted). Hydrogen Propellant = Hydrogen + Silica Powder + Tungsten Powder in a Refinery.
-  function canMake(Y, D, ast, prod, seen) {
+  // st (?beta=1 test, Mark 15 Nov): what's in storage on the rock. Some chains loop round (e.g. Ammonia goes into
+  // Ammonium Paratungstate and comes back out with Tungsten; Sulfuric Acid ↔ Sulfur Dioxide) – a loop is fine when the
+  // rock already has some of it in storage to start the loop off (never propellant itself).
+  function canMake(Y, D, ast, prod, seen, st) {
     const R = window.YICREC; if (!R) return false;
     if (+prod <= 22) {                                     // raw material: can it be mined here?
       const c = ast.Celestial || {};
@@ -38,11 +41,11 @@
       // a raw not mined here can still be made here (e.g. Hydrogen from Water – Mark, 29 Oct)
       if (ok) return true;
     }
-    if (seen[prod]) return false; seen = Object.assign({}, seen, { [prod]: 1 });
+    if (seen[prod]) return !!(st && +prod !== 170 && st[prod] > 0); seen = Object.assign({}, seen, { [prod]: 1 });
     const has = t => (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[t] && b.Building.status === 3 &&
       (((b.Location || {}).locations || []).find(x => x.label === 3) || {}).id === ast.id);
     return (R.MK[prod] || []).some(([, pt, inp, , out]) => has(pt) &&
-      Object.keys(inp).every(k => (out && out[k]) || canMake(Y, D, ast, k, seen)));   // catalysts that come back are fine
+      Object.keys(inp).every(k => (out && out[k]) || canMake(Y, D, ast, k, seen, st)));   // catalysts that come back are fine
   }
   let REF = {};
   // Refuel check with stock (community idea + Mark, 15 Nov 2026 – TEST ONLY, ?beta=1): a rock also counts as a refuel
@@ -55,18 +58,19 @@
     REF = {};
     asts.forEach(a => {
       const ast = (D.owned || []).find(x => x.id === a.id) || {};
-      const mk = canMake(Y, D, ast, '170', {});
+      const as = (D.asteroids || []).find(x => +x.id === +a.id), st = {};
+      ((as && as.buildings) || []).forEach(b => Object.keys(b.items || {}).forEach(k => { st[k] = (st[k] || 0) + +b.items[k]; }));
+      const mk = canMake(Y, D, ast, '170', {}, RFS ? st : null);
       REF[a.id] = mk; RST[a.id] = mk ? 'make' : 'no';
       if (!RFS || mk) return;
-      const as = (D.asteroids || []).find(x => +x.id === +a.id);
-      let n = 0; ((as && as.buildings) || []).forEach(b => { n += +((b.items || {})[170] || 0); });
+      const n = +(st[170] || 0);
       const kg = n && Y.kg ? Y.kg(170, n) : n;
       STK[a.id] = kg;
       if (kg >= 1000) { REF[a.id] = true; RST[a.id] = 'stock'; return; }
       const R = window.YICREC, pt = R && R.MK && R.MK['170'] && R.MK['170'][0] && R.MK['170'][0][1];
       const refinery = pt != null && (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[pt] && b.Building.status === 3 &&
         (((b.Location || {}).locations || []).find(x => x.label === 3) || {}).id === a.id);
-      if (refinery && canMake(Y, D, ast, '2', {})) RST[a.id] = 'powders';
+      if (refinery && canMake(Y, D, ast, '2', {}, st)) RST[a.id] = 'powders';
     });
     return REF;
   }
