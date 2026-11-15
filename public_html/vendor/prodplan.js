@@ -846,7 +846,9 @@
         const x = P.sq[p] || {}, bulk = k.bulk(p);
         return `<tr><td>${esc(k.pname(p))}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-sq="${p}" value="${esc(x.q || '')}" placeholder="0">` +
           (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : (QLB ? '<span class="src" style="display:inline-block;min-width:4.2em">units</span>' : '<span class="src">×</span>')) +
-          `<button type="button" class="dk-shipbtn" data-sall="${p}" style="cursor:pointer">ALL</button></div></td></tr>`;
+          // an item with an amount gets CLEAR instead of ALL, to take it off easily (Mark, 15 Nov – TEST ONLY)
+          (FLEET && want(p) > 0 ? `<button type="button" class="dk-shipbtn" data-sclr="${p}" style="cursor:pointer">CLEAR</button>`
+            : `<button type="button" class="dk-shipbtn" data-sall="${p}" style="cursor:pointer">ALL</button>`) + `</div></td></tr>`;
       }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing in storage on ' + esc(r) + '.'}</div>`) + fitBar() + '</div>';
     // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
     S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
@@ -954,6 +956,7 @@
     on('pp-sfind', 'input', (e) => { P.sfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-sfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-sq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.sq; P.sq[p] = Object.assign(P.sq[p] || {}, { q: e.value }); k.render(); }));
     m.querySelectorAll('[data-su]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.su; P.sq[p] = Object.assign(P.sq[p] || {}, { unit: e.value }); k.render(); }));
+    m.querySelectorAll('[data-sclr]').forEach((e) => e.addEventListener('click', () => { delete P.sq[e.dataset.sclr]; k.render(); }));
     m.querySelectorAll('[data-sall]').forEach((e) => e.addEventListener('click', () => {
       const p = +e.dataset.sall, n = tot(p);
       if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.sq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n };
