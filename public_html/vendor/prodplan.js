@@ -834,9 +834,10 @@
       if (!x.fl.length) return '<div class="src" style="margin-top:8px;color:var(--amber)">Tick at least one ship in step 2.</div>';
       const over = x.k < 0.999;
       return `<div class="row" style="margin-top:10px;gap:10px;align-items:center"><span class="src">Picked <b>${k.tonnes(x.W / 1000)}</b> · room in the ticked ships <b>${k.tonnes(x.cg / 1000)}</b> · ` +
-        (over ? `<b style="color:var(--amber)">⚠ ${Math.round((1 - x.k) * 100)}% too much</b></span><button type="button" class="dk-shipbtn" id="pp-fit" style="cursor:pointer">⚖ Scale everything to fit</button>`
-          : `<b style="color:var(--green)">✓ fits</b></span>`) + '</div>' +
-        (over ? '<div class="hint">Scaling cuts every item by the same amount. Then change any amount above – more of one, less of another – until it fits.</div>' : '');
+        // Mark (15 Nov): no automatic scaling – the player decides what to cut
+        (over ? `<b style="color:var(--amber)">⚠ ${x.W > x.cg ? k.tonnes((x.W - x.cg) / 1000) : Math.round((1 - x.k) * 100) + '% (by space)'} too much</b></span>`
+          : `<b style="color:var(--green)">✓ fits</b> · ${k.tonnes((x.cg - x.W) / 1000)} room left</span>`) + '</div>' +
+        (over ? '<div class="hint">Lower some amounts above (or tick another ship) until it fits – you choose what goes.</div>' : '');
     };
     const f = (P.sfind || '').trim().toLowerCase();
     const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
@@ -854,7 +855,9 @@
     S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
     const picked = Object.keys(P.sq).map(Number).filter((p) => want(p) > 0);
     const fleet = FL ? ships.filter((s) => P.fl.includes(s.id)) : [];
-    if (FL && fleet.length && picked.length) {
+    if (FL && fleet.length && picked.length && fitInfo().k < 0.999) {
+      h += `<div class="card"><h2><span class="n">4</span>Load them</h2><div class="src" style="color:var(--amber)">⚠ That's more than the ticked ships can carry. Lower some amounts in step 3, or tick another ship, then the split appears here.</div></div>`;
+    } else if (FL && fleet.length && picked.length) {
       const cl = k.crews(r);
       if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
       S.moverObj = cl.find((c) => c.id === S.mover);
@@ -951,14 +954,6 @@
     m.querySelectorAll('[data-fl]').forEach((e) => e.addEventListener('change', () => { const id = +e.dataset.fl; P.fl = (P.fl || []).filter((x) => x !== id); if (e.checked) P.fl.push(id); k.render(); }));
     on('pp-flall', 'click', () => { P.fl = ships.filter((s) => room(s) >= 0.01).map((s) => s.id); k.render(); });
     on('pp-flnone', 'click', () => { P.fl = []; k.render(); });
-    on('pp-fit', 'click', () => {
-      const x = fitInfo();
-      x.pk.forEach((p) => {
-        const n = Math.floor(want(p) * x.k);
-        if (k.bulk(p)) { const u = (P.sq[p] && P.sq[p].unit) || 't'; P.sq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n };
-      });
-      k.render();
-    });
     on('pp-sfind', 'input', (e) => { P.sfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-sfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-sq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.sq; P.sq[p] = Object.assign(P.sq[p] || {}, { q: e.value }); k.render(); }));
     m.querySelectorAll('[data-su]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.su; P.sq[p] = Object.assign(P.sq[p] || {}, { unit: e.value }); k.render(); }));
