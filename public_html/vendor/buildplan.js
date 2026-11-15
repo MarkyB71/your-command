@@ -279,17 +279,25 @@ export function drawBuildPlan(m){
       const thenOne=async ln=>{const ft=ln.querySelector('.bp-ft'),sh=(D.ships||[]).find(z=>String(z.id)===ln.dataset.ship),a=O[ln.dataset.from],b=O[S.ast];
         if(!sh){ft.textContent='(no ship chosen yet)';return}if(!a||!b){ft.textContent='(distance unknown)';return}
         const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
-        const SH0=(T.SHIPS||{})[sh.st],full=(S.fuel==='full')&&SH0,P=full?SH0[2]/1000:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{},half=!canMk(Y,D,dAst,'170',{});
+        /* NFC (Mark 15 Nov – TEST ONLY): fuel slider (S.fuel 'pct' = S.fpc % of the tank) and the new refuel rule from Navigation:
+           the build rock also counts as a refuel stop if it holds 1 t+ of propellant, sells it on the belt, or is Adalia Prime */
+        const SH0=(T.SHIPS||{})[sh.st],pct=NFC&&S.fuel==='pct'&&SH0,full=(S.fuel==='full')&&SH0,P=full?SH0[2]/1000:pct?SH0[2]/1000*(S.fpc||100)/100:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{};
+        const refHere=()=>{if(S.ast===1)return true;const a=A.find(x=>x.id===S.ast),n=a&&a.i!==null?((Y.tot[a.i]||{})[170]||0):0;if((Y.kg?Y.kg(170,n):n)>=1000)return true;
+          const B=window.BELTDATA&&window.BELTDATA.data;return!!(B&&!B.err&&(B.orders||[]).some(o=>String(o[0])==='170'&&o[1]===2&&o[5]===S.ast&&o[2]>0))};
+        const half=!canMk(Y,D,dAst,'170',{})&&!(NFC&&refHere());
         try{f=await T.fastest(a.o,b.o,now,half?T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load+P/2,P/2):T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,P),2000)}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
-        {ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option><option value="now"'+(full?'':' selected')+'>propellant as it is now</option></select>'+(half?', <b>½ fuel</b>':'')+')';
-          ft.querySelector('.bp-fuel').onchange=e=>{S.fuel=e.target.value;m.querySelectorAll('.bp-then').forEach(x=>{if(x.dataset.ship)thenOne(x)})}}
+        {ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option>'+(NFC?'<option value="pct"'+(pct?' selected':'')+'>choose how much</option>':'')+'<option value="now"'+(full||pct?'':' selected')+'>propellant as it is now</option></select>'+
+          (pct?' <input type="range" class="bp-fpc" min="5" max="100" step="5" value="'+(S.fpc||100)+'" style="vertical-align:middle;width:140px"> <b class="bp-fpcl">'+(S.fpc||100)+'% ('+tkg(P)+')</b>':'')+(half?', <b>½ fuel</b>':'')+')';
+          const redo=()=>m.querySelectorAll('.bp-then').forEach(x=>{if(x.dataset.ship)thenOne(x)});
+          ft.querySelector('.bp-fuel').onchange=e=>{S.fuel=e.target.value;if(S.fuel==='pct'&&!S.fpc)S.fpc=100;redo()};
+          const rg=ft.querySelector('.bp-fpc');if(rg){rg.oninput=()=>{const l=ft.querySelector('.bp-fpcl');if(l)l.textContent=rg.value+'% ('+tkg(SH0[2]/1000*rg.value/100)+')'};rg.onchange=()=>{S.fpc=+rg.value;redo()}}}
         /* more detail: propellant this trip uses, or what it would take */
         let dl=ln.querySelector('.bp-tdet');if(!dl){dl=document.createElement('div');dl.className='bp-tdet';ln.appendChild(dl)}
         const SH=(T.SHIPS||{})[sh.st];if(!SH){dl.textContent='';return}
         const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=P,t=x=>tkg(x);
-        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
+        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(NFC&&!half&&!canMk(Y,D,dAst,'170',{})?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||(S.ast===1?'Adalia Prime':'This rock'))+'</b> has propellant to refuel (in storage or for sale) – the ship can fill up there for the way back.':'')+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
         dl.innerHTML='<span class="a">working out what it would take…</span>';
         let best=null;for(let h=6;h<=2000;h+=h<200?6:24){let dv;try{dv=await T.deltaV(a.o,b.o,now,h)}catch(e){continue}if(!best||dv<best.dv)best={h,dv}}
         if(me!==run||!ln.isConnected)return;
