@@ -104,10 +104,9 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
 
   function draw(){
     m.innerHTML='';
+    /* Mark 15 Nov (test): on the Flight Deck this page is just the whole belt's flights; your crews' log lives in the Captain's log */
+    if(BELT&&!opt.noTitle){m.appendChild(el('h2','hl-title','Belt flights – in flight now'));drawBelt();return}
     if(!opt.noTitle)m.appendChild(el('h2','hl-title','Activity log'));
-    if(BELT&&!opt.noTitle){const tb=el('div','hl-tabs');const b1=el('button',S.belt?'':'on','Your crews'),b2=el('button',S.belt?'on':'','🚀 Whole belt – in flight now');
-      b1.addEventListener('click',()=>{S.belt=false;draw()});b2.addEventListener('click',()=>{S.belt=true;draw()});tb.appendChild(b1);tb.appendChild(b2);m.appendChild(tb);
-      if(S.belt){drawBelt();return}}
     const H=HC[S.range];
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
     rs.addEventListener('change',()=>{S.range=rs.value;S.show=300;S.crew='';fetchRange();draw()});
@@ -151,7 +150,7 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
     const when=t=>new Date(t*1000).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     const rows=(FL.ships||[]).filter(x=>x[8]>now).sort((a,b)=>a[8]-b[8]);
     m.appendChild(el('div','note','Every ship flying right now across the whole belt, landing soonest first – '+rows.length.toLocaleString()+' ship'+(rows.length===1?'':'s')+
-      '. Your own ships are highlighted. Updated '+esc(new Date((FL.fetched||now)*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+' (the site checks at most every 5 minutes). Times are in your local time.'));
+      '. Your own ships are highlighted. Your crews\' own history is in the Captain\'s log on the Bridge. Updated '+esc(new Date((FL.fetched||now)*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+' (the site checks at most every 5 minutes). Times are in your local time.'));
     const bar=el('div','hl-bar'),q=el('input');q.placeholder='Search ship, type, crew or asteroid';q.value=S.bq;bar.appendChild(q);m.appendChild(bar);
     const box=el('div');m.appendChild(box);
     const fill=()=>{const qq=S.bq.trim().toLowerCase();
@@ -176,7 +175,7 @@ window.YICdrawHistory=drawHistory; // used by the Captain's log on the Bridge (v
   const hook=()=>{
     const r=document.getElementById('vV'),main=document.getElementById('main');
     if(!r||!main||document.getElementById('vJ'))return;
-    const b=document.createElement('button');b.id='vJ';b.textContent='Activity log';r.after(b);
+    const b=document.createElement('button');b.id='vJ';b.textContent=BELT?'Belt flights':'Activity log';r.after(b);
     b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */b.className='on';drawHistory(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vJ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
