@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 15 Nov 2026 – Extension 0.6.9 is on the Chrome Web Store: crews with no crewmates no longer leave a stray food bar in the game's My Crews list.
+
 ## 15 Nov 2026 – Community suggestions, all live together (asked for by a player on Discord, worked through with Mark):
 - Maps (Bridge viewscreen, Asteroids page, Flight Deck navigation window): full screen, pause the turning, zoom, click a rock (or Adalia Prime) for a small card, and an Adalia Prime tick box.
 - Travel: Include Adalia Prime (remembered, so it can be your default). Refuel check now counts propellant in storage and for sale on the belt (Adalia Prime always counts), and flags rocks that could make it if you bring the powders; fixed rocks like TRCS CMS wrongly showing "can't refuel" when their chain loops round (Ammonia, Sulfuric Acid). New ⛽ Fuel on the belt table.
