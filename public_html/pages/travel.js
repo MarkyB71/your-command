@@ -57,6 +57,8 @@
   function refuelMap(Y, D, asts) {
     REF = {};
     asts.forEach(a => {
+      // Adalia Prime: everyone's starting rock – propellant can always be bought at its markets (Mark, 15 Nov)
+      if (RFS && a.id === AP_ID) { REF[a.id] = true; RST[a.id] = 'market'; return; }
       const ast = (D.owned || []).find(x => x.id === a.id) || {};
       const as = (D.asteroids || []).find(x => +x.id === +a.id), st = {};
       ((as && as.buildings) || []).forEach(b => Object.keys(b.items || {}).forEach(k => { st[k] = (st[k] || 0) + +b.items[k]; }));
@@ -151,9 +153,10 @@
     {
       if (RFS) {
         const of = k => asts.filter(a => RST[a.id] === k);
-        const mk = of('make'), st = of('stock'), pw = of('powders'), no = of('no');
+        const mk = of('make'), st = of('stock'), mkt = of('market'), pw = of('powders'), no = of('no');
         const t = kg => Y.fmtT ? Y.fmtT(kg / 1000) : Math.round(kg / 1000) + ' t';
         h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (mk.map(a => esc(a.name)).join(', ') || 'none') +
+          (mkt.length ? '<br>⛽ <b>Propellant can be bought at its markets:</b> ' + mkt.map(a => esc(a.name)).join(', ') : '') +
           (st.length ? '<br>⛽ <b>Has propellant in storage:</b> ' + st.map(a => esc(a.name) + ' (' + t(STK[a.id]) + ')').join(', ') : '') +
           (pw.length ? '<br>⛽ <b>Can make it if you bring Silica Powder and Tungsten Powder:</b> ' + pw.map(a => esc(a.name)).join(', ') : '') +
           (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.map(a => esc(a.name)).join(', ') : '') +
