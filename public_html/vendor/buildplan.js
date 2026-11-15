@@ -213,10 +213,20 @@ export function drawBuildPlan(m){
     const howTxt=(c,it)=>{const h=c.can[it.k];if(h.how==='help')return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span><div class="a">– '+helpTxt(h)+'</div>';if(h.how==='stock')return'<span class="ok">in stock</span>';if(h.how==='mine')return'<span class="bp-mn">mine it there</span>';
       return'<span class="part">make it there</span> <span class="a">('+esc(h.R?h.R[0]:'')+' · '+h.fac.map(t=>(myFac(t,c.id)?'✓ ':'✗ ')+esc(PTYPE[t])).join(', ')+')</span>'};
     const posN=pick.filter(c=>!ready(c.id).length).length;
+    /* Fleet (community idea, Mark 15 Nov – TEST ONLY ?beta=1): tick several of the ships parked at a pick-up rock; the load is
+       shared so each ship carries about the same weight (a ship with less room takes what fits, the others share the rest) */
+    const fleetHTML=(c,kg)=>{if(!NFC)return'';const rd=ready(c.id);if(rd.length<2)return'';
+      S.fleet=S.fleet||{};let sel=(S.fleet[c.id]||[rd[0].id]).filter(id=>rd.some(sh=>sh.id===id));if(!sel.length)sel=[rd[0].id];S.fleet[c.id]=sel;
+      const fl=rd.filter(sh=>sel.includes(sh.id)).map(sh=>({sh,g:Math.max(0,(sh.capM-sh.useM)*0.995)/1000,t:0}));
+      const cap=fl.reduce((t,f)=>t+f.g,0),tr=cap>0?Math.max(1,Math.ceil(kg/cap)):0,per=tr?kg/tr:0;
+      let rest=per,open=fl.slice();while(rest>1e-6&&open.length){const each=rest/open.length,sm=open.filter(f=>f.g-f.t<=each);if(sm.length){sm.forEach(f=>{rest-=f.g-f.t;f.t=f.g});open=open.filter(f=>!sm.includes(f))}else{open.forEach(f=>{f.t+=each});rest=0}}
+      return'<div class="bp-fleet" style="margin:8px 0 4px;padding:8px 10px;border:1px solid #2a3648;border-radius:8px"><div class="a" style="margin-bottom:4px">🚀 Ships parked at '+esc(c.name)+' – tick several to share the load (about the same weight each):</div>'+
+        rd.map(sh=>{const f=fl.find(x=>x.sh.id===sh.id),pc=Math.round(Math.max(sh.useM/sh.capM,sh.useV/sh.capV)*100);return'<label style="display:flex;gap:8px;align-items:center;padding:2px 0;cursor:pointer"><input type="checkbox" data-bpfl="'+c.id+':'+sh.id+'"'+(f?' checked':'')+'><b>'+esc(sh.name)+'</b> <span class="a">'+esc(sh.type||'')+(pc?' · '+pc+'% loaded':'')+' · '+tkg(Math.max(0,sh.capM-sh.useM)/1000)+' free</span>'+(f?' <span class="ok" style="margin-left:auto">'+tkg(f.t)+(tr>1?' per trip':'')+'</span>':'')+'</label>'}).join('')+
+        (tr?'<div class="a" style="margin-top:4px">'+(tr>1?'<b>'+tr+' trips</b> with these ships – ':'One trip – ')+tkg(per)+' a trip in all.</div>':'<div class="none">The ticked ships are full.</div>')+'</div>'};
     return'<div class="bp-plan">'+'<div id="bpFirst"></div>'+'<div class="bp-ps"'+' style="display:none"'+'>'+(pick.length?'Fly from <b>'+pick.length+'</b> asteroid'+(pick.length>1?'s':'')+' · about <b>'+totLT+'</b> Light Transport trip'+(totLT>1?'s':'')+' (or '+totHT+' by Heavy Transport)'+(posN?' + <b>'+posN+'</b> flight'+(posN>1?'s':'')+' first to get a ship there':''):'None of your asteroids can supply these')+'</div>'+
       pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);
         return'<details class="bp-it" open><summary><b>'+esc(c.name)+'</b> – '+c.take.length+' item'+(c.take.length>1?'s':'')+', '+tkg(kg)+' · '+trips(kg)+' LT trip'+(trips(kg)>1?'s':'')+(rd.length?' <span class="bp-shb">· 🚀 '+esc(rd[0].name)+' ready</span>':' <span class="a bp-pos" data-to="'+c.id+'" data-kg="'+kg+'">· no ship there – finding your nearest…</span>')+'</summary><div class="bp-src">'+
-          c.take.map(it=>'<div>'+amt(it.k,it.q)+' <b>'+esc(nm(it.k))+'</b> – '+howTxt(c,it)+'</div>').join('')+'</div></details>'}).join('')+
+          c.take.map(it=>'<div>'+amt(it.k,it.q)+' <b>'+esc(nm(it.k))+'</b> – '+howTxt(c,it)+'</div>').join('')+fleetHTML(c,kg)+'</div></details>'}).join('')+
       (left.length?'<div class="none" style="margin-top:6px">Not available from any of your asteroids: '+left.map(it=>esc(nm(it.k))).join(', ')+'</div>':'')+
       (pick.length?'<div id="bpThen">'+pick.map(c=>{const kg=c.take.reduce((x,it)=>x+it.kg,0),rd=ready(c.id);return'<div class="bp-first bp-then" data-from="'+c.id+'" data-kg="'+kg+'" data-ship="'+(rd[0]?rd[0].id:'')+'">📦 Then send it from <b>'+esc(c.name)+'</b> to <b class="bp-dst">'+esc(here.name)+'</b> <span class="bp-ft">(working out…)</span></div>'}).join('')+'</div>':'')+
       '<div class="a" style="margin-top:6px">Trips = weight ÷ 2,000 t per Light Transport (12,000 t Heavy). "Make it there" means it can be made from that asteroid\'s own stock and mining; ✗ = you\'d need that facility there.</div></div>'};
@@ -253,7 +263,8 @@ export function drawBuildPlan(m){
     :'<div class="bp-two"><div class="bp-l">'+MAT+'</div>'+FEW+'</div>'+(shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:''))+chainHTML+'</div>';
   m.innerHTML=h;
   {const rb=m.querySelector('.bp-rawany');if(rb)rb.onclick=()=>{S.rawAny=!S.rawAny;drawBuildPlan(m)}}
-  if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
+  if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos();
+    m.querySelectorAll('[data-bpfl]').forEach(cb=>cb.onchange=()=>{const[c,sh]=cb.dataset.bpfl.split(':').map(Number);S.fleet=S.fleet||{};let a=(S.fleet[c]||[]).filter(x=>x!==sh);if(cb.checked)a.push(sh);S.fleet[c]=a;drawBuildPlan(m)})}},60);
   /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
   const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')],th=[...m.querySelectorAll('.bp-then')];if(!sp.length&&!th.length)return;
     const cand=kg=>(D.ships||[]).filter(sh=>true&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
