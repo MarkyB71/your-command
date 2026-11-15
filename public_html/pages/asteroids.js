@@ -308,6 +308,8 @@
           '.bm-ctl button{all:unset;box-sizing:border-box;cursor:pointer;min-width:30px;height:28px;padding:0 7px;text-align:center;' +
           'font:bold 15px/28px system-ui,sans-serif;color:#8fe3ff;background:rgba(20,32,44,.85);border:1px solid #5fc3e4;border-radius:6px}' +
           '.bm-ctl button:hover,.bm-ctl button:focus-visible{background:#1d3346;box-shadow:0 0 10px -2px #5fc3e4}' +
+          '.bm-ctl label{display:flex;align-items:center;gap:5px;height:28px;padding:0 9px;font:bold 13px system-ui,sans-serif;color:#8fe3ff;' +
+          'background:rgba(20,32,44,.85);border:1px solid #5fc3e4;border-radius:6px;cursor:pointer;white-space:nowrap}' +
           '.bm-box:fullscreen{clip-path:none!important;border:0!important;border-radius:0!important;background:#05070a}' +
           '.bm-box:fullscreen canvas{height:100vh!important}.bm-box:fullscreen .bm-ctl{right:16px;top:14px}' +
           '.bm-card{position:absolute;left:6%;top:46px;z-index:3;min-width:190px;max-width:260px;padding:9px 30px 10px 12px;font-size:13px;line-height:1.45;' +
@@ -317,7 +319,8 @@
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
-      c.innerHTML = '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
+      c.innerHTML = '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>' +
+        '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
         '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
       box.appendChild(c);
       const cd = document.createElement('div'); cd.className = 'bm-card'; cd.hidden = true;
@@ -389,7 +392,8 @@
         });
         R = R || 4;
         const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let sel = null,
+        let apL = [],
+          sel = null,
           zf = 1,
           paused = false,
           az = 0.6,
@@ -440,6 +444,25 @@
               i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
             });
             ctx.stroke();
+          });
+          apL.forEach((a) => {
+            const q = proj(a.p);
+            if (sel === a.id) {
+              ctx.strokeStyle = '#ffd24a';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(q[0], q[1], 11, 0, 6.283);
+              ctx.stroke();
+            }
+            ctx.fillStyle = '#ffffff';
+            ctx.save();
+            ctx.translate(q[0], q[1]);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillRect(-5, -5, 10, 10);
+            ctx.restore();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px system-ui,sans-serif';
+            ctx.fillText(a.name, q[0] + 9, q[1] - 7);
           });
           me.forEach((a) => {
             const q = proj(a.p);
@@ -517,6 +540,20 @@
             e.preventDefault();
             zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
           }, { passive: false });
+          // Adalia Prime on the map (Mark, 15 Nov): a tick box, shared with Navigation's "Include Adalia Prime" (same saved setting)
+          const APK = 'yic-travel-ap', apcb = box.querySelector('[data-bm="ap"]');
+          const apOn = () => { try { return localStorage.getItem(APK) === '1'; } catch (e) { return false; } };
+          const apDraw = () => {
+            if (!apcb.checked) { apL = []; if (sel === 1) show(null); frame(); return; }
+            (APP.apOrb ? Promise.resolve(APP.apOrb) : fetch('orbits.php?ids=1').then((r) => r.json())
+              .then((j) => (APP.apOrb = j && j.orbits && j.orbits[1] && j.orbits[1].o))).then((o) => {
+              if (!o || !apcb.checked) return;
+              try { apL = [{ id: 1, name: 'Adalia Prime', p: P(o) }]; } catch (e) { apL = []; }
+              frame();
+            }).catch(() => {});
+          };
+          apcb.checked = apOn();
+          apcb.onchange = () => { try { localStorage.setItem(APK, apcb.checked ? '1' : '0'); } catch (e) {} apDraw(); };
           // Select (Mark, 15 Nov): click one of your rocks → a small card; click empty space or ✕ to close.
           const card = box.querySelector('.bm-card');
           const show = (a) => {
@@ -538,9 +575,10 @@
             down = null;
             const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
             let hit = null, bd = 14;
-            me.forEach((a) => { const q = proj(a.p), d = Math.hypot(q[0] - x, q[1] - y); if (d < bd) { bd = d; hit = a; } });
+            me.concat(apL).forEach((a) => { const q = proj(a.p), d = Math.hypot(q[0] - x, q[1] - y); if (d < bd) { bd = d; hit = a; } });
             show(hit);
           });
+          apDraw();
         }
       })
       .catch((e) => {
