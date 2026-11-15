@@ -72,7 +72,7 @@ body.dk-flight #main th{color:#c4adff}
   }
 
   // Map controls, select and Adalia Prime – same as the Bridge viewscreen (Mark, 15 Nov 2026 – TEST ONLY, ?beta=1)
-  const MC = /[?&]beta=1\b/.test(location.search);
+  const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const APK = 'yic-travel-ap';
   const apOn = () => { try { return localStorage.getItem(APK) === '1'; } catch (e) { return false; } };
 

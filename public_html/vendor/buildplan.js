@@ -130,7 +130,7 @@ export function drawBuildPlan(m){
   /* NFC (community idea, Mark 15 Nov 2026 – TEST ONLY ?beta=1): something none of your rocks has is only followed down to
      raw materials if this rock has the buildings to make it (Habitation Modules on Zolex with no Shipyard were turned into
      raws to fly in). Otherwise it's flagged as missing – buy it, or make it on a rock that can. */
-  const NFC=/[?&]beta=1\b/.test(location.search);
+  const NFC=true; /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */
   const facNeed=r=>{const E=expand(stk,canMine,[[r.id,r.short]],UC1,AW);return E.USED[r.id]?Object.keys(E.fac).filter(t=>!myFac(t)):null};
   /* Mark (21:32): keep the option to fly in the raw materials anyway (S.rawAny – a button in the Missing box) */
   const chainRows=rows.filter(r=>r.short&&(NFC&&!S.rawAny?((!r.others.length&&(facNeed(r)||[1]).length===0)||makeOK(r)):(!r.others.length||makeOK(r))));

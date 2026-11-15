@@ -2,6 +2,14 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 15 Nov 2026 – Community suggestions, all live together (asked for by a player on Discord, worked through with Mark):
+- Maps (Bridge viewscreen, Asteroids page, Flight Deck navigation window): full screen, pause the turning, zoom, click a rock (or Adalia Prime) for a small card, and an Adalia Prime tick box.
+- Travel: Include Adalia Prime (remembered, so it can be your default). Refuel check now counts propellant in storage and for sale on the belt (Adalia Prime always counts), and flags rocks that could make it if you bring the powders; fixed rocks like TRCS CMS wrongly showing "can't refuel" when their chain loops round (Ammonia, Sulfuric Acid). New ⛽ Fuel on the belt table.
+- Flight Deck: Activity log is now Belt flights – every ship in flight across the belt. Your crews' history stays in the Captain's log.
+- Logistics Hub › Cargo bay: buttons are now Export for production, Load one ship and the new Load a fleet (several ships, about the same weight each; full ships greyed out; you choose what to cut if it won't fit). CLEAR button on items with an amount.
+- Construction planner: materials first, then ⚠ Missing (what none of your rocks has and this rock can't make, e.g. no Shipyard), with an option to fly in the raw materials anyway; share a pick-up load across several ships; fuel slider; new refuel rule.
+- Help page updated.
+
 ## 14 Nov 2026 – Extension 0.6.8 is on the Chrome Web Store: Deck strip (your six Command Deck stations along the bottom of the game) and a gold SkippyChain button on the game's side bar. Help page updated (Extension options, settings switch straight away).
 
 ## 14 Nov 2026 – Logistics Hub Cargo bay: new step 4 "Load a ship" – put what your rock is missing to make something into a ship parked on the asteroid you pick; new "📦 Load straight from stock" – pick a rock, a ship parked there, and what to load from its storage; clearer explanations on each step. Things counted one by one now show "units" instead of ×. Help page updated. Asked for by Mark.

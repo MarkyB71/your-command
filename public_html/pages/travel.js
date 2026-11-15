@@ -13,7 +13,7 @@
   // Adalia Prime option (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): a tick box adds Adalia Prime (#1) to the
   // table even though it isn't yours – everyone starts there and most players still fly out from it. Off to start with;
   // the choice is remembered in this browser, so ticking it makes it your default.
-  const APT = /[?&]beta=1\b/.test(location.search);
+  const APT = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const AP_ID = 1, APKEY = 'yic-travel-ap';
   let apOrbit = null, apBusy = false;
   const apOn = () => { try { return localStorage.getItem(APKEY) === '1'; } catch (e) { return false; } };
@@ -51,7 +51,7 @@
   // Refuel check with stock (community idea + Mark, 15 Nov 2026 – TEST ONLY, ?beta=1): a rock also counts as a refuel
   // stop if it has Hydrogen Propellant in storage. And a rock with a working Refinery that can get Hydrogen is flagged
   // "can make it if you bring the powders" (Silica Powder + Tungsten Powder) – still the half-propellant rule there.
-  const RFS = /[?&]beta=1\b/.test(location.search);
+  const RFS = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const RST = {};   // id -> 'make' | 'stock' | 'powders' | 'no'
   const STK = {};   // id -> kg of Hydrogen Propellant stored
   // Belt markets selling propellant (Mark, 15 Nov – ?beta=1): asteroid id -> { kg, name }, from window.BELTDATA (pages/market.js)

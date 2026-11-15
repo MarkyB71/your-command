@@ -299,7 +299,7 @@
     m.prepend(box);
     // Map controls (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): full screen, pause the turning, zoom
     // (buttons, or the mouse wheel while full screen so the page still scrolls normally).
-    const MC = /[?&]beta=1\b/.test(location.search);
+    const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
     if (MC) {
       box.classList.add('bm-box');
       if (!document.getElementById('bm-css')) {

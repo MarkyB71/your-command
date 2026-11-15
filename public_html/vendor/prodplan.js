@@ -241,7 +241,7 @@
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
   const PKB = /[?&]beta=1\b/.test(location.search); // pick which ready process to start next (Mark, 14 Nov – TEST ONLY)
-  const FLEET = /[?&]beta=1\b/.test(location.search); // Load straight from stock: several ships, same weight each (Mark, 15 Nov – TEST ONLY)
+  const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
