@@ -127,7 +127,13 @@ export function drawBuildPlan(m){
     if(fl.length)return'<em class="bp-cb fl" title="Fly in: '+esc(fl.map(k=>{const t=window.YICSRCTXT?window.YICSRCTXT(k,E.fly[k],S.ast):'';return nm(k)+(t?' ('+t.replace(/&#(\d+);/g,(x,n)=>String.fromCharCode(n))+')':'')}).join(', '))+'">✈ Fly some in</em>';
     if(nf.length)return'<em class="bp-cb pt" title="Needs '+esc(nf.map(t=>PTYPE[t]).join(' and '))+' here">⚒ Needs '+esc(nf.map(t=>PTYPE[t]).join(' + '))+'</em>';
     return'<em class="bp-cb mk bp-go" role="button" tabindex="0" data-go="'+k+'" title="Open in The SkippyChain (new tab)">⚒ Make it here ↗</em>'};
-  const chainRows=rows.filter(r=>r.short&&(!r.others.length||makeOK(r)));
+  /* NFC (community idea, Mark 15 Nov 2026 – TEST ONLY ?beta=1): something none of your rocks has is only followed down to
+     raw materials if this rock has the buildings to make it (Habitation Modules on Zolex with no Shipyard were turned into
+     raws to fly in). Otherwise it's flagged as missing – buy it, or make it on a rock that can. */
+  const NFC=/[?&]beta=1\b/.test(location.search);
+  const facNeed=r=>{const E=expand(stk,canMine,[[r.id,r.short]],UC1,AW);return E.USED[r.id]?Object.keys(E.fac).filter(t=>!myFac(t)):null};
+  const chainRows=rows.filter(r=>r.short&&(NFC?((!r.others.length&&(facNeed(r)||[1]).length===0)||makeOK(r)):(!r.others.length||makeOK(r))));
+  const missRows=NFC?rows.filter(r=>r.short&&!r.others.length&&!chainRows.includes(r)):[];
   const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),UC1,AW),{USED,pool,fly,mine,fac,made}=EX;if(PM)fac[PR[1]]=1;else if(Object.keys(S.cnt).some(k=>isShip(k)&&S.cnt[k]>0))fac[5]=1;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
@@ -236,7 +242,11 @@ export function drawBuildPlan(m){
       '<td class="num"><span class="'+(r.have>=r.need?'ok':r.have>0?'part':'none')+'">'+(r.have>0?amt(r.id,r.have):'None')+'</span></td>'+
       '<td class="num">'+(r.short?'<b>'+amt(r.id,r.short)+'</b>':'<span class="ok">✓</span>')+'</td>'+('<td class="bp-mh">'+makeHere(r)+'</td>')+'</tr>').join('')+'</tbody></table></div>';
   const FEW=(shortRows.length?(planHTML?'<div class="bp-r"><h2 style="margin-top:4px">🚀 Fewest flights</h2>'+planHTML+'</div>':''):'');
-  if(Object.keys(inp).length)h+=(shortRows.length?'<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div><div style="margin-top:14px">'+MAT+'</div>'
+  /* NFC: what's needed first, then what's missing and can't be made here, then what to fly in */
+  const MISS=missRows.length?'<div class="bp-miss" style="margin:14px 0;padding:10px 12px;border:1px solid #ffb54766;border-radius:8px;background:rgba(255,181,71,.06)"><h2 style="margin:0 0 6px;color:#ffb547">⚠ Missing – none of your rocks has it</h2>'+
+    missRows.map(r=>{const nf=facNeed(r);return'<div style="margin:5px 0"><b>'+esc(nm(r.id))+'</b> '+amt(r.id,r.short)+' <span class="a">– '+(nf===null?'no way to make it here':'can\'t be made on '+esc(here.name)+': needs a '+nf.map(t=>esc(PTYPE[t])).join(' and ')+' here')+'. Buy it (Trade Deck › Where to buy), or make it on a rock that has '+(nf&&nf.length?'a '+nf.map(t=>esc(PTYPE[t])).join(' and '):'what it needs')+'.</span></div>'}).join('')+'</div>':'';
+  if(NFC&&Object.keys(inp).length)h+=MAT+MISS+(shortRows.length?'<div class="bp-two" style="margin-top:14px"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div>':'')+chainHTML+'</div>';
+  else if(Object.keys(inp).length)h+=(shortRows.length?'<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div><div style="margin-top:14px">'+MAT+'</div>'
     :'<div class="bp-two"><div class="bp-l">'+MAT+'</div>'+FEW+'</div>'+(shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:''))+chainHTML+'</div>';
   m.innerHTML=h;
   if(planHTML)setTimeout(()=>{if(me!==run)return;const el=m.querySelector('#bpPlan');if(!el)return;let x='';try{x=planCalc()}catch(e){x='<div class="bp-plan a">Couldn\'t work out the flights</div>'}if(me===run&&el.isConnected){el.outerHTML=x;fillPos()}},60);
