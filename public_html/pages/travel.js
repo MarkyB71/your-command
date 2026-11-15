@@ -54,6 +54,19 @@
   const RFS = /[?&]beta=1\b/.test(location.search);
   const RST = {};   // id -> 'make' | 'stock' | 'powders' | 'no'
   const STK = {};   // id -> kg of Hydrogen Propellant stored
+  // Belt markets selling propellant (Mark, 15 Nov – ?beta=1): asteroid id -> { kg, name }, from window.BELTDATA (pages/market.js)
+  let SELL = null;
+  function beltFuel(Y, B) {
+    SELL = {};
+    if (!B || B.err) return SELL;
+    const mk = B.markets || {};
+    (B.orders || []).forEach(o => {
+      if (String(o[0]) !== '170' || o[1] !== 2 || !(o[2] > 0)) return;
+      const x = SELL[o[5]] = SELL[o[5]] || { kg: 0, name: (mk[o[4]] && mk[o[4]].ast) || ('Asteroid #' + o[5]) };
+      x.kg += Y.kg ? Y.kg(170, o[2]) : o[2];
+    });
+    return SELL;
+  }
   function refuelMap(Y, D, asts) {
     REF = {};
     asts.forEach(a => {
@@ -69,6 +82,7 @@
       const kg = n && Y.kg ? Y.kg(170, n) : n;
       STK[a.id] = kg;
       if (kg >= 1000) { REF[a.id] = true; RST[a.id] = 'stock'; return; }
+      if (SELL && SELL[a.id] && SELL[a.id].kg >= 1000) { REF[a.id] = true; RST[a.id] = 'market'; return; }
       const R = window.YICREC, pt = R && R.MK && R.MK['170'] && R.MK['170'][0] && R.MK['170'][0][1];
       const refinery = pt != null && (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[pt] && b.Building.status === 3 &&
         (((b.Location || {}).locations || []).find(x => x.label === 3) || {}).id === a.id);
@@ -149,6 +163,10 @@
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
       ((hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + apBox() + '</div>';
 
+    if (RFS) {
+      const B = window.BELTDATA && window.BELTDATA.get(() => { if (SELL) return; beltFuel(Y, window.BELTDATA.data); if (m.isConnected) drawTravel(m); });
+      if (B) beltFuel(Y, B); else if (!window.BELTDATA) SELL = {};
+    }
     const ref = refuelMap(Y, D, asts);
     {
       if (RFS) {
@@ -156,10 +174,15 @@
         const mk = of('make'), st = of('stock'), mkt = of('market'), pw = of('powders'), no = of('no');
         const t = kg => Y.fmtT ? Y.fmtT(kg / 1000) : Math.round(kg / 1000) + ' t';
         h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (mk.map(a => esc(a.name)).join(', ') || 'none') +
-          (mkt.length ? '<br>⛽ <b>Propellant can be bought at its markets:</b> ' + mkt.map(a => esc(a.name)).join(', ') : '') +
+          (mkt.length ? '<br>⛽ <b>Propellant for sale at its markets:</b> ' + mkt.map(a => esc(a.name) + (SELL && SELL[a.id] ? ' (' + t(SELL[a.id].kg) + ')' : '')).join(', ') : '') +
           (st.length ? '<br>⛽ <b>Has propellant in storage:</b> ' + st.map(a => esc(a.name) + ' (' + t(STK[a.id]) + ')').join(', ') : '') +
           (pw.length ? '<br>⛽ <b>Can make it if you bring Silica Powder and Tungsten Powder:</b> ' + pw.map(a => esc(a.name)).join(', ') : '') +
           (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.map(a => esc(a.name)).join(', ') : '') +
+          (SELL ? (() => {
+            const shown = new Set(asts.map(a => +a.id)), more = Object.keys(SELL).filter(id => !shown.has(+id) && SELL[id].kg >= 1000)
+              .sort((x, y) => SELL[y].kg - SELL[x].kg);
+            return more.length ? '<br>⛽ <b>Also for sale across the belt:</b> ' + more.map(id => esc(SELL[id].name) + ' (' + t(SELL[id].kg) + ')').join(', ') : '';
+          })() : '<br><span class="a">⛽ Checking the belt markets for propellant…</span>') +
           (pw.length || no.length ? '<br><span class="a">Flying to a rock that can\'t refuel yet, the ship only uses half its propellant so it can get back.</span>' : '') + '</div>';
       } else {
       const yes = asts.filter(a => ref[a.id]).map(a => esc(a.name)), no = asts.filter(a => !ref[a.id]).map(a => esc(a.name));
