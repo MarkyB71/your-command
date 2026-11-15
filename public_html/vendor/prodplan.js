@@ -58,24 +58,30 @@
       const o = { i, st, r, bt, left, runningFin, toCollect };
       if (runningFin) o.s = 'run'; else if (toCollect) o.s = 'collect'; else if (!left) o.s = 'done';
       if (!left) return o;
-      if (o.s) { o.why = left.toLocaleString('en-GB') + ' runs still to start after this'; return o; }
-      o.s = 'wait';
-      if (!r) { o.why = 'recipe not found'; return o; }
-      if (!mat) { o.why = 'materials warehouse not found'; return o; }
-      if (!pid) { o.why = 'can’t be started from here'; return o; }
+      // still running but runs left (Mark, 15 Nov – TEST ONLY, ?beta=1): "nothing ready" while a second Bioreactor
+      // sat free with the inputs there. Now the rest can start in another free building while this one runs.
+      if (o.s) { o.why = left.toLocaleString('en-GB') + ' runs still to start after this'; if (!PKB) return o; }
+      const busy = o.s;
+      o.s = o.s || 'wait';
+      const nope = (why) => { if (!busy) o.why = why; return o; };
+      if (!r) return nope('recipe not found');
+      if (!mat) return nope('materials warehouse not found');
+      if (!pid) return nope('can’t be started from here');
       const one = { r, runs: left };
-      if (k.capRuns && !k.capRuns(one)) { o.why = 'one run takes longer than the game allows'; return o; }
+      if (k.capRuns && !k.capRuns(one)) return nope('one run takes longer than the game allows');
       const lack = Object.keys(r.inp).filter((ip) => (pool[ip] || 0) < r.inp[ip] * one.runs);
-      if (lack.length) { o.why = 'waiting for ' + lack.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (lack.length > 3 ? '…' : ''); return o; }
+      if (lack.length) return nope('waiting for ' + lack.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (lack.length > 3 ? '…' : ''));
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
-      if (!b) { o.why = 'no free ' + (k.BTN[bt] || 'building'); return o; }
+      if (!b) return nope('no free ' + (k.BTN[bt] || 'building'));
       const to = byId(st.to) || mat;
       used.add(b.id); Object.keys(r.inp).forEach((ip) => { pool[ip] -= r.inp[ip] * one.runs; });
-      o.s = 'ready'; o.start = { i, b, slot: k.freeSlot(b), r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: mat, to };
+      if (busy) o.why = 'the other ' + one.runs.toLocaleString('en-GB') + ' runs can start now';
+      else o.s = 'ready';
+      o.start = { i, b, slot: k.freeSlot(b), r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: mat, to };
       return o;
     });
   }
-  const tally = (ss) => ({ done: ss.filter((x) => x.s === 'done').length, run: ss.filter((x) => x.s === 'run').length, col: ss.filter((x) => x.s === 'collect').length, ready: ss.filter((x) => x.s === 'ready').length });
+  const tally = (ss) => ({ done: ss.filter((x) => x.s === 'done').length, run: ss.filter((x) => x.s === 'run').length, col: ss.filter((x) => x.s === 'collect').length, ready: ss.filter((x) => x.start).length, wait: ss.filter((x) => x.s === 'wait').length });
   const whenTxt = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   function plansListHTML() {
     const k = K(), esc = k.esc, a = myPlans();
@@ -98,19 +104,21 @@
     // is free, so nothing ticked here waits on another process finishing.
     P.noStart = P.noStart || {};
     const pick = (i) => !(PKB && P.noStart[plan.id + ':' + i]);
-    const ready = ss.filter((x) => x.s === 'ready' && pick(x.i)).map((x) => Object.assign(x.start, { crew: P.runner }));
+    const ready = ss.filter((x) => x.start && pick(x.i)).map((x) => Object.assign(x.start, { crew: P.runner }));
     S.rock = plan.rock; S.calls = []; S.feedCalls = []; S.feed = false; S.mover = P.runner; S.moverObj = runner;
     S.startList = ready;
     const ICON = { done: '<span class="ok">✓ done</span>', run: '⚙ running', collect: '<span style="color:var(--amber)">✓ finished – collect it in the game</span>', ready: '<span class="ok">▶ ready to start</span>', wait: '<span class="src">⏳ waiting</span>' };
     let h = `<div class="card"><h2><span class="n">📋</span>${esc(k.pname(plan.p))} ${k.amt(plan.p, plan.qty)} on ${esc(plan.rock)}</h2>` +
       `<div class="row"><button type="button" class="dk-shipbtn" id="pp-back" style="cursor:pointer">← All plans / new plan</button><span class="src">Planned ${esc(whenTxt(plan.made / 1000))} · materials in ${esc(byId(plan.mat) ? k.nm(byId(plan.mat)) : '?')}</span></div>` +
-      `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${plan.steps.length - t.done - t.run - t.col - t.ready}</b>waiting</div></div>` +
+      `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${t.wait}</b>waiting</div></div>` +
       `<table style="margin-top:10px"><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Status</th></tr></thead><tbody>` +
       ss.map((x) => {
         const st = x.st, b = x.start && x.start.b;
-        const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + (x.start.capTxt ? '<br><span class="src">⏱ ' + esc(x.start.capTxt) + '</span>' : '') : '';
-        const tick = PKB && x.s === 'ready' ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
-        return `<tr><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : ''}</td></tr>`;
+        const cap = x.start && x.start.capTxt ? '<br><span class="src">⏱ ' + esc(x.start.capTxt) + '</span>' : '';
+        const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + cap : '';
+        const more = x.start && x.s !== 'ready' ? '<br><span class="ok">▶ ' + esc(x.why) + ' in ' + esc(k.nm(b)) + '</span>' + cap : '';
+        const tick = PKB && x.start ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
+        return `<tr><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${more || (x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : '')}</td></tr>`;
       }).join('') + '</tbody></table>' +
       (PKB && t.ready > 1 ? '<div class="hint">Tick the ready processes you want to start – only those go in the approval.</div>' : '') +
       (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
