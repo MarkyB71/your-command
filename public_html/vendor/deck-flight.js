@@ -33,6 +33,17 @@ body.dk-flight #main th{color:#c4adff}
 @media (prefers-reduced-motion:reduce){.fh-ship{animation:none}}
 @media (max-width:700px){.fh-ship{flex-direction:column;padding:26px 12px 10px}.fh-ship .fh-pic{width:90%;height:55%}.fh-ship .fh-si{max-width:100%;text-align:center}}
 .fh-lip{height:12px;margin:0 -9px;background:linear-gradient(180deg,#251d3c,#100a18);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
+/* map controls (community idea, 15 Nov 2026 – TEST ONLY, ?beta=1) */
+.fh-ctl{position:absolute;right:5%;bottom:10px;display:flex;gap:5px;z-index:2}
+.fh-ctl button{all:unset;box-sizing:border-box;cursor:pointer;min-width:30px;height:28px;padding:0 7px;text-align:center;font:bold 15px/28px system-ui,sans-serif;color:#c4adff;background:rgba(18,13,30,.88);border:1px solid ${COL};border-radius:6px}
+.fh-ctl button:hover,.fh-ctl button:focus-visible{background:#251d3c;box-shadow:0 0 10px -2px ${COL}}
+.fh-ctl label{display:flex;align-items:center;gap:5px;height:28px;padding:0 9px;font:bold 13px system-ui,sans-serif;color:#c4adff;background:rgba(18,13,30,.88);border:1px solid ${COL};border-radius:6px;cursor:pointer;white-space:nowrap}
+.fh-card{position:absolute;left:5%;top:82px;z-index:2;min-width:190px;max-width:260px;padding:9px 30px 10px 12px;font:13px/1.45 system-ui,sans-serif;color:#e6ebf2;background:rgba(18,13,30,.92);border:1px solid ${COL};border-radius:8px;box-shadow:0 0 18px -6px ${COL}}
+.fh-card b{color:#c4adff;font-size:14px}.fh-card a{color:#c4adff}
+.fh-card .fh-cx{all:unset;cursor:pointer;position:absolute;right:8px;top:5px;color:#8b9ab0;font-size:15px}.fh-card .fh-cx:hover{color:#fff}
+.fh-win:fullscreen{clip-path:none!important;background:#03060a}
+.fh-win:fullscreen canvas{height:100vh}
+.fh-win:fullscreen .fh-ctl{right:16px;bottom:16px}
 @media (max-width:700px){.fh-key{display:none}#deckhero[data-deck="flight"],.fh-win{clip-path:none}}
 `;
 
@@ -60,6 +71,11 @@ body.dk-flight #main th{color:#c4adff}
     ).then((a) => (ORB = Object.assign(ORB || {}, ...a)));
   }
 
+  // Map controls, select and Adalia Prime – same as the Bridge viewscreen (Mark, 15 Nov 2026 – TEST ONLY, ?beta=1)
+  const MC = /[?&]beta=1\b/.test(location.search);
+  const APK = 'yic-travel-ap';
+  const apOn = () => { try { return localStorage.getItem(APK) === '1'; } catch (e) { return false; } };
+
   function hero(el) {
     addCss();
     const Y = window.YIC;
@@ -74,10 +90,14 @@ body.dk-flight #main th{color:#c4adff}
       '<div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div>' +
       '<div class="fh-key"><i style="background:' + COL + ';clip-path:polygon(0 50%,100% 0,70% 50%,100% 100%)"></i>ship in flight<br>' +
       '<i style="border-top:1px dashed ' + COL + ';height:0"></i>course<br><i style="background:#c4cdd9;border-radius:50%"></i>your rock<br><span style="opacity:.7">drag to turn</span></div>' +
-      '<div class="fh-load">Plotting courses…</div></div><div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
+      '<div class="fh-load">Plotting courses…</div>' +
+      (MC ? '<div class="fh-ctl"><label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-fh="ap"> Adalia Prime</label>' +
+        '<button type="button" data-fh="out" title="Zoom out">−</button><button type="button" data-fh="in" title="Zoom in">+</button>' +
+        '<button type="button" data-fh="pause" title="Pause the turning">⏸</button><button type="button" data-fh="fs" title="Full screen">⛶</button></div>' +
+        '<div class="fh-card" hidden></div>' : '') + '</div><div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
     const cv = el.querySelector('canvas'),
       ctx = cv.getContext('2d');
-    const ids = [...new Set(owned.concat(ships.map((s) => s.dId), fly.map((s) => s.oId)))].filter(Boolean);
+    const ids = [...new Set(owned.concat(ships.map((s) => s.dId), fly.map((s) => s.oId), MC ? [1] : []))].filter(Boolean);
     Promise.all([import('./travel.js?v=' + (Y.VER || 1)), orbitsFor(ids)])
       .then(([T, O]) => {
         if (!el.isConnected) return;
@@ -104,9 +124,12 @@ body.dk-flight #main th{color:#c4adff}
         // turns slowly like the bridge viewscreen; drag to turn and tilt
         let tilt = 0.55,
           az = 0,
-          drag = null;
+          drag = null,
+          zf = 1,
+          paused = false,
+          sel = null;
         const proj = (p) => {
-          const s = (Math.min(W * 0.92, H * 1.9) * 0.5) / R,
+          const s = ((Math.min(W * 0.92, H * 1.9) * 0.5) / R) * zf,
             ca = Math.cos(az),
             sa = Math.sin(az),
             x = p[0] * ca - p[1] * sa,
@@ -132,6 +155,12 @@ body.dk-flight #main th{color:#c4adff}
               return { id, p, ring, name: nm(id), mine: owned.includes(id), n: dock.filter((s) => s.dId === id).length };
             })
             .filter(Boolean);
+          // Adalia Prime when ticked (white diamond); it's still drawn as a plain rock when ships are docked there
+          if (MC && apOn() && O[1]) {
+            let r = rocks.find((x) => x.id === 1);
+            if (!r) { const p = at(1, now); if (p) rocks.push((r = { id: 1, p, ring: [], name: 'Adalia Prime', mine: false, n: 0 })); }
+            if (r) { r.ap = true; r.name = 'Adalia Prime'; }
+          }
           trips = fly
             .map((s) => {
               const dep = s.depT || now,
@@ -198,7 +227,7 @@ body.dk-flight #main th{color:#c4adff}
           ctx.lineWidth = 1;
           [0.33, 0.66, 1].forEach((k) => {
             ctx.beginPath();
-            ctx.ellipse(c[0], c[1], (Math.min(W * 0.92, H * 1.9) * 0.5) * k, (Math.min(W * 0.92, H * 1.9) * 0.5) * k * Math.cos(tilt) * 0.92, 0, 0, 6.283);
+            ctx.ellipse(c[0], c[1], (Math.min(W * 0.92, H * 1.9) * 0.5) * k * zf, (Math.min(W * 0.92, H * 1.9) * 0.5) * k * zf * Math.cos(tilt) * 0.92, 0, 0, 6.283);
             ctx.stroke();
           });
           rocks.forEach((r) => {
@@ -266,12 +295,28 @@ body.dk-flight #main th{color:#c4adff}
           });
           rocks.forEach((r) => {
             const q = proj(r.p);
-            ctx.fillStyle = r.mine ? '#c4cdd9' : '#7d8899';
-            ctx.beginPath();
-            ctx.arc(q[0], q[1], r.mine ? 4 : 3, 0, 6.283);
-            ctx.fill();
-            ctx.fillStyle = r.mine ? '#c4cdd9' : '#8b9ab0';
-            ctx.font = '11px system-ui,sans-serif';
+            if (sel === r.id) {
+              ctx.strokeStyle = '#ffd24a';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(q[0], q[1], 10, 0, 6.283);
+              ctx.stroke();
+            }
+            if (r.ap) {
+              ctx.fillStyle = '#ffffff';
+              ctx.save();
+              ctx.translate(q[0], q[1]);
+              ctx.rotate(Math.PI / 4);
+              ctx.fillRect(-5, -5, 10, 10);
+              ctx.restore();
+            } else {
+              ctx.fillStyle = r.mine ? '#c4cdd9' : '#7d8899';
+              ctx.beginPath();
+              ctx.arc(q[0], q[1], r.mine ? 4 : 3, 0, 6.283);
+              ctx.fill();
+            }
+            ctx.fillStyle = r.ap ? '#ffffff' : r.mine ? '#c4cdd9' : '#8b9ab0';
+            ctx.font = (r.ap ? 'bold ' : '') + '11px system-ui,sans-serif';
             ctx.fillText(r.name, q[0] + 7, q[1] + 14);
             if (r.n) {
               dock.filter((s) => s.dId === r.id).forEach((s) => hits.push([q[0] - 12, q[1] - 9, s]));
@@ -304,7 +349,7 @@ body.dk-flight #main th{color:#c4adff}
         const loop = () => {
           if (!cv.isConnected) return;
           ph += 0.05;
-          if (!drag) az += 0.0012;
+          if (!drag && !paused) az += 0.0012;
           if (Date.now() - last > 60000) {
             last = Date.now();
             plan();
@@ -342,7 +387,71 @@ body.dk-flight #main th{color:#c4adff}
             }
           });
           if (best) showShip(best);
+          else if (MC) {
+            // no ship there: a rock? (your rocks and Adalia Prime) → small card; empty space closes it
+            let rk = null,
+              rd = 14;
+            rocks.forEach((r) => {
+              if (!r.mine && !r.ap) return;
+              const q = proj(r.p),
+                d = Math.hypot(q[0] - x, q[1] - y);
+              if (d < rd) {
+                rd = d;
+                rk = r;
+              }
+            });
+            pick(rk);
+          }
         });
+        const card = el.querySelector('.fh-card');
+        const pick = (r) => {
+          sel = r ? r.id : null;
+          if (!r) { card.hidden = true; frame(); return; }
+          const esc = Y.esc || ((x) => String(x));
+          const gl = (window.GL && window.GL('/asteroids/' + r.id, 'Open this asteroid in the game')) ||
+            ' <a href="https://game.influenceth.io/asteroids/' + r.id + '" target="influencegame" rel="noopener">Open in the game ↗</a>';
+          card.innerHTML = '<button type="button" class="fh-cx" title="Close">✕</button><b>' + esc(r.name) + '</b><br>' +
+            Math.hypot(r.p[0], r.p[1], r.p[2]).toFixed(2) + ' AU from the Adalia Star' +
+            (r.n ? '<br>' + r.n + ' of your ships docked' : '') + '<br>' + gl;
+          card.querySelector('.fh-cx').onclick = () => pick(null);
+          card.hidden = false;
+          frame();
+        };
+        if (MC) {
+          const win = el.querySelector('.fh-win'),
+            zoom = (k) => { zf = Math.max(1, Math.min(12, zf * k)); frame(); },
+            pb = el.querySelector('[data-fh="pause"]'),
+            fb = el.querySelector('[data-fh="fs"]'),
+            apcb = el.querySelector('[data-fh="ap"]');
+          el.querySelector('[data-fh="in"]').onclick = () => zoom(1.3);
+          el.querySelector('[data-fh="out"]').onclick = () => zoom(1 / 1.3);
+          pb.onclick = () => {
+            paused = !paused;
+            pb.textContent = paused ? '▶' : '⏸';
+            pb.title = paused ? 'Start the turning again' : 'Pause the turning';
+          };
+          fb.onclick = () => {
+            if (document.fullscreenElement === win) document.exitFullscreen();
+            else if (win.requestFullscreen) win.requestFullscreen().catch(() => {});
+          };
+          document.addEventListener('fullscreenchange', () => {
+            if (!win.isConnected) return;
+            fb.title = document.fullscreenElement === win ? 'Leave full screen (or press Esc)' : 'Full screen';
+            requestAnimationFrame(() => { size(); frame(); });
+          });
+          cv.addEventListener('wheel', (e) => {
+            if (document.fullscreenElement !== win) return; // normal page scrolling when not full screen
+            e.preventDefault();
+            zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
+          }, { passive: false });
+          apcb.checked = apOn();
+          apcb.onchange = () => {
+            try { localStorage.setItem(APK, apcb.checked ? '1' : '0'); } catch (e) {}
+            if (!apcb.checked && sel === 1) pick(null);
+            plan();
+            frame();
+          };
+        }
       })
       .catch(() => {
         const l = el.querySelector('.fh-load');
