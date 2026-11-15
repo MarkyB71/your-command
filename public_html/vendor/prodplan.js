@@ -768,10 +768,10 @@
   // ---------- Cargo bay: two ways to load (Mark, 14 Nov – TEST ONLY, ?beta=1) ----------
   function cmodeBar() {
     const b = (v, t) => `<button type="button" class="dk-shipbtn${(P.cmode || 'make') === v ? ' on' : ''}" data-cmode="${v}" style="cursor:pointer">${t}</button>`;
-    // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Stock movement / Load a fleet
+    // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Load one ship / Load a fleet
     if (FLEET) {
       const cm = P.cmode || 'make';
-      return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Stock movement')}${b('fleet', '🚀 Load a fleet')}</div>` +
+      return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}</div>` +
         `<div class="hint" style="margin:8px 0 0">${cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
           : cm === 'fleet' ? 'Pick a rock, tick the ships parked there, and what to load – it’s spread so each ship carries about the same weight.'
           : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
