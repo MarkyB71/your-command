@@ -661,7 +661,7 @@
     }
     if (!rl.includes(S.rock)) S.rock = rl[0];
     // Cargo bay, TEST ONLY (?beta=1): load for making something, or just pick what's in stock and put it on a ship (Mark, 14 Nov)
-    if (cargo && QLB && P.cmode === 'stock') return stockPage(m);
+    if (cargo && QLB && (P.cmode === 'stock' || (FLEET && P.cmode === 'fleet'))) return stockPage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
     if (TRACK && !cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
@@ -768,11 +768,20 @@
   // ---------- Cargo bay: two ways to load (Mark, 14 Nov – TEST ONLY, ?beta=1) ----------
   function cmodeBar() {
     const b = (v, t) => `<button type="button" class="dk-shipbtn${(P.cmode || 'make') === v ? ' on' : ''}" data-cmode="${v}" style="cursor:pointer">${t}</button>`;
+    // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Stock movement / Load a fleet
+    if (FLEET) {
+      const cm = P.cmode || 'make';
+      return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Stock movement')}${b('fleet', '🚀 Load a fleet')}</div>` +
+        `<div class="hint" style="margin:8px 0 0">${cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
+          : cm === 'fleet' ? 'Pick a rock, tick the ships parked there, and what to load – it’s spread so each ship carries about the same weight.'
+          : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
+    }
     return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}</div>` +
       `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
   }
   // "I'd also like to be able to just pick what's in stock on a rock and send it to a ship" (Mark, 14 Nov)
   function stockPage(m) {
+    const FL = FLEET && P.cmode === 'fleet'; // 🚀 Load a fleet (Mark, 15 Nov – own button)
     const k = K(), esc = k.esc, S = k.S, d = k.D() || {}, rl = k.rocks();
     const SHIPT = { 2: 'Light Transport', 3: 'Heavy Transport' };
     const g = (p) => k.grams(+p), v = (p) => (k.mv()[p] || [1000, 1000])[1];
@@ -795,11 +804,11 @@
     // full = under 1% room left (same rule as the Cargo bay) – greyed out and can't be ticked (Mark, 15 Nov)
     const isFull = (s) => room(s) < 0.01;
     const usedPc = (s) => Math.min(100, Math.round(Math.max(s.useM / s.capM, s.useV / s.capV) * 100));
-    if (FLEET) {
+    if (FL) {
       if (!P.fl) P.fl = P.ss ? [P.ss] : [];
       P.fl = P.fl.filter((id) => ships.some((s) => s.id === id && !isFull(s)));
     }
-    if (FLEET) h += `<div class="card"><h2><span class="n">2</span>Ships to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}. Tick one, or several – the load is spread so each ship carries about the same weight.</div>` +
+    if (FL) h += `<div class="card"><h2><span class="n">2</span>Ships to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}. Tick one, or several – the load is spread so each ship carries about the same weight.</div>` +
       (ships.length ? `<div class="row" style="margin:0 0 6px;gap:8px"><button type="button" class="dk-shipbtn" id="pp-flall">Tick all</button><button type="button" class="dk-shipbtn" id="pp-flnone">Untick all</button></div>` +
         ships.map((s) => isFull(s)
           ? `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;opacity:.45;cursor:not-allowed" title="Full – unload it in the game first"><input type="checkbox" disabled><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · <b style="color:var(--amber)">Full</b> (${k.tonnes(s.useM / 1000)} on board)</span></label>`
@@ -822,8 +831,8 @@
     // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
     S.calls = []; S.startList = []; S.feed = false; S.srcRock = r;
     const picked = Object.keys(P.sq).map(Number).filter((p) => want(p) > 0);
-    const fleet = FLEET ? ships.filter((s) => P.fl.includes(s.id)) : [];
-    if (FLEET && fleet.length && picked.length) {
+    const fleet = FL ? ships.filter((s) => P.fl.includes(s.id)) : [];
+    if (FL && fleet.length && picked.length) {
       const cl = k.crews(r);
       if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
       S.moverObj = cl.find((c) => c.id === S.mover);
@@ -881,7 +890,7 @@
         `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
         `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) +
         `<div class="hint">This only loads the ships. You fly them and unload them in the game yourself.</div></div>`;
-    } else if (!FLEET && ship && picked.length) {
+    } else if (!FL && ship && picked.length) {
       const cl = k.crews(r);
       if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
       S.moverObj = cl.find((c) => c.id === S.mover);
