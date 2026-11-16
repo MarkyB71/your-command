@@ -3,6 +3,9 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
+## 0.7.0 – coming soon
+- **Deck strip stays put** – scrolling the game's My Crews list no longer makes the strip at the bottom jump wider or narrower.
+
 ## 0.6.9 – 15 Nov 2026
 - **No more stray food bar** – crews with no crewmates (the game doesn't show them) no longer leave a food bar floating in the My Crews list.
 

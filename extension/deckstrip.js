@@ -84,8 +84,16 @@
   function gameEdges() {
     let L = 0, R = innerWidth;
     const H = innerHeight, half = innerWidth / 2;
-    for (const el of document.querySelectorAll('body *')) {
+    const all = document.querySelectorAll('body *');
+    // Skip anything inside a scrolling panel (e.g. My Crews) – its cards slide past the bottom
+    // as you scroll and made the strip jump about (Mark, 16 Nov).
+    const scrollers = [];
+    for (const el of all) {
+      if (el.scrollHeight > el.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(el).overflowY)) scrollers.push(el);
+    }
+    for (const el of all) {
       if (bar && bar.contains(el)) continue;
+      if (scrollers.some(s => s !== el && s.contains(el))) continue;
       const r = el.getBoundingClientRect();
       if (r.top < H - 160 || r.bottom > H - 10 || r.height < 18 || r.height > 90) continue;
       // left: the action buttons; right: the clock, timeline controls and orbit button (they grow when the timeline opens)
