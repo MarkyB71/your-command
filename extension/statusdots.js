@@ -6,7 +6,9 @@
 // No dot on warehouses, tank farms, spaceports, marketplaces, habitats, or empty expired sites.
 // It only READS what the game has already loaded (no requests of its own), never clicks or changes
 // anything in the game, and switches itself off quietly if a game update moves things.
-// Off by default – switched on in the extension's options.
+// On by default – can be switched off in the extension's options.
+// It also tells the deck strip which of your rocks is on screen (its "On this rock" card), and opens
+// a building in the game when you pick one there (the game's own /building/ link – no game actions).
 (() => {
   if (window.top !== window) return;
   const root = document.documentElement;
@@ -74,21 +76,26 @@
     (b.Inventories || []).forEach(i => (i.contents || []).forEach(x => { if (x && x.product) got[x.product] = (got[x.product] || 0) + (x.amount || 0); }));
     return Object.keys(need).every(p => (got[p] || 0) >= need[p]);
   }
-  // mine[ast] = Map(lot -> colour or null)
-  let mine = {};
+  // mine[ast] = Map(lot -> colour or null); list[ast] = your buildings there (for the deck strip's "On this rock" card)
+  let mine = {}, list = {};
+  const BT = { 1: 'Warehouse', 2: 'Extractor', 3: 'Refinery', 4: 'Bioreactor', 5: 'Factory', 6: 'Shipyard', 7: 'Spaceport', 8: 'Marketplace', 9: 'Habitat', 10: 'Tank Farm' };
   function readBuildings() {
     if (!qc) qc = findQueryClient();
     if (!qc) return false;
-    const now = Date.now() / 1000, out = {};
+    const now = Date.now() / 1000, out = {}, ls = {};
     qc.getQueryCache().getAll().forEach(q => {
       const k = q.queryKey;
       if (!k || k[0] !== 'entities' || k[1] !== 5 || !k[2] || !Array.isArray(k[2].controllerId) || !k[2].controllerId.length) return;
       (Array.isArray(q.state.data) ? q.state.data : []).forEach(b => {
         const L = lotOf(b); if (!L) return;
-        (out[L.ast] = out[L.ast] || new Map()).set(L.lot, colourOf(b, now));
+        const c = colourOf(b, now), B = b.Building || {};
+        (out[L.ast] = out[L.ast] || new Map()).set(L.lot, c);
+        const seen = (ls[L.ast] = ls[L.ast] || new Map());
+        if (!seen.has(b.id)) seen.set(b.id, { id: b.id, lot: L.lot, t: BT[B.buildingType] || 'Building', st: B.status, n: (b.Name && b.Name.name) || '', c: c || '' });
       });
     });
     mine = out;
+    list = {}; for (const a in ls) list[a] = [...ls[a].values()];
     return Object.keys(out).length > 0;
   }
 
@@ -200,12 +207,38 @@
     return el;
   }
 
-  function refresh() { // every 2 s: buildings, asteroid on screen, colours
+  // The rock on screen, shared with the deck strip (it runs in the extension's own space, so it reads
+  // this from the page's <html> tag). Only your own buildings, only what the game has already loaded.
+  let rockSent = '';
+  function rockName(ast) {
+    let nm = '';
+    try {
+      qc.getQueryCache().getAll().forEach(q => {
+        if (nm) return;
+        const d = q.state.data; (Array.isArray(d) ? d : [d]).forEach(x => { if (!nm && x && x.label === 3 && Number(x.id) === ast && x.Name && x.Name.name) nm = x.Name.name; });
+      });
+    } catch (e) {}
+    return nm || 'Asteroid #' + ast;
+  }
+  function shareRock(ast) {
+    const v = ast == null ? '' : JSON.stringify({ ast, name: rockName(ast), b: list[ast] || [] });
+    if (v !== rockSent) { rockSent = v; if (v) root.dataset.yicRock = v; else delete root.dataset.yicRock; }
+  }
+  // "Go" from the card: open that building in the game – the same as the game's own /building/ link.
+  addEventListener('message', e => {
+    if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== 'yic-goto-building') return;
+    const id = Number(e.data.id); if (!(id > 0)) return;
+    history.pushState({}, '', '/building/' + id);
+    dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  });
+  function clearDots() { if (view) { view.lots.forEach(o => o.el.remove()); view.lots = []; } }
+
+  function refresh(draw) { // every 2 s: buildings, asteroid on screen, colours
     if (!getStore()) return;
     const st = store.getState(), V = st.camera.position.constructor, M = st.camera.matrixWorld.constructor;
     readBuildings();
     const rock = findRock(st.scene);
-    if (!rock) { clearView(); note('waiting for an asteroid view'); return; }
+    if (!rock) { clearView(); shareRock(null); note('waiting for an asteroid view'); return; }
     // key: changes when the game draws a different set of lots/icons (zooming, panning, new buildings)
     const mat = new M(), v = new V();
     const key = rock.uuid + ':' + rock.children.map(m => {
@@ -215,12 +248,14 @@
     }).join('|') + ':' + Object.keys(mine).map(a => mine[a].size).join(',');
     if (!view || view.key !== key) {
       const pts = points(rock, V, M), found = whichAsteroid(rock, pts, V, M);
-      if (!found) { clearView(); view = { rock, ast: null, key, lots: [], pos: new Map() }; note('not one of your asteroids'); return; }
+      if (!found) { clearView(); shareRock(null); view = { rock, ast: null, key, lots: [], pos: new Map() }; note('not one of your asteroids'); return; }
       if (view && view.ast === found.ast && view.rock === rock) { view.key = key; view.pos = found.out; view.lotW = found.lotW; lastKey = ''; }
       else { clearView(); view = { rock, ast: found.ast, key, lots: [], pos: found.out, lotW: found.lotW }; }
     }
     if (view.ast == null) return;
-    if (!mine[view.ast]) { clearView(); return; }
+    if (!mine[view.ast]) { clearView(); shareRock(null); return; }
+    shareRock(view.ast);
+    if (!draw) { clearDots(); note('dots off – rock ' + view.ast + ' shared with the deck strip'); return; }
     if (!layer || !layer.isConnected) makeLayer();
     // (re)build the dots for this asteroid's coloured buildings
     const want = [...mine[view.ast].entries()].filter(([lot, c]) => c && view.pos.has(lot));
@@ -282,8 +317,9 @@
     let on = live('statusDots', true) !== false;
     setInterval(() => {
       on = live('statusDots', true) !== false;
-      if (!on) { clearView(); note('switched off in options'); return; }
-      try { refresh(); } catch (e) { clearView(); note('paused – ' + e.message); }
+      const strip = live('deckStrip', true) !== false; // the strip's "On this rock" card needs the rock too
+      if (!on && !strip) { clearView(); shareRock(null); note('switched off in options'); return; }
+      try { refresh(on); } catch (e) { clearView(); shareRock(null); note('paused – ' + e.message); }
     }, 2000);
     const loop = () => { requestAnimationFrame(loop); if (!on) return; try { frame(); } catch (e) { clearView(); note('paused – ' + e.message); } };
     requestAnimationFrame(loop);

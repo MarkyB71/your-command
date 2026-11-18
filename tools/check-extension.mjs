@@ -183,8 +183,8 @@ try {
   await op.goto('chrome-extension://' + extId + '/' + man.options_ui.page);
   await new Promise(r => setTimeout(r, 800));
   const boxes = await op.$$eval('input[type=checkbox]', b => b.map(x => [x.name, x.checked]));
-  const OFF = []; // everything on by default since 0.6.1 (status dots were off in 0.6.0)
-  check(boxes.length >= 4 && boxes.every(b => b[1] === !OFF.includes(b[0])), 'options page shows ' + boxes.length + ' choices, all on by default', 'options page: ' + JSON.stringify(boxes));
+  const OFF = ['deckAutoHide']; // all on by default since 0.6.1, except auto-hide strip (0.7.1)
+  check(boxes.length >= 4 && boxes.every(b => b[1] === !OFF.includes(b[0])), 'options page shows ' + boxes.length + ' choices, right ones on by default', 'options page: ' + JSON.stringify(boxes));
   const sd = await game.evaluate(() => document.documentElement.dataset.yicStatusDots || '').catch(() => '');
   check(sd && !/switched off/.test(sd), 'status dots on by default (' + sd + ')', 'status dots: ' + sd);
   // Deck strip off → the S button comes back in the open game tab (no refresh); the S button tests below need it off.

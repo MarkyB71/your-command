@@ -2,7 +2,9 @@
 // Shows the Bridge's station consoles in the empty space between the game's
 // action buttons and the clock, in the Command Deck's own look. Numbers come from your Command
 // Deck tab (saved in this browser); until then each console shows "–". Clicking a console opens
-// that deck on your Command Deck. It reads nothing from the game page and never presses anything.
+// that deck on your Command Deck. A separate card at the top of the screen, "On this rock", lists your buildings on the rock
+// on screen (passed on by the status-dots script) – pick one and the game opens it, the same as the
+// game's own building link. It never presses anything in the game.
 (() => {
   if (window.top !== window) return;
   // [deck id, name, colour, tilt, default line] – colours and tilts as on the Bridge
@@ -39,9 +41,90 @@
 #yic-strip .pc span{display:block;font-size:11px;color:#f3e2b0;margin:4px 0 5px}
 #yic-strip .pc i{font:normal 700 9px/1 system-ui,sans-serif;letter-spacing:.18em;color:#ffd24a}
 #yic-strip .sn{display:none}#yic-strip.narrow .fn{display:none}#yic-strip.narrow .sn{display:inline}
+#yic-rocktop{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:230px;z-index:50;font-family:system-ui,sans-serif;cursor:pointer}
+#yic-rocktop .scr{box-sizing:border-box;height:62px;padding:4px 8px;border-radius:2px 2px 6px 6px;overflow:hidden;background:linear-gradient(0deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;
+ border:1px solid #2a3646;border-bottom:2px solid var(--dc);box-shadow:0 0 12px -5px var(--dc),inset 0 0 18px -9px var(--dc);transition:filter .2s,transform .2s}
+#yic-rocktop:hover .scr{filter:drop-shadow(0 0 10px var(--dc));transform:translateY(2px)}
+#yic-rocktop .h{display:flex;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-items:center;gap:4px;font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
+#yic-rocktop .led{margin-left:auto;flex:0 0 6px;height:6px;border-radius:50%;background:var(--dc);box-shadow:0 0 6px var(--dc);animation:yicLed 2.6s ease-in-out infinite}
+#yic-rocktop .n{position:relative;display:block!important;text-align:center!important;padding:0 46px;font:700 14px/1.2 ui-monospace,Menlo,monospace;color:#e6ebf2;text-shadow:0 0 8px var(--dc);margin-top:3px}
+#yic-rocktop .n span:first-child{display:block;text-align:center!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#yic-rocktop .go{position:absolute;right:0;bottom:2px;font:700 9px/1 system-ui,sans-serif;letter-spacing:.18em;color:var(--dc);text-shadow:none;white-space:nowrap}
+#yic-rocktop .l{font-size:11px;color:#c4cdd9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+#yic-pop{position:fixed;z-index:51;width:330px;max-height:min(460px,60vh);display:flex;flex-direction:column;box-sizing:border-box;padding:8px;border-radius:6px;font:12px/1.35 system-ui,sans-serif;color:#e6ebf2;
+ background:#0a1119;border:1px solid #2a3646;border-top:2px solid #57d5ff;box-shadow:0 0 16px -4px #57d5ff}
+#yic-pop{max-height:min(460px,calc(100vh - 110px))}
+#yic-pop .t{display:flex;align-items:center;gap:6px;font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#57d5ff;margin-bottom:6px}
+#yic-pop .t b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#yic-pop .x{cursor:pointer;color:#c4cdd9;font-size:14px;padding:0 4px}
+#yic-pop input{box-sizing:border-box;width:100%;margin-bottom:6px;padding:4px 6px;border-radius:4px;border:1px solid #2a3646;background:#05090e;color:#e6ebf2;font:12px system-ui,sans-serif}
+#yic-pop .ls{overflow-y:auto;flex:1}
+#yic-pop .g{margin:6px 0 2px;font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#8a96a6}
+#yic-pop .b{display:flex;align-items:center;gap:6px;padding:3px 5px;border-radius:3px;cursor:pointer}
+#yic-pop .b:hover{background:rgba(87,213,255,.14)}
+#yic-pop .b i{flex:0 0 7px;height:7px;border-radius:50%;background:#2a3646}
+#yic-pop .b span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#yic-pop .b em{font-style:normal;color:#8a96a6;font-size:11px}
+#yic-pop .none{color:#8a96a6;padding:6px}
+#yic-strip.ah{pointer-events:auto}
+#yic-strip.ah .st .scr{opacity:0;transform:translateY(40px);transition:opacity .25s,transform .25s}
+#yic-strip.ah:hover .st .scr{opacity:1;transform:none}
 @keyframes yicLed{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){#yic-strip .led{animation:none}#yic-strip .st,#yic-strip .pc{transition:none}}`;
-  let on = true, bar = null, data = {};
+  // Auto-hide (option, off by default): only the strip's base lights show until you hover over it (Mark, 18 Nov).
+  let autoHide = false;
+  chrome.storage.sync.get({ deckAutoHide: false }, o => { autoHide = !!o.deckAutoHide; if (bar) bar.classList.toggle('ah', autoHide); });
+  let on = true, bar = null, data = {}, rock = null, pop = null, q = '';
+  // Order of building types in the list – set in the extension's options (storage first by default).
+  let order = ['Warehouse', 'Tank Farm', 'Extractor', 'Refinery', 'Bioreactor', 'Factory', 'Shipyard', 'Spaceport', 'Marketplace', 'Habitat'];
+  chrome.storage.sync.get({ rockOrder: order }, o => { if (Array.isArray(o.rockOrder)) order = o.rockOrder; });
+  // Your buildings on the rock on screen – the status-dots script (in the page) leaves it on <html> for us.
+  const DOT = { green: '#57ff65', yellow: '#ffd94f', red: '#ff564d' };
+  const STATE = { 0: 'empty', 1: 'planned', 2: 'being built', 3: '' };
+  function readRock() {
+    let r = null; try { r = JSON.parse(document.documentElement.dataset.yicRock || 'null'); } catch (e) {}
+    const was = rock ? rock.ast + ':' + rock.b.length + rock.name : '', now = r ? r.ast + ':' + r.b.length + r.name : '';
+    rock = r;
+    if (was !== now) drawTop();
+    if (pop) { if (!rock) closePop(); else listPop(); }
+  }
+  new MutationObserver(readRock).observe(document.documentElement, { attributes: true, attributeFilter: ['data-yic-rock'] });
+  const label = b => b.n || (b.t + ' – lot ' + b.lot.toLocaleString());
+  function closePop() { if (pop) { pop.remove(); pop = null; } }
+  function openPop(card) {
+    if (pop) { closePop(); return; }
+    pop = document.createElement('div'); pop.id = 'yic-pop';
+    pop.innerHTML = '<div class="t"><b></b><span class="x" title="Close">✕</span></div><input type="search" placeholder="Find a building…"><div class="ls"></div>';
+    document.body.appendChild(pop);
+    const r = card.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(innerWidth - 338, r.left + r.width / 2 - 165)) + 'px';
+    pop.style.top = Math.round(r.bottom + 8) + 'px';
+    pop.querySelector('.x').onclick = closePop;
+    const inp = pop.querySelector('input'); inp.value = q;
+    // keep typing out of the game's own keyboard shortcuts
+    ['keydown', 'keyup', 'keypress'].forEach(k => inp.addEventListener(k, e => { e.stopPropagation(); if (k === 'keydown' && e.key === 'Escape') closePop(); }));
+    inp.addEventListener('input', () => { q = inp.value; listPop(); });
+    pop.addEventListener('click', e => {
+      const row = e.target.closest('[data-id]'); if (!row) return;
+      window.postMessage({ type: 'yic-goto-building', id: Number(row.dataset.id) }, location.origin);
+      closePop();
+    });
+    listPop(); inp.focus();
+  }
+  function listPop() {
+    if (!pop || !rock) return;
+    pop.querySelector('.t b').textContent = rock.name + ' – ' + rock.b.length + ' buildings';
+    const f = q.trim().toLowerCase(), groups = {};
+    rock.b.filter(b => !f || (label(b) + ' ' + b.t).toLowerCase().includes(f))
+      .forEach(b => (groups[b.t] = groups[b.t] || []).push(b));
+    const rank = t => { const i = order.indexOf(t); return i < 0 ? 99 : i; };
+    const html = Object.keys(groups).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).map(t => '<div class="g">' + esc(t) + ' (' + groups[t].length + ')</div>' +
+      groups[t].sort((a, b) => label(a).localeCompare(label(b), undefined, { numeric: true })).map(b =>
+        '<div class="b" data-id="' + b.id + '" title="Open in the game"><i' + (DOT[b.c] ? ' style="background:' + DOT[b.c] + '"' : '') + '></i><span>' + esc(label(b)) + '</span>' +
+        (STATE[b.st] ? '<em>' + STATE[b.st] + '</em>' : '') + '</div>').join('')).join('');
+    pop.querySelector('.ls').innerHTML = html || '<div class="none">No buildings match.</div>';
+  }
+  addEventListener('mousedown', e => { if (pop && !pop.contains(e.target) && !(top && top.contains(e.target))) closePop(); }, true);
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const go = id => { try { chrome.runtime.sendMessage({ type: 'yic-deck', id }); } catch (e) {} };
@@ -55,11 +138,26 @@
     }
     bar = document.createElement('div');
     bar.id = 'yic-strip';
+    bar.classList.toggle('ah', autoHide);
     bar.style.display = 'none'; // shown by fit() once it has found the game's buttons
     document.body.appendChild(bar);
     draw(); fit();
   }
-  function remove() { if (bar) { bar.remove(); bar = null; } }
+  function remove() { closePop(); if (top) { top.remove(); top = null; } if (bar) { bar.remove(); bar = null; } }
+  // "On this rock" sits on its own at the top of the screen (Mark, 18 Nov: too many cards along the bottom).
+  let top = null;
+  function drawTop() {
+    if (!rock || !on) { if (top) { top.remove(); top = null; } return; }
+    if (!top) {
+      top = document.createElement('div'); top.id = 'yic-rocktop';
+      top.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openPop(top); });
+      document.body.appendChild(top);
+    }
+    top.innerHTML = '<div class="st rk" style="--dc:#57d5ff" title="Your buildings on this rock – pick one to jump to it"><div class="scr">' +
+      '<div class="h"><span>' + esc(rock.name) + '</span><i class="led"></i></div>' +
+      '<div class="n"><span>Buildings</span><span class="go">PICK ▾</span></div>' +
+      '<div class="l">' + rock.b.length + ' of your buildings</div></div></div>';
+  }
 
   function draw() {
     if (!bar) return;
@@ -73,6 +171,7 @@
         (d.w ? '<div class="w">' + esc(d.w) + '</div>' : '') +
         '</div><div class="base"><i></i><i></i><i></i><i></i></div></div>';
     }).join('');
+    drawTop();
     bar.querySelectorAll('[data-k]').forEach(t => {
       if (t.dataset.k === 'weapons') return;
       t.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); go(t.dataset.k); });
@@ -125,10 +224,12 @@
 
   chrome.storage.sync.get({ deckStrip: true }, o => {
     on = o.deckStrip !== false;
-    chrome.storage.local.get({ deckSummary: {} }, x => { data = x.deckSummary || {}; build(); });
+    chrome.storage.local.get({ deckSummary: {} }, x => { data = x.deckSummary || {}; build(); readRock(); });
   });
   chrome.storage.onChanged.addListener((ch, area) => {
     if (area === 'sync' && ch.deckStrip) { on = ch.deckStrip.newValue !== false; on ? build() : remove(); }
+    if (area === 'sync' && ch.deckAutoHide) { autoHide = !!ch.deckAutoHide.newValue; if (bar) bar.classList.toggle('ah', autoHide); }
+    if (area === 'sync' && ch.rockOrder && Array.isArray(ch.rockOrder.newValue)) { order = ch.rockOrder.newValue; listPop(); }
     if (area === 'local' && ch.deckSummary) { data = ch.deckSummary.newValue || {}; draw(); }
   });
   if (!document.body) document.addEventListener('DOMContentLoaded', build);
