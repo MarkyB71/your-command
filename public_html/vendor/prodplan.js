@@ -58,7 +58,7 @@
       const o = { i, st, r, bt, left, runningFin, toCollect };
       if (runningFin) o.s = 'run'; else if (toCollect) o.s = 'collect'; else if (!left) o.s = 'done';
       if (!left) return o;
-      // still running but runs left (Mark, 15 Nov – TEST ONLY, ?beta=1): "nothing ready" while a second Bioreactor
+      // still running but runs left (Mark, 15 Nov – LIVE 18 Nov): "nothing ready" while a second Bioreactor
       // sat free with the inputs there. Now the rest can start in another free building while this one runs.
       if (o.s) { o.why = left.toLocaleString('en-GB') + ' runs still to start after this'; if (!PKB) return o; }
       const busy = o.s;
@@ -240,7 +240,7 @@
     return '<div class="hint">⛏ You’ll mine these, not make them: ' +
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
-  const PKB = /[?&]beta=1\b/.test(location.search); // pick which ready process to start next (Mark, 14 Nov – TEST ONLY)
+  const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {

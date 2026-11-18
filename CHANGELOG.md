@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 18 Nov 2026 – Production plans: a step that's still running but has runs left can now start the rest in another free building of the same type (it used to say "Nothing ready to start yet"). Tick boxes let you choose which ready processes go in the approval. Help page updated. Asked for by Mark.
+
 ## 18 Nov 2026 – Construction planner: "in game ↗" link next to the ship on the First send and Then send lines (shows with the extension installed).
 
 ## 16 Nov 2026 – Extension 0.7.0 is on the Chrome Web Store: the deck strip at the bottom of the game no longer jumps about when you scroll the My Crews list.
