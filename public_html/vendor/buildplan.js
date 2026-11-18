@@ -287,7 +287,7 @@ export function drawBuildPlan(m){
         const half=!canMk(Y,D,dAst,'170',{})&&!(NFC&&refHere());
         try{f=await T.fastest(a.o,b.o,now,half?T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load+P/2,P/2):T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,P),2000)}catch(e){}
         if(me!==run||!ln.isConnected)return;
-        ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b> ';
+        ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' ';
         {ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option>'+(NFC?'<option value="pct"'+(pct?' selected':'')+'>choose how much</option>':'')+'<option value="now"'+(full||pct?'':' selected')+'>propellant as it is now</option></select>'+
           (pct?' <input type="range" class="bp-fpc" min="5" max="100" step="5" value="'+(S.fpc||100)+'" style="vertical-align:middle;width:140px"> <b class="bp-fpcl">'+(S.fpc||100)+'% ('+tkg(P)+')</b>':'')+(half?', <b>½ fuel</b>':'')+')';
           const redo=()=>m.querySelectorAll('.bp-then').forEach(x=>{if(x.dataset.ship)thenOne(x)});
@@ -317,7 +317,7 @@ export function drawBuildPlan(m){
           try{f=await T.fastest(O[b.dId].o,to.o,t0(b),T.maxDeltaV(b.st,b.sv||1,bon(b),0,b.prop*1000),2000)}catch(e){}
           if(me!==run||!x.isConnected)return;
           x.className='bp-first';const top=m.querySelector('#bpFirst');if(top&&x.parentNode!==top)top.appendChild(x);
-          const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+(o.sh.fl?'✈ landing on '+esc(anOf(o.sh))+(o.w>0?' in '+HW(o.w):''):esc(anOf(o.sh)))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>':'<b>'+esc(b.name)+'</b> from <b>'+esc(anOf(b))+'</b>';
+          const pickB=top&&L.length>1?'<select class="bp-shsel">'+L.map((o,n)=>'<option value="'+n+'"'+(n===k?' selected':'')+'>'+esc(o.sh.name)+' – '+(o.sh.fl?'✈ landing on '+esc(anOf(o.sh))+(o.w>0?' in '+HW(o.w):''):esc(anOf(o.sh)))+' ('+o.d.toFixed(2)+' AU)</option>').join('')+'</select>'+(window.GL?window.GL('/ship/'+b.id,'Open this ship in the game'):''):'<b>'+esc(b.name)+'</b>'+(window.GL?window.GL('/ship/'+b.id,'Open this ship in the game'):'')+' from <b>'+esc(anOf(b))+'</b>';
           x.innerHTML='🚀 First send '+pickB+(top?' to <b class="bp-dst">'+esc(toN)+'</b>':'')+' <span class="bp-ft">('+(b.fl&&it.w>0?'in flight – leaves when it lands in '+HW(it.w)+', then ':'')+(f?HW(f.tof)+', empty':it.d.toFixed(2)+' AU away – may be out of range')+')</span>';
           thenFor(x.dataset.to,b.id);
           const sel=x.querySelector('.bp-shsel');if(sel)sel.onchange=e=>{x.querySelector('.bp-ft').textContent='(working out…)';show(+e.target.value)}};

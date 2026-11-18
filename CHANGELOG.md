@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 18 Nov 2026 – Construction planner: "in game ↗" link next to the ship on the First send and Then send lines (shows with the extension installed).
+
 ## 16 Nov 2026 – Extension 0.7.0 is on the Chrome Web Store: the deck strip at the bottom of the game no longer jumps about when you scroll the My Crews list.
 
 ## 15 Nov 2026 – Extension 0.6.9 is on the Chrome Web Store: crews with no crewmates no longer leave a stray food bar in the game's My Crews list.
