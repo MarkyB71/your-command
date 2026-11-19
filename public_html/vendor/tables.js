@@ -207,6 +207,9 @@
   function topLine() {
     var bar = document.querySelector('.bar[data-mv="1"]') || document.querySelector('header');
     var y = bar ? bar.getBoundingClientRect().bottom : 0;
+    // On a deck viewscreen the page scrolls inside .dkr-pg, so stick to its top (below its padding) instead.
+    var pg = main && main.closest && main.closest('.dkr-pg');
+    if (pg) y = Math.max(y, pg.getBoundingClientRect().top + (parseFloat(getComputedStyle(pg).paddingTop) || 0));
     return Math.max(0, y);
   }
   var raf = 0;
@@ -232,7 +235,8 @@
     });
   }
 
-  window.addEventListener('scroll', stick, { passive: true });
+  // capture: also catches scrolling inside the deck viewscreen (.dkr-pg), which doesn't bubble to window
+  document.addEventListener('scroll', stick, { passive: true, capture: true });
   window.addEventListener('resize', stick);
 
   var obs = null, pending = 0;
