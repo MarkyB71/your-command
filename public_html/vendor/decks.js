@@ -320,7 +320,6 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
 #deckroom.scr .dkr-vs{width:93%}
 .dkr-pg{position:relative;height:clamp(380px,66vh,860px);overflow:auto;padding:36px 18px 16px;clip-path:polygon(3% 0,97% 0,100% 5%,100% 100%,0 100%,0 5%);background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 0,#0d1825,#05080d 75%);scrollbar-color:#2c3a4c transparent}
 #deckroom .dkr-pg > #main{margin:0!important;padding:0!important;max-width:none!important;background:none!important;border:0!important;box-shadow:none!important}
-#deckroom .dkr-pg th{transform:none!important}
 #deckroom .dkr-pg .pc-bar.stick{top:0!important}
 @keyframes dkrLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes dkrBlink{0%,92%,100%{opacity:.25}95%{opacity:1}}
