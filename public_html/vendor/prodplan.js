@@ -1020,7 +1020,7 @@
       const out = rows[top] = [];
       const walk = (p, path, d) => {
         const go = !stopAt.has(p) && !k.canMine(p) && rOf(p).length && !path.includes(p) && d < 9;
-        out.push({ p, d, x: go ? pickR(p) : null }); if (!need.has(p)) need.set(p, []); need.get(p).push(d);
+        out.push({ p, d, x: go ? pickR(p) : null, key: path.concat(p).join('-'), par: path.join('-') }); if (!need.has(p)) need.set(p, []); need.get(p).push(d);
         if (go) { const x = pickR(p); Object.keys(x.inp).forEach((ip) => walk(+ip, path.concat(p), d + 1)); }
       };
       const x = pickR(top); if (x) Object.keys(x.inp).forEach((ip) => walk(+ip, [top], 1));
@@ -1089,8 +1089,11 @@
           recLine(p, x, rs, 0) +
           `<div class="src">Most from all the stock on ${esc(r)}: <b>${k.amt(p, a.q)}</b>${a.lim != null ? ' – ' + esc(k.pname(a.lim)) + ' runs out first' : ''}</div>` +
           `<div class="src">With what’s in ${dest ? esc(k.nm(dest)) : 'the storage'} after these moves: <b>${k.amt(p, b.q)}</b></div>` +
-          `<details class="dkp-fold" data-gch="${p}"${(P.gopen || {})[p] ? ' open' : ''} style="margin-top:6px"><summary>Show the chain (${(rows[p] || []).length} items)</summary>` + (rows[p] || []).map((z) => `<div style="margin:3px 0 3px ${(z.d - 1) * 18}px;padding-left:8px;border-left:3px solid ${lc(z.d)}"><span class="src">${dot(z.d)}<b>${esc(k.pname(z.p))}</b> · ${k.amt(z.p, allOn(z.p))} on ${esc(r)}${(need.get(z.p) || []).length > 1 ? ' · <i>also used elsewhere</i>' : ''}</span>` +
-            (z.x ? recLine(z.p, z.x, rOf(z.p), 0).replace('margin:2px 0 2px 0px', 'margin:1px 0 0 16px') : '') + '</div>').join('') + '</details></div>';
+          `<details class="dkp-fold" data-gch="${p}"${(P.gopen || {})[p] ? ' open' : ''} style="margin-top:6px"><summary>Show the chain (${(rows[p] || []).length} items)</summary>` + (() => { P.gx = P.gx || {}; const shown = {}; shown[String(p)] = true; return (rows[p] || []).map((z) => {
+            if (!shown[z.par]) return ''; shown[z.key] = !!(z.x && P.gx[z.key]);
+            return `<div style="margin:3px 0 3px ${(z.d - 1) * 18}px;padding-left:8px;border-left:3px solid ${lc(z.d)}"><span class="src">${dot(z.d)}<b>${esc(k.pname(z.p))}</b> · ${k.amt(z.p, allOn(z.p))} on ${esc(r)}${(need.get(z.p) || []).length > 1 ? ' · <i>also used elsewhere</i>' : ''}</span>` +
+              (z.x ? ` <button type="button" class="dk-shipbtn" data-gx="${esc(z.key)}" style="cursor:pointer;padding:1px 6px">${shown[z.key] ? '▾ hide' : '▸ how it’s made'}</button>` + (shown[z.key] ? recLine(z.p, z.x, rOf(z.p), 0).replace('margin:2px 0 2px 0px', 'margin:1px 0 0 16px') : '') : '') + '</div>';
+          }).join(''); })() + '</details></div>';
       }).join('');
       P.gtree = [...need.keys()].filter((p) => !P.gm.includes(p));
       const card = (gh ? (legend ? `<div style="margin:8px 0 2px">${legend}</div>` : '') + gh +
@@ -1116,6 +1119,7 @@
     m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
     m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
     m.querySelectorAll('[data-gch]').forEach((d) => d.addEventListener('toggle', () => { P.gopen = P.gopen || {}; P.gopen[d.dataset.gch] = d.open; }));
+    m.querySelectorAll('[data-gx]').forEach((b) => b.addEventListener('click', () => { const key = b.dataset.gx; if (P.gx[key]) delete P.gx[key]; else P.gx[key] = 1; k.render(); }));
     on('pp-gneed', 'click', () => { P.mq = {}; Object.keys(gneed).map(Number).forEach((p) => { const n = useAmt(p); if (n > 0 && !(tank && !k.TANKOK.has(p))) setQ(p, n); }); k.render(); });
     m.querySelectorAll('[data-muse]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.muse; setQ(p, useAmt(p)); k.render(); }));
     on('pp-gall', 'click', () => {
