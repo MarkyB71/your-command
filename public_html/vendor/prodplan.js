@@ -1011,12 +1011,17 @@
       gmAt = h.length;
     }
     const f = (P.mfind || '').trim().toLowerCase();
-    const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
+    // highlight in step 4 what the step 3 picks need (Mark, 19 Nov): the same walk as the trees in step 3
+    const need = new Set();
+    if (GMB) { const walk = (p, path, d) => { need.add(p); const key = path.concat(p).join('-'); if (rOf(p).length && !path.includes(p) && d < 8 && (P.gx || {})[key]) { const x = pickR(p); Object.keys(x.inp).forEach((ip) => walk(+ip, path.concat(p), d + 1)); } };
+      P.gm.forEach((p) => { const x = pickR(p); if (x) Object.keys(x.inp).forEach((ip) => walk(+ip, [p], 0)); }); }
+    const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => need.has(b) - need.has(a) || !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
     h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">Everything in the other storage on ${esc(r)}. Type how much of each to move, or press ALL.</div>` +
       `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
       (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Move</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
-        return `<tr><td>${esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
+        const nd = need.has(p);
+        return `<tr${nd ? ' style="background:#ffb03b1f;box-shadow:inset 4px 0 0 var(--amber)"' : ''}><td>${nd ? '<b style="color:var(--amber)">' + esc(k.pname(p)) + '</b> <span class="src" style="color:var(--amber)">· needed</span>' : esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
           (bulk ? `<select data-mu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
           `<button type="button" class="dk-shipbtn" data-mall="${p}" style="cursor:pointer"${no ? ' disabled' : ''}>ALL</button></div></td></tr>`;
       }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing else in storage on ' + esc(r) + '.'}</div>`) + '</div>';
