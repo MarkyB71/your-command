@@ -7,6 +7,7 @@
    Pages are not changed: this file works on the tables after each page draws. */
 (function () {
   'use strict';
+  var VSB = /[?&]beta=1\b/.test(location.search);
   var CSS =
     '#main th{cursor:default;position:relative;z-index:3}' +
     '#main th.yic-s{cursor:pointer}' +
@@ -208,7 +209,7 @@
     var bar = document.querySelector('.bar[data-mv="1"]') || document.querySelector('header');
     var y = bar ? bar.getBoundingClientRect().bottom : 0;
     // On a deck viewscreen the page scrolls inside .dkr-pg, so stick to its top (below its padding) instead.
-    var pg = main && main.closest && main.closest('.dkr-pg');
+    var pg = VSB && main && main.closest && main.closest('.dkr-pg');
     if (pg) y = Math.max(y, pg.getBoundingClientRect().top + (parseFloat(getComputedStyle(pg).paddingTop) || 0));
     return Math.max(0, y);
   }
@@ -229,14 +230,20 @@
         t.__yicDy = dy;
         t.classList.toggle('yic-stuck', on);
         Array.prototype.forEach.call(t.tHead.rows, function (tr) {
-          Array.prototype.forEach.call(tr.cells, function (th) { th.style.transform = on ? 'translateY(' + dy + 'px)' : ''; });
+          Array.prototype.forEach.call(tr.cells, function (th) {
+            // !important inline beats decks.js '#deckroom .dkr-pg th{transform:none!important}'
+            if (VSB) th.style.setProperty('transform', on ? 'translateY(' + dy + 'px)' : '', on ? 'important' : '');
+            else th.style.transform = on ? 'translateY(' + dy + 'px)' : '';
+          });
         });
       });
     });
   }
 
-  // capture: also catches scrolling inside the deck viewscreen (.dkr-pg), which doesn't bubble to window
-  document.addEventListener('scroll', stick, { passive: true, capture: true });
+  // VSB (TEST ONLY ?beta=1, 19 Nov 2026 – Mark): headings also stay in view on a deck viewscreen (.dkr-pg).
+  // capture catches scrolling inside .dkr-pg, which doesn't bubble to window.
+  if (VSB) document.addEventListener('scroll', stick, { passive: true, capture: true });
+  else window.addEventListener('scroll', stick, { passive: true });
   window.addEventListener('resize', stick);
 
   var obs = null, pending = 0;
