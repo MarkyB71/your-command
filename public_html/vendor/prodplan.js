@@ -1086,7 +1086,7 @@
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; P.gm = []; P.gr = {}; S.msg = ''; k.render(); });
     on('pp-md', 'change', (e) => { P.mdest = +e.target.value; S.msg = ''; k.render(); });
-    on('pp-mfind', 'input', (e) => { P.mfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-mfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
+    on('pp-mfind', 'input', (e) => { P.mfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = document.getElementById('pp-mfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-mq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.mq; P.mq[p] = Object.assign(P.mq[p] || {}, { q: e.value }); k.render(); }));
     m.querySelectorAll('[data-mu]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.mu; P.mq[p] = Object.assign(P.mq[p] || {}, { unit: e.value }); k.render(); }));
     m.querySelectorAll('[data-mall]').forEach((e) => e.addEventListener('click', () => {
@@ -1096,7 +1096,7 @@
     }));
     on('pp-mcrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
     on('pp-mgo', 'click', () => k.approve());
-    on('pp-gfind', 'input', (e) => { P.gfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-gfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
+    on('pp-gfind', 'input', (e) => { P.gfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = document.getElementById('pp-gfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
     m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
     m.querySelectorAll('[data-gx]').forEach((b) => b.addEventListener('click', () => { const key = b.dataset.gx; if (P.gx[key]) delete P.gx[key]; else P.gx[key] = 1; k.render(); }));
