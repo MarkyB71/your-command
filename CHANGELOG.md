@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 19 Nov 2026 – Extension 0.7.1 is on the Chrome Web Store: a Buildings card at the top of the game lists your buildings on the rock you're looking at – pick one to jump to it (order set in Options, storage first). New option to hide the deck strip until you hover.
+
 ## 18 Nov 2026 – Production plans: a step that's still running but has runs left can now start the rest in another free building of the same type (it used to say "Nothing ready to start yet"). Tick boxes let you choose which ready processes go in the approval. Help page updated. Asked for by Mark.
 
 ## 18 Nov 2026 – Construction planner: "in game ↗" link next to the ship on the First send and Then send lines (shows with the extension installed).

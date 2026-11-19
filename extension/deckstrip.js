@@ -41,7 +41,7 @@
 #yic-strip .pc span{display:block;font-size:11px;color:#f3e2b0;margin:4px 0 5px}
 #yic-strip .pc i{font:normal 700 9px/1 system-ui,sans-serif;letter-spacing:.18em;color:#ffd24a}
 #yic-strip .sn{display:none}#yic-strip.narrow .fn{display:none}#yic-strip.narrow .sn{display:inline}
-#yic-rocktop{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:230px;z-index:50;font-family:system-ui,sans-serif;cursor:pointer}
+#yic-rocktop{position:fixed;top:10px;right:250px;width:230px;z-index:50;font-family:system-ui,sans-serif;cursor:pointer}
 #yic-rocktop .scr{box-sizing:border-box;height:62px;padding:4px 8px;border-radius:2px 2px 6px 6px;overflow:hidden;background:linear-gradient(0deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;
  border:1px solid #2a3646;border-bottom:2px solid var(--dc);box-shadow:0 0 12px -5px var(--dc),inset 0 0 18px -9px var(--dc);transition:filter .2s,transform .2s}
 #yic-rocktop:hover .scr{filter:drop-shadow(0 0 10px var(--dc));transform:translateY(2px)}
@@ -57,7 +57,9 @@
 #yic-pop .t{display:flex;align-items:center;gap:6px;font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#57d5ff;margin-bottom:6px}
 #yic-pop .t b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #yic-pop .x{cursor:pointer;color:#c4cdd9;font-size:14px;padding:0 4px}
-#yic-pop input{box-sizing:border-box;width:100%;margin-bottom:6px;padding:4px 6px;border-radius:4px;border:1px solid #2a3646;background:#05090e;color:#e6ebf2;font:12px system-ui,sans-serif}
+#yic-pop input[type=search]{box-sizing:border-box;width:100%;margin-bottom:6px;padding:4px 6px;border-radius:4px;border:1px solid #2a3646;background:#05090e;color:#e6ebf2;font:12px system-ui,sans-serif}
+#yic-pop .hp{display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:12px;color:#c4cdd9;cursor:pointer}
+#yic-pop .hp input{width:auto;margin:0;padding:0;accent-color:#57d5ff}
 #yic-pop .ls{overflow-y:auto;flex:1}
 #yic-pop .g{margin:6px 0 2px;font:700 10px/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#8a96a6}
 #yic-pop .b{display:flex;align-items:center;gap:6px;padding:3px 5px;border-radius:3px;cursor:pointer}
@@ -66,18 +68,32 @@
 #yic-pop .b span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #yic-pop .b em{font-style:normal;color:#8a96a6;font-size:11px}
 #yic-pop .none{color:#8a96a6;padding:6px}
+#yic-rocktop.ah .scr{opacity:0;transform:translateY(-20px);transition:opacity .25s,transform .25s}
+#yic-rocktop.ah:hover .scr,#yic-rocktop.ah.open .scr{opacity:1;transform:none}
+#yic-rocktop.ah::before{content:'BUILDINGS';position:absolute;top:-10px;left:50%;transform:translateX(-50%);padding:4px 18px 5px;font:700 9px/1 system-ui,sans-serif;letter-spacing:.18em;color:#57d5ff;text-shadow:0 0 6px #57d5ff;white-space:nowrap;
+ background:linear-gradient(0deg,#1f2a38,#0d131b);border-bottom:2px solid #57d5ff;box-shadow:0 3px 8px -4px #57d5ff;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);transition:opacity .25s}
+#yic-rocktop.ah:hover::before,#yic-rocktop.ah.open::before{opacity:0}
 #yic-strip.ah{pointer-events:auto}
 #yic-strip.ah .st .scr{opacity:0;transform:translateY(40px);transition:opacity .25s,transform .25s}
 #yic-strip.ah:hover .st .scr{opacity:1;transform:none}
+#yic-strip.ah .st .base{opacity:0;transition:opacity .25s}
+#yic-strip.ah:hover .st .base{opacity:1}
+#yic-strip.ah::after{content:'COMMAND DECK';position:absolute;bottom:0;left:50%;transform:translateX(-50%);padding:5px 22px 4px;font:700 9px/1 system-ui,sans-serif;letter-spacing:.18em;color:#57d5ff;text-shadow:0 0 6px #57d5ff;white-space:nowrap;
+ background:linear-gradient(180deg,#1f2a38,#0d131b);border-top:2px solid #57d5ff;box-shadow:0 -3px 8px -4px #57d5ff;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);pointer-events:none;transition:opacity .25s}
+#yic-strip.ah:hover::after{opacity:0}
 @keyframes yicLed{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){#yic-strip .led{animation:none}#yic-strip .st,#yic-strip .pc{transition:none}}`;
   // Auto-hide (option, off by default): only the strip's base lights show until you hover over it (Mark, 18 Nov).
   let autoHide = false;
-  chrome.storage.sync.get({ deckAutoHide: false }, o => { autoHide = !!o.deckAutoHide; if (bar) bar.classList.toggle('ah', autoHide); });
+  chrome.storage.sync.get({ deckAutoHide: false }, o => { autoHide = !!o.deckAutoHide; if (bar) bar.classList.toggle('ah', autoHide); if (top) top.classList.toggle('ah', autoHide); });
   let on = true, bar = null, data = {}, rock = null, pop = null, q = '';
   // Order of building types in the list – set in the extension's options (storage first by default).
   let order = ['Warehouse', 'Tank Farm', 'Extractor', 'Refinery', 'Bioreactor', 'Factory', 'Shipyard', 'Spaceport', 'Marketplace', 'Habitat'];
   chrome.storage.sync.get({ rockOrder: order }, o => { if (Array.isArray(o.rockOrder)) order = o.rockOrder; });
+  // "Hide planned sites" tick box in the list – remembered in this browser (Mark, 18 Nov).
+  let hidePlanned = false;
+  chrome.storage.sync.get({ rockHidePlanned: false }, o => { hidePlanned = !!o.rockHidePlanned; drawTop(); listPop(); });
+  const shownB = () => rock ? rock.b.filter(b => !(hidePlanned && b.st === 1)) : [];
   // Your buildings on the rock on screen – the status-dots script (in the page) leaves it on <html> for us.
   const DOT = { green: '#57ff65', yellow: '#ffd94f', red: '#ff564d' };
   const STATE = { 0: 'empty', 1: 'planned', 2: 'being built', 3: '' };
@@ -90,17 +106,19 @@
   }
   new MutationObserver(readRock).observe(document.documentElement, { attributes: true, attributeFilter: ['data-yic-rock'] });
   const label = b => b.n || (b.t + ' – lot ' + b.lot.toLocaleString());
-  function closePop() { if (pop) { pop.remove(); pop = null; } }
+  function closePop() { if (pop) { pop.remove(); pop = null; } if (top) top.classList.remove('open'); }
   function openPop(card) {
     if (pop) { closePop(); return; }
-    pop = document.createElement('div'); pop.id = 'yic-pop';
-    pop.innerHTML = '<div class="t"><b></b><span class="x" title="Close">✕</span></div><input type="search" placeholder="Find a building…"><div class="ls"></div>';
+    pop = document.createElement('div'); pop.id = 'yic-pop'; card.classList.add('open');
+    pop.innerHTML = '<div class="t"><b></b><span class="x" title="Close">✕</span></div><input type="search" placeholder="Find a building…"><label class="hp"><input type="checkbox"> Hide planned sites</label><div class="ls"></div>';
     document.body.appendChild(pop);
     const r = card.getBoundingClientRect();
     pop.style.left = Math.max(8, Math.min(innerWidth - 338, r.left + r.width / 2 - 165)) + 'px';
     pop.style.top = Math.round(r.bottom + 8) + 'px';
     pop.querySelector('.x').onclick = closePop;
-    const inp = pop.querySelector('input'); inp.value = q;
+    const inp = pop.querySelector('input[type=search]'); inp.value = q;
+    const hp = pop.querySelector('.hp input'); hp.checked = hidePlanned;
+    hp.addEventListener('change', () => { hidePlanned = hp.checked; chrome.storage.sync.set({ rockHidePlanned: hidePlanned }); drawTop(); listPop(); });
     // keep typing out of the game's own keyboard shortcuts
     ['keydown', 'keyup', 'keypress'].forEach(k => inp.addEventListener(k, e => { e.stopPropagation(); if (k === 'keydown' && e.key === 'Escape') closePop(); }));
     inp.addEventListener('input', () => { q = inp.value; listPop(); });
@@ -113,9 +131,9 @@
   }
   function listPop() {
     if (!pop || !rock) return;
-    pop.querySelector('.t b').textContent = rock.name + ' – ' + rock.b.length + ' buildings';
+    pop.querySelector('.t b').textContent = rock.name + ' – ' + shownB().length + ' buildings';
     const f = q.trim().toLowerCase(), groups = {};
-    rock.b.filter(b => !f || (label(b) + ' ' + b.t).toLowerCase().includes(f))
+    shownB().filter(b => !f || (label(b) + ' ' + b.t).toLowerCase().includes(f))
       .forEach(b => (groups[b.t] = groups[b.t] || []).push(b));
     const rank = t => { const i = order.indexOf(t); return i < 0 ? 99 : i; };
     const html = Object.keys(groups).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).map(t => '<div class="g">' + esc(t) + ' (' + groups[t].length + ')</div>' +
@@ -144,19 +162,20 @@
     draw(); fit();
   }
   function remove() { closePop(); if (top) { top.remove(); top = null; } if (bar) { bar.remove(); bar = null; } }
-  // "On this rock" sits on its own at the top of the screen (Mark, 18 Nov: too many cards along the bottom).
+  // "On this rock" sits on its own top right, left of the SWAY balance (Mark, 18 Nov: too many cards along the bottom; the game's pop-ups covered it top centre).
   let top = null;
   function drawTop() {
     if (!rock || !on) { if (top) { top.remove(); top = null; } return; }
     if (!top) {
       top = document.createElement('div'); top.id = 'yic-rocktop';
+      top.classList.toggle('ah', autoHide);
       top.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openPop(top); });
       document.body.appendChild(top);
     }
     top.innerHTML = '<div class="st rk" style="--dc:#57d5ff" title="Your buildings on this rock – pick one to jump to it"><div class="scr">' +
       '<div class="h"><span>' + esc(rock.name) + '</span><i class="led"></i></div>' +
       '<div class="n"><span>Buildings</span><span class="go">PICK ▾</span></div>' +
-      '<div class="l">' + rock.b.length + ' of your buildings</div></div></div>';
+      '<div class="l">' + shownB().length + ' of your buildings</div></div></div>';
   }
 
   function draw() {
@@ -228,7 +247,8 @@
   });
   chrome.storage.onChanged.addListener((ch, area) => {
     if (area === 'sync' && ch.deckStrip) { on = ch.deckStrip.newValue !== false; on ? build() : remove(); }
-    if (area === 'sync' && ch.deckAutoHide) { autoHide = !!ch.deckAutoHide.newValue; if (bar) bar.classList.toggle('ah', autoHide); }
+    if (area === 'sync' && ch.deckAutoHide) { autoHide = !!ch.deckAutoHide.newValue; if (bar) bar.classList.toggle('ah', autoHide); if (top) top.classList.toggle('ah', autoHide); }
+    if (area === 'sync' && ch.rockHidePlanned) { hidePlanned = !!ch.rockHidePlanned.newValue; drawTop(); listPop(); }
     if (area === 'sync' && ch.rockOrder && Array.isArray(ch.rockOrder.newValue)) { order = ch.rockOrder.newValue; listPop(); }
     if (area === 'local' && ch.deckSummary) { data = ch.deckSummary.newValue || {}; draw(); }
   });

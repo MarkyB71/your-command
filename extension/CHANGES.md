@@ -3,7 +3,7 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## 0.7.1 – coming soon
+## 0.7.1 – 19 Nov 2026
 - **Buildings card** – a new card at the top of the game screen shows the rock you're looking at and how many of your buildings are on it. Click it for a list of them (grouped by type, with their status dot and a search box) – pick one and the game jumps straight to it. Choose the order of building types in Options (storage first to start with).
 - **Hide the deck strip until you hover** (off by default – switch on in Options) – the strip's cards stay hidden, just their base lights showing, until you move the mouse over them.
 
