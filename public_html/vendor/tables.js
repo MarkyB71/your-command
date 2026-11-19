@@ -7,7 +7,7 @@
    Pages are not changed: this file works on the tables after each page draws. */
 (function () {
   'use strict';
-  var VSB = /[?&]beta=1\b/.test(location.search);
+  var VSB = true; // LIVE 19 Nov 2026 (tested on ?beta=1 – Mark)
   // Solid band over the top of the viewscreen (behind NAVIGATION / SHIPS / rock picker) so rows and the
   // filter box scroll out of sight under it instead of showing above the stuck headings.
   var VSB_CSS =
@@ -256,7 +256,7 @@
     });
   }
 
-  // VSB (TEST ONLY ?beta=1, 19 Nov 2026 – Mark): headings also stay in view on a deck viewscreen (.dkr-pg).
+  // VSB (LIVE 19 Nov 2026, tested on ?beta=1 – Mark): headings also stay in view on a deck viewscreen (.dkr-pg).
   // capture catches scrolling inside .dkr-pg, which doesn't bubble to window.
   if (VSB) document.addEventListener('scroll', stick, { passive: true, capture: true });
   else window.addEventListener('scroll', stick, { passive: true });
