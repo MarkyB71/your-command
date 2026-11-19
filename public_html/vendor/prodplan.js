@@ -1005,23 +1005,36 @@
     if (GMB) {
       const gf = (P.gfind || '').trim().toLowerCase();
       const can = gf ? products().filter((p) => !P.gm.includes(p) && rOf(p).length && k.pname(p).toLowerCase().includes(gf)).slice(0, 12) : [];
-      h += `<div class="card"><h2><span class="n">3</span>What do you want to make? <span class="src">(optional)</span></h2><div class="src" style="margin-bottom:8px">Pick one or more things, open “how it’s made” to go further down the chain. Everything listed goes into ${dest ? esc(k.nm(dest)) : 'the storage above'} – then choose how much to make in the game.</div>` +
+      h += `<div class="card"><h2><span class="n">3</span>What do you want to make? <span class="src">(optional)</span></h2><div class="src" style="margin-bottom:8px">Pick one or more things – the whole chain to make them is listed, coloured by how many steps down. Everything listed goes into ${dest ? esc(k.nm(dest)) : 'the storage above'} – then choose how much to make in the game.</div>` +
         `<input type="search" id="pp-gfind" placeholder="🔍 Search what to make…" value="${esc(P.gfind || '')}">` +
         (gf ? (can.length ? '<div style="margin-top:6px">' + can.map((p) => `<button type="button" class="dk-shipbtn" data-gadd="${p}" style="cursor:pointer;margin:2px">${esc(k.pname(p))}</button>`).join('') + '</div>' : `<div class="src" style="margin-top:6px">Nothing that can be made on ${esc(r)} matches.</div>`) : '');
       gmAt = h.length;
     }
     const f = (P.mfind || '').trim().toLowerCase();
-    // highlight in step 4 what the step 3 picks need (Mark, 19 Nov): the same walk as the trees in step 3
-    const need = new Set();
-    if (GMB) { const walk = (p, path, d) => { need.add(p); const key = path.concat(p).join('-'); if (rOf(p).length && !path.includes(p) && d < 8 && (P.gx || {})[key]) { const x = pickR(p); Object.keys(x.inp).forEach((ip) => walk(+ip, path.concat(p), d + 1)); } };
-      P.gm.forEach((p) => { const x = pickR(p); if (x) Object.keys(x.inp).forEach((ip) => walk(+ip, [p], 0)); }); }
-    const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => need.has(b) - need.has(a) || !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
-    h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">Everything in the other storage on ${esc(r)}. Type how much of each to move, or press ALL.</div>` +
+    // the whole chain for each pick (Mark, 19 Nov): every ingredient down to what's mined, coloured by how many steps
+    // down it is (game palette, theme.js); something used by more than one process gets one dot per use, and a striped
+    // bar in step 4. Step 4 then lists only what's needed.
+    const LV = ['#57ff65', '#36a7cd', '#884fff', '#ff8c1a', '#e0282e', '#ffd94f', '#88e675', '#4f90ff'], lc = (d) => LV[(d - 1) % LV.length];
+    const stopAt = new Set(IMB ? mineGet() : []), rows = {}, need = new Map();
+    if (GMB) P.gm.forEach((top) => {
+      const out = rows[top] = [];
+      const walk = (p, path, d) => {
+        const go = !stopAt.has(p) && !k.canMine(p) && rOf(p).length && !path.includes(p) && d < 9;
+        out.push({ p, d, x: go ? pickR(p) : null }); if (!need.has(p)) need.set(p, []); need.get(p).push(d);
+        if (go) { const x = pickR(p); Object.keys(x.inp).forEach((ip) => walk(+ip, path.concat(p), d + 1)); }
+      };
+      const x = pickR(top); if (x) Object.keys(x.inp).forEach((ip) => walk(+ip, [top], 1));
+    });
+    const dot = (d) => `<span title="${d} step${d > 1 ? 's' : ''} down" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${lc(d)};margin-right:3px;vertical-align:middle"></span>`;
+    const dots = (p) => (need.get(p) || []).map(dot).join('');
+    const bar = (p) => { const u = need.get(p) || []; if (u.length < 2) return lc(u[0]); return 'linear-gradient(' + u.map((d, j) => `${lc(d)} ${j * 100 / u.length}% ${(j + 1) * 100 / u.length}%`).join(',') + ')'; };
+    const prods = Object.keys(stock).map(Number).filter((p) => (!need.size || need.has(p)) && (!f || k.pname(p).toLowerCase().includes(f))).sort((a, b) => Math.min(...(need.get(a) || [99])) - Math.min(...(need.get(b) || [99])) || !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
+    h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">${need.size ? 'Only what your picks in step 3 need, from the other storage on ' + esc(r) + '.' : 'Everything in the other storage on ' + esc(r) + '.'} Type how much of each to move, or press ALL.</div>` +
       `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
       (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Move</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
-        const nd = need.has(p);
-        return `<tr${nd ? ' style="background:#ffb03b1f;box-shadow:inset 4px 0 0 var(--amber)"' : ''}><td>${nd ? '<b style="color:var(--amber)">' + esc(k.pname(p)) + '</b> <span class="src" style="color:var(--amber)">· needed</span>' : esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
+        const nd = need.has(p), uses = (need.get(p) || []).length;
+        return `<tr${nd ? ` style="background:#ffffff08"` : ''}><td${nd ? ` style="position:relative;padding-left:16px"` : ''}>${nd ? `<span style="position:absolute;left:0;top:4px;bottom:4px;width:6px;border-radius:3px;background:${bar(p)}"></span>` + dots(p) + ' <b>' + esc(k.pname(p)) + '</b>' + (uses > 1 ? ` <span class="src">· used in ${uses} processes</span>` : '') : esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
           (bulk ? `<select data-mu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
           `<button type="button" class="dk-shipbtn" data-mall="${p}" style="cursor:pointer"${no ? ' disabled' : ''}>ALL</button></div></td></tr>`;
       }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing else in storage on ' + esc(r) + '.'}</div>`) + '</div>';
@@ -1058,32 +1071,19 @@
     }
     if (GMB && gmAt >= 0) {
       const moved = {}; S.calls.forEach((c) => c.items.forEach(([p, a]) => { moved[p] = (moved[p] || 0) + a; }));
-      // the chain, a step at a time (Mark, 19 Nov): "▸ how it's made" opens an ingredient's own process and inputs,
-      // like The SkippyChain; everything shown goes into the warehouse with MOVE ALL
-      P.gx = P.gx || {}; const inTree = new Set();
       const recLine = (p, x, rs, pad) => `<div class="src" style="margin:2px 0 2px ${pad}px">` + (rs.length > 1 ? `<select data-grec="${p}" style="min-width:0">${rs.map((y) => `<option value="${y.i}"${y === x ? ' selected' : ''}>${esc(y.name)}</option>`).join('')}</select>` : '⚙ ' + esc(x.name)) + '</div>';
-      const node = (p, path, d) => {
-        inTree.add(p);
-        const rs = rOf(p), key = path.concat(p).join('-'), loop = path.includes(p), can = rs.length && !loop && d < 8, open = can && P.gx[key];
-        let t = `<div class="src" style="margin:3px 0 3px ${d * 18}px">└ <b>${esc(k.pname(p))}</b> · ${k.amt(p, allOn(p))} on ${esc(r)}` +
-          (can ? ` <button type="button" class="dk-shipbtn" data-gx="${esc(key)}" style="cursor:pointer;padding:1px 6px">${open ? '▾ hide' : '▸ how it’s made'}</button>` : '') + '</div>';
-        if (open) {
-          const x = pickR(p), a = makes(p, x, allOn);
-          t += recLine(p, x, rs, d * 18 + 18) + `<div class="src" style="margin:0 0 2px ${d * 18 + 18}px">Makes up to <b>${k.amt(p, a.q)}</b> from the stock on ${esc(r)}</div>`;
-          Object.keys(x.inp).forEach((ip) => { t += node(+ip, path.concat(p), d + 1); });
-        }
-        return t;
-      };
+      const legend = [...new Set([].concat(...[...need.values()]))].sort((a, b) => a - b).map((d) => dot(d) + `<span class="src" style="margin-right:10px">${d} step${d > 1 ? 's' : ''} down</span>`).join('');
       const gh = P.gm.map((p) => {
         const x = pickR(p), rs = rOf(p), a = makes(p, x, allOn), b = makes(p, x, (ip) => inDest(ip) + (moved[ip] || 0));
         return `<div style="margin:8px 0;padding:8px 10px;border:1px solid #ffb03b44;border-radius:8px"><b>${esc(k.pname(p))}</b> <button type="button" class="dk-shipbtn" data-gdel="${p}" style="cursor:pointer;padding:1px 6px">✕</button>` +
           recLine(p, x, rs, 0) +
           `<div class="src">Most from all the stock on ${esc(r)}: <b>${k.amt(p, a.q)}</b>${a.lim != null ? ' – ' + esc(k.pname(a.lim)) + ' runs out first' : ''}</div>` +
           `<div class="src">With what’s in ${dest ? esc(k.nm(dest)) : 'the storage'} after these moves: <b>${k.amt(p, b.q)}</b></div>` +
-          `<div style="margin-top:6px">` + Object.keys(x.inp).map((ip) => node(+ip, [p], 0)).join('') + '</div></div>';
+          `<div style="margin-top:6px">` + (rows[p] || []).map((z) => `<div style="margin:3px 0 3px ${(z.d - 1) * 18}px;padding-left:8px;border-left:3px solid ${lc(z.d)}"><span class="src">${dot(z.d)}<b>${esc(k.pname(z.p))}</b> · ${k.amt(z.p, allOn(z.p))} on ${esc(r)}${(need.get(z.p) || []).length > 1 ? ' · <i>also used elsewhere</i>' : ''}</span>` +
+            (z.x ? recLine(z.p, z.x, rOf(z.p), 0).replace('margin:2px 0 2px 0px', 'margin:1px 0 0 16px') : '') + '</div>').join('') + '</div></div>';
       }).join('');
-      P.gtree = [...inTree].filter((p) => !P.gm.includes(p));
-      const card = (gh ? gh +
+      P.gtree = [...need.keys()].filter((p) => !P.gm.includes(p));
+      const card = (gh ? (legend ? `<div style="margin:8px 0 2px">${legend}</div>` : '') + gh +
         `<button type="button" class="dk-shipbtn" id="pp-gall" style="cursor:pointer;margin-top:6px">MOVE ALL THE INGREDIENTS</button><div class="hint">Fills in step 4 with ALL of everything listed above – then lower any you want to keep for other processes.</div>` : '') + '</div>';
       h = h.slice(0, gmAt) + card + h.slice(gmAt);
     }
@@ -1104,7 +1104,6 @@
     on('pp-gfind', 'input', (e) => { P.gfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = document.getElementById('pp-gfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
     m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
-    m.querySelectorAll('[data-gx]').forEach((b) => b.addEventListener('click', () => { const key = b.dataset.gx; if (P.gx[key]) delete P.gx[key]; else P.gx[key] = 1; k.render(); }));
     m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
     on('pp-gall', 'click', () => {
       (P.gtree || []).forEach((p) => { const n = tot(p); if (!n || (tank && !k.TANKOK.has(p))) return;
