@@ -227,6 +227,7 @@
   const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY, ?beta=1): pick what's in storage on a rock and send it to one of its warehouses / tank farms
   const SMB = /[?&]beta=1\b/.test(location.search);
+  const GMB = /[?&]beta=1\b/.test(location.search); // 🧪 Gather to make in Storage Management (19 Nov – TEST ONLY)
   // ⛏ "No, don't do that – I'll mine it" (Mark, 14 Nov – TEST ONLY, ?beta=1): when the plan makes a raw resource
   // (e.g. Sulfur Dioxide from Sulfuric Acid), the player can say they'll mine it instead. The planner then puts it on
   // the mine list rather than making it. Remembered in this browser; "make it again" undoes it.
@@ -988,9 +989,30 @@
       (stores.length ? `<select id="pp-md">${stores.map((b) => `<option value="${b.id}"${b.id === P.mdest ? ' selected' : ''}>${esc(k.nm(b))} · ${b.Building.buildingType === TANK ? 'tank farm' : 'warehouse'} · ${Math.round(full(b) * 100)}% full</option>`).join('')}</select>` +
         (tank ? '<div class="src" style="margin-top:6px">A tank farm only takes fluids – anything else is left out.</div>' : '')
         : `<div class="src" style="color:var(--amber)">No warehouse or tank farm on ${esc(r)}.</div>`) + '</div>';
+    // 🧪 Gather to make (Mark, 19 Nov – TEST ONLY, ?beta=1): "select what I want to make, it all moves into the same
+    // warehouse so I can then pick in game how much I want to make". Pick one or more products; their ingredients
+    // (the process inputs, one step back) are listed with ALL ready to move, trimmed to keep some for other processes.
+    // Shows the most you could make from all the stock on the rock, and from what these moves put in the warehouse.
+    P.gm = P.gm || []; P.gr = P.gr || {};
+    const types = new Set(k.onRock().map((b) => b.Building.buildingType));
+    const rOf = (p) => k.recipes().filter((x) => x.out[p] && !/Unbundling/.test(x.name) && types.has(k.FBT[x.type]));
+    const inDest = (p) => (dest ? ((k.inv(dest) || { contents: [] }).contents || []).filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0) : 0);
+    const allOn = (p) => tot(p) + inDest(p);
+    const pickR = (p) => { const rs = rOf(p); if (!rs.length) return null; const by = rs.find((x) => x.i === P.gr[p]); if (by) return by; const mk = (x) => Math.min(...Object.keys(x.inp).map((ip) => allOn(+ip) / x.inp[ip])); return rs.slice().sort((a, b) => mk(b) - mk(a))[0]; };
+    const makes = (p, x, have) => { let lim = null, runs = Infinity; Object.keys(x.inp).forEach((ip) => { const n = Math.floor(have(+ip) / x.inp[ip]); if (n < runs) { runs = n; lim = +ip; } }); return { q: (runs === Infinity ? 0 : runs) * x.out[p], lim }; };
+    P.gm = P.gm.filter((p) => rOf(p).length);
+    let gmAt = -1;
+    if (GMB) {
+      const gf = (P.gfind || '').trim().toLowerCase();
+      const can = gf ? products().filter((p) => !P.gm.includes(p) && rOf(p).length && k.pname(p).toLowerCase().includes(gf)).slice(0, 12) : [];
+      h += `<div class="card"><h2><span class="n">3</span>What do you want to make? <span class="src">(optional)</span></h2><div class="src" style="margin-bottom:8px">Pick one or more things. Their ingredients go into ${dest ? esc(k.nm(dest)) : 'the storage above'} – then choose how much to make in the game.</div>` +
+        `<input type="search" id="pp-gfind" placeholder="🔍 Search what to make…" value="${esc(P.gfind || '')}">` +
+        (gf ? (can.length ? '<div style="margin-top:6px">' + can.map((p) => `<button type="button" class="dk-shipbtn" data-gadd="${p}" style="cursor:pointer;margin:2px">${esc(k.pname(p))}</button>`).join('') + '</div>' : `<div class="src" style="margin-top:6px">Nothing that can be made on ${esc(r)} matches.</div>`) : '');
+      gmAt = h.length;
+    }
     const f = (P.mfind || '').trim().toLowerCase();
     const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
-    h += `<div class="card"><h2><span class="n">3</span>What to move</h2><div class="src" style="margin-bottom:8px">Everything in the other storage on ${esc(r)}. Type how much of each to move, or press ALL.</div>` +
+    h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">Everything in the other storage on ${esc(r)}. Type how much of each to move, or press ALL.</div>` +
       `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
       (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Move</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
@@ -1018,7 +1040,7 @@
       const lg = S.calls.reduce((t, c) => t + c.items.reduce((s2, [p, a]) => s2 + a * g(p), 0), 0);
       const after = Math.round(Math.max((u[0] + lg) / cp[0], (u[1] + S.calls.reduce((t, c) => t + c.items.reduce((s2, [p, a]) => s2 + a * v(p), 0), 0)) / cp[1]) * 100);
       const crewTxt = (c) => esc(c.name) + (c.busy ? ' – busy until ' + esc(c.busy) : ' – ready') + (c.food < 0.5 ? ' – food ' + Math.round(c.food * 100) + '% (hungry, slower)' : '');
-      h += `<div class="card"><h2><span class="n">4</span>Move it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(k.nm(dest))} is full. Pick another storage.</div>` :
+      h += `<div class="card"><h2><span class="n">${GMB ? 5 : 4}</span>Move it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(k.nm(dest))} is full. Pick another storage.</div>` :
         `<div class="src">These moves put <b>${k.tonnes(lg / 1000)}</b> into ${esc(k.nm(dest))} (${Math.round(full(dest) * 100)}% → <b>${after}%</b> full):</div>` +
         (cut ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ Not all of it fits – ${esc(k.nm(dest))} takes what it has room for (up to 95%).</div>` : '') +
         `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => { const km = k.kmBetween(k.lotOf(mv[id].b), k.lotOf(dest), ast); return `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🗄 ${esc(k.nm(dest))}${km != null ? ' <span class="src">· ' + k.kmTxt(km) + '</span>' : ''}` +
@@ -1029,9 +1051,25 @@
         `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
         `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) + '</div>';
     }
+    if (GMB && gmAt >= 0) {
+      const moved = {}; S.calls.forEach((c) => c.items.forEach(([p, a]) => { moved[p] = (moved[p] || 0) + a; }));
+      const usedBy = {}; P.gm.forEach((p) => { const x = pickR(p); if (x) Object.keys(x.inp).forEach((ip) => { (usedBy[ip] = usedBy[ip] || []).push(p); }); });
+      const gh = P.gm.map((p) => {
+        const x = pickR(p), rs = rOf(p), a = makes(p, x, allOn), b = makes(p, x, (ip) => inDest(ip) + (moved[ip] || 0));
+        return `<div style="margin:8px 0;padding:8px 10px;border:1px solid #ffb03b44;border-radius:8px"><b>${esc(k.pname(p))}</b> <button type="button" class="dk-shipbtn" data-gdel="${p}" style="cursor:pointer;padding:1px 6px">✕</button>` +
+          (rs.length > 1 ? ` <select data-grec="${p}" style="min-width:0">${rs.map((y) => `<option value="${y.i}"${y === x ? ' selected' : ''}>${esc(y.name)}</option>`).join('')}</select>` : ` <span class="src">· ${esc(x.name)}</span>`) +
+          `<div class="src" style="margin-top:4px">Needs: ${Object.keys(x.inp).map((ip) => esc(k.pname(+ip)) + (usedBy[ip].length > 1 ? ' <span style="color:var(--amber)">(shared)</span>' : '')).join(' · ')}</div>` +
+          `<div class="src">Most from all the stock on ${esc(r)}: <b>${k.amt(p, a.q)}</b>${a.lim != null ? ' – ' + esc(k.pname(a.lim)) + ' runs out first' : ''}</div>` +
+          `<div class="src">With these moves in ${dest ? esc(k.nm(dest)) : 'the storage'}: <b>${k.amt(p, b.q)}</b></div></div>`;
+      }).join('');
+      const sh = Object.keys(usedBy).some((ip) => usedBy[ip].length > 1);
+      const card = (gh ? gh + (sh ? '<div class="hint">“Shared” ingredients are used by more than one pick – the amounts above each assume they get it all.</div>' : '') +
+        `<button type="button" class="dk-shipbtn" id="pp-gall" style="cursor:pointer;margin-top:6px">MOVE ALL THE INGREDIENTS</button><div class="hint">Fills in step 4 with ALL of each ingredient – then lower any you want to keep for other processes.</div>` : '') + '</div>';
+      h = h.slice(0, gmAt) + card + h.slice(gmAt);
+    }
     m.innerHTML = h;
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
-    on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; S.msg = ''; k.render(); });
+    on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; P.gm = []; P.gr = {}; S.msg = ''; k.render(); });
     on('pp-md', 'change', (e) => { P.mdest = +e.target.value; S.msg = ''; k.render(); });
     on('pp-mfind', 'input', (e) => { P.mfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-mfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-mq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.mq; P.mq[p] = Object.assign(P.mq[p] || {}, { q: e.value }); k.render(); }));
@@ -1043,6 +1081,15 @@
     }));
     on('pp-mcrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
     on('pp-mgo', 'click', () => k.approve());
+    on('pp-gfind', 'input', (e) => { P.gfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-gfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
+    m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
+    m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
+    m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
+    on('pp-gall', 'click', () => {
+      P.gm.forEach((p) => { const x = pickR(p); if (!x) return; Object.keys(x.inp).forEach((ip) => { const n = tot(+ip); if (!n || (tank && !k.TANKOK.has(+ip))) return;
+        if (k.bulk(+ip)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.mq[ip] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.mq[ip] = { q: n }; }); });
+      k.render();
+    });
   }
   function finish(m, h) {
     const k = K(), S = k.S;
