@@ -11,7 +11,11 @@
   // Solid band over the top of the viewscreen (behind NAVIGATION / SHIPS / rock picker) so rows and the
   // filter box scroll out of sight under it instead of showing above the stuck headings.
   var VSB_CSS =
-    '#deckroom .dkr-pg::before{content:"";display:block;position:sticky;top:-36px;z-index:1;height:36px;margin:-36px -18px 0;background:#0a131e;pointer-events:none}' +
+    '#deckroom .dkr-pg::before{content:"";display:block;position:sticky;top:-36px;z-index:1;height:36px;margin:-36px -18px 0;background:#1a212d;pointer-events:none}' +
+    // On the viewscreen the headings use real CSS sticky (no jumping): .wrap must not be its own scroller.
+    '#deckroom .dkr-pg .wrap{overflow:visible!important}' +
+    '#deckroom .dkr-pg #main thead th{position:sticky!important;top:0!important;transform:none!important}' +
+    '#deckroom.scr .dkr-back,#deckroom.scr .dkr-plate,#deckroom.scr .dkr-ast{background-color:#1a212d!important}' +
     '@media (max-width:760px){#deckroom .dkr-pg::before{top:-40px;height:40px;margin:-40px -8px 0}}' +
     '@media (max-width:700px){#deckroom .dkr-pg::before{top:-38px;height:38px;margin:-38px -6px 0}}';
   var CSS =
@@ -225,6 +229,12 @@
     raf = requestAnimationFrame(function () {
       raf = 0;
       if (!main) return;
+      var inPg = VSB && main.closest && main.closest('.dkr-pg');
+      if (inPg) {                                 // CSS sticky does it on the viewscreen
+        Array.prototype.forEach.call(main.querySelectorAll('thead th'), function (th) { th.style.removeProperty('transform'); });
+        Array.prototype.forEach.call(main.querySelectorAll('table'), function (t) { t.__yicDy = null; });
+        return;
+      }
       var top = topLine();
       Array.prototype.forEach.call(main.querySelectorAll('table'), function (t) {
         if (!t.tHead) return;
