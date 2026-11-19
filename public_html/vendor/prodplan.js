@@ -1028,13 +1028,23 @@
     const dot = (d) => `<span title="${d} step${d > 1 ? 's' : ''} down" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${lc(d)};margin-right:3px;vertical-align:middle"></span>`;
     const dots = (p) => (need.get(p) || []).map(dot).join('');
     const bar = (p) => { const u = need.get(p) || []; if (u.length < 2) return lc(u[0]); return 'linear-gradient(' + u.map((d, j) => `${lc(d)} ${j * 100 / u.length}% ${(j + 1) * 100 / u.length}%`).join(',') + ')'; };
+    // how much the most you could make would really use (Mark, 19 Nov: "Tungsten Powder will never use that much water
+    // or oxygen") – the planner run at MAX for each pick, minus what's already in the storage it goes to
+    let gneed = {};
+    if (GMB && P.gm.length) {
+      const key = r + '|' + P.gm.join(',') + '|' + P.mdest + '|' + (S.msg || '').length;
+      if (P.gnk !== key) { P.gnv = {}; P.gm.forEach((p) => { const mx = maxMake(p).q; if (mx > 0) { const W = work(p, mx); Object.keys(W.stock).forEach((ip) => { if (+ip !== p) P.gnv[ip] = (P.gnv[ip] || 0) + W.stock[ip]; }); } }); P.gnk = key; }
+      gneed = P.gnv || {};
+    }
+    const useAmt = (p) => Math.max(0, Math.min(tot(p), (gneed[p] || 0) - inDest(p)));
+    const setQ = (p, n) => { if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.mq[p] = { q: Math.ceil(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.mq[p] = { q: n }; };
     const prods = Object.keys(stock).map(Number).filter((p) => (!need.size || need.has(p)) && (!f || k.pname(p).toLowerCase().includes(f))).sort((a, b) => Math.min(...(need.get(a) || [99])) - Math.min(...(need.get(b) || [99])) || !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
     h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">${need.size ? 'Only what your picks in step 3 need, from the other storage on ' + esc(r) + '.' : 'Everything in the other storage on ' + esc(r) + '.'} Type how much of each to move, or press ALL.</div>` +
       `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
-      (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Move</th></tr></thead><tbody>` + prods.map((p) => {
+      (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th>${need.size ? '<th class="num">Used at MAX</th>' : ''}<th>Move</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
         const nd = need.has(p), uses = (need.get(p) || []).length;
-        return `<tr${nd ? ` style="background:#ffffff08"` : ''}><td${nd ? ` style="position:relative;padding-left:16px"` : ''}>${nd ? `<span style="position:absolute;left:0;top:4px;bottom:4px;width:6px;border-radius:3px;background:${bar(p)}"></span>` + dots(p) + ' <b>' + esc(k.pname(p)) + '</b>' + (uses > 1 ? ` <span class="src">· used in ${uses} processes</span>` : '') : esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
+        return `<tr${nd ? ` style="background:#ffffff08"` : ''}><td${nd ? ` style="position:relative;padding-left:16px"` : ''}>${nd ? `<span style="position:absolute;left:0;top:4px;bottom:4px;width:6px;border-radius:3px;background:${bar(p)}"></span>` + dots(p) + ' <b>' + esc(k.pname(p)) + '</b>' + (uses > 1 ? ` <span class="src">· used in ${uses} processes</span>` : '') : esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td>${need.size ? `<td class="num">${useAmt(p) > 0 ? k.amt(p, useAmt(p)) + ` <button type="button" class="dk-shipbtn" data-muse="${p}" style="cursor:pointer;padding:1px 6px">USE</button>` : '<span class="src">' + (gneed[p] ? 'already there' : '–') + '</span>'}</td>` : ''}<td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
           (bulk ? `<select data-mu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
           `<button type="button" class="dk-shipbtn" data-mall="${p}" style="cursor:pointer"${no ? ' disabled' : ''}>ALL</button></div></td></tr>`;
       }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing else in storage on ' + esc(r) + '.'}</div>`) + '</div>';
@@ -1084,7 +1094,7 @@
       }).join('');
       P.gtree = [...need.keys()].filter((p) => !P.gm.includes(p));
       const card = (gh ? (legend ? `<div style="margin:8px 0 2px">${legend}</div>` : '') + gh +
-        `<button type="button" class="dk-shipbtn" id="pp-gall" style="cursor:pointer;margin-top:6px">MOVE ALL THE INGREDIENTS</button><div class="hint">Fills in step 4 with ALL of everything listed above – then lower any you want to keep for other processes.</div>` : '') + '</div>';
+        `<div class="row" style="gap:8px;margin-top:6px"><button type="button" class="dk-shipbtn" id="pp-gneed" style="cursor:pointer">MOVE WHAT MAX USES</button><button type="button" class="dk-shipbtn" id="pp-gall" style="cursor:pointer">MOVE ALL THE INGREDIENTS</button></div><div class="hint">MAX uses = what the most you can make from the stock here would use (the planner’s own recipe picks). Change any amount in step 4.</div>` : '') + '</div>';
       h = h.slice(0, gmAt) + card + h.slice(gmAt);
     }
     m.innerHTML = h;
@@ -1105,6 +1115,8 @@
     m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
     m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
     m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
+    on('pp-gneed', 'click', () => { P.mq = {}; Object.keys(gneed).map(Number).forEach((p) => { const n = useAmt(p); if (n > 0 && !(tank && !k.TANKOK.has(p))) setQ(p, n); }); k.render(); });
+    m.querySelectorAll('[data-muse]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.muse; setQ(p, useAmt(p)); k.render(); }));
     on('pp-gall', 'click', () => {
       (P.gtree || []).forEach((p) => { const n = tot(p); if (!n || (tank && !k.TANKOK.has(p))) return;
         if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.mq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.mq[p] = { q: n }; });
