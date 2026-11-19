@@ -1089,8 +1089,8 @@
           recLine(p, x, rs, 0) +
           `<div class="src">Most from all the stock on ${esc(r)}: <b>${k.amt(p, a.q)}</b>${a.lim != null ? ' – ' + esc(k.pname(a.lim)) + ' runs out first' : ''}</div>` +
           `<div class="src">With what’s in ${dest ? esc(k.nm(dest)) : 'the storage'} after these moves: <b>${k.amt(p, b.q)}</b></div>` +
-          `<div style="margin-top:6px">` + (rows[p] || []).map((z) => `<div style="margin:3px 0 3px ${(z.d - 1) * 18}px;padding-left:8px;border-left:3px solid ${lc(z.d)}"><span class="src">${dot(z.d)}<b>${esc(k.pname(z.p))}</b> · ${k.amt(z.p, allOn(z.p))} on ${esc(r)}${(need.get(z.p) || []).length > 1 ? ' · <i>also used elsewhere</i>' : ''}</span>` +
-            (z.x ? recLine(z.p, z.x, rOf(z.p), 0).replace('margin:2px 0 2px 0px', 'margin:1px 0 0 16px') : '') + '</div>').join('') + '</div></div>';
+          `<details class="dkp-fold" data-gch="${p}"${(P.gopen || {})[p] ? ' open' : ''} style="margin-top:6px"><summary>Show the chain (${(rows[p] || []).length} items)</summary>` + (rows[p] || []).map((z) => `<div style="margin:3px 0 3px ${(z.d - 1) * 18}px;padding-left:8px;border-left:3px solid ${lc(z.d)}"><span class="src">${dot(z.d)}<b>${esc(k.pname(z.p))}</b> · ${k.amt(z.p, allOn(z.p))} on ${esc(r)}${(need.get(z.p) || []).length > 1 ? ' · <i>also used elsewhere</i>' : ''}</span>` +
+            (z.x ? recLine(z.p, z.x, rOf(z.p), 0).replace('margin:2px 0 2px 0px', 'margin:1px 0 0 16px') : '') + '</div>').join('') + '</details></div>';
       }).join('');
       P.gtree = [...need.keys()].filter((p) => !P.gm.includes(p));
       const card = (gh ? (legend ? `<div style="margin:8px 0 2px">${legend}</div>` : '') + gh +
@@ -1115,6 +1115,7 @@
     m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
     m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
     m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
+    m.querySelectorAll('[data-gch]').forEach((d) => d.addEventListener('toggle', () => { P.gopen = P.gopen || {}; P.gopen[d.dataset.gch] = d.open; }));
     on('pp-gneed', 'click', () => { P.mq = {}; Object.keys(gneed).map(Number).forEach((p) => { const n = useAmt(p); if (n > 0 && !(tank && !k.TANKOK.has(p))) setQ(p, n); }); k.render(); });
     m.querySelectorAll('[data-muse]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.muse; setQ(p, useAmt(p)); k.render(); }));
     on('pp-gall', 'click', () => {
