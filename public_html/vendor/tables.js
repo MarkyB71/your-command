@@ -8,6 +8,12 @@
 (function () {
   'use strict';
   var VSB = /[?&]beta=1\b/.test(location.search);
+  // Solid band over the top of the viewscreen (behind NAVIGATION / SHIPS / rock picker) so rows and the
+  // filter box scroll out of sight under it instead of showing above the stuck headings.
+  var VSB_CSS =
+    '#deckroom .dkr-pg::before{content:"";display:block;position:sticky;top:0;z-index:1;height:36px;margin:-36px -18px 0;background:#0a131e;pointer-events:none}' +
+    '@media (max-width:760px){#deckroom .dkr-pg::before{height:40px;margin:-40px -8px 0}}' +
+    '@media (max-width:700px){#deckroom .dkr-pg::before{height:38px;margin:-38px -6px 0}}';
   var CSS =
     '#main th{cursor:default;position:relative;z-index:3}' +
     '#main th.yic-s{cursor:pointer}' +
@@ -31,7 +37,7 @@
     if (document.getElementById('yic-tbl-css')) return;
     var s = document.createElement('style');
     s.id = 'yic-tbl-css';
-    s.textContent = CSS;
+    s.textContent = CSS + (VSB ? VSB_CSS : '');
     document.head.appendChild(s);
   }
 
