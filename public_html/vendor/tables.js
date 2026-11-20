@@ -8,6 +8,8 @@
 (function () {
   'use strict';
   var VSB = true; // LIVE 19 Nov 2026 (tested on ?beta=1 – Mark)
+  // NTF (?beta=1, 20 Nov 2026): no filter box on a table inside another table (Market opened product with 8+ listings looped, adding boxes forever)
+  var NTF = /[?&]beta=1\b/.test(location.search);
   // Solid band over the top of the viewscreen (behind NAVIGATION / SHIPS / rock picker) so rows and the
   // filter box scroll out of sight under it instead of showing above the stuck headings.
   var VSB_CSS =
@@ -201,7 +203,7 @@
         mark(hs, s);
       }
       stripes(t);
-      if (t.tHead) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
+      if (t.tHead && !(NTF && t.parentNode.closest('table'))) filterBox(t, v + '|' + ti + '|' + heads(t).map(function (h) { return h.textContent.trim(); }).join('/'));
     });
     busy = false;
     stick();
