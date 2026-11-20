@@ -33,6 +33,8 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
 /* LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): same look as the new Crew Quarters cards / Galley – green, crewmate pictures with class colours */
 const CPBETA=true; /* LIVE 9 Nov 2026 */
+/* RKB (Mark, 20 Nov 2026 – TEST ONLY ?beta=1): rock drop-down in the planner bar – show only the crews on one rock */
+const RKB=/[?&]beta=1\b/.test(location.search);
 const CCOL={1:'#884fff',2:'#e0282e',3:'#ff8c1a',4:'#ffd94f',5:'#4f90ff'};
 const CSS_G=`.cp-title{color:#9be8bf}
 .cp-crew{background:#0e1512;border-color:#2c3d35;transition:border-color .15s,box-shadow .15s}
@@ -52,7 +54,7 @@ const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=nu
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc0=v=>{const p=Math.round((v-1)*100);return p===0?'standard':(p>0?'+':'−')+Math.abs(p)+'%'};
 const pc=v=>{const t=pc0(v),p=Math.round((v-1)*100);return(p===0)?t:'<span style="color:'+(p>0?'#3fd68a':'#ff6b6b')+';font-weight:600">'+t+'</span>'};
-const S={plan:null,orig:null,sel:null,job:'',q:'',best:false};
+const S={plan:null,orig:null,sel:null,job:'',q:'',best:false,rock:null};
 const POOL='pool';
 const store=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
@@ -70,7 +72,9 @@ export function drawCrewPlan(m){
     const saved=store(key);S.plan=saved&&saved.n===crews.length?saved.p:JSON.parse(JSON.stringify(S.orig));if(!S.plan[POOL])S.plan[POOL]=[]}
   const home={};Object.entries(S.orig).forEach(([i,r])=>r.forEach(id=>home[id]=+i));
   const mult=(i,ids,a)=>{const ms=ids.map(id=>cm[id]).filter(Boolean);return crewMult(a,ms)*(CBNF[a]?1:habEff(crews[i]))};
-  const ai=(document.getElementById('ast')||{}).value,an=ai===''||ai==null?null:(Y.asts[+ai]||{}).name;
+  const ai=(document.getElementById('ast')||{}).value;let an=ai===''||ai==null?null:(Y.asts[+ai]||{}).name;
+  if(RKB){if(S.rock==null)S.rock=an||'';an=S.rock||null}
+  const rocks=[...new Set(crews.map(c=>c.ast).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
 
   function move(id,to){
     for(const k in S.plan){const j=S.plan[k].indexOf(id);if(j>=0)S.plan[k].splice(j,1)}
@@ -111,7 +115,10 @@ export function drawCrewPlan(m){
     js.addEventListener('change',()=>{S.job=js.value;draw()});
     qs.placeholder='Find a crew';qs.value=S.q;qs.addEventListener('input',()=>{S.q=qs.value;const p=qs.selectionStart;draw();const n=m.querySelector('.cp-bar input');n.focus();n.setSelectionRange(p,p)});
     rs.addEventListener('click',()=>{S.plan=JSON.parse(JSON.stringify(S.orig));S.plan[POOL]=[];S.sel=null;save(key,null);draw()});
-    const l1=el('label',null,'Show ');l1.appendChild(js);[l1,qs,rs].forEach(x=>bar.appendChild(x));
+    const l1=el('label',null,'Show ');l1.appendChild(js);
+    if(RKB){const rk=el('select');rk.innerHTML='<option value="">All rocks</option>'+rocks.map(r=>'<option'+(r===S.rock?' selected':'')+'>'+esc(r)+'</option>').join('');
+      rk.addEventListener('change',()=>{S.rock=rk.value;drawCrewPlan(m)});const l0=el('label',null,'Rock ');l0.appendChild(rk);bar.appendChild(l0)}
+    [l1,qs,rs].forEach(x=>bar.appendChild(x));
     {const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
       bb.addEventListener('click',()=>{S.best=!S.best;draw()});bar.appendChild(bb)}
     top.appendChild(bar);
@@ -165,5 +172,5 @@ export function drawCrewPlan(m){
   document.addEventListener('click',e=>{const b=document.getElementById('vQ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700);
   const as=()=>document.getElementById('ast');
-  setInterval(()=>{const a=as();if(a&&!a.dataset.cp){a.dataset.cp=1;a.addEventListener('change',()=>{const b=document.getElementById('vQ');if(b&&b.className==='on')setTimeout(()=>drawCrewPlan(document.getElementById('main')),0)})}},1000);
+  setInterval(()=>{const a=as();if(a&&!a.dataset.cp){a.dataset.cp=1;a.addEventListener('change',()=>{const b=document.getElementById('vQ');S.rock=null;if(b&&b.className==='on')setTimeout(()=>drawCrewPlan(document.getElementById('main')),0)})}},1000);
 }
