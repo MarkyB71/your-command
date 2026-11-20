@@ -364,7 +364,20 @@ async function bgTick(force){
   const N=buildD(j);if(!N)return;bgSig=s;window.YICquiet(N);bgDirty=true;bgApply();
  }catch(e){}finally{bgBusy=false}
 }
-window.YICrefreshNow=()=>bgTick(true); /* ⟳ Refresh on the decks: fetch now, no page rebuild */
+/* RFX (Mark, 20 Nov 2026 – TEST ONLY ?beta=1, player report): ⟳ Refresh Game Data did nothing on many pages – add-on pages and Travel
+   skipped the redraw, belt-wide data (market, belt flights, trades) was only fetched once per visit, and a refresh while the
+   background check was running was dropped. Now: wait for that check, fetch, tell the belt pages to drop their copies, redraw the page you're on. */
+const RFX=/[?&]beta=1\b/.test(location.search);
+window.YICrefreshNow=async()=>{
+ if(!RFX)return bgTick(true); /* ⟳ Refresh on the decks: fetch now, no page rebuild */
+ for(let i=0;bgBusy&&i<100;i++)await new Promise(r=>setTimeout(r,200));
+ await bgTick(true);
+ if(window.BELTDATA)window.BELTDATA.data=null;
+ try{document.dispatchEvent(new Event('yic-refresh'))}catch(e){}
+ bgDirty=false;
+ if(view==='M'||view==='R'){const b=document.querySelector('button[id^="v"].on');if(b)b.click()}
+ else if(window.YICredraw){try{window.YICredraw()}catch(e){}}
+};
 {setInterval(()=>{bgTick();bgApply()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)bgTick()})}
 async function load(wallet){
  bgW='';bgDirty=false;
