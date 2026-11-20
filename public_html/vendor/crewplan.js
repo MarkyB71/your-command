@@ -33,8 +33,8 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
 /* LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): same look as the new Crew Quarters cards / Galley – green, crewmate pictures with class colours */
 const CPBETA=true; /* LIVE 9 Nov 2026 */
-/* RKB (Mark, 20 Nov 2026 – TEST ONLY ?beta=1): rock drop-down in the planner bar – show only the crews on one rock */
-const RKB=/[?&]beta=1\b/.test(location.search);
+/* RKB (LIVE 20 Nov 2026, tested on ?beta=1 – Mark): rock drop-down in the planner bar – show only the crews on one rock. "Find a crew" box removed (Mark). */
+const RKB=true;
 const CCOL={1:'#884fff',2:'#e0282e',3:'#ff8c1a',4:'#ffd94f',5:'#4f90ff'};
 const CSS_G=`.cp-title{color:#9be8bf}
 .cp-crew{background:#0e1512;border-color:#2c3d35;transition:border-color .15s,box-shadow .15s}
@@ -118,7 +118,7 @@ export function drawCrewPlan(m){
     const l1=el('label',null,'Show ');l1.appendChild(js);
     if(RKB){const rk=el('select');rk.innerHTML='<option value="">All rocks</option>'+rocks.map(r=>'<option'+(r===S.rock?' selected':'')+'>'+esc(r)+'</option>').join('');
       rk.addEventListener('change',()=>{S.rock=rk.value;drawCrewPlan(m)});const l0=el('label',null,'Rock ');l0.appendChild(rk);bar.appendChild(l0)}
-    [l1,qs,rs].forEach(x=>bar.appendChild(x));
+    S.q='';[l1,rs].forEach(x=>bar.appendChild(x));
     {const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
       bb.addEventListener('click',()=>{S.best=!S.best;draw()});bar.appendChild(bb)}
     top.appendChild(bar);

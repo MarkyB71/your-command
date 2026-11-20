@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 20 Nov 2026 – Crew planner: new Rock drop-down to show just the crews on one rock (also for Best crew for each job). The "Find a crew" box is gone. Help page updated. Asked for by Mark.
+
 ## 20 Nov 2026 – Market bug fix: opening a product with lots of listings (e.g. Core Drill, Feldspar on Whole belt) no longer keeps adding "Filter this table" boxes and blanks the table. Reported by a player.
 
 ## 19 Nov 2026 – Table headings now stay fixed at the top when you scroll a table on a deck viewscreen (e.g. Ships), joined to the NAVIGATION / page name / rock picker bar. Asked for by Mark.
