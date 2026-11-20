@@ -21,7 +21,7 @@ const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=nu
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const RANGES=[['100','Latest 100 trades'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 const HC={},LD={};
-document.addEventListener('yic-refresh',()=>{for(const k in HC)delete HC[k]}); /* RFX (?beta=1, 20 Nov): ⟳ Refresh Game Data fetches trades again */const S={range:'100',prod:'',mk:'',mine:false,q:'',show:200};
+document.addEventListener('yic-refresh',()=>{for(const k in HC)delete HC[k]}); /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches trades again */const S={range:'100',prod:'',mk:'',mine:false,q:'',show:200};
 const swayN=(price,amount)=>price*(amount||1)/1e6;
 const fmtS=s=>(s>=100?Math.round(s):+s.toFixed(s<1?4:2)).toLocaleString()+' SWAY';
 

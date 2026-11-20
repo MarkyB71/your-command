@@ -50,7 +50,7 @@ body.dk-trade #main h2,body.dk-trade #main th{color:#ffe39a}
   }
 
   let TR = null, trLoad = null; // recent trades, fetched once per visit
-  document.addEventListener('yic-refresh', () => { if (!trLoad) TR = null; }); // RFX (?beta=1, 20 Nov): ⟳ Refresh Game Data fetches them again
+  document.addEventListener('yic-refresh', () => { if (!trLoad) TR = null; }); // RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches them again
   const num = (v) => (+v.toFixed(v < 1 ? 4 : v < 100 ? 2 : 0)).toLocaleString();
 
   function hero(el) {

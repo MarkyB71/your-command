@@ -37,7 +37,7 @@ const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100',bel
 /* Whole belt – ships in flight now (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1). From flights.php: every ship in
    flight across the belt (Escape Modules too), shared by all visitors and rebuilt at most every 5 minutes. */
 const BELT=true; /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */let FL=null,FLL=null;
-document.addEventListener('yic-refresh',()=>{FL=null}); /* RFX (?beta=1, 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
+document.addEventListener('yic-refresh',()=>{FL=null}); /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
 const STYPE={1:'Escape Module',2:'Light Transport',3:'Heavy Transport',4:'Shuttle'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 

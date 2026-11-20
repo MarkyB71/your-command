@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 20 Nov 2026 – ⟳ Refresh Game Data now works on every page: it redraws the page you're on (Travel and planners too) and fetches the belt-wide market, belt flights and recent trades again. Help page updated. Reported by a player.
+
 ## 20 Nov 2026 – Crew planner: new Rock drop-down to show just the crews on one rock (also for Best crew for each job). The "Find a crew" box is gone. Help page updated. Asked for by Mark.
 
 ## 20 Nov 2026 – Market bug fix: opening a product with lots of listings (e.g. Core Drill, Feldspar on Whole belt) no longer keeps adding "Filter this table" boxes and blanks the table. Reported by a player.
