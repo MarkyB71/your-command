@@ -94,9 +94,9 @@
     });
     return REF;
   }
-  // DCL (community idea, Mark 21 Nov 2026 – TEST ONLY, ?beta=1): colour the distance by how far it is right now
+  // DCL (community idea, Mark 21 Nov 2026 – LIVE): colour the distance by how far it is right now
   // (under 1 AU green, 1–2 lime, 2–3 yellow, 3+ red), so a close rock no longer looks far just because a better window is coming.
-  const DCL = /[?&]beta=1\b/.test(location.search);
+  const DCL = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const auCol = au => au < 1 ? '#3fd68a' : au < 2 ? '#b5e04a' : au < 3 ? '#ffd24a' : '#ff6b6b';
   const WDAYS = 30, WSTEP = 12;                       // next 30 days, a sample every 12 hours
   const TOFS = [];                                    // trip lengths tried: every hour to 2 days, then coarser
