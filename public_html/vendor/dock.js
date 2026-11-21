@@ -16,7 +16,7 @@
       if (document.getElementById('dkhub') || !document.body) return;
       const a = document.createElement('a'); a.id = 'dkhub'; a.textContent = '🚚 Logistics Hub ↗';
       a.title = 'Opens a page that acts in the game – it can send moves and process starts from your wallet, only when you approve them';
-      a.href = location.pathname + (location.search ? location.search + '&' : '?') + 'dock=1';
+      a.href = (() => { const u = new URLSearchParams(location.search); ['mk', 'q', 'rock'].forEach((x) => u.delete(x)); u.set('dock', '1'); return location.pathname + '?' + u.toString(); })();
       a.style.cssText = 'display:inline-block;padding:5px 10px;border-radius:8px;border:1px solid #ffb03b;color:#ffd28a;background:#2a1d08;text-decoration:none;font-weight:600;font-size:12px;line-height:1.2;white-space:nowrap;order:8';
       // the deck bar's own Logistics Hub tab replaces it; it showed loose on the page for a moment on load (Mark, 13 Nov – TEST ONLY ?beta=1)
       a.style.display = 'none'; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
@@ -1008,7 +1008,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
   function start() {
     if (/[?&]feed=1\b/.test(location.search)) S.mode = 'feed'; // from Crew Quarters' "Feed crews" button
     // from a Captain's log box (Mark, 13 Nov – TEST ONLY ?beta=1): ?mk=product&q=amount&rock=name opens Production filled in
-    { const u = new URLSearchParams(location.search); if (u.get('mk')) { /* LIVE 13 Nov 2026 */ S.mode = 'make'; window.YICPRODGO = { p: +u.get('mk'), q: +u.get('q') || 0, rock: u.get('rock') || '' }; } }
+    { const u = new URLSearchParams(location.search); if (u.get('mk')) { /* LIVE 13 Nov 2026 */ S.mode = 'make'; window.YICPRODGO = { p: +u.get('mk'), q: +u.get('q') || 0, rock: u.get('rock') || '' }; ['mk', 'q', 'rock'].forEach((x) => u.delete(x)); try { history.replaceState(null, '', location.pathname + '?' + u.toString()); } catch (e) {} } } // used once – a reload opens the Hub normally (Mark, 21 Nov)
     build();
     loadRecipes().then(() => {
       const wait = setInterval(() => { if (D() && R) { clearInterval(wait); loadDeliveries().then(() => { S.ready = true; S.dataAt = Date.now(); render(); }); } }, 400);

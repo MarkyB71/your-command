@@ -130,7 +130,7 @@ function wNameBox(pen) {
     document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
       e.preventDefault(); e.stopPropagation();
-      location.href = location.pathname + (location.search ? location.search + '&' : '?') + 'dock=1';
+      location.href = (() => { const u = new URLSearchParams(location.search); ['mk', 'q', 'rock'].forEach((x) => u.delete(x)); u.set('dock', '1'); return location.pathname + '?' + u.toString(); })(); // drop Captain's log link details (mk/q/rock) so the Hub opens normally (Mark, 21 Nov)
     }, true);
   }
 
