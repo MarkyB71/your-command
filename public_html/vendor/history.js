@@ -38,9 +38,9 @@ const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100',bel
    flight across the belt (Escape Modules too), shared by all visitors and rebuilt at most every 5 minutes. */
 const BELT=true; /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */let FL=null,FLL=null;
 document.addEventListener('yic-refresh',()=>{FL=null;FP=null});
-/* DAA (community idea, Mark 21 Nov 2026 – TEST ONLY, ?beta=1): a "Departures and Arrivals" tab – who left and who landed across the
+/* DAA (community idea, Mark 21 Nov 2026 – LIVE): a "Departures and Arrivals" tab – who left and who landed across the
    whole belt in the last 7 days, newest first. Landed ships come from flights.php?past=1 (the game keeps a ship's last trip until it flies again). */
-const DAA=/[?&]beta=1\b/.test(location.search);let FP=null,FPL=null; /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
+const DAA=true; /* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) */let FP=null,FPL=null; /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
 const STYPE={1:'Escape Module',2:'Light Transport',3:'Heavy Transport',4:'Shuttle'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 

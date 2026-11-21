@@ -5,7 +5,7 @@
 // plus the orbits and names of every asteroid those ships fly between, so the route can be worked out.
 require __DIR__ . '/_api.php';
 const FLIGHTS_SECONDS = 300;
-// ?past=1 (Departures and Arrivals, community idea – TEST ONLY on ?beta=1, Mark 21 Nov 2026): ships that LANDED in the
+// ?past=1 (Departures and Arrivals, community idea – LIVE 21 Nov 2026, tested on ?beta=1 – Mark): ships that LANDED in the
 // last 7 days instead of ships in flight (the game keeps a ship's last trip until it flies again). Own cache file.
 $PAST = !empty($_GET['past']);
 $ff = $CACHE . ($PAST ? '/flights-past.json' : '/flights.json');
