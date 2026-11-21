@@ -150,8 +150,8 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
   }
   function drawDA(){
     if(!FL||!FP){m.appendChild(el('div','note','Loading departures and arrivals across the belt…'));
-      if(!FL&&!FLL)FLL=fetch('flights.php').then(r=>r.json()).then(j=>{FL=j.error?{error:j.error}:j}).catch(e=>{FL={error:String(e&&e.message||e)}}).finally(()=>{FLL=null;if(m.isConnected&&S.belt)draw()});
-      if(!FP&&!FPL)FPL=fetch('flights.php?past=1').then(r=>r.json()).then(j=>{FP=j.error?{error:j.error}:j}).catch(e=>{FP={error:String(e&&e.message||e)}}).finally(()=>{FPL=null;if(m.isConnected&&S.belt)draw()});return}
+      if(!FL&&!FLL)FLL=fetch('flights.php').then(r=>r.json()).then(j=>{FL=j.error?{error:j.error}:j}).catch(e=>{FL={error:String(e&&e.message||e)}}).finally(()=>{FLL=null;if(m.isConnected)draw()});
+      if(!FP&&!FPL)FPL=fetch('flights.php?past=1').then(r=>r.json()).then(j=>{FP=j.error?{error:j.error}:j}).catch(e=>{FP={error:String(e&&e.message||e)}}).finally(()=>{FPL=null;if(m.isConnected)draw()});return}
     if(FL.error||FP.error){m.appendChild(el('div','note','Could not load the flights: '+esc(FL.error||FP.error)));return}
     const now=Date.now()/1000,since=now-7*86400,nm=Object.assign({},FP.names||{},FL.names||{}),an=id=>esc(aName[id]||nm[id]||('Asteroid #'+id));
     const when=t=>new Date(t*1000).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
@@ -176,7 +176,7 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
   }
   function drawBelt(){
     if(!FL){m.appendChild(el('div','note','Loading every ship in flight across the belt…'));
-      if(!FLL)FLL=fetch('flights.php').then(r=>r.json()).then(j=>{FL=j.error?{error:j.error}:j}).catch(e=>{FL={error:String(e&&e.message||e)}}).finally(()=>{FLL=null;if(m.isConnected&&S.belt)draw()});return}
+      if(!FLL)FLL=fetch('flights.php').then(r=>r.json()).then(j=>{FL=j.error?{error:j.error}:j}).catch(e=>{FL={error:String(e&&e.message||e)}}).finally(()=>{FLL=null;if(m.isConnected)draw()});return}
     if(FL.error){m.appendChild(el('div','note','Could not load the flights: '+esc(FL.error)));return}
     const now=Date.now()/1000,nm=FL.names||{},an=id=>esc(aName[id]||nm[id]||('Asteroid #'+id));
     const left=s=>{const h=s/3600;return h<1?Math.max(1,Math.round(h*60))+' m':h<48?Math.round(h)+' h':(h/24).toFixed(1)+' d'};
