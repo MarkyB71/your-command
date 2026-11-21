@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – Watch list fix: ticking a product no longer jumps the list back to the top, so the next tick lands where you clicked.
+
 ## 21 Nov 2026 – Engineering › Products › Control panel: a watch list. Choose which products to watch for each rock; each dial shows what's in storage plus what's being made right now. Raw materials listed first, "Show all products" for the rest. Help page updated. Asked for by a community player.
 
 ## 20 Nov 2026 – ⟳ Refresh Game Data now works on every page: it redraws the page you're on (Travel and planners too) and fetches the belt-wide market, belt flights and recent trades again. Help page updated. Reported by a player.

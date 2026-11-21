@@ -188,6 +188,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
           '<label class="en-all"><input type="checkbox" class="en-eall"' + (eAll ? ' checked' : '') + '> Show all products</label><button type="button" data-w="raws">Raw materials</button><button type="button" data-w="clear">Clear all</button><button type="button" class="en-done" data-w="done">Done</button></div>' +
           '<div class="en-ed-list">' + all.map((p) => { const s = st(p); return '<label' + (on.has(p) ? ' class="on"' : '') + '><input type="checkbox" data-p="' + p + '"' + (on.has(p) ? ' checked' : '') + '>' + Y.esc(Y.pn(p)) + (s > 0 ? '<i>' + amt(p, s) + '</i>' : '') + '</label>'; }).join('') + '</div></div>';
       }
+      const oldL = el.querySelector('.en-ed-list'), keepY = oldL ? oldL.scrollTop : 0; // keep the picker where you scrolled it (Mark, 21 Nov)
       el.innerHTML =
         '<div class="en-plate">ENGINEERING</div>' +
         '<div class="en-read">' + pick(ai) + ' <b>' + W.length + '</b> watched · <b>' + have + '</b> in stock · <b style="color:#57d5ff">' + making + '</b> in process</div>' +
@@ -195,6 +196,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         (W.length ? '<div class="en-row en-raws">' + dials + '</div>' : '<div class="en-none">Nothing watched on this rock yet – press ✎ Choose what to watch.</div>') +
         '<div class="en-floor"></div>';
       if (editing) {
+        const nl = el.querySelector('.en-ed-list');
+        if (nl && keepY) nl.scrollTop = keepY;
         const i = el.querySelector('.en-eq');
         if (i && document.activeElement !== i && eq) { i.focus(); i.setSelectionRange(eq.length, eq.length); }
       }
