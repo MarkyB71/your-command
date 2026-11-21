@@ -300,6 +300,13 @@
     // Map controls (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): full screen, pause the turning, zoom
     // (buttons, or the mouse wheel while full screen so the page still scrolls normally).
     const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
+    // ORB (community idea, Mark 21 Nov 2026 – TEST ONLY, ?beta=1): each of your rocks gets its own orbit colour,
+    // and a "Rocks" list to show or hide each one (saved in the browser, 'yic-map-hide').
+    const ORB = /[?&]beta=1\b/.test(location.search);
+    const OCOL = ['#5fc3e4', '#ffb84a', '#7be07b', '#ff7ab6', '#b48cff', '#ffe66b', '#ff8a5c', '#5ce1c4', '#9fb4ff', '#e0e0e0'];
+    const HK = 'yic-map-hide';
+    const hidL = () => { try { return JSON.parse(localStorage.getItem(HK)) || []; } catch (e) { return []; } };
+    const hidS = (a) => { try { localStorage.setItem(HK, JSON.stringify(a)); } catch (e) {} };
     if (MC) {
       box.classList.add('bm-box');
       if (!document.getElementById('bm-css')) {
@@ -315,11 +322,18 @@
           '.bm-card{position:absolute;left:6%;top:46px;z-index:3;min-width:190px;max-width:260px;padding:9px 30px 10px 12px;font-size:13px;line-height:1.45;' +
           'color:#e6ebf2;background:rgba(14,24,34,.92);border:1px solid #5fc3e4;border-radius:8px;box-shadow:0 0 18px -6px #5fc3e4}' +
           '.bm-card b{color:#8fe3ff;font-size:14px}.bm-card .bm-x{all:unset;cursor:pointer;position:absolute;right:8px;top:5px;color:#9aa8bb;font-size:15px}' +
-          '.bm-card .bm-x:hover{color:#fff}.bm-card a{color:#8fe3ff}.bm-box:fullscreen .bm-card{left:16px;top:16px}';
+          '.bm-card .bm-x:hover{color:#fff}.bm-card a{color:#8fe3ff}.bm-box:fullscreen .bm-card{left:16px;top:16px}' +
+          '.bm-rl{position:absolute;top:44px;right:6%;z-index:4;min-width:200px;max-height:60%;overflow:auto;padding:8px 10px;background:rgba(14,24,34,.95);' +
+          'border:1px solid #5fc3e4;border-radius:8px;font:13px system-ui,sans-serif;color:#e6ebf2}.bm-box:fullscreen .bm-rl{right:16px;top:48px}' +
+          '.bm-rl label{display:flex;align-items:center;gap:7px;padding:2px 0;cursor:pointer;white-space:nowrap}' +
+          '.bm-rl input[type=checkbox]{flex:none;width:auto;min-width:0;max-width:none;margin:0}' +
+          '.bm-rl i{flex:none;width:18px;height:3px;border-radius:2px}.bm-rl .bm-rb{display:flex;gap:6px;margin-top:6px}' +
+          '.bm-rl .bm-rb button{all:unset;cursor:pointer;padding:2px 8px;font:bold 12px system-ui,sans-serif;color:#8fe3ff;border:1px solid #5fc3e4;border-radius:5px}';
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
-      c.innerHTML = '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>' +
+      c.innerHTML = (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
+        '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>' +
         '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
         '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
       box.appendChild(c);
@@ -385,6 +399,9 @@
             return { ...a, p, ring };
           })
           .filter((a) => a.p);
+        me.forEach((a, i) => (a.col = ORB ? OCOL[i % OCOL.length] : '#5fc3e4'));
+        let hid = ORB ? hidL() : [];
+        const vis = () => me.filter((a) => !hid.includes(a.id));
         box.querySelector('.bm-load').remove();
         let R = 0;
         belt.concat(me.map((a) => a.p)).forEach((p) => {
@@ -435,15 +452,17 @@
             const q = proj(p);
             ctx.fillRect(q[0], q[1], 1.2, 1.2);
           });
-          me.forEach((a) => {
-            ctx.strokeStyle = 'rgba(95,195,228,0.35)';
-            ctx.lineWidth = 1;
+          vis().forEach((a) => {
+            ctx.strokeStyle = ORB ? a.col : 'rgba(95,195,228,0.35)';
+            ctx.globalAlpha = ORB ? 0.6 : 1;
+            ctx.lineWidth = ORB ? 1.3 : 1;
             ctx.beginPath();
             a.ring.forEach((p, i) => {
               const q = proj(p);
               i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
             });
             ctx.stroke();
+            ctx.globalAlpha = 1;
           });
           apL.forEach((a) => {
             const q = proj(a.p);
@@ -464,7 +483,7 @@
             ctx.font = 'bold 12px system-ui,sans-serif';
             ctx.fillText(a.name, q[0] + 9, q[1] - 7);
           });
-          me.forEach((a) => {
+          vis().forEach((a) => {
             const q = proj(a.p);
             if (sel === a.id) {
               ctx.strokeStyle = '#ffd24a';
@@ -473,7 +492,7 @@
               ctx.arc(q[0], q[1], 10, 0, 6.283);
               ctx.stroke();
             }
-            ctx.fillStyle = '#5fc3e4';
+            ctx.fillStyle = a.col;
             ctx.save();
             ctx.translate(q[0], q[1]);
             ctx.rotate(Math.PI / 4);
@@ -575,10 +594,22 @@
             down = null;
             const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
             let hit = null, bd = 14;
-            me.concat(apL).forEach((a) => { const q = proj(a.p), d = Math.hypot(q[0] - x, q[1] - y); if (d < bd) { bd = d; hit = a; } });
+            vis().concat(apL).forEach((a) => { const q = proj(a.p), d = Math.hypot(q[0] - x, q[1] - y); if (d < bd) { bd = d; hit = a; } });
             show(hit);
           });
           apDraw();
+          if (ORB) {
+            const rb = box.querySelector('[data-bm="rocks"]'), rl = document.createElement('div');
+            rl.className = 'bm-rl'; rl.hidden = true; box.appendChild(rl);
+            const list = () => {
+              rl.innerHTML = me.map((a) => '<label><input type="checkbox" data-rk="' + a.id + '"' + (hid.includes(a.id) ? '' : ' checked') + '><i style="background:' + a.col + '"></i>' + APP.esc(a.name) + '</label>').join('') +
+                '<div class="bm-rb"><button type="button" data-ra="all">Show all</button><button type="button" data-ra="none">Hide all</button></div>';
+            };
+            const set = (h) => { hid = h; hidS(hid); if (sel && hid.includes(sel)) show(null); list(); frame(); };
+            rb.onclick = () => { rl.hidden = !rl.hidden; rb.setAttribute('aria-expanded', String(!rl.hidden)); if (!rl.hidden) list(); };
+            rl.addEventListener('change', (e) => { const id = +e.target.dataset.rk; if (!id) return; set(e.target.checked ? hid.filter((x) => x !== id) : hid.concat([id])); });
+            rl.addEventListener('click', (e) => { const w = e.target.dataset.ra; if (w === 'all') set([]); else if (w === 'none') set(me.map((a) => a.id)); });
+          }
         }
       })
       .catch((e) => {
