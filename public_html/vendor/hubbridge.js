@@ -124,10 +124,11 @@
   // Hub tidy-up (Mark, 14 Nov – TEST ONLY ?beta=1): 4 consoles, 2 each side. Deliveries + Storage Management go into Storage.
   const ORG = /[?&]beta=1\b/.test(location.search);
   const STATIONS4 = [
-    { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: 13 },
-    { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: 8 },
-    { m: 'feed', name: 'Galley', ico: '🍽', col: '#ffc45e', ry: -8 },
-    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -13, k: 'store' },
+    // order left to right (Mark, 21 Nov): Storage · Galley · chair · Production · Cargo bay
+    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: 13, k: 'store' },
+    { m: 'feed', name: 'Galley', ico: '🍽', col: '#ffc45e', ry: 8 },
+    { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: -8 },
+    { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: -13 },
   ];
   const STATIONS = [
     { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: 15 },
