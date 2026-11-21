@@ -1045,7 +1045,8 @@
     // or oxygen") – the planner run at MAX for each pick, minus what's already in the storage it goes to
     let gneed = {};
     P.gq = P.gq || {};
-    const gqty = (p) => { const x = P.gq[p]; if (!x || !(+x.q > 0)) return 0; return k.bulk(+p) ? Math.round(+x.q * UNITS[x.unit || 't']) : Math.floor(+x.q); };
+    // modules and other counted items: units, or a weight turned into whole units (Mark, 21 Nov)
+    const gqty = (p) => { const x = P.gq[p]; if (!x || !(+x.q > 0)) return 0; if (k.bulk(+p)) return Math.round(+x.q * UNITS[x.unit || 't']); const u = x.unit || 'units'; return u === 'units' ? Math.floor(+x.q) : Math.floor(+x.q * UNITS[u] * 1000 / k.grams(+p)); };
     const typed = P.gm.some((p) => gqty(p) > 0), nLbl = typed ? 'Needed' : 'Used at MAX';
     if (GMB && P.gm.length) {
       // how many to make (Mark, 21 Nov – TEST ONLY, ?beta=1): a typed amount per pick, else MAX
@@ -1113,8 +1114,9 @@
         return `<div style="margin:8px 0;padding:8px 10px;border:1px solid #ffb03b44;border-radius:8px"><b>${esc(k.pname(p))}</b> <button type="button" class="dk-shipbtn" data-gdel="${p}" style="cursor:pointer;padding:1px 6px">✕</button>` +
           recLine(p, x, rs, 0) +
           (() => { const q = P.gq[p] || {}, sh = (P.gshort || {})[p] || []; return `<div class="row" style="gap:6px;margin:6px 0"><span class="src">How many to make</span><input type="number" min="0" step="any" data-gq="${p}" value="${esc(q.q || '')}" placeholder="MAX" style="width:8em">` +
-            (k.bulk(p) ? `<select data-gqu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (q.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
-            `<button type="button" class="dk-shipbtn" data-gqmax="${p}" style="cursor:pointer">MAX</button></div>` +
+            (k.bulk(p) ? `<select data-gqu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (q.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : `<select data-gqu="${p}" style="min-width:0">${['units'].concat(Object.keys(UNITS)).map((u) => `<option${u === (q.unit || 'units') ? ' selected' : ''}>${u}</option>`).join('')}</select>`) +
+            `<button type="button" class="dk-shipbtn" data-gqmax="${p}" style="cursor:pointer">MAX</button>` +
+            (!k.bulk(p) && q.unit && q.unit !== 'units' && gqty(p) > 0 ? `<span class="src">= <b>${k.amt(p, gqty(p))}</b></span>` : '') + '</div>' +
             (sh.length ? `<div class="src" style="color:var(--amber)">⚠ Not enough on ${esc(r)} for that many – short of ${sh.slice(0, 3).map((z) => esc(k.pname(z))).join(', ')}.</div>` : ''); })() +
           `<div class="src">Most from all the stock on ${esc(r)}: <b>${k.amt(p, a.q)}</b>${a.lim != null ? ' – ' + esc(k.pname(a.lim)) + ' runs out first' : ''}</div>` +
           `<div class="src">With what’s in ${dest ? esc(k.nm(dest)) : 'the storage'} after these moves: <b>${k.amt(p, b.q)}</b></div>` +
@@ -1148,7 +1150,7 @@
     m.querySelectorAll('[data-gq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.gq; P.gq[p] = Object.assign(P.gq[p] || {}, { q: e.value }); k.render(); }));
     m.querySelectorAll('[data-gqu]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.gqu; P.gq[p] = Object.assign(P.gq[p] || {}, { unit: e.value }); k.render(); }));
     m.querySelectorAll('[data-gqmax]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.gqmax, n = (P.gmax || {})[p] || 0;
-      if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.gq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.gq[p] = { q: n }; k.render(); }));
+      if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.gq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.gq[p] = { q: n, unit: 'units' }; k.render(); }));
     m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); delete P.gq[b.dataset.gdel]; k.render(); }));
     m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
     m.querySelectorAll('[data-gch]').forEach((d) => d.addEventListener('toggle', () => { P.gopen = P.gopen || {}; P.gopen[d.dataset.gch] = d.open; }));
