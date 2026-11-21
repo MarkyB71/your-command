@@ -46,8 +46,10 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-tl:hover{color:#f2ede6}
 .en-tl.en-more{justify-content:center;color:#9c8a74}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a1613 0 12px,#0e0807 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
-.en-wl{all:unset;cursor:pointer;margin-left:10px;padding:2px 8px;border:1px solid #5a302b;border-radius:4px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#ffc2bb}
-.en-wl:hover,.en-wl:focus-visible{border-color:#e8645a;box-shadow:0 0 8px -2px #e8645a}
+.en-wl{all:unset;cursor:pointer;margin-left:12px;padding:4px 14px;border:1px solid #e8645a;border-radius:4px;background:#e8645a;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#0e0807;box-shadow:0 0 10px -2px #e8645a;animation:enWl 2.4s ease-in-out infinite}
+.en-wl:hover,.en-wl:focus-visible{background:#ffc2bb;border-color:#ffc2bb;box-shadow:0 0 14px 0 #e8645a}
+.en-wl[aria-expanded="true"]{animation:none}
+@keyframes enWl{50%{box-shadow:0 0 18px 2px #e8645a}}
 .en-ip{margin-top:1px;font:600 11px/1.2 system-ui,sans-serif;color:#57d5ff}
 .en-ed{margin:0 0 10px;padding:10px 12px;border:1px solid #5a302b;border-radius:10px;background:#0e0807}
 .en-ed-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
@@ -62,7 +64,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-ed-list label i{font-style:normal;color:#9c8a74;margin-left:auto}
 .en-none{padding:14px;font:13px system-ui,sans-serif;color:#b9a68f}
 @media (max-width:700px){.en-g.en-raw{width:84px}.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
-@media (prefers-reduced-motion:reduce){.en-arc,.en-g{transition:none}}
+@media (prefers-reduced-motion:reduce){.en-arc,.en-g{transition:none}.en-wl{animation:none}}
 `;
 
   function addCss() {
@@ -209,9 +211,9 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       el.innerHTML =
         '<div class="en-plate">ENGINEERING</div>' +
         '<div class="en-read">' + pick(ai) + ' <b>' + W.length + '</b> watched · <b>' + have + '</b> in stock · <b style="color:#57d5ff">' + making + '</b> in process' +
-        '<button type="button" class="en-wl" data-w="edit" aria-expanded="' + editing + '">✎ Choose</button></div>' +
+        '<button type="button" class="en-wl" data-w="edit" aria-expanded="' + editing + '">✎ Choose what to watch</button></div>' +
         '<div class="en-hint">Storage + <span style="color:#57d5ff">in process</span> · saved for this rock</div>' + ed +
-        (W.length ? '<div class="en-row en-raws">' + dials + '</div>' : '<div class="en-none">Nothing watched on this rock yet – press ✎ Choose.</div>') +
+        (W.length ? '<div class="en-row en-raws">' + dials + '</div>' : '<div class="en-none">Nothing watched on this rock yet – press ✎ Choose what to watch.</div>') +
         '<div class="en-floor"></div>';
       if (editing) {
         const i = el.querySelector('.en-eq');
