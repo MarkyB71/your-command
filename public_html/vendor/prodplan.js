@@ -243,6 +243,9 @@
   }
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
+  // EXF (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): Export for production step 4 gets a button to spread what's collected over
+  // several ships – it hands the pick-up rock and the amounts to 🚀 Load a fleet, with every ship parked there ticked.
+  const EXF = /[?&]beta=1\b/.test(location.search);
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -568,6 +571,15 @@
       if (!X.G) Q += `<div class="src" style="margin-top:8px;color:var(--amber)">${esc(C.qr)} has none of what ${esc(dest)} needs – pick another asteroid.</div>`;
       else if (!qs) Q += `<div class="src" style="margin-top:8px;color:var(--amber)">✈ No ship is parked at ${esc(C.qr)}. Fly one there in the game first, then come back here to load it.</div>`;
       else Q += loadHTML(X, qs, Math.max(1, Math.ceil(Math.max(X.G / (qs.capM * 0.995), X.V / (qs.capV * 0.995)))));
+      if (EXF && FLEET && X.G && there.length > 1) {
+        Q += `<div class="row" style="margin-top:10px"><button type="button" class="dk-shipbtn" id="pp-qfleet" style="cursor:pointer;padding:5px 12px;border:1px solid #ffb03b;color:#ffd28a">🚀 Spread it over ${there.length} ships here instead</button>` +
+          `<span class="src">opens Load a fleet with this load and every ship parked at ${esc(C.qr)} ticked</span></div>`;
+        C.qfleet = () => {
+          P.cmode = 'fleet'; P.sr = C.qr; P.ss = 0; P.sq = {}; P.fl = there.map((s) => s.id);
+          Object.keys(X.got).forEach((p) => { const n = X.got[p]; if (k.bulk(+p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.sq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n }; });
+          S.msg = ''; k.render();
+        };
+      }
       Q += `<div class="hint">This only loads the ship. You fly it to ${esc(dest)} and unload it in the game yourself.</div></div>`;
       h += `<div class="hint">Flight times: quickest route leaving now, loaded with a full tank; ships getting there with the propellant they have now. Light / Heavy Transports only.</div>`;
     } else {
@@ -602,6 +614,7 @@
     h += `</div><div class="hint">This only loads a ship – you fly it and unload it in the game. Flight times: quickest route leaving now (site's route maths), loaded with a full tank; getting there with the propellant it has now. Light / Heavy Transports only.</div>`;
     }
     el.innerHTML = Q + h + '</div>';
+    { const qf = el.querySelector('#pp-qfleet'); if (qf && C.qfleet) qf.addEventListener('click', C.qfleet); }
     el.querySelectorAll('[data-src]').forEach((r) => r.addEventListener('click', () => {
       if (QLB) { C.qr = r.dataset.src; C.qs = 0; k.render(); const q = document.getElementById('pp-qcard'); if (q) q.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       C.src = r.dataset.src; k.render();
