@@ -44,6 +44,12 @@ body.dk-flight #main th{color:#c4adff}
 .fh-win:fullscreen{clip-path:none!important;background:#03060a}
 .fh-win:fullscreen canvas{height:100vh}
 .fh-win:fullscreen .fh-ctl{right:16px;bottom:16px}
+.fh-rl{position:absolute;right:5%;bottom:46px;z-index:3;min-width:200px;max-height:60%;overflow:auto;padding:8px 10px;background:rgba(18,13,30,.95);border:1px solid ${COL};border-radius:8px;font:13px system-ui,sans-serif;color:#e6ebf2}
+.fh-win:fullscreen .fh-rl{right:16px;bottom:52px}
+.fh-rl label{display:flex;align-items:center;gap:7px;padding:2px 0;cursor:pointer;white-space:nowrap}
+.fh-rl input[type=checkbox]{flex:none;width:auto;min-width:0;max-width:none;margin:0}
+.fh-rl i{flex:none;width:18px;height:3px;border-radius:2px}.fh-rl .fh-rb{display:flex;gap:6px;margin-top:6px}
+.fh-rl .fh-rb button{all:unset;cursor:pointer;padding:2px 8px;font:bold 12px system-ui,sans-serif;color:#c4adff;border:1px solid ${COL};border-radius:5px}
 @media (max-width:700px){.fh-key{display:none}#deckhero[data-deck="flight"],.fh-win{clip-path:none}}
 `;
 
@@ -74,6 +80,14 @@ body.dk-flight #main th{color:#c4adff}
   // Map controls, select and Adalia Prime – same as the Bridge viewscreen (Mark, 15 Nov 2026 – TEST ONLY, ?beta=1)
   const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const APK = 'yic-travel-ap';
+  // FOC (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): same as the Bridge map – each of your rocks has its own orbit colour (same
+  // colours as the Bridge), and a Rocks ▾ list (Adalia Prime at the top) shows or hides each one. Hidden rocks are shared
+  // with the Bridge map ('yic-map-hide'). Mark: any change to the Bridge viewscreen map goes on this map too.
+  const FOC = /[?&]beta=1\b/.test(location.search);
+  const OCOL = ['#5fc3e4', '#ffb84a', '#7be07b', '#ff7ab6', '#b48cff', '#ffe66b', '#ff8a5c', '#5ce1c4', '#9fb4ff', '#e0e0e0'];
+  const HK = 'yic-map-hide';
+  const hidL = () => { try { return JSON.parse(localStorage.getItem(HK)) || []; } catch (e) { return []; } };
+  const hidS = (a) => { try { localStorage.setItem(HK, JSON.stringify(a)); } catch (e) {} };
   const apOn = () => { try { return localStorage.getItem(APK) === '1'; } catch (e) { return false; } };
 
   function hero(el) {
@@ -91,12 +105,16 @@ body.dk-flight #main th{color:#c4adff}
       '<div class="fh-key"><i style="background:' + COL + ';clip-path:polygon(0 50%,100% 0,70% 50%,100% 100%)"></i>ship in flight<br>' +
       '<i style="border-top:1px dashed ' + COL + ';height:0"></i>course<br><i style="background:#c4cdd9;border-radius:50%"></i>your rock<br><span style="opacity:.7">drag to turn</span></div>' +
       '<div class="fh-load">Plotting courses…</div>' +
-      (MC ? '<div class="fh-ctl"><label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-fh="ap"> Adalia Prime</label>' +
+      (MC ? '<div class="fh-ctl">' + (FOC ? '<button type="button" data-fh="rocks" title="Show or hide each of your asteroids" aria-expanded="false" style="font-size:13px">Rocks ▴</button>' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-fh="ap"> Adalia Prime</label>') +
         '<button type="button" data-fh="out" title="Zoom out">−</button><button type="button" data-fh="in" title="Zoom in">+</button>' +
         '<button type="button" data-fh="pause" title="Pause the turning">⏸</button><button type="button" data-fh="fs" title="Full screen">⛶</button></div>' +
         '<div class="fh-card" hidden></div>' : '') + '</div><div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
     const cv = el.querySelector('canvas'),
       ctx = cv.getContext('2d');
+    const ocol = {}; // rock id → its colour, in the same order as the Bridge map
+    (D.owned || []).filter((a) => a.Orbit && a.Orbit.a).forEach((a, i) => { ocol[+a.id] = OCOL[i % OCOL.length]; });
+    let hid = FOC ? hidL() : [];
+    const shown = (r) => !(r.mine && hid.includes(r.id));
     const ids = [...new Set(owned.concat(ships.map((s) => s.dId), fly.map((s) => s.oId), MC ? [1] : []))].filter(Boolean);
     Promise.all([import('./travel.js?v=' + (Y.VER || 1)), orbitsFor(ids)])
       .then(([T, O]) => {
@@ -231,14 +249,16 @@ body.dk-flight #main th{color:#c4adff}
             ctx.stroke();
           });
           rocks.forEach((r) => {
-            if (!r.ring.length) return;
-            ctx.strokeStyle = 'rgba(196,205,217,.13)';
+            if (!r.ring.length || !shown(r)) return;
+            ctx.strokeStyle = FOC && ocol[r.id] ? ocol[r.id] : 'rgba(196,205,217,.13)';
+            ctx.globalAlpha = FOC && ocol[r.id] ? 0.55 : 1;
             ctx.beginPath();
             r.ring.forEach((p, i) => {
               const q = proj(p);
               i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
             });
             ctx.stroke();
+            ctx.globalAlpha = 1;
           });
           trips.forEach((t) => {
             const A = proj(t.a),
@@ -294,6 +314,7 @@ body.dk-flight #main th{color:#c4adff}
             ctx.fillText('→ ' + nm(t.s.dId) + ' · lands in ' + left(t.left), P[0] + 10, P[1] + 6);
           });
           rocks.forEach((r) => {
+            if (!shown(r)) return;
             const q = proj(r.p);
             if (sel === r.id) {
               ctx.strokeStyle = '#ffd24a';
@@ -310,7 +331,7 @@ body.dk-flight #main th{color:#c4adff}
               ctx.fillRect(-5, -5, 10, 10);
               ctx.restore();
             } else {
-              ctx.fillStyle = r.mine ? '#c4cdd9' : '#7d8899';
+              ctx.fillStyle = r.mine ? (FOC && ocol[r.id]) || '#c4cdd9' : '#7d8899';
               ctx.beginPath();
               ctx.arc(q[0], q[1], r.mine ? 4 : 3, 0, 6.283);
               ctx.fill();
@@ -392,7 +413,7 @@ body.dk-flight #main th{color:#c4adff}
             let rk = null,
               rd = 14;
             rocks.forEach((r) => {
-              if (!r.mine && !r.ap) return;
+              if ((!r.mine && !r.ap) || !shown(r)) return;
               const q = proj(r.p),
                 d = Math.hypot(q[0] - x, q[1] - y);
               if (d < rd) {
@@ -444,8 +465,23 @@ body.dk-flight #main th{color:#c4adff}
             e.preventDefault();
             zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
           }, { passive: false });
-          apcb.checked = apOn();
-          apcb.onchange = () => {
+          if (FOC) {
+            const rb = el.querySelector('[data-fh="rocks"]'), rl = document.createElement('div');
+            rl.className = 'fh-rl'; rl.hidden = true; win.appendChild(rl);
+            const mineL = (D.owned || []).filter((a) => a.Orbit && a.Orbit.a).map((a) => ({ id: +a.id, name: nm(+a.id) }));
+            const list = () => {
+              rl.innerHTML = '<label title="Same setting as Navigation"><input type="checkbox" data-rap' + (apOn() ? ' checked' : '') + '><i style="background:#fff"></i>Adalia Prime</label>' +
+                mineL.map((a) => '<label><input type="checkbox" data-rk="' + a.id + '"' + (hid.includes(a.id) ? '' : ' checked') + '><i style="background:' + ocol[a.id] + '"></i>' + (Y.esc ? Y.esc(a.name) : a.name) + '</label>').join('') +
+                '<div class="fh-rb"><button type="button" data-ra="all">Show all</button><button type="button" data-ra="none">Hide all</button></div>';
+            };
+            const setAP = (on) => { try { localStorage.setItem(APK, on ? '1' : '0'); } catch (e) {} if (!on && sel === 1) pick(null); plan(); };
+            const set = (h) => { hid = h; hidS(hid); if (sel && hid.includes(sel)) pick(null); list(); frame(); };
+            rb.onclick = () => { rl.hidden = !rl.hidden; rb.setAttribute('aria-expanded', String(!rl.hidden)); if (!rl.hidden) list(); };
+            rl.addEventListener('change', (e) => { if ('rap' in e.target.dataset) { setAP(e.target.checked); frame(); return; } const id = +e.target.dataset.rk; if (!id) return; set(e.target.checked ? hid.filter((x) => x !== id) : hid.concat([id])); });
+            rl.addEventListener('click', (e) => { const w = e.target.dataset.ra; if (w === 'all') { setAP(true); set([]); } else if (w === 'none') { setAP(false); set(mineL.map((a) => a.id)); } });
+          }
+          if (apcb) apcb.checked = apOn();
+          if (apcb) apcb.onchange = () => {
             try { localStorage.setItem(APK, apcb.checked ? '1' : '0'); } catch (e) {}
             if (!apcb.checked && sel === 1) pick(null);
             plan();
