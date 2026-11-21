@@ -333,7 +333,7 @@
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
       c.innerHTML = (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
-        '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>' +
+        (ORB ? '' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>') +
         '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
         '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
       box.appendChild(c);
@@ -560,7 +560,7 @@
             zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
           }, { passive: false });
           // Adalia Prime on the map (Mark, 15 Nov): a tick box, shared with Navigation's "Include Adalia Prime" (same saved setting)
-          const APK = 'yic-travel-ap', apcb = box.querySelector('[data-bm="ap"]');
+          const APK = 'yic-travel-ap', apcb = box.querySelector('[data-bm="ap"]') || Object.assign(document.createElement('input'), { type: 'checkbox' }); // ORB: AP lives in the Rocks list (Mark, 21 Nov)
           const apOn = () => { try { return localStorage.getItem(APK) === '1'; } catch (e) { return false; } };
           const apDraw = () => {
             if (!apcb.checked) { apL = []; if (sel === 1) show(null); frame(); return; }
@@ -602,13 +602,14 @@
             const rb = box.querySelector('[data-bm="rocks"]'), rl = document.createElement('div');
             rl.className = 'bm-rl'; rl.hidden = true; box.appendChild(rl);
             const list = () => {
-              rl.innerHTML = me.map((a) => '<label><input type="checkbox" data-rk="' + a.id + '"' + (hid.includes(a.id) ? '' : ' checked') + '><i style="background:' + a.col + '"></i>' + APP.esc(a.name) + '</label>').join('') +
+              rl.innerHTML = '<label title="Same setting as Navigation"><input type="checkbox" data-rap' + (apcb.checked ? ' checked' : '') + '><i style="background:#fff"></i>Adalia Prime</label>' + me.map((a) => '<label><input type="checkbox" data-rk="' + a.id + '"' + (hid.includes(a.id) ? '' : ' checked') + '><i style="background:' + a.col + '"></i>' + APP.esc(a.name) + '</label>').join('') +
                 '<div class="bm-rb"><button type="button" data-ra="all">Show all</button><button type="button" data-ra="none">Hide all</button></div>';
             };
             const set = (h) => { hid = h; hidS(hid); if (sel && hid.includes(sel)) show(null); list(); frame(); };
             rb.onclick = () => { rl.hidden = !rl.hidden; rb.setAttribute('aria-expanded', String(!rl.hidden)); if (!rl.hidden) list(); };
-            rl.addEventListener('change', (e) => { const id = +e.target.dataset.rk; if (!id) return; set(e.target.checked ? hid.filter((x) => x !== id) : hid.concat([id])); });
-            rl.addEventListener('click', (e) => { const w = e.target.dataset.ra; if (w === 'all') set([]); else if (w === 'none') set(me.map((a) => a.id)); });
+            const apSet = (on) => { if (apcb.checked !== on) { apcb.checked = on; apcb.onchange(); } };
+            rl.addEventListener('change', (e) => { if ('rap' in e.target.dataset) return apSet(e.target.checked); const id = +e.target.dataset.rk; if (!id) return; set(e.target.checked ? hid.filter((x) => x !== id) : hid.concat([id])); });
+            rl.addEventListener('click', (e) => { const w = e.target.dataset.ra; if (w === 'all') { apSet(true); set([]); } else if (w === 'none') { apSet(false); set(me.map((a) => a.id)); } });
           }
         }
       })
