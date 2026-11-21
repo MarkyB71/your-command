@@ -1018,7 +1018,7 @@
     if (GMB) {
       const gf = (P.gfind || '').trim().toLowerCase();
       const can = gf ? products().filter((p) => !P.gm.includes(p) && rOf(p).length && k.pname(p).toLowerCase().includes(gf)).slice(0, 12) : [];
-      h += `<div class="card"><h2><span class="n">3</span>What do you want to make? <span class="src">(optional)</span></h2><div class="src" style="margin-bottom:8px">Pick one or more things – the whole chain to make them is listed, coloured by how many steps down. Everything listed goes into ${dest ? esc(k.nm(dest)) : 'the storage above'} – then choose how much to make in the game.</div>` +
+      h += `<div class="card"><h2><span class="n">3</span>What do you want to make? <span class="src">(optional)</span></h2><div class="src" style="margin-bottom:8px">Pick one or more things – the whole chain to make them is listed, coloured by how many steps down. Type how many to make (or press MAX) and step 4 fills in what to move into ${dest ? esc(k.nm(dest)) : 'the storage above'}.</div>` +
         `<input type="search" id="pp-gfind" placeholder="🔍 Search what to make…" value="${esc(P.gfind || '')}">` +
         (gf ? (can.length ? '<div style="margin-top:6px">' + can.map((p) => `<button type="button" class="dk-shipbtn" data-gadd="${p}" style="cursor:pointer;margin:2px">${esc(k.pname(p))}</button>`).join('') + '</div>' : `<div class="src" style="margin-top:6px">Nothing that can be made on ${esc(r)} matches.</div>`) : '');
       gmAt = h.length;
@@ -1044,9 +1044,21 @@
     // how much the most you could make would really use (Mark, 19 Nov: "Tungsten Powder will never use that much water
     // or oxygen") – the planner run at MAX for each pick, minus what's already in the storage it goes to
     let gneed = {};
+    P.gq = P.gq || {};
+    const gqty = (p) => { const x = P.gq[p]; if (!x || !(+x.q > 0)) return 0; return k.bulk(+p) ? Math.round(+x.q * UNITS[x.unit || 't']) : Math.floor(+x.q); };
+    const typed = P.gm.some((p) => gqty(p) > 0), nLbl = typed ? 'Needed' : 'Used at MAX';
     if (GMB && P.gm.length) {
-      const key = r + '|' + P.gm.join(',') + '|' + P.mdest + '|' + (S.msg || '').length;
-      if (P.gnk !== key) { P.gnv = {}; P.gm.forEach((p) => { const mx = maxMake(p).q; if (mx > 0) { const W = work(p, mx); Object.keys(W.stock).forEach((ip) => { if (+ip !== p) P.gnv[ip] = (P.gnv[ip] || 0) + W.stock[ip]; }); } }); P.gnk = key; }
+      // how many to make (Mark, 21 Nov – TEST ONLY, ?beta=1): a typed amount per pick, else MAX
+      const key = r + '|' + P.gm.join(',') + '|' + P.mdest + '|' + (S.msg || '').length + '|' + JSON.stringify(P.gq);
+      if (P.gnk !== key) {
+        P.gnv = {}; P.gmax = {}; P.gshort = {};
+        P.gm.forEach((p) => {
+          const mx = P.gmax[p] = maxMake(p).q, amt = gqty(p) || mx; if (!(amt > 0)) return;
+          const W = work(p, amt); Object.keys(W.stock).forEach((ip) => { if (+ip !== p) P.gnv[ip] = (P.gnv[ip] || 0) + W.stock[ip]; });
+          if (gqty(p)) P.gshort[p] = Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number);
+        });
+        P.gnk = key;
+      }
       gneed = P.gnv || {};
     }
     const useAmt = (p) => Math.max(0, Math.min(tot(p), (gneed[p] || 0) - inDest(p)));
@@ -1054,7 +1066,7 @@
     const prods = Object.keys(stock).map(Number).filter((p) => (!need.size || need.has(p)) && (!f || k.pname(p).toLowerCase().includes(f))).sort((a, b) => Math.min(...(need.get(a) || [99])) - Math.min(...(need.get(b) || [99])) || !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
     h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">${need.size ? 'Only what your picks in step 3 need, from the other storage on ' + esc(r) + '.' : 'Everything in the other storage on ' + esc(r) + '.'} Type how much of each to move, or press ALL.</div>` +
       `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
-      (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th>${need.size ? '<th class="num">Used at MAX</th>' : ''}<th>Move</th></tr></thead><tbody>` + prods.map((p) => {
+      (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th>${need.size ? '<th class="num">' + nLbl + '</th>' : ''}<th>Move</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
         const nd = need.has(p), uses = (need.get(p) || []).length;
         return `<tr${nd ? ` style="background:#ffffff08"` : ''}><td${nd ? ` style="position:relative;padding-left:16px"` : ''}>${nd ? `<span style="position:absolute;left:0;top:4px;bottom:4px;width:6px;border-radius:3px;background:${bar(p)}"></span>` + dots(p) + ' <b>' + esc(k.pname(p)) + '</b>' + (uses > 1 ? ` <span class="src">· used in ${uses} processes</span>` : '') : esc(k.pname(p))}${no ? ' <span class="src" style="color:var(--amber)">· not a fluid</span>' : ''}</td><td class="num">${k.amt(p, tot(p))}</td>${need.size ? `<td class="num">${useAmt(p) > 0 ? k.amt(p, useAmt(p)) + ` <button type="button" class="dk-shipbtn" data-muse="${p}" style="cursor:pointer;padding:1px 6px">USE</button>` : '<span class="src">' + (gneed[p] ? 'already there' : '–') + '</span>'}</td>` : ''}<td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-mq="${p}" value="${esc(x.q || '')}" placeholder="0"${no ? ' disabled' : ''}>` +
@@ -1100,6 +1112,10 @@
         const x = pickR(p), rs = rOf(p), a = makes(p, x, allOn), b = makes(p, x, (ip) => inDest(ip) + (moved[ip] || 0));
         return `<div style="margin:8px 0;padding:8px 10px;border:1px solid #ffb03b44;border-radius:8px"><b>${esc(k.pname(p))}</b> <button type="button" class="dk-shipbtn" data-gdel="${p}" style="cursor:pointer;padding:1px 6px">✕</button>` +
           recLine(p, x, rs, 0) +
+          (() => { const q = P.gq[p] || {}, sh = (P.gshort || {})[p] || []; return `<div class="row" style="gap:6px;margin:6px 0"><span class="src">How many to make</span><input type="number" min="0" step="any" data-gq="${p}" value="${esc(q.q || '')}" placeholder="MAX" style="width:8em">` +
+            (k.bulk(p) ? `<select data-gqu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (q.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
+            `<button type="button" class="dk-shipbtn" data-gqmax="${p}" style="cursor:pointer">MAX</button></div>` +
+            (sh.length ? `<div class="src" style="color:var(--amber)">⚠ Not enough on ${esc(r)} for that many – short of ${sh.slice(0, 3).map((z) => esc(k.pname(z))).join(', ')}.</div>` : ''); })() +
           `<div class="src">Most from all the stock on ${esc(r)}: <b>${k.amt(p, a.q)}</b>${a.lim != null ? ' – ' + esc(k.pname(a.lim)) + ' runs out first' : ''}</div>` +
           `<div class="src">With what’s in ${dest ? esc(k.nm(dest)) : 'the storage'} after these moves: <b>${k.amt(p, b.q)}</b></div>` +
           `<details class="dkp-fold" data-gch="${p}"${(P.gopen || {})[p] ? ' open' : ''} style="margin-top:6px"><summary>Show the chain (${(rows[p] || []).length} items)</summary>` + (() => { P.gx = P.gx || {}; const shown = {}; shown[String(p)] = true; return (rows[p] || []).map((z) => {
@@ -1110,12 +1126,12 @@
       }).join('');
       P.gtree = [...need.keys()].filter((p) => !P.gm.includes(p));
       const card = (gh ? (legend ? `<div style="margin:8px 0 2px">${legend}</div>` : '') + gh +
-        `<div class="row" style="gap:8px;margin-top:6px"><button type="button" class="dk-shipbtn" id="pp-gneed" style="cursor:pointer">MOVE WHAT MAX USES</button><button type="button" class="dk-shipbtn" id="pp-gall" style="cursor:pointer">MOVE ALL THE INGREDIENTS</button></div><div class="hint">MAX uses = what the most you can make from the stock here would use (the planner’s own recipe picks). Change any amount in step 4.</div>` : '') + '</div>';
+        `<div class="row" style="gap:8px;margin-top:6px"><button type="button" class="dk-shipbtn" id="pp-gneed" style="cursor:pointer">${typed ? 'MOVE WHAT’S NEEDED' : 'MOVE WHAT MAX USES'}</button><button type="button" class="dk-shipbtn" id="pp-gall" style="cursor:pointer">MOVE ALL THE INGREDIENTS</button></div><div class="hint">${typed ? 'Needed = what making the amounts above would use' : 'MAX uses = what the most you can make from the stock here would use'} (the planner’s own recipe picks). Change any amount in step 4.</div>` : '') + '</div>';
       h = h.slice(0, gmAt) + card + h.slice(gmAt);
     }
     m.innerHTML = h;
     const on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
-    on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; P.gm = []; P.gr = {}; S.msg = ''; k.render(); });
+    on('pp-mr', 'change', (e) => { S.rock = e.target.value; P.mdest = 0; P.mq = {}; P.gm = []; P.gr = {}; P.gq = {}; S.msg = ''; k.render(); });
     on('pp-md', 'change', (e) => { P.mdest = +e.target.value; S.msg = ''; k.render(); });
     on('pp-mfind', 'input', (e) => { P.mfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = document.getElementById('pp-mfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-mq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.mq; P.mq[p] = Object.assign(P.mq[p] || {}, { q: e.value }); k.render(); }));
@@ -1129,7 +1145,11 @@
     on('pp-mgo', 'click', () => k.approve());
     on('pp-gfind', 'input', (e) => { P.gfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = document.getElementById('pp-gfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
-    m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); k.render(); }));
+    m.querySelectorAll('[data-gq]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.gq; P.gq[p] = Object.assign(P.gq[p] || {}, { q: e.value }); k.render(); }));
+    m.querySelectorAll('[data-gqu]').forEach((e) => e.addEventListener('change', () => { const p = e.dataset.gqu; P.gq[p] = Object.assign(P.gq[p] || {}, { unit: e.value }); k.render(); }));
+    m.querySelectorAll('[data-gqmax]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.gqmax, n = (P.gmax || {})[p] || 0;
+      if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.gq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.gq[p] = { q: n }; k.render(); }));
+    m.querySelectorAll('[data-gdel]').forEach((b) => b.addEventListener('click', () => { P.gm = P.gm.filter((p) => p !== +b.dataset.gdel); delete P.gq[b.dataset.gdel]; k.render(); }));
     m.querySelectorAll('[data-grec]').forEach((e) => e.addEventListener('change', () => { P.gr[e.dataset.grec] = +e.value; k.render(); }));
     m.querySelectorAll('[data-gch]').forEach((d) => d.addEventListener('toggle', () => { P.gopen = P.gopen || {}; P.gopen[d.dataset.gch] = d.open; }));
     m.querySelectorAll('[data-gx]').forEach((b) => b.addEventListener('click', () => { const key = b.dataset.gx; if (P.gx[key]) delete P.gx[key]; else P.gx[key] = 1; k.render(); }));
