@@ -102,10 +102,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       '<image href="rimg.php?p=' + p + '" x="25" y="17" width="30" height="30"' + (v > 0 || v2 > 0 ? '' : ' opacity=".35"') + '/></svg>';
   }
 
-  // Watch list (TEST on ?beta=1 – community idea, 21 Nov 2026): pick which products to watch, per rock,
+  // Watch list (LIVE 21 Nov 2026, tested on ?beta=1 – community idea): pick which products to watch, per rock,
   // showing what's in storage plus what's being made right now (running extractors + processes, main output).
-  // TO REMOVE: set HUD=false (the Products panel goes back to the 22 raw materials).
-  const HUD = /[?&]beta=1\b/.test(location.search);
   const WKEY = 'sk_eng_watch';
   const wLoad = () => { try { return JSON.parse(localStorage.getItem(WKEY)) || {}; } catch (e) { return {}; } };
   const wSave = (o) => { try { localStorage.setItem(WKEY, JSON.stringify(o)); } catch (e) { /* storage off */ } };
@@ -140,26 +138,6 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       '<select class="en-pick" aria-label="Which rock"><option value="">All rocks</option>' +
       (Y.asts || []).map((a, i) => '<option value="' + i + '"' + (String(i) === ai ? ' selected' : '') + '>' + Y.esc(a.name) + '</option>').join('') +
       '</select>';
-
-    // Products page: one dial per raw material (Mark, 27 Oct)
-    function drawRaws(ai) {
-      const tot = Y.tot || [], idx = ai === '' ? Object.keys(tot) : [ai];
-      const t = {};
-      for (let p = 1; p <= 22; p++) t[p] = idx.reduce((s, i) => s + Y.kg(p, (tot[i] && tot[i][p]) || 0), 0) / 1000;
-      const max = Math.max(1, ...Object.values(t)), have = Object.values(t).filter((v) => v > 0).length;
-      const raws = Object.keys(t).map((p) => {
-        const v = t[p] > 0 ? Math.log10(1 + t[p]) / Math.log10(1 + max) : 0;
-        return '<span class="en-g en-raw" title="' + Y.esc(Y.pn(p)) + ': ' + (t[p] > 0 ? Y.fmtT(t[p]) : 'none') + '">' +
-          dialRaw(v, t[p] > 0 ? COL : '#5a302b', p) +
-          '<span class="en-rv" style="color:' + (t[p] > 0 ? '#f2ede6' : '#6b5a46') + '">' + (t[p] > 0 ? Y.fmtT(t[p]) : 'none') + '</span>' +
-          '<span class="en-rn">' + Y.esc(Y.pn(p)) + '</span></span>';
-      }).join('');
-      el.innerHTML =
-        '<div class="en-plate">ENGINEERING</div>' +
-        '<div class="en-read">' + pick(ai) + ' <b>' + have + '</b> of <b>22</b> raw materials in stock</div>' +
-        '<div class="en-hint">Raw materials in your warehouses and tank farms</div>' +
-        '<div class="en-row en-raws">' + raws + '</div><div class="en-floor"></div>';
-    }
 
     // ---- Watch list (HUD) ----
     let editing = false, eq = '', eAll = false; // eAll: picker shows every product, not just raws (Mark, 21 Nov)
@@ -221,7 +199,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         if (i && document.activeElement !== i && eq) { i.focus(); i.setSelectionRange(eq.length, eq.length); }
       }
     }
-    if (HUD) {
+    {
       const setW = (fn) => { const ai = (document.getElementById('ast') || {}).value || '', o = wLoad(), k = rockKey(ai); o[k] = fn(watched(ai)); wSave(o); drawHud(ai); };
       el.addEventListener('click', (e) => {
         const b = e.target.closest('[data-w]');
@@ -252,7 +230,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       const box = document.getElementById('ast');
       const ai = box ? box.value : '';
       mode = Y.view;
-      if (mode === 'P') return HUD ? drawHud(ai) : drawRaws(ai);
+      if (mode === 'P') return drawHud(ai);
       const an = ai === '' || !Y.asts[+ai] ? null : Y.asts[+ai].name;
       const P = {}, S = {}, L = {};
       PROD.forEach(([t]) => (P[t] = { op: 0, run: 0, done: 0, build: 0 }));
