@@ -46,10 +46,10 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-tl:hover{color:#f2ede6}
 .en-tl.en-more{justify-content:center;color:#9c8a74}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a1613 0 12px,#0e0807 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
-.en-wl{all:unset;cursor:pointer;margin-left:12px;padding:4px 14px;border:1px solid #e8645a;border-radius:4px;background:#e8645a;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#0e0807;box-shadow:0 0 10px -2px #e8645a;animation:enWl 2.4s ease-in-out infinite}
-.en-wl:hover,.en-wl:focus-visible{background:#ffc2bb;border-color:#ffc2bb;box-shadow:0 0 14px 0 #e8645a}
+.en-wl{all:unset;cursor:pointer;margin-left:12px;padding:4px 14px;border:1px solid #e8645a;border-radius:4px;background:#0e0807;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#ffc2bb;box-shadow:0 0 8px -2px #e8645a;animation:enWl 2.4s ease-in-out infinite}
+.en-wl:hover,.en-wl:focus-visible{color:#f2ede6;box-shadow:0 0 14px 0 #e8645a}
 .en-wl[aria-expanded="true"]{animation:none}
-@keyframes enWl{50%{box-shadow:0 0 18px 2px #e8645a}}
+@keyframes enWl{50%{box-shadow:0 0 14px 0 #e8645a}}
 .en-hint-w{top:2px;display:flex;align-items:center}
 @media (max-width:700px){.en-hint-w{display:flex;position:static;justify-content:flex-end;margin:0 0 8px}}
 .en-ip{margin-top:1px;font:600 11px/1.2 system-ui,sans-serif;color:#57d5ff}
