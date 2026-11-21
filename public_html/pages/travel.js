@@ -52,6 +52,11 @@
   // stop if it has Hydrogen Propellant in storage. And a rock with a working Refinery that can get Hydrogen is flagged
   // "can make it if you bring the powders" (Silica Powder + Tungsten Powder) – still the half-propellant rule there.
   const RFS = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
+  // RFN (Mark 21 Nov 2026 – LIVE, straight in): a rock only counts as "can refuel" from storage or its markets when it has at
+  // least HALF A TANK for the ship picked above (was 1 t – far too little: tanks are 4,000 t Light / 24,000 t Heavy / 2,000 t Shuttle).
+  // Half a tank matches the half-propellant rule for rocks that can't refuel.
+  const TANKKG = { 1: 200, 2: 4e6, 3: 24e6, 4: 2e6 };
+  let NEED = 1000;
   const RST = {};   // id -> 'make' | 'stock' | 'powders' | 'no'
   const STK = {};   // id -> kg of Hydrogen Propellant stored
   // Belt markets selling propellant (Mark, 15 Nov – ?beta=1): asteroid id -> { kg, name }, from window.BELTDATA (pages/market.js)
@@ -85,8 +90,8 @@
       const n = +(st[170] || 0);
       const kg = n && Y.kg ? Y.kg(170, n) : n;
       STK[a.id] = kg;
-      if (kg >= 1000) { REF[a.id] = true; RST[a.id] = 'stock'; return; }
-      if (SELL && SELL[a.id] && SELL[a.id].kg >= 1000) { REF[a.id] = true; RST[a.id] = 'market'; return; }
+      if (kg >= NEED) { REF[a.id] = true; RST[a.id] = 'stock'; return; }
+      if (SELL && SELL[a.id] && SELL[a.id].kg >= NEED) { REF[a.id] = true; RST[a.id] = 'market'; return; }
       const R = window.YICREC, pt = R && R.MK && R.MK['170'] && R.MK['170'][0] && R.MK['170'][0][1];
       const refinery = pt != null && (D.allB || []).some(b => b.Building && b.Building.buildingType === R.FBT[pt] && b.Building.status === 3 &&
         (((b.Location || {}).locations || []).find(x => x.label === 3) || {}).id === a.id);
@@ -224,6 +229,7 @@
       const B = window.BELTDATA && window.BELTDATA.get(() => { if (SELL) return; beltFuel(Y, window.BELTDATA.data); if (m.isConnected) drawTravel(m); });
       if (B) beltFuel(Y, B); else if (!window.BELTDATA) SELL = {};
     }
+    { const so = S.ship[0] === 's' ? ships.find(x => 's' + x.id === S.ship) : null; NEED = (TANKKG[so ? so.st : +S.ship.slice(1)] || 4e6) / 2; }
     const ref = refuelMap(Y, D, asts);
     if (S.fuel) {
       h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div id="trFT">' +
@@ -239,9 +245,10 @@
           (mkt.length ? '<br>⛽ <b>Propellant for sale at its markets:</b> ' + mkt.map(a => esc(a.name) + (SELL && SELL[a.id] ? ' (' + t(SELL[a.id].kg) + ')' : '')).join(', ') : '') +
           (st.length ? '<br>⛽ <b>Has propellant in storage:</b> ' + st.map(a => esc(a.name) + ' (' + t(STK[a.id]) + ')').join(', ') : '') +
           (pw.length ? '<br>⛽ <b>Can make it if you bring Silica Powder and Tungsten Powder:</b> ' + pw.map(a => esc(a.name)).join(', ') : '') +
-          (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.map(a => esc(a.name)).join(', ') : '') +
+          (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.map(a => esc(a.name) + (STK[a.id] >= 1000 ? ' <span class="a">(' + t(STK[a.id]) + ' in storage – under half a tank)</span>' : '')).join(', ') : '') +
+          '<br><span class="a">Storage and markets count when they hold at least half a tank for this ship (' + t(NEED) + ').</span>' +
           (SELL ? (() => {
-            const shown = new Set(asts.map(a => +a.id)), more = Object.keys(SELL).filter(id => !shown.has(+id) && SELL[id].kg >= 1000)
+            const shown = new Set(asts.map(a => +a.id)), more = Object.keys(SELL).filter(id => !shown.has(+id) && SELL[id].kg >= NEED)
               .sort((x, y) => SELL[y].kg - SELL[x].kg);
             return more.length ? '<br>⛽ Propellant is also for sale on <b>' + more.length + '</b> other asteroid' + (more.length === 1 ? '' : 's') + ' across the belt – see <b>⛽ Fuel on the belt</b>.' : '';
           })() : '<br><span class="a">⛽ Checking the belt markets for propellant…</span>') +
