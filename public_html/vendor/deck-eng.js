@@ -62,6 +62,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-all{display:flex;gap:6px;align-items:center;font:12px system-ui,sans-serif;color:#ffc2bb;cursor:pointer}
 .en-ed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px;max-height:260px;overflow:auto}
 .en-ed-list label{display:flex;gap:6px;align-items:center;font:12px/1.5 system-ui,sans-serif;color:#d8cbbb;cursor:pointer}
+.en-ed-list input[type=checkbox]{flex:none;width:auto;min-width:0;max-width:none;margin:0}
 .en-ed-list label.on{color:#f2ede6}
 .en-ed-list label i{font-style:normal;color:#9c8a74;margin-left:auto}
 .en-none{padding:14px;font:13px system-ui,sans-serif;color:#b9a68f}
