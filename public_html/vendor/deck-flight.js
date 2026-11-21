@@ -47,6 +47,7 @@ body.dk-flight #main th{color:#c4adff}
 .fh-one .bm-box{margin:0!important;border:0!important;border-radius:0!important;background:transparent!important}
 .fh-one .bm-box>.a{left:50%!important;transform:translateX(-50%);top:auto!important;bottom:6px;white-space:nowrap;opacity:.7}
 .fh-one .fh-read{top:auto;bottom:28px}
+.fh-one canvas{height:clamp(300px,46vw,520px)!important}
 .fh-win.fh-one:fullscreen canvas{height:100vh!important}
 .fh-rl{position:absolute;right:5%;bottom:46px;z-index:3;min-width:200px;max-height:60%;overflow:auto;padding:8px 10px;background:rgba(18,13,30,.95);border:1px solid ${COL};border-radius:8px;font:13px system-ui,sans-serif;color:#e6ebf2}
 .fh-win:fullscreen .fh-rl{right:16px;bottom:52px}
@@ -110,7 +111,7 @@ body.dk-flight #main th{color:#c4adff}
       el.innerHTML = '<div class="fh-win fh-one"><div class="fh-glass"></div><div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div></div>' +
         '<div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
       const win = el.querySelector('.fh-win');
-      window.YICbeltMap(win, { ships: true, theme: 'flight', onShip: showShip, fsEl: win, h: 'clamp(220px,28vw,330px)', label: 'Ships in flight · courses · docked ships · drag to turn' });
+      window.YICbeltMap(win, { ships: true, theme: 'flight', onShip: showShip, fsEl: win, h: 'clamp(300px,46vw,520px)', label: 'Ships in flight · courses · docked ships · drag to turn' });
       return;
     }
     el.innerHTML =
