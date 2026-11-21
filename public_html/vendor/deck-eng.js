@@ -50,6 +50,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-wl:hover,.en-wl:focus-visible{background:#ffc2bb;border-color:#ffc2bb;box-shadow:0 0 14px 0 #e8645a}
 .en-wl[aria-expanded="true"]{animation:none}
 @keyframes enWl{50%{box-shadow:0 0 18px 2px #e8645a}}
+.en-hint-w{top:2px;display:flex;align-items:center}
+@media (max-width:700px){.en-hint-w{display:flex;position:static;justify-content:flex-end;margin:0 0 8px}}
 .en-ip{margin-top:1px;font:600 11px/1.2 system-ui,sans-serif;color:#57d5ff}
 .en-ed{margin:0 0 10px;padding:10px 12px;border:1px solid #5a302b;border-radius:10px;background:#0e0807}
 .en-ed-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
@@ -210,9 +212,8 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       }
       el.innerHTML =
         '<div class="en-plate">ENGINEERING</div>' +
-        '<div class="en-read">' + pick(ai) + ' <b>' + W.length + '</b> watched · <b>' + have + '</b> in stock · <b style="color:#57d5ff">' + making + '</b> in process' +
-        '<button type="button" class="en-wl" data-w="edit" aria-expanded="' + editing + '">✎ Choose what to watch</button></div>' +
-        '<div class="en-hint">Storage + <span style="color:#57d5ff">in process</span> · saved for this rock</div>' + ed +
+        '<div class="en-read">' + pick(ai) + ' <b>' + W.length + '</b> watched · <b>' + have + '</b> in stock · <b style="color:#57d5ff">' + making + '</b> in process</div>' +
+        '<div class="en-hint en-hint-w">Storage + <span style="color:#57d5ff">in process</span> · saved for this rock<button type="button" class="en-wl" data-w="edit" aria-expanded="' + editing + '">✎ Choose what to watch</button></div>' + ed +
         (W.length ? '<div class="en-row en-raws">' + dials + '</div>' : '<div class="en-none">Nothing watched on this rock yet – press ✎ Choose what to watch.</div>') +
         '<div class="en-floor"></div>';
       if (editing) {
