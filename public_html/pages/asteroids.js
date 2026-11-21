@@ -434,7 +434,7 @@
         };
         if (SH) {
           const need = [...new Set(dock.map((x) => x.dId).concat(fly.map((x) => x.dId), fly.map((x) => x.oId)))].filter((id) => id && !me.some((a) => a.id === id) && !SO[id]);
-          if (need.length) fetch('orbits.php?ids=' + need.slice(0, 200).join(',')).then((r) => r.json()).then((j) => { SO = APP.shipO = Object.assign(APP.shipO || {}, j.orbits || {}); plan(); }).catch(() => {});
+          if (need.length) fetch('orbits.php?ids=' + need.slice(0, 200).join(',')).then((r) => r.json()).then((j) => { SO = APP.shipO = Object.assign(APP.shipO || {}, j.orbits || {}); plan(); if (typeof fitR === 'function') fitR(); }).catch(() => {});
           plan();
         }
         const lefT = (sec) => { const h = sec / 3600; return h < 1 ? Math.max(1, Math.round(h * 60)) + ' m' : h < 48 ? Math.round(h) + ' h' : Math.round(h / 24) + ' d'; };
@@ -485,6 +485,9 @@
           R = Math.max(R, Math.hypot(p[0], p[1]));
         });
         R = R || 4;
+        // ships on (Flight Deck): fit the map to your rocks and the ships' courses, like the old navigation window
+        const fitR = () => { if (!SH) return; let r2 = 0.5; me.forEach((a) => a.ring.concat([a.p]).forEach((p) => (r2 = Math.max(r2, Math.hypot(p[0], p[1]))))); others.forEach((r) => (r2 = Math.max(r2, Math.hypot(r.p[0], r.p[1])))); trips.forEach((t) => [t.a, t.b].forEach((p) => (r2 = Math.max(r2, Math.hypot(p[0], p[1]))))); R = r2 * 1.08; };
+        fitR();
         const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         let apL = [],
           sel = null,
