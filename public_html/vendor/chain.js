@@ -77,7 +77,9 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}
 .pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px;position:relative}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}
 .pc-sw a[data-m=from]{color:#ffd24a;border-color:#6b5a1c}.pc-sw a[data-m=from]:hover{background:#2a2410}`;
-const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={kg:1,t:1e3,kt:1e6};
+const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={units:1,kg:1,t:1e3,kt:1e6};/* units for a bulk item = 1 kg each (Mark, 21 Nov) */
+let CMV=null,REDRAW=null;const UNB=/[?&]beta=1\b/.test(location.search);/* TEST ONLY until Mark says live *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
+fetch('vendor/tidy.js',{cache:'force-cache'}).then(r=>r.text()).then(t=>{const m=/const MV = (\{.*?\});/.exec(t);if(m){CMV=JSON.parse(m[1]);try{REDRAW&&REDRAW()}catch(e){}}}).catch(()=>{});
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
 
  /* ONE = show the process on single-recipe boxes (test) */
@@ -256,7 +258,7 @@ export function drawChain(m){
     [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
     const w=el('div','pc-wrap'+' dn'),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);navTop(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
-  function draw(){const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
+  function draw(){REDRAW=draw;const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
     if(S.anchor){const a=S.anchor;S.anchor=null;const c=M0.querySelector('[data-k="'+window.CSS.escape(a.k)+'"]>.pc-n');if(c){const r=c.getBoundingClientRect();scrollBy(0,r.top-a.top);const cw=c.closest('.pc-wrap.dn');if(cw)cw.scrollLeft+=r.left-a.left}}
     hsBar()}
@@ -306,12 +308,12 @@ export function drawChain(m){
     m.appendChild(el('div','note','Pick a product. Its inputs '+'open out below it'+', back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     fillPs(ps);
-    const bulk=(S.prod<1000)&&!CNT.has(S.prod),uf=bulk?UF[S.unit]:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
+    const bulk=(S.prod<1000)&&!CNT.has(S.prod),cg=UNB&&!bulk&&S.prod<1000&&CMV&&CMV[S.prod]?CMV[S.prod][0]:0;if(!cg||!S.cunit)S.cunit='units';const cw=cg&&S.cunit!=='units',uf=bulk?UF[S.unit]:cw?UF[S.cunit]*1000/cg:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw()});
-    am.addEventListener('change',()=>{S.amt=bulk?Math.max(1,(+am.value||0)*uf):Math.max(1,Math.round(+am.value||1));draw()});
+    am.addEventListener('change',()=>{S.amt=bulk?Math.max(1,(+am.value||0)*uf):cw?Math.max(1,Math.floor((+am.value||0)*uf)):Math.max(1,Math.round(+am.value||1));draw()});
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
-    const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=['kg','t','kt'].map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(S.prod<1000)l2.appendChild(document.createTextNode(' each'));
+    const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=(UNB?['units','kg','t','kt']:['kg','t','kt']).map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(S.prod<1000){if(cg){const us3=el('select');us3.innerHTML=['units','kg','t','kt'].map(u=>'<option'+(u===S.cunit?' selected':'')+'>'+u+'</option>').join('');us3.title='Units or weight';us3.addEventListener('change',()=>{const v=+am.value||1,was=uf;S.cunit=us3.value;const nf=S.cunit==='units'?1:UF[S.cunit]*1000/cg;S.amt=Math.max(1,Math.floor(v*nf));draw()});l2.appendChild(us3);if(cw)l2.appendChild(document.createTextNode(' = '+S.amt.toLocaleString()+(S.amt===1?' unit':' units')))}else l2.appendChild(document.createTextNode(' each'))}
     [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
