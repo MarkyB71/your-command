@@ -46,6 +46,20 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-tl:hover{color:#f2ede6}
 .en-tl.en-more{justify-content:center;color:#9c8a74}
 .en-floor{height:14px;margin:0 -14px;background:repeating-linear-gradient(-45deg,#2a1613 0 12px,#0e0807 12px 24px);border-top:2px solid ${COL};box-shadow:0 -2px 14px -2px ${COL}}
+.en-wl{all:unset;cursor:pointer;margin-left:10px;padding:2px 8px;border:1px solid #5a302b;border-radius:4px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#ffc2bb}
+.en-wl:hover,.en-wl:focus-visible{border-color:#e8645a;box-shadow:0 0 8px -2px #e8645a}
+.en-ip{margin-top:1px;font:600 11px/1.2 system-ui,sans-serif;color:#57d5ff}
+.en-ed{margin:0 0 10px;padding:10px 12px;border:1px solid #5a302b;border-radius:10px;background:#0e0807}
+.en-ed-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.en-ed-top input{flex:1 1 200px;min-width:0;padding:5px 8px;border:1px solid #5a302b;border-radius:4px;background:#160c0a;color:#f2ede6;font:13px system-ui,sans-serif}
+.en-ed-top button{all:unset;cursor:pointer;padding:4px 10px;border:1px solid #5a302b;border-radius:4px;color:#ffc2bb;font:600 12px system-ui,sans-serif}
+.en-ed-top button:hover,.en-ed-top button:focus-visible{border-color:#e8645a}
+.en-ed-top .en-done{background:#e8645a;color:#0e0807;border-color:#e8645a}
+.en-ed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px;max-height:260px;overflow:auto}
+.en-ed-list label{display:flex;gap:6px;align-items:center;font:12px/1.5 system-ui,sans-serif;color:#d8cbbb;cursor:pointer}
+.en-ed-list label.on{color:#f2ede6}
+.en-ed-list label i{font-style:normal;color:#9c8a74;margin-left:auto}
+.en-none{padding:14px;font:13px system-ui,sans-serif;color:#b9a68f}
 @media (max-width:700px){.en-g.en-raw{width:84px}.en-hint,.en-sep{display:none}.en-read{position:static;margin:0 0 6px}.en-g{width:128px}.en-g svg{width:100px;height:72px}}
 @media (prefers-reduced-motion:reduce){.en-arc,.en-g{transition:none}}
 `;
@@ -73,14 +87,24 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       '<text class="en-of" x="60" y="78" text-anchor="middle">' + of + '</text></svg>';
   }
 
-  // Smaller dial with the raw material's icon in the middle
-  function dialRaw(v, col, p) {
-    const R = 30, L = Math.PI * R, off = L * (1 - v);
+  // Smaller dial with the product's icon in the middle. v = stock, v2 = stock + in process (blue part)
+  function dialRaw(v, col, p, v2) {
+    const R = 30, L = Math.PI * R, off = (x) => (L * (1 - Math.max(0, Math.min(1, x)))).toFixed(1);
+    const arc = (x, c, cls) => '<path class="en-arc" d="M10 44 A30 30 0 0 1 70 44" fill="none" stroke="' + c + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + L.toFixed(1) + '" stroke-dashoffset="' + (x > 0 ? off(x) : L.toFixed(1)) + '" style="filter:drop-shadow(0 0 3px ' + c + ')"' + (cls || '') + '/>';
     return '<svg viewBox="0 0 80 50" aria-hidden="true">' +
       '<path d="M10 44 A30 30 0 0 1 70 44" fill="none" stroke="#2a1715" stroke-width="7" stroke-linecap="round"/>' +
-      '<path class="en-arc" d="M10 44 A30 30 0 0 1 70 44" fill="none" stroke="' + col + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + L.toFixed(1) + '" stroke-dashoffset="' + (v > 0 ? off.toFixed(1) : L.toFixed(1)) + '" style="filter:drop-shadow(0 0 3px ' + col + ')"/>' +
-      '<image href="rimg.php?p=' + p + '" x="25" y="17" width="30" height="30"' + (v > 0 ? '' : ' opacity=".35"') + '/></svg>';
+      (v2 > v ? arc(v2, '#57d5ff') : '') + arc(v, col) +
+      '<image href="rimg.php?p=' + p + '" x="25" y="17" width="30" height="30"' + (v > 0 || v2 > 0 ? '' : ' opacity=".35"') + '/></svg>';
   }
+
+  // Watch list (TEST on ?beta=1 – community idea, 21 Nov 2026): pick which products to watch, per rock,
+  // showing what's in storage plus what's being made right now (running extractors + processes, main output).
+  // TO REMOVE: set HUD=false (the Products panel goes back to the 22 raw materials).
+  const HUD = /[?&]beta=1\b/.test(location.search);
+  const WKEY = 'sk_eng_watch';
+  const wLoad = () => { try { return JSON.parse(localStorage.getItem(WKEY)) || {}; } catch (e) { return {}; } };
+  const wSave = (o) => { try { localStorage.setItem(WKEY, JSON.stringify(o)); } catch (e) { /* storage off */ } };
+  const RAWS = Array.from({ length: 22 }, (_, i) => i + 1);
 
   function hero(el) {
     addCss();
@@ -132,11 +156,98 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         '<div class="en-row en-raws">' + raws + '</div><div class="en-floor"></div>';
     }
 
+    // ---- Watch list (HUD) ----
+    let editing = false, eq = '';
+    const rockKey = (ai) => ai === '' || !Y.asts[+ai] ? 'all' : String(Y.asts[+ai].id || Y.asts[+ai].name);
+    const watched = (ai) => { const w = wLoad()[rockKey(ai)]; return Array.isArray(w) ? w : RAWS; };
+    const amt = (p, n) => !n ? 'none' : Y.PR[p] && Y.PR[p][3] ? Math.round(n).toLocaleString() + ' unit' + (Math.round(n) === 1 ? '' : 's') : Y.fmtT(Y.kg(p, n) / 1000);
+    // what's being made: running extractors (yield) and processes (recipes × main output), on the picked rock
+    function inProc(an) {
+      const mk = {}, rd = {};
+      (Y.D.allB || []).forEach((b) => {
+        if ((b.Building || {}).status !== 3 || (an && astOf(b) !== an)) return;
+        const add = (p, n, f) => { if (!p || !(n > 0)) return; const o = f <= now ? rd : mk; o[p] = (o[p] || 0) + n; };
+        (b.Extractors || []).forEach((e) => { if (e.status === 1) add(e.outputProduct, e.yield, e.finishTime); });
+        (b.Processors || []).forEach((x) => {
+          if (x.status !== 1) return;
+          const pr = Y.PROCN[x.runningProcess], o = x.outputProduct;
+          if (pr && pr[1][o]) add(o, x.recipes * pr[1][o], x.finishTime);
+        });
+      });
+      return { mk, rd };
+    }
+    function drawHud(ai) {
+      const an = ai === '' || !Y.asts[+ai] ? null : Y.asts[+ai].name;
+      const tot = Y.tot || [], idx = ai === '' ? Object.keys(tot) : [ai];
+      const W = watched(ai), ip = inProc(an);
+      const st = (p) => idx.reduce((s, i) => s + ((tot[i] && tot[i][p]) || 0), 0);
+      const kgOf = (p, n) => Y.kg(p, n);
+      const rows = W.map((p) => { const s = st(p), m = (ip.mk[p] || 0) + (ip.rd[p] || 0); return { p, s, m, ks: kgOf(p, s), km: kgOf(p, m) }; });
+      const max = Math.max(1, ...rows.map((r) => r.ks + r.km));
+      const lg = (x) => x > 0 ? Math.log10(1 + x) / Math.log10(1 + max) : 0;
+      const have = rows.filter((r) => r.s > 0).length, making = rows.filter((r) => r.m > 0).length;
+      const dials = rows.map((r) => {
+        const tip = Y.pn(r.p) + '\nIn storage: ' + amt(r.p, r.s) +
+          (ip.mk[r.p] ? '\nBeing made: ' + amt(r.p, ip.mk[r.p]) : '') + (ip.rd[r.p] ? '\nReady to collect: ' + amt(r.p, ip.rd[r.p]) : '');
+        return '<span class="en-g en-raw" title="' + Y.esc(tip) + '">' +
+          dialRaw(lg(r.ks), r.s > 0 ? COL : '#5a302b', r.p, lg(r.ks + r.km)) +
+          '<span class="en-rv" style="color:' + (r.s > 0 ? '#f2ede6' : '#6b5a46') + '">' + amt(r.p, r.s) + '</span>' +
+          (r.m > 0 ? '<span class="en-ip">+' + amt(r.p, r.m) + ' in process</span>' : '') +
+          '<span class="en-rn">' + Y.esc(Y.pn(r.p)) + '</span></span>';
+      }).join('');
+      let ed = '';
+      if (editing) {
+        const on = new Set(W), q = eq.toLowerCase();
+        const all = Object.keys(Y.PR).map(Number).filter((p) => p > 0 && Y.PR[p] && Y.PR[p][0])
+          .filter((p) => !q || Y.pn(p).toLowerCase().includes(q))
+          .sort((a, b) => Y.pn(a).localeCompare(Y.pn(b)));
+        ed = '<div class="en-ed"><div class="en-ed-top"><input type="search" class="en-eq" placeholder="Find a product…" aria-label="Find a product" value="' + Y.esc(eq) + '">' +
+          '<button type="button" data-w="raws">Raw materials</button><button type="button" data-w="clear">Clear all</button><button type="button" class="en-done" data-w="done">Done</button></div>' +
+          '<div class="en-ed-list">' + all.map((p) => { const s = st(p); return '<label' + (on.has(p) ? ' class="on"' : '') + '><input type="checkbox" data-p="' + p + '"' + (on.has(p) ? ' checked' : '') + '>' + Y.esc(Y.pn(p)) + (s > 0 ? '<i>' + amt(p, s) + '</i>' : '') + '</label>'; }).join('') + '</div></div>';
+      }
+      el.innerHTML =
+        '<div class="en-plate">ENGINEERING</div>' +
+        '<div class="en-read">' + pick(ai) + ' <b>' + W.length + '</b> watched · <b>' + have + '</b> in stock · <b style="color:#57d5ff">' + making + '</b> in process' +
+        '<button type="button" class="en-wl" data-w="edit" aria-expanded="' + editing + '">✎ Choose</button></div>' +
+        '<div class="en-hint">Storage + <span style="color:#57d5ff">in process</span> · saved for this rock</div>' + ed +
+        (W.length ? '<div class="en-row en-raws">' + dials + '</div>' : '<div class="en-none">Nothing watched on this rock yet – press ✎ Choose.</div>') +
+        '<div class="en-floor"></div>';
+      if (editing) {
+        const i = el.querySelector('.en-eq');
+        if (i && document.activeElement !== i && eq) { i.focus(); i.setSelectionRange(eq.length, eq.length); }
+      }
+    }
+    if (HUD) {
+      const setW = (fn) => { const ai = (document.getElementById('ast') || {}).value || '', o = wLoad(), k = rockKey(ai); o[k] = fn(watched(ai)); wSave(o); drawHud(ai); };
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-w]');
+        if (!b) return;
+        const w = b.dataset.w, ai = (document.getElementById('ast') || {}).value || '';
+        if (w === 'edit') { editing = !editing; eq = ''; drawHud(ai); }
+        else if (w === 'done') { editing = false; eq = ''; drawHud(ai); }
+        else if (w === 'raws') setW(() => RAWS.slice());
+        else if (w === 'clear') setW(() => []);
+      });
+      el.addEventListener('change', (e) => {
+        const c = e.target.closest('input[data-p]');
+        if (!c) return;
+        const p = +c.dataset.p;
+        setW((W) => c.checked ? W.concat(W.includes(p) ? [] : [p]) : W.filter((x) => x !== p));
+      });
+      let qt;
+      el.addEventListener('input', (e) => {
+        if (!e.target.classList.contains('en-eq')) return;
+        eq = e.target.value;
+        clearTimeout(qt);
+        qt = setTimeout(() => { const ai = (document.getElementById('ast') || {}).value || ''; drawHud(ai); const i = el.querySelector('.en-eq'); if (i) { i.focus(); i.setSelectionRange(eq.length, eq.length); } }, 200);
+      });
+    }
+
     function draw() {
       const box = document.getElementById('ast');
       const ai = box ? box.value : '';
       mode = Y.view;
-      if (mode === 'P') return drawRaws(ai);
+      if (mode === 'P') return HUD ? drawHud(ai) : drawRaws(ai);
       const an = ai === '' || !Y.asts[+ai] ? null : Y.asts[+ai].name;
       const P = {}, S = {}, L = {};
       PROD.forEach(([t]) => (P[t] = { op: 0, run: 0, done: 0, build: 0 }));
