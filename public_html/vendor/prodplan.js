@@ -226,8 +226,8 @@
   // nothing to fly in, buy or mine. Found by doubling then halving the amount. Says which input runs out first.
   const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY, ?beta=1): pick what's in storage on a rock and send it to one of its warehouses / tank farms
-  const SMB = /[?&]beta=1\b/.test(location.search);
-  const GMB = /[?&]beta=1\b/.test(location.search); // 🧪 Gather to make in Storage Management (19 Nov – TEST ONLY)
+  const SMB = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
+  const GMB = true; // 🧪 Gather to make + how many to make – LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   // ⛏ "No, don't do that – I'll mine it" (Mark, 14 Nov – TEST ONLY, ?beta=1): when the plan makes a raw resource
   // (e.g. Sulfur Dioxide from Sulfuric Acid), the player can say they'll mine it instead. The planner then puts it on
   // the mine list rather than making it. Remembered in this browser; "make it again" undoes it.

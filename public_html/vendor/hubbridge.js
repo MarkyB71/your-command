@@ -122,7 +122,7 @@
   }
 
   // Hub tidy-up (Mark, 14 Nov – TEST ONLY ?beta=1): 4 consoles, 2 each side. Deliveries + Storage Management go into Storage.
-  const ORG = /[?&]beta=1\b/.test(location.search);
+  const ORG = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const STATIONS4 = [
     // order left to right (Mark, 21 Nov): Storage · Galley · chair · Production · Cargo bay
     { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: 13, k: 'store' },
@@ -197,7 +197,7 @@
   // called at the top of dock.js render(): draws the bridge, returns the viewscreen to draw the tool into
   function screen(main, S, render) {
     if (!document.getElementById('lb-css')) { const st = document.createElement('style'); st.id = 'lb-css'; st.textContent = CSS; document.head.appendChild(st); }
-    if (!S.mode) S.mode = ORG ? 'tidy' : 'home'; // Storage opens first (Mark, 21 Nov – TEST ONLY ?beta=1)
+    if (!S.mode) S.mode = ORG ? 'tidy' : 'home'; // Storage opens first (LIVE 21 Nov 2026)
     const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {

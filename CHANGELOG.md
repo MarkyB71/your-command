@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – Logistics Hub: four consoles (Storage · Galley · chair · Production · Cargo bay), opens on Storage. New Storage Management – gather what you want to make into one warehouse or tank farm, with how many to make (units or weight), and feed the moving crew in the same approval. Help page updated.
+
 ## 21 Nov 2026 – The SkippyChain: the amount can be given in units or by weight (kg / t / kt) – a weight on a module shows how many units it makes. Help page updated.
 
 ## 21 Nov 2026 – One viewscreen: the Flight Deck's navigation window is now the same map as the Bridge (buttons at the top, Rocks list, orbit colours), with your ships switched on, a taller window and a Ships tick box. Help page updated.
