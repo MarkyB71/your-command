@@ -83,7 +83,7 @@ body.dk-flight #main th{color:#c4adff}
   }
 
   // Map controls, select and Adalia Prime – same as the Bridge viewscreen (Mark, 15 Nov 2026 – TEST ONLY, ?beta=1)
-  const ONE = /[?&]beta=1\b/.test(location.search);
+  const ONE = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const APK = 'yic-travel-ap';
   // FOC (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): same as the Bridge map – each of your rocks has its own orbit colour (same
@@ -105,7 +105,7 @@ body.dk-flight #main th{color:#c4adff}
     const owned = (D.owned || []).map((a) => +a.id),
       fly = ships.filter((s) => s.fl),
       dock = ships.filter((s) => !s.fl);
-    // ONE VIEWSCREEN (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): the Bridge's map (window.YICbeltMap, pages/asteroids.js) with the
+    // ONE VIEWSCREEN (Mark 21 Nov 2026 – LIVE): the Bridge's map (window.YICbeltMap, pages/asteroids.js) with the
     // ships switched on and the Flight Deck's purple – one map for both, buttons at the top. The old drawing below stays for now.
     if (ONE && window.YICbeltMap) {
       el.innerHTML = '<div class="fh-win fh-one"><div class="fh-glass"></div><div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div></div>' +

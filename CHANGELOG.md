@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – One viewscreen: the Flight Deck's navigation window is now the same map as the Bridge (buttons at the top, Rocks list, orbit colours), with your ships switched on, a taller window and a Ships tick box. Help page updated.
+
 ## 21 Nov 2026 – Travel refuel check: a rock now only counts as able to refuel from storage or its markets with at least half a tank for the chosen ship (was 1 t). Help page updated.
 
 ## 21 Nov 2026 – Logistics Hub › Cargo bay › Export for production: "Spread it over N ships here instead" in step 4 hands the load to Load a fleet, so several ships share it evenly. Help page updated. From a community request.

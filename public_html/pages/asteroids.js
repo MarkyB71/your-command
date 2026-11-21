@@ -290,7 +290,7 @@
     APP.wire3d(m);
   }
 
-  // ONE VIEWSCREEN (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): the Flight Deck's navigation window uses this same map, with
+  // ONE VIEWSCREEN (Mark 21 Nov 2026 – LIVE): the Flight Deck's navigation window uses this same map, with
   // opts.ships = your ships in flight (courses) and docked, opts.theme 'flight' = purple, opts.onShip(s) = a ship was clicked,
   // opts.fsEl = the element to put in full screen. Any change here shows on the Bridge and the Flight Deck alike.
   function beltMap(m, opts) {
