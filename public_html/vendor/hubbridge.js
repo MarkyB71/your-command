@@ -197,7 +197,7 @@
   // called at the top of dock.js render(): draws the bridge, returns the viewscreen to draw the tool into
   function screen(main, S, render) {
     if (!document.getElementById('lb-css')) { const st = document.createElement('style'); st.id = 'lb-css'; st.textContent = CSS; document.head.appendChild(st); }
-    if (!S.mode) S.mode = 'home';
+    if (!S.mode) S.mode = ORG ? 'tidy' : 'home'; // Storage opens first (Mark, 21 Nov – TEST ONLY ?beta=1)
     const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {
