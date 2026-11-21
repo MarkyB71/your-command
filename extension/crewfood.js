@@ -101,10 +101,11 @@
     return r;
   }
   // the crew's card = the first box above the name that also holds the crewmate faces.
-  // A crew has at most 5 faces – a box with more is a whole group of cards, so no bar there.
-  function cardOf(el) {
+  // A box holding more than one crew name is a whole group of cards, so no bar there.
+  // (Counting faces failed on full crews: 5 portraits plus the captain badge made more than 5 images.)
+  function cardOf(el, nameEls) {
     for (let x = el.parentElement, i = 0; x && x !== document.body && i < 8; x = x.parentElement, i++)
-      if (x.querySelector('img')) return x.querySelectorAll('img').length <= 5 ? x : null;
+      if (x.querySelector('img')) return nameEls.filter(e => x.contains(e)).length <= 1 ? x : null;
     return null;
   }
 
@@ -145,8 +146,9 @@
     // tidy any bar left outside the list (e.g. the top-left crew panel)
     document.querySelectorAll('.yic-food').forEach(b => { if (!panel.contains(b)) b.remove(); });
     const used = new Set();
+    const nameEls = hits.map(h => h[0]);
     for (const [el, pct] of hits) {
-      const card = cardOf(el); if (!card) continue;
+      const card = cardOf(el, nameEls); if (!card) continue;
       used.add(card);
       const old = card.querySelector(':scope > .yic-food');
       if (old && old.dataset.pct === String(pct)) { n++; continue; }

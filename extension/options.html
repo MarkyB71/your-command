@@ -32,17 +32,27 @@
   .tbtn .danger{color:#ff564d;border-color:#5a2a2a}
   .tbtn .danger:hover{border-color:#ff564d}
   #saved{color:#3fd68a;font-weight:600;margin-left:8px}
-  .new{margin-top:26px;padding:14px 16px;border:1px solid #1e2a3a;border-radius:10px;background:#0a101b}
+  .new-grp{margin-top:26px}
+  .new{padding:14px 16px;border:1px solid #1e2a3a;border-radius:10px;background:#0a101b}
   .new h3{margin:12px 0 4px;font-size:14px;color:#ffd24a}
   .new h3:first-of-type{margin-top:0}
   .new ul{margin:0;padding-left:20px;color:#c3d2e2;font-size:14px}
   .new a{color:#4fb3ff}
+  details.grp{margin:0 0 12px;border:1px solid #1e2a3a;border-radius:12px;background:#09101b}
+  details.grp>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:12px}
+  details.grp>summary::-webkit-details-marker{display:none}
+  details.grp>summary::before{content:"▸";color:#4fb3ff;font-size:16px;transition:transform .15s}
+  details.grp[open]>summary::before{transform:rotate(90deg)}
+  details.grp>summary b{font-size:17px;color:#8fe3ff}
+  details.grp>summary:hover{background:#0c1626;border-radius:12px}
+  details.grp .gbody{padding:0 12px 4px}
 </style></head>
 <body><main>
   <h1><img src="icons/icon48.png" alt="">Skippy's Command Deck</h1>
   <p class="sub">Choose which game tweaks you want. Each one only changes how the game looks or what it shows you – none of them play the game for you.<span id="saved"></span></p>
   <div id="opts">
-    <h2>In the game</h2>
+    <details class="grp" name="grp"><summary><span><b>Game windows</b><span class="d">Extra help inside the game's own windows and lists</span></span></summary>
+    <div class="gbody">
     <label><input type="checkbox" name="lotColours"><span><b>Keep lot colours on</b>
       <span class="d">Switches on Filter Lots › Building Categories colours each time the game loads, so you don't have to click the paint icon. Switching this one off takes effect the next time the game loads.</span></span></label>
     <label><input type="checkbox" name="hideUsedDeposits"><span><b>Hide used deposits</b>
@@ -51,20 +61,15 @@
       <span class="d">When you open Extract Resource and no deposit is chosen yet, the top sample in the list is picked for you. You can still change it, and you still press Extract yourself.</span></span></label>
     <label><input type="checkbox" name="chainLink"><span><b>SkippyChain button</b>
       <span class="d">A gold "SkippyChain ↗" button beside PROCESS in the game's Refine / Manufacture / Bioreactor / Shipyard window. Click it to open that product in The SkippyChain on your Command Deck tab – same recipe, same number of runs, same rock.</span></span></label>
-    <label><input type="checkbox" name="deckStrip"><span><b>Deck strip</b>
-      <span class="d">A slim Command Deck strip at the bottom of the game, in the empty space beside the clock. Click a tile to go to your Command Deck.</span></span></label>
-    <label><input type="checkbox" name="deckAutoHide"><span><b>Hide the deck strip until you hover</b>
-      <span class="d">The strip's cards stay hidden – just their small base lights show – until you move the mouse over them.</span></span></label>
-    <div class="tags" id="rockOrderBox"><b>Buildings card – order</b>
-      <span class="d">The order building types are listed in when you click the Buildings card at the top of the game. Use ▲ ▼ to move them.</span>
-      <div id="rockOrder" style="margin:10px 0"></div>
-      <div class="tbtn"><button type="button" id="rockOrderReset">Back to the default (storage first)</button></div></div>
     <label><input type="checkbox" name="statusDots"><span><b>Building status dots</b>
       <span class="d">A tiny dot beside each of your buildings when you look at an asteroid: green ready, yellow under 3 hours left, red busy. Planned sites: yellow if the reservation runs out within 3 hours, red if it ran out with materials still in it.</span></span></label>
     <label><input type="checkbox" name="crewFood"><span><b>Crew food %</b>
       <span class="d">A food bar along the bottom of each crew's card in the game's My Crews list, with the %. It fades from green when full to red at 50% (hungry).</span></span></label>
     <label><input type="checkbox" name="shipProp"><span><b>Ship propellant %</b>
       <span class="d">A propellant bar along the bottom of each ship in the game's My Assets › Ships list, with the %. Red at 10% and under, yellow around a quarter, green from half a tank.</span></span></label>
+    </div></details>
+    <details class="grp" name="grp"><summary><span><b>System map</b><span class="d">Tags, marketplaces and ships in flight on the belt map</span></span></summary>
+    <div class="gbody">
     <label><input type="checkbox" name="mapTags"><span><b>Friend / foe tags on the system map</b>
       <span class="d">Click an asteroid on the belt map to tag its owner as friendly, neutral or hostile. All of that owner's asteroids get a coloured ring. Tags are saved in this browser only.</span>
       <span class="cols"><span><input type="color" name="tagCol_friendly"> Friendly</span><span><input type="color" name="tagCol_neutral"> Neutral</span><span><input type="color" name="tagCol_hostile"> Hostile</span></span></span></label>
@@ -85,13 +90,27 @@
         <button type="button" id="tagImport">Import a friend's list</button>
         <button type="button" id="tagClear" class="danger">Clear all tags</button>
         <input type="file" id="tagFile" accept=".json,application/json" hidden></div>
-      <span class="d">Import adds a friend's tags to yours – where you've both tagged the same player, theirs is used. On the belt map, the small "Tags" switch at the top hides or shows the rings, and hovering a ringed asteroid shows the owner's name.</span>
+      <span class="d">Import adds a friend's tags to yours – where you've both tagged the same player, theirs is used. Hovering a ringed asteroid on the belt map shows the owner's name.</span>
     </div>
+    </div></details>
+    <details class="grp" name="grp"><summary><span><b>Command Deck links</b><span class="d">Getting between the game and your Command Deck</span></span></summary>
+    <div class="gbody">
     <label><input type="checkbox" name="sideButton"><span><b>Command Deck button in the game</b>
       <span class="d">Adds the crowned S to the bottom of the game's right-hand side bar. Click it to jump back to your Command Deck.</span></span></label>
+    <label><input type="checkbox" name="deckStrip"><span><b>Deck strip</b>
+      <span class="d">A slim Command Deck strip at the bottom of the game, in the empty space beside the clock. Click a tile to go to your Command Deck.</span></span></label>
+    <label><input type="checkbox" name="deckAutoHide"><span><b>Hide the deck strip until you hover</b>
+      <span class="d">The strip's cards stay hidden – just their small base lights show – until you move the mouse over them.</span></span></label>
+    <div class="tags" id="rockOrderBox"><b>Buildings card – order</b>
+      <span class="d">The order building types are listed in when you click the Buildings card at the top of the game. Use ▲ ▼ to move them.</span>
+      <div id="rockOrder" style="margin:10px 0"></div>
+      <div class="tbtn"><button type="button" id="rockOrderReset">Back to the default (storage first)</button></div></div>
+    </div></details>
   </div>
-  <div class="new">
-    <h2 style="margin-top:0">What's new</h2>
+  <details class="grp new-grp"><summary><span><b>What's new</b><span class="d">Changes in each version</span></span></summary>
+  <div class="new" style="margin:0 12px 12px">
+    <h3>0.7.2</h3>
+    <ul><li>Status dots are much lighter on the game – big rocks with hundreds of buildings no longer slow it down when you zoom out.</li><li>Buildings card moved to the top right, with a "Hide planned sites" tick box in its list. Picking a building closes the game's open side panel first.</li><li>The deck strip and Buildings card now stay tucked away until you hover (switch off in Options).</li><li>Map tags and markets are switched here in Options – the small switches on the map are gone (they covered the flight time bar).</li><li>Tidier Options page, in folding sections.</li><li>Fix: the food bar now shows on full crews too.</li></ul>
     <h3>0.7.1</h3>
     <ul><li>Buildings card – at the top of the game, lists your buildings on the rock you're looking at; pick one to jump to it. Choose the order in these options (storage first to start with).</li><li>Hide the deck strip until you hover – a new option.</li></ul>
     <h3>0.7.0</h3>
@@ -130,5 +149,6 @@
       <li>Hide used deposits when picking a core sample.</li></ul>
     <p class="foot" style="margin:10px 0 0"><a href="https://github.com/MarkyB71/your-command/blob/main/extension/CHANGES.md" target="_blank" rel="noopener">Full list of changes</a></p>
   </div>
-  <p class="foot">Changes apply when you reload the game tab. Your choices are saved in your browser only.</p>
+  </details>
+  <p class="foot">Changes apply straight away in the game tab. Your choices are saved in your browser only.</p>
 </main><script src="options.js"></script><script src="tags-options.js"></script><script src="rockorder-options.js"></script></body></html>

@@ -183,16 +183,18 @@ try {
   await op.goto('chrome-extension://' + extId + '/' + man.options_ui.page);
   await new Promise(r => setTimeout(r, 800));
   const boxes = await op.$$eval('input[type=checkbox]', b => b.map(x => [x.name, x.checked]));
-  const OFF = ['deckAutoHide']; // all on by default since 0.6.1, except auto-hide strip (0.7.1)
+  const OFF = []; // all on by default (auto-hide strip on since 0.7.2)
   check(boxes.length >= 4 && boxes.every(b => b[1] === !OFF.includes(b[0])), 'options page shows ' + boxes.length + ' choices, right ones on by default', 'options page: ' + JSON.stringify(boxes));
+  // 0.7.2: settings sit in folding sections – open the right one before ticking a box.
+  const tick = n => op.evaluate(n => { const d = document.querySelector('input[name=' + n + ']').closest('details'); if (d) d.open = true; }, n).then(() => op.click('input[name=' + n + ']'));
   const sd = await game.evaluate(() => document.documentElement.dataset.yicStatusDots || '').catch(() => '');
   check(sd && !/switched off/.test(sd), 'status dots on by default (' + sd + ')', 'status dots: ' + sd);
   // Deck strip off → the S button comes back in the open game tab (no refresh); the S button tests below need it off.
-  await op.click('input[name=deckStrip]');
+  await tick('deckStrip');
   const sBack = await game.waitForFunction(() => !!document.getElementById('yic-s') && !document.getElementById('yic-strip'), null, { timeout: 4000 }).then(() => true, () => false);
   check(sBack, 'switching the deck strip off brings the S button back (no refresh)', 'deck strip off: S button / strip wrong');
   await new Promise(r => setTimeout(r, 600));
-  await op.click('input[name=sideButton]');
+  await tick('sideButton');
   await op.waitForFunction(() => document.getElementById('saved').textContent === 'Saved', null, { timeout: 3000 }).catch(() => {});
   const g2 = await ctx.newPage();
   await g2.goto(GAME + '/');
@@ -201,10 +203,10 @@ try {
   check(opts[0] && JSON.parse(opts[0]).sideButton === false && !opts[1], 'switching the S button off in options works', 'option not applied: ' + JSON.stringify(opts));
   // 0.6.7: the game page that was ALREADY open follows the switch without a refresh – off, then back on.
   const liveOff = await game.waitForFunction(() => !document.getElementById('yic-s'), null, { timeout: 4000 }).then(() => true, () => false);
-  await op.click('input[name=sideButton]');
+  await tick('sideButton');
   const liveOn = await game.waitForFunction(() => !!document.getElementById('yic-s'), null, { timeout: 4000 }).then(() => true, () => false);
   check(liveOff && liveOn, 'S button switches off and on in an open game tab (no refresh)', 'live switch: off ' + liveOff + ', on ' + liveOn);
-  await op.click('input[name=sideButton]');
+  await tick('sideButton');
 
   check(!errs.length, 'no script errors anywhere', 'script errors:\n      ' + errs.join('\n      '));
 } catch (e) {

@@ -85,7 +85,7 @@
 @media (prefers-reduced-motion:reduce){#yic-strip .led{animation:none}#yic-strip .st,#yic-strip .pc{transition:none}}`;
   // Auto-hide (option, off by default): only the strip's base lights show until you hover over it (Mark, 18 Nov).
   let autoHide = false;
-  chrome.storage.sync.get({ deckAutoHide: false }, o => { autoHide = !!o.deckAutoHide; if (bar) bar.classList.toggle('ah', autoHide); if (top) top.classList.toggle('ah', autoHide); });
+  chrome.storage.sync.get({ deckAutoHide: true }, o => { autoHide = !!o.deckAutoHide; if (bar) bar.classList.toggle('ah', autoHide); if (top) top.classList.toggle('ah', autoHide); });
   let on = true, bar = null, data = {}, rock = null, pop = null, q = '';
   // Order of building types in the list – set in the extension's options (storage first by default).
   let order = ['Warehouse', 'Tank Farm', 'Extractor', 'Refinery', 'Bioreactor', 'Factory', 'Shipyard', 'Spaceport', 'Marketplace', 'Habitat'];
@@ -107,8 +107,30 @@
   new MutationObserver(readRock).observe(document.documentElement, { attributes: true, attributeFilter: ['data-yic-rock'] });
   const label = b => b.n || (b.t + ' – lot ' + b.lot.toLocaleString());
   function closePop() { if (pop) { pop.remove(); pop = null; } if (top) top.classList.remove('open'); }
+  // Close the game's open side panel (My Crews etc.) by clicking its selected side bar button.
+  function closeHudPanel() {
+    const all = [...document.querySelectorAll('[data-tooltip-id="hudMenuTooltip"]')]
+      .filter(b => !b.id || !b.id.startsWith('yic'))
+      .map(b => ({ b, r: b.getBoundingClientRect() })).filter(o => o.r.width > 0 && o.r.height > 0);
+    if (!all.length) return;
+    const edge = Math.max(...all.map(o => o.r.left));
+    const btns = all.filter(o => Math.abs(o.r.left - edge) < 8).map(o => o.b);
+    const n = {}; btns.forEach(b => { n[b.className] = (n[b.className] || 0) + 1; });
+    const cls = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
+    const sel = btns.find(b => b.className !== cls);
+    if (!sel) return;
+    // Only if a panel really is open: just left of the side bar there must be something other
+    // than the 3D map (Mark, 19 Nov: with nothing open it opened My Crews).
+    const left = Math.min(...btns.map(b => b.getBoundingClientRect().left)) - 40;
+    const open = [0.35, 0.5, 0.65].some(f => {
+      const el = document.elementFromPoint(left, innerHeight * f);
+      return el && el.tagName !== 'CANVAS' && el !== document.body && el !== document.documentElement && !(el.id || '').startsWith('yic');
+    });
+    if (open) sel.click();
+  }
   function openPop(card) {
     if (pop) { closePop(); return; }
+    closeHudPanel();
     pop = document.createElement('div'); pop.id = 'yic-pop'; card.classList.add('open');
     pop.innerHTML = '<div class="t"><b></b><span class="x" title="Close">✕</span></div><input type="search" placeholder="Find a building…"><label class="hp"><input type="checkbox"> Hide planned sites</label><div class="ls"></div>';
     document.body.appendChild(pop);
@@ -247,7 +269,7 @@
   });
   chrome.storage.onChanged.addListener((ch, area) => {
     if (area === 'sync' && ch.deckStrip) { on = ch.deckStrip.newValue !== false; on ? build() : remove(); }
-    if (area === 'sync' && ch.deckAutoHide) { autoHide = !!ch.deckAutoHide.newValue; if (bar) bar.classList.toggle('ah', autoHide); if (top) top.classList.toggle('ah', autoHide); }
+    if (area === 'sync' && ch.deckAutoHide) { autoHide = ch.deckAutoHide.newValue !== false; if (bar) bar.classList.toggle('ah', autoHide); if (top) top.classList.toggle('ah', autoHide); }
     if (area === 'sync' && ch.rockHidePlanned) { hidePlanned = !!ch.rockHidePlanned.newValue; drawTop(); listPop(); }
     if (area === 'sync' && ch.rockOrder && Array.isArray(ch.rockOrder.newValue)) { order = ch.rockOrder.newValue; listPop(); }
     if (area === 'local' && ch.deckSummary) { data = ch.deckSummary.newValue || {}; draw(); }

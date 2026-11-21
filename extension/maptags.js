@@ -40,7 +40,9 @@
   const short = a => a ? a.slice(0, 6) + '…' + a.slice(-4) : '';
   let tags = {}; // owner address -> { tag, name }
   let tagsOn = true;
-  let hidden = false; try { hidden = localStorage.getItem(KEY + 'Hidden') === '1'; } catch (e) {}
+  // 0.7.2: the on-map Tags / Markets switches are gone (they covered the game's flight time bar) –
+  // Options › Map tags / Map markets switch them now. Clear any old 'hidden' choice so nothing stays hidden.
+  const hidden = false; try { localStorage.removeItem(KEY + 'Hidden'); localStorage.removeItem(KEY + 'MktHidden'); } catch (e) {}
   // Tags live in the extension's storage; game.js sends them in here and saves what we send out.
   const save = () => { window.postMessage({ yic: 'tags-save', tags }, location.origin); dirty = true; };
   window.addEventListener('message', e => {
@@ -60,8 +62,8 @@
     if (shownId) showBox(shownId);
   });
   // Open marketplaces per asteroid: id -> [[marketplace name, for sale, buy orders], ...]
-  let markets = new Map(), marketsOn = false, mktHidden = false, mktFetched = 0;
-  try { mktHidden = localStorage.getItem(KEY + 'MktHidden') === '1'; } catch (e) {}
+  let markets = new Map(), marketsOn = false, mktFetched = 0;
+  const mktHidden = false;
   const MKT = '#57ff65'; // the game's own Trade colour (Filter Lots › Building Categories)
   window.addEventListener('message', e => {
     if (e.source !== window || !e.data || e.data.yic !== 'markets' || !e.data.data || typeof e.data.data !== 'object') return;
@@ -350,40 +352,8 @@
     tip.style.display = '';
   }
 
-  // ---- 6. Small switches on the belt map to hide / show the rings and the marketplace diamonds ----
-  let bar = null, pillWanted = false;
-  function showPill(onMap) {
-    if (onMap !== undefined) pillWanted = onMap;
-    const anyTags = tagsOn && Object.values(tags).some(t => t && t.tag);
-    const anyMkts = marketsOn && markets.size > 0;
-    if (!bar || !bar.isConnected) {
-      bar = document.createElement('div');
-      bar.style.cssText = 'position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:2147483000;display:none;gap:6px';
-      const mk = (title, fn) => {
-        const b = document.createElement('button'); b.type = 'button'; b.title = title;
-        b.style.cssText = 'cursor:pointer;font:12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;padding:5px 10px;color:#d7e6f5;'
-          + 'background:rgba(8,14,24,.85);border:1px solid #36a7cd';
-        ['pointerdown', 'pointerup'].forEach(t => b.addEventListener(t, e => e.stopPropagation()));
-        b.addEventListener('click', e => { e.stopPropagation(); fn(); dirty = true; updateRings(); showPill(); });
-        bar.appendChild(b); return b;
-      };
-      bar.tags = mk("Skippy's Command Deck – show or hide your friend / foe rings", () => {
-        hidden = !hidden; try { localStorage.setItem(KEY + 'Hidden', hidden ? '1' : '0'); } catch (err) {}
-      });
-      bar.mkts = mk("Skippy's Command Deck – show or hide asteroids with open marketplaces", () => {
-        mktHidden = !mktHidden; try { localStorage.setItem(KEY + 'MktHidden', mktHidden ? '1' : '0'); } catch (err) {}
-      });
-      (document.body || root).appendChild(bar);
-    }
-    bar.tags.textContent = hidden ? '◎ Tags: hidden' : '◉ Tags: shown';
-    bar.tags.style.opacity = hidden ? '.6' : '1';
-    bar.tags.style.display = anyTags ? '' : 'none';
-    bar.mkts.textContent = mktHidden ? '◇ Markets: hidden' : '◆ Markets: shown';
-    bar.mkts.style.opacity = mktHidden ? '.6' : '1';
-    bar.mkts.style.borderColor = MKT;
-    bar.mkts.style.display = anyMkts ? '' : 'none';
-    bar.style.display = pillWanted && (anyTags || anyMkts) ? 'flex' : 'none';
-  }
+  // ---- 6. (removed in 0.7.2) the on-map Tags / Markets switches – now in Options only ----
+  function showPill() {}
 
   function clickedAsteroid(e) {
     if (!store) store = window.__yicR3f || null;

@@ -3,6 +3,14 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
+## 0.7.2 – coming soon
+- **Lighter status dots** – all the dots are now drawn on one see-through layer instead of hundreds of separate pieces, so big rocks with hundreds of buildings no longer drag the game's frame rate down when you zoom out.
+- **Buildings card top right** – moved beside the SWAY balance (the game's pop-ups covered it in the middle). Its list has a **Hide planned sites** tick box, and picking a building closes the game's open side panel (My Crews etc.) first.
+- **Tucked away until you hover** – now on by default. The deck strip shows one "COMMAND DECK" tab and the Buildings card a "BUILDINGS" tab until you move the mouse over them. Switch off in Options.
+- **Map tags and markets switched in Options** – the small Tags / Markets switches on the belt map are gone (they covered the game's flight time bar).
+- **Tidier Options page** – settings in folding sections: Game windows, System map, Command Deck links.
+- **Fix:** the crew food bar now shows on full crews (five crewmates plus the captain badge used to confuse it).
+
 ## 0.7.1 – 19 Nov 2026
 - **Buildings card** – a new card at the top of the game screen shows the rock you're looking at and how many of your buildings are on it. Click it for a list of them (grouped by type, with their status dot and a search box) – pick one and the game jumps straight to it. Choose the order of building types in Options (storage first to start with).
 - **Hide the deck strip until you hover** (off by default – switch on in Options) – the strip's cards stay hidden, just their base lights showing, until you move the mouse over them.

@@ -190,21 +190,40 @@
   }
 
   // ---- 4. Drawing ---------------------------------------------------------------------------
-  let layer = null;
-  let lastKey = '', lastCover = 0;
+  // 0.7.2: all dots are painted on ONE see-through canvas (was one <div> per dot). Big rocks with
+  // hundreds of buildings were slowing the game's frame rate when zoomed out.
+  let layer = null, ctx = null, dpr = 1;
+  let lastKey = '', lastCover = 0, coverAt = -1;
   function makeLayer() {
-    layer = document.createElement('div');
+    layer = document.createElement('canvas');
     layer.id = 'yic-dots';
-    layer.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:2147483000';
+    layer.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483000';
     document.body.appendChild(layer);
+    ctx = layer.getContext('2d');
+    sizeLayer();
   }
-  function clearView() { if (view) view.lots.forEach(o => o.el.remove()); view = null; lastKey = ''; }
-  function dot(c) {
-    const el = document.createElement('div');
-    el.style.cssText = 'position:absolute;left:0;top:0;width:8px;height:8px;margin:-5px 0 0 -5px;border-radius:50%;'
-      + 'border:1px solid rgba(0,0,0,.85);display:none;will-change:transform;box-shadow:0 0 5px ' + COL[c] + ';background:' + COL[c];
-    el.dataset.c = c;
-    return el;
+  function sizeLayer() {
+    dpr = window.devicePixelRatio || 1;
+    const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+    if (layer.width !== w || layer.height !== h) { layer.width = w; layer.height = h; }
+  }
+  function wipe() { if (ctx) ctx.clearRect(0, 0, layer.width, layer.height); }
+  function clearView() { wipe(); view = null; lastKey = ''; coverAt = -1; }
+  function paint() {
+    sizeLayer(); wipe();
+    if (!view) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (const c of ['green', 'yellow', 'red']) {
+      const on = view.lots.filter(o => o.c === c && o.vis && o.show);
+      if (!on.length) continue;
+      ctx.globalAlpha = 0.35; ctx.fillStyle = COL[c]; ctx.beginPath();          // soft glow
+      for (const o of on) { ctx.moveTo(o.x + 7, o.y); ctx.arc(o.x, o.y, 7, 0, 6.2832); }
+      ctx.fill();
+      ctx.globalAlpha = 1; ctx.beginPath();                                       // the dot
+      for (const o of on) { ctx.moveTo(o.x + 4.5, o.y); ctx.arc(o.x, o.y, 4.5, 0, 6.2832); }
+      ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.stroke();
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   // The rock on screen, shared with the deck strip (it runs in the extension's own space, so it reads
@@ -231,7 +250,7 @@
     history.pushState({}, '', '/building/' + id);
     dispatchEvent(new PopStateEvent('popstate', { state: {} }));
   });
-  function clearDots() { if (view) { view.lots.forEach(o => o.el.remove()); view.lots = []; } }
+  function clearDots() { if (view) view.lots = []; wipe(); }
 
   function refresh(draw) { // every 2 s: buildings, asteroid on screen, colours
     if (!getStore()) return;
@@ -261,48 +280,57 @@
     const want = [...mine[view.ast].entries()].filter(([lot, c]) => c && view.pos.has(lot));
     const have = new Map(view.lots.map(o => [o.lot, o]));
     view.lots = want.map(([lot, c]) => {
-      let o = have.get(lot);
-      if (o && o.el.dataset.c !== c) { o.el.remove(); o = null; }
-      if (!o) { o = { lot, el: dot(c), vis: false }; layer.appendChild(o.el); }
-      have.delete(lot);
+      const o = have.get(lot) || { lot, vis: false, show: false, x: 0, y: 0 };
+      o.c = c;
       return o;
     });
-    have.forEach(o => o.el.remove());
+    lastKey = '';
     const n = { green: 0, yellow: 0, red: 0 }; want.forEach(([, c]) => n[c]++);
     note('asteroid ' + view.ast + ': ' + n.green + ' green, ' + n.yellow + ' yellow, ' + n.red + ' red');
   }
 
   function frame() {
-    if (!getStore() || !view || view.ast == null || !view.lots.length) return;
+    if (!getStore() || !view || view.ast == null || !view.lots.length || !ctx) return;
     const st = store.getState(), cam = st.camera, canvas = st.gl && st.gl.domElement;
     if (!canvas) return;
     const t = performance.now();
-    const k = cam.matrixWorld.elements.join() + view.rock.matrixWorld.elements.join();
-    const cover = t - lastCover > 300;
-    if (k === lastKey && !cover) return;
-    lastKey = k; if (cover) lastCover = t;
-    const V = cam.position.constructor, M = cam.matrixWorld.constructor;
+    // "under a game panel?" – checked a few dots per frame (was every dot at once, every 300 ms)
+    if (coverAt < 0 && t - lastCover > 300) { coverAt = 0; lastCover = t; }
+    const k = cam.matrixWorld.elements.join() + view.rock.matrixWorld.elements.join() + innerWidth + 'x' + innerHeight;
+    const moved = k !== lastKey;
+    if (!moved && coverAt < 0) return;
     const cr = canvas.getBoundingClientRect();
-    const camW = new V().setFromMatrixPosition(cam.matrixWorld), centre = new V().setFromMatrixPosition(view.rock.matrixWorld);
-    const w = new V(), out = new V(), toCam = new V(), side = new V(), right = new V().setFromMatrixColumn(cam.matrixWorld, 0).normalize();
-    const rs = view.rock.matrixWorld.elements, scale = Math.hypot(rs[0], rs[1], rs[2]) || 1;
-    for (const o of view.lots) {
-      const p = view.pos.get(o.lot);
-      if (!p) { o.el.style.display = 'none'; continue; }
-      w.set(p[0], p[1], p[2]).applyMatrix4(view.rock.matrixWorld);
-      // round the back of the rock?
-      out.copy(w).sub(centre).normalize(); toCam.copy(camW).sub(w).normalize();
-      if (out.dot(toCam) < 0.15) { o.vis = false; o.el.style.display = 'none'; continue; }
-      // how big one lot looks on screen – the offset shrinks with it so the dot stays by its own icon
-      side.copy(right).multiplyScalar(view.lotW * scale).add(w).project(cam);
-      w.project(cam);
-      const lotPx = Math.abs(side.x - w.x) / 2 * cr.width, f = Math.max(0.25, Math.min(1, lotPx * 0.35 / OFFSET[0]));
-      const x = (w.x + 1) / 2 * cr.width + cr.left + OFFSET[0] * f, y = (1 - w.y) / 2 * cr.height + cr.top + OFFSET[1] * f;
-      // under a game panel?
-      if (cover) o.vis = x >= cr.left && x <= cr.right && y >= cr.top && y <= cr.bottom && document.elementFromPoint(x, y) === canvas;
-      o.el.style.display = o.vis ? '' : 'none';
-      o.el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    if (moved) {
+      lastKey = k;
+      const V = cam.position.constructor;
+      const camW = new V().setFromMatrixPosition(cam.matrixWorld), centre = new V().setFromMatrixPosition(view.rock.matrixWorld);
+      const w = new V(), out = new V(), toCam = new V(), side = new V(), right = new V().setFromMatrixColumn(cam.matrixWorld, 0).normalize();
+      const rs = view.rock.matrixWorld.elements, scale = Math.hypot(rs[0], rs[1], rs[2]) || 1;
+      for (const o of view.lots) {
+        const p = view.pos.get(o.lot);
+        o.show = false;
+        if (!p) continue;
+        w.set(p[0], p[1], p[2]).applyMatrix4(view.rock.matrixWorld);
+        out.copy(w).sub(centre).normalize(); toCam.copy(camW).sub(w).normalize();
+        if (out.dot(toCam) < 0.15) continue;                     // round the back of the rock
+        side.copy(right).multiplyScalar(view.lotW * scale).add(w).project(cam);
+        w.project(cam);
+        const lotPx = Math.abs(side.x - w.x) / 2 * cr.width, f = Math.max(0.25, Math.min(1, lotPx * 0.35 / OFFSET[0]));
+        o.x = (w.x + 1) / 2 * cr.width + cr.left + OFFSET[0] * f; o.y = (1 - w.y) / 2 * cr.height + cr.top + OFFSET[1] * f;
+        o.show = o.x >= cr.left && o.x <= cr.right && o.y >= cr.top && o.y <= cr.bottom;
+      }
     }
+    let changed = false;
+    if (coverAt >= 0) {
+      const stop = Math.min(view.lots.length, coverAt + 40);
+      for (; coverAt < stop; coverAt++) {
+        const o = view.lots[coverAt];
+        const v = o.show && document.elementFromPoint(o.x, o.y) === canvas;
+        if (v !== o.vis) { o.vis = v; changed = true; }
+      }
+      if (coverAt >= view.lots.length) coverAt = -1;
+    }
+    if (moved || changed) paint();
   }
 
   // ---- start: wait for your options, then run ---------------------------------------------
