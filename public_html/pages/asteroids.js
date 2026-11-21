@@ -290,13 +290,21 @@
     APP.wire3d(m);
   }
 
-  function beltMap(m) {
+  // ONE VIEWSCREEN (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): the Flight Deck's navigation window uses this same map, with
+  // opts.ships = your ships in flight (courses) and docked, opts.theme 'flight' = purple, opts.onShip(s) = a ship was clicked,
+  // opts.fsEl = the element to put in full screen. Any change here shows on the Bridge and the Flight Deck alike.
+  function beltMap(m, opts) {
+    opts = opts || {};
+    const SH = !!opts.ships, FLT = opts.theme === 'flight', ACC = FLT ? '#9a6bff' : '#5fc3e4';
     const box = document.createElement('div');
     box.style.cssText =
       'position:relative;margin:0 0 16px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#0d1622 0%,#05070a 70%)';
     box.innerHTML =
       '<canvas style="display:block;width:100%;height:clamp(260px,46vw,440px)"></canvas><div class="a" style="position:absolute;left:12px;top:8px;font-size:12px;pointer-events:none">The Adalia system right now · your asteroids in blue · drag to turn</div><div class="bm-load a" style="position:absolute;left:12px;bottom:8px;font-size:12px">Loading orbits…</div>';
     m.prepend(box);
+    if (FLT) box.classList.add('bm-fl');
+    if (opts.h) box.querySelector('canvas').style.height = opts.h;
+    if (opts.label) box.querySelector('canvas + .a').textContent = opts.label;
     // Map controls (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): full screen, pause the turning, zoom
     // (buttons, or the mouse wheel while full screen so the page still scrolls normally).
     const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
@@ -328,7 +336,10 @@
           '.bm-rl label{display:flex;align-items:center;gap:7px;padding:2px 0;cursor:pointer;white-space:nowrap}' +
           '.bm-rl input[type=checkbox]{flex:none;width:auto;min-width:0;max-width:none;margin:0}' +
           '.bm-rl i{flex:none;width:18px;height:3px;border-radius:2px}.bm-rl .bm-rb{display:flex;gap:6px;margin-top:6px}' +
-          '.bm-rl .bm-rb button{all:unset;cursor:pointer;padding:2px 8px;font:bold 12px system-ui,sans-serif;color:#8fe3ff;border:1px solid #5fc3e4;border-radius:5px}';
+          '.bm-rl .bm-rb button{all:unset;cursor:pointer;padding:2px 8px;font:bold 12px system-ui,sans-serif;color:#8fe3ff;border:1px solid #5fc3e4;border-radius:5px}' +
+          '.bm-fl .bm-ctl button,.bm-fl .bm-ctl label{color:#c4adff;border-color:#9a6bff;background:rgba(18,13,30,.88)}.bm-fl .bm-ctl button:hover{background:#251d3c;box-shadow:0 0 10px -2px #9a6bff}' +
+          '.bm-fl .bm-card{border-color:#9a6bff;background:rgba(18,13,30,.92);box-shadow:0 0 18px -6px #9a6bff}.bm-fl .bm-card b,.bm-fl .bm-card a{color:#c4adff}' +
+          '.bm-fl .bm-rl{border-color:#9a6bff;background:rgba(18,13,30,.95)}.bm-fl .bm-rl .bm-rb button{color:#c4adff;border-color:#9a6bff}';
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
@@ -403,6 +414,72 @@
         let hid = ORB ? hidL() : [];
         const vis = () => me.filter((a) => !hid.includes(a.id));
         box.querySelector('.bm-load').remove();
+        // ---- ships (Flight Deck): courses of ships in flight, docked ships beside their rock ----
+        const EP = 1609459200, posAt = (o, unix) => { try { const q = T.pos(o, (unix - EP) / 3600); return [q[0] / AU, q[1] / AU, q[2] / AU]; } catch (e) { return null; } };
+        const SHIPS = SH ? (APP.D.ships || []) : [], fly = SHIPS.filter((x) => x.fl), dock = SHIPS.filter((x) => !x.fl);
+        let others = [], trips = [], SO = APP.shipO || {}, hits = [], ph = 0;
+        const orbOf = (id) => { const a = me.find((x) => x.id === id); return a ? a.o : (SO[id] && SO[id].o) || (id === 1 && APP.apOrb) || null; };
+        const nameOf = (id) => { const a = me.find((x) => x.id === id); return a ? a.name : id === 1 ? 'Adalia Prime' : (SO[id] && SO[id].n) || 'Asteroid #' + id; };
+        const plan = () => {
+          if (!SH) return;
+          const now = Date.now() / 1000;
+          me.forEach((a) => { const q = posAt(a.o, now); if (q) a.p = q; });
+          const ids = [...new Set(dock.map((x) => x.dId).concat(fly.map((x) => x.dId), fly.map((x) => x.oId)))].filter((id) => id && !me.some((a) => a.id === id));
+          others = ids.map((id) => { const o = orbOf(id), p = o && posAt(o, now); return p ? { id, p, name: nameOf(id) } : null; }).filter(Boolean);
+          trips = fly.map((x) => {
+            const dep = x.depT || now, arr = x.arrT || now, oa = orbOf(x.oId), ob = orbOf(x.dId), a = oa && posAt(oa, dep), b = ob && posAt(ob, arr);
+            if (!a || !b) return null;
+            return { s: x, a, b, f: arr > dep ? Math.max(0, Math.min(1, (now - dep) / (arr - dep))) : 1, left: Math.max(0, arr - now) };
+          }).filter(Boolean);
+        };
+        if (SH) {
+          const need = [...new Set(dock.map((x) => x.dId).concat(fly.map((x) => x.dId), fly.map((x) => x.oId)))].filter((id) => id && !me.some((a) => a.id === id) && !SO[id]);
+          if (need.length) fetch('orbits.php?ids=' + need.slice(0, 200).join(',')).then((r) => r.json()).then((j) => { SO = APP.shipO = Object.assign(APP.shipO || {}, j.orbits || {}); plan(); }).catch(() => {});
+          plan();
+        }
+        const lefT = (sec) => { const h = sec / 3600; return h < 1 ? Math.max(1, Math.round(h * 60)) + ' m' : h < 48 ? Math.round(h) + ' h' : Math.round(h / 24) + ' d'; };
+        const curve = (A, B) => {
+          const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1;
+          let nx = -dy / L, ny = dx / L;
+          if (nx * (mx - W / 2) + ny * (my - H / 2) < 0) { nx = -nx; ny = -ny; }
+          return [mx + nx * L * 0.18, my + ny * L * 0.18];
+        };
+        const qb = (A, C, B, f) => [(1 - f) * (1 - f) * A[0] + 2 * (1 - f) * f * C[0] + f * f * B[0], (1 - f) * (1 - f) * A[1] + 2 * (1 - f) * f * C[1] + f * f * B[1]];
+        const docked = (q, id) => {
+          const ds = dock.filter((x) => x.dId === id);
+          if (!ds.length) return;
+          ds.forEach((x) => hits.push([q[0] - 12, q[1] - 9, x]));
+          for (let i = 0; i < Math.min(ds.length, 5); i++) {
+            ctx.fillStyle = '#9a6bff'; ctx.beginPath();
+            const x = q[0] - 8 - i * 7, y = q[1] - 9;
+            ctx.moveTo(x, y - 4); ctx.lineTo(x + 4, y + 3); ctx.lineTo(x - 4, y + 3); ctx.closePath(); ctx.fill();
+          }
+          ctx.fillStyle = '#c4adff'; ctx.font = '10px system-ui,sans-serif'; ctx.fillText(ds.length + ' docked', q[0] + 8, q[1] + 16);
+        };
+        const shipLayer = () => {
+          if (!SH) return;
+          others.forEach((r) => {
+            const q = proj(r.p);
+            ctx.fillStyle = '#7d8899'; ctx.beginPath(); ctx.arc(q[0], q[1], 3, 0, 6.283); ctx.fill();
+            ctx.fillStyle = '#8b9ab0'; ctx.font = '11px system-ui,sans-serif'; ctx.fillText(r.name, q[0] + 7, q[1] + 14);
+            docked(q, r.id);
+          });
+          trips.forEach((t) => {
+            const A = proj(t.a), B = proj(t.b), C = curve(A, B), Pp = qb(A, C, B, t.f), P2 = qb(A, C, B, Math.min(1, t.f + 0.02));
+            ctx.setLineDash([5, 6]); ctx.strokeStyle = 'rgba(154,107,255,.55)'; ctx.lineWidth = 1.4;
+            ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.quadraticCurveTo(C[0], C[1], B[0], B[1]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = 'rgba(196,173,255,.85)'; ctx.lineWidth = 2; ctx.beginPath();
+            for (let k = 0; k <= 30; k++) { const q = qb(A, C, B, (t.f * k) / 30); k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(154,107,255,.7)'; ctx.beginPath(); ctx.arc(B[0], B[1], 7, 0, 6.283); ctx.stroke();
+            const ang = Math.atan2(P2[1] - Pp[1], P2[0] - Pp[0]) || 0, glow = calm ? 0.5 : 0.5 + 0.5 * Math.sin(ph);
+            ctx.save(); ctx.translate(Pp[0], Pp[1]); ctx.shadowColor = '#9a6bff'; ctx.shadowBlur = 8 + glow * 10; ctx.rotate(ang);
+            ctx.fillStyle = '#e0d4ff'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-6, -5); ctx.lineTo(-3, 0); ctx.lineTo(-6, 5); ctx.closePath(); ctx.fill(); ctx.restore();
+            hits.push([Pp[0], Pp[1], t.s]);
+            ctx.fillStyle = '#e6ebf2'; ctx.font = '600 12px system-ui,sans-serif'; ctx.fillText(t.s.name, Pp[0] + 10, Pp[1] - 8);
+            ctx.fillStyle = '#c4adff'; ctx.font = '11px system-ui,sans-serif'; ctx.fillText('→ ' + nameOf(t.s.dId) + ' · lands in ' + lefT(t.left), Pp[0] + 10, Pp[1] + 6);
+          });
+        };
         let R = 0;
         belt.concat(me.map((a) => a.p)).forEach((p) => {
           R = Math.max(R, Math.hypot(p[0], p[1]));
@@ -438,6 +515,7 @@
           return [W / 2 + x * s, H / 2 + (y * ct - p[2] * st) * s, y * st];
         };
         const frame = () => {
+          hits = [];
           ctx.clearRect(0, 0, W, H);
           const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.min(W, H) * 0.12);
           g.addColorStop(0, 'rgba(255,250,235,1)');
@@ -501,7 +579,10 @@
             ctx.fillStyle = '#e6ebf2';
             ctx.font = '12px system-ui,sans-serif';
             ctx.fillText(a.name, q[0] + 8, q[1] - 6);
+            if (SH) docked(q, a.id);
           });
+          if (SH) apL.forEach((a) => docked(proj(a.p), a.id));
+          shipLayer();
         };
         let raf = 0;
         const loop = () => {
@@ -511,6 +592,7 @@
           }
           raf = requestAnimationFrame(loop);
           if (!drag && !calm && !paused) az += 0.0012;
+          if (SH) { ph += 0.05; if (Date.now() - (loop.t || 0) > 60000) { loop.t = Date.now(); plan(); } }
           frame();
         };
         if (calm) frame();
@@ -545,17 +627,18 @@
             pb.textContent = paused ? '▶' : '⏸';
             pb.title = paused ? 'Start the turning again' : 'Pause the turning';
           };
+          const FS = opts.fsEl || box;
           fb.onclick = () => {
-            if (document.fullscreenElement === box) document.exitFullscreen();
-            else if (box.requestFullscreen) box.requestFullscreen().catch(() => {});
+            if (document.fullscreenElement === FS) document.exitFullscreen();
+            else if (FS.requestFullscreen) FS.requestFullscreen().catch(() => {});
           };
           document.addEventListener('fullscreenchange', () => {
-            const on = document.fullscreenElement === box;
+            const on = document.fullscreenElement === FS;
             fb.title = on ? 'Leave full screen (or press Esc)' : 'Full screen';
             requestAnimationFrame(() => { size(); frame(); });
           });
           cv.addEventListener('wheel', (e) => {
-            if (document.fullscreenElement !== box) return;   // normal page scrolling when not full screen
+            if (document.fullscreenElement !== (opts.fsEl || box)) return;   // normal page scrolling when not full screen
             e.preventDefault();
             zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15);
           }, { passive: false });
@@ -593,6 +676,11 @@
             if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) { down = null; return; }   // that was a drag
             down = null;
             const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+            if (SH && opts.onShip) {
+              let sb = null, sd = 16;
+              hits.forEach((h) => { const d = Math.hypot(h[0] - x, h[1] - y); if (d < sd) { sd = d; sb = h[2]; } });
+              if (sb) { opts.onShip(sb); return; }
+            }
             let hit = null, bd = 14;
             vis().concat(apL).forEach((a) => { const q = proj(a.p), d = Math.hypot(q[0] - x, q[1] - y); if (d < bd) { bd = d; hit = a; } });
             show(hit);

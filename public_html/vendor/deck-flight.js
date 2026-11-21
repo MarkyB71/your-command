@@ -44,6 +44,10 @@ body.dk-flight #main th{color:#c4adff}
 .fh-win:fullscreen{clip-path:none!important;background:#03060a}
 .fh-win:fullscreen canvas{height:100vh}
 .fh-win:fullscreen .fh-ctl{right:16px;bottom:16px}
+.fh-one .bm-box{margin:0!important;border:0!important;border-radius:0!important;background:transparent!important}
+.fh-one .bm-box>.a{left:50%!important;transform:translateX(-50%);top:auto!important;bottom:6px;white-space:nowrap;opacity:.7}
+.fh-one .fh-read{top:auto;bottom:28px}
+.fh-win.fh-one:fullscreen canvas{height:100vh!important}
 .fh-rl{position:absolute;right:5%;bottom:46px;z-index:3;min-width:200px;max-height:60%;overflow:auto;padding:8px 10px;background:rgba(18,13,30,.95);border:1px solid ${COL};border-radius:8px;font:13px system-ui,sans-serif;color:#e6ebf2}
 .fh-win:fullscreen .fh-rl{right:16px;bottom:52px}
 .fh-rl label{display:flex;align-items:center;gap:7px;padding:2px 0;cursor:pointer;white-space:nowrap}
@@ -78,6 +82,7 @@ body.dk-flight #main th{color:#c4adff}
   }
 
   // Map controls, select and Adalia Prime – same as the Bridge viewscreen (Mark, 15 Nov 2026 – TEST ONLY, ?beta=1)
+  const ONE = /[?&]beta=1\b/.test(location.search);
   const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const APK = 'yic-travel-ap';
   // FOC (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): same as the Bridge map – each of your rocks has its own orbit colour (same
@@ -99,6 +104,15 @@ body.dk-flight #main th{color:#c4adff}
     const owned = (D.owned || []).map((a) => +a.id),
       fly = ships.filter((s) => s.fl),
       dock = ships.filter((s) => !s.fl);
+    // ONE VIEWSCREEN (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): the Bridge's map (window.YICbeltMap, pages/asteroids.js) with the
+    // ships switched on and the Flight Deck's purple – one map for both, buttons at the top. The old drawing below stays for now.
+    if (ONE && window.YICbeltMap) {
+      el.innerHTML = '<div class="fh-win fh-one"><div class="fh-glass"></div><div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div></div>' +
+        '<div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
+      const win = el.querySelector('.fh-win');
+      window.YICbeltMap(win, { ships: true, theme: 'flight', onShip: showShip, fsEl: win, h: 'clamp(220px,28vw,330px)', label: 'Ships in flight · courses · docked ships · drag to turn' });
+      return;
+    }
     el.innerHTML =
       '<div class="fh-win"><canvas></canvas><div class="fh-glass"></div>' +
       '<div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div>' +
