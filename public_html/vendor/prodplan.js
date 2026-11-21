@@ -1046,7 +1046,7 @@
     let gneed = {};
     P.gq = P.gq || {};
     // modules and other counted items: units, or a weight turned into whole units (Mark, 21 Nov)
-    const gqty = (p) => { const x = P.gq[p]; if (!x || !(+x.q > 0)) return 0; if (k.bulk(+p)) return Math.round(+x.q * UNITS[x.unit || 't']); const u = x.unit || 'units'; return u === 'units' ? Math.floor(+x.q) : Math.floor(+x.q * UNITS[u] * 1000 / k.grams(+p)); };
+    const gqty = (p) => { const x = P.gq[p]; if (!x || !(+x.q > 0)) return 0; if (k.bulk(+p)) return x.unit === 'units' ? Math.floor(+x.q) : Math.round(+x.q * UNITS[x.unit || 't']); /* 1 unit of a bulk item = 1 kg */ const u = x.unit || 'units'; return u === 'units' ? Math.floor(+x.q) : Math.floor(+x.q * UNITS[u] * 1000 / k.grams(+p)); };
     const typed = P.gm.some((p) => gqty(p) > 0), nLbl = typed ? 'Needed' : 'Used at MAX';
     if (GMB && P.gm.length) {
       // how many to make (Mark, 21 Nov – TEST ONLY, ?beta=1): a typed amount per pick, else MAX
@@ -1114,7 +1114,7 @@
         return `<div style="margin:8px 0;padding:8px 10px;border:1px solid #ffb03b44;border-radius:8px"><b>${esc(k.pname(p))}</b> <button type="button" class="dk-shipbtn" data-gdel="${p}" style="cursor:pointer;padding:1px 6px">✕</button>` +
           recLine(p, x, rs, 0) +
           (() => { const q = P.gq[p] || {}, sh = (P.gshort || {})[p] || []; return `<div class="row" style="gap:6px;margin:6px 0"><span class="src">How many to make</span><input type="number" min="0" step="any" data-gq="${p}" value="${esc(q.q || '')}" placeholder="MAX" style="width:8em">` +
-            (k.bulk(p) ? `<select data-gqu="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (q.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : `<select data-gqu="${p}" style="min-width:0">${['units'].concat(Object.keys(UNITS)).map((u) => `<option${u === (q.unit || 'units') ? ' selected' : ''}>${u}</option>`).join('')}</select>`) +
+            (k.bulk(p) ? `<select data-gqu="${p}" style="min-width:0">${['units'].concat(Object.keys(UNITS)).map((u) => `<option${u === (q.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : `<select data-gqu="${p}" style="min-width:0">${['units'].concat(Object.keys(UNITS)).map((u) => `<option${u === (q.unit || 'units') ? ' selected' : ''}>${u}</option>`).join('')}</select>`) +
             `<button type="button" class="dk-shipbtn" data-gqmax="${p}" style="cursor:pointer">MAX</button>` +
             (!k.bulk(p) && q.unit && q.unit !== 'units' && gqty(p) > 0 ? `<span class="src">= <b>${k.amt(p, gqty(p))}</b></span>` : '') + '</div>' +
             (sh.length ? `<div class="src" style="color:var(--amber)">⚠ Not enough on ${esc(r)} for that many – short of ${sh.slice(0, 3).map((z) => esc(k.pname(z))).join(', ')}.</div>` : ''); })() +
