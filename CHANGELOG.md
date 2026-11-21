@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – Number format: choose 1,234.5, 1.234,5 or 1 234,5 in Deck controls; the whole site follows, Logistics Hub included. Help page updated. Asked for by a community player.
+
 ## 21 Nov 2026 – Flight Deck › Travel: distances coloured by how far away each rock is right now (green under 1 AU, lime 1–2, yellow 2–3, red 3+). Help page updated. Asked for by a community player.
 
 ## 21 Nov 2026 – System map (the Bridge viewscreen and the Asteroids page): each of your rocks has its own orbit colour, and a Rocks ▾ list shows or hides each one. Adalia Prime moved from the top bar into that list. Help page updated. Asked for by a community player.

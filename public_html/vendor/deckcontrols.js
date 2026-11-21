@@ -168,7 +168,7 @@
     return '<h3>Site voice</h3><div class="dc-row"><b>Logistics Hub voice</b><span style="display:block;color:#9fb0c4;font-size:12px">The voice for the airlock and the welcome. These are the voices your browser offers – saved in this browser only. Doesn\'t need the extension.</span>' +
       '<div class="dc-voice"><select data-voice>' + o + '</select><button type="button" data-vtest>▶ Test</button></div></div>';
   }
-  // ---- Number format (community idea, Mark 21 Nov – TEST ONLY ?beta=1): see vendor/numfmt.js. Saved in this browser; no extension needed.
+  // ---- Number format (community idea, Mark 21 Nov – LIVE 21 Nov 2026): see vendor/numfmt.js. Saved in this browser; no extension needed.
   function numRow() {
     const c = YICnumfmt.get(), op = [['uk', '1,234.5 – comma for thousands, point for decimals'], ['eu', '1.234,5 – point for thousands, comma for decimals'], ['sp', '1 234,5 – space for thousands, comma for decimals']];
     return '<h3>Number format</h3><div class="dc-row"><b>How numbers are written</b><span style="display:block;color:#9fb0c4;font-size:12px">For the whole site, the Logistics Hub too – saved in this browser only. Doesn\'t need the extension.</span>' +
