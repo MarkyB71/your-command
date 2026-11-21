@@ -337,16 +337,18 @@
           '.bm-rl input[type=checkbox]{flex:none;width:auto;min-width:0;max-width:none;margin:0}' +
           '.bm-rl i{flex:none;width:18px;height:3px;border-radius:2px}.bm-rl .bm-rb{display:flex;gap:6px;margin-top:6px}' +
           '.bm-rl .bm-rb button{all:unset;cursor:pointer;padding:2px 8px;font:bold 12px system-ui,sans-serif;color:#8fe3ff;border:1px solid #5fc3e4;border-radius:5px}' +
+          '.bm-ctl input[type=checkbox]{flex:none;width:auto;min-width:0;max-width:none;margin:0}' +
           '.bm-fl .bm-ctl button,.bm-fl .bm-ctl label{color:#c4adff;border-color:#9a6bff;background:rgba(18,13,30,.88)}.bm-fl .bm-ctl button:hover{background:#251d3c;box-shadow:0 0 10px -2px #9a6bff}' +
           '.bm-fl .bm-card{border-color:#9a6bff;background:rgba(18,13,30,.92);box-shadow:0 0 18px -6px #9a6bff}.bm-fl .bm-card b,.bm-fl .bm-card a{color:#c4adff}' +
           '.bm-fl .bm-rl{border-color:#9a6bff;background:rgba(18,13,30,.95)}.bm-fl .bm-rl .bm-rb button{color:#c4adff;border-color:#9a6bff}';
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
-      c.innerHTML = (SH ? '<label title="Show or hide your ships and their courses"><input type="checkbox" data-bm="ships"> Ships</label>' : '') + (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
+      c.innerHTML = (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
         (ORB ? '' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>') +
         '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
-        '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
+        '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>' +
+        (SH ? '<label title="Show or hide your ships and their courses"><input type="checkbox" data-bm="ships"> Ships</label>' : '');
       box.appendChild(c);
       const cd = document.createElement('div'); cd.className = 'bm-card'; cd.hidden = true;
       box.appendChild(cd);
