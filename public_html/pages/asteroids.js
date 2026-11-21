@@ -494,7 +494,7 @@
           zf = 1,
           paused = false,
           az = 0.6,
-          tilt = 1.05,
+          tilt = SH ? 0.55 : 1.05, // Flight Deck: flatter, like its old navigation window
           drag = null,
           W = 0,
           H = 0;
@@ -508,7 +508,7 @@
         };
         size();
         const proj = (p) => {
-          const s = ((Math.min(W, H * 1.6) * 0.46) / R) * zf,
+          const s = ((SH ? Math.min(W * 0.92, H * 1.9) * 0.5 : Math.min(W, H * 1.6) * 0.46) / R) * zf,
             ca = Math.cos(az),
             sa = Math.sin(az),
             x = p[0] * ca - p[1] * sa,
