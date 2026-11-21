@@ -300,9 +300,9 @@
     // Map controls (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): full screen, pause the turning, zoom
     // (buttons, or the mouse wheel while full screen so the page still scrolls normally).
     const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
-    // ORB (community idea, Mark 21 Nov 2026 – TEST ONLY, ?beta=1): each of your rocks gets its own orbit colour,
+    // ORB (community idea, Mark 21 Nov 2026 – LIVE): each of your rocks gets its own orbit colour,
     // and a "Rocks" list to show or hide each one (saved in the browser, 'yic-map-hide').
-    const ORB = /[?&]beta=1\b/.test(location.search);
+    const ORB = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
     const OCOL = ['#5fc3e4', '#ffb84a', '#7be07b', '#ff7ab6', '#b48cff', '#ffe66b', '#ff8a5c', '#5ce1c4', '#9fb4ff', '#e0e0e0'];
     const HK = 'yic-map-hide';
     const hidL = () => { try { return JSON.parse(localStorage.getItem(HK)) || []; } catch (e) { return []; } };

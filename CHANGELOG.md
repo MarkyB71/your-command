@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – System map (the Bridge viewscreen and the Asteroids page): each of your rocks has its own orbit colour, and a Rocks ▾ list shows or hides each one. Adalia Prime moved from the top bar into that list. Help page updated. Asked for by a community player.
+
 ## 21 Nov 2026 – Watch list fix: each tick box now sits right beside its own product (they were stretched wide, so a click could land on the next product), and ticking no longer jumps the list back to the top. Reported by Mark.
 
 ## 21 Nov 2026 – Engineering › Products › Control panel: a watch list. Choose which products to watch for each rock; each dial shows what's in storage plus what's being made right now. Raw materials listed first, "Show all products" for the rest. Help page updated. Asked for by a community player.
