@@ -37,7 +37,10 @@ const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100',bel
 /* Whole belt – ships in flight now (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1). From flights.php: every ship in
    flight across the belt (Escape Modules too), shared by all visitors and rebuilt at most every 5 minutes. */
 const BELT=true; /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */let FL=null,FLL=null;
-document.addEventListener('yic-refresh',()=>{FL=null}); /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
+document.addEventListener('yic-refresh',()=>{FL=null;FP=null});
+/* DAA (community idea, Mark 21 Nov 2026 – TEST ONLY, ?beta=1): a "Departures and Arrivals" tab – who left and who landed across the
+   whole belt in the last 7 days, newest first. Landed ships come from flights.php?past=1 (the game keeps a ship's last trip until it flies again). */
+const DAA=/[?&]beta=1\b/.test(location.search);let FP=null,FPL=null; /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
 const STYPE={1:'Escape Module',2:'Light Transport',3:'Heavy Transport',4:'Shuttle'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
@@ -106,7 +109,10 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
   function draw(){
     m.innerHTML='';
     /* Mark 15 Nov (test): on the Flight Deck this page is just the whole belt's flights; your crews' log lives in the Captain's log */
-    if(BELT&&!opt.noTitle){m.appendChild(el('h2','hl-title','Belt flights – in flight now'));drawBelt();return}
+    if(BELT&&!opt.noTitle){m.appendChild(el('h2','hl-title',DAA&&S.bv==='da'?'Belt flights – departures and arrivals':'Belt flights – in flight now'));
+      if(DAA){const tb=el('div','hl-bar');tb.innerHTML='<button type="button" data-bv="now"'+(S.bv!=='da'?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>In flight now</button><button type="button" data-bv="da"'+(S.bv==='da'?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Departures and Arrivals</button>';
+        tb.querySelectorAll('button').forEach(b=>{b.style.cssText='padding:5px 12px;border-radius:6px;border:1px solid #5fc3e4;cursor:pointer;font-weight:bold;'+(b.classList.contains('on')?'background:#1d3346;color:#fff':'background:#14202c;color:#8fe3ff');b.onclick=()=>{S.bv=b.dataset.bv;draw()}});m.appendChild(tb)}
+      if(DAA&&S.bv==='da')drawDA();else drawBelt();return}
     if(!opt.noTitle)m.appendChild(el('h2','hl-title','Activity log'));
     const H=HC[S.range];
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
@@ -141,6 +147,32 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
       box.appendChild(el('div','hl-row','<span class="hl-tm">'+(opt.stardate?'<b class="hl-sd">'+esc(SD(r.t,2))+'</b><span class="hl-real">'+tm+'</span>':tm)+'</span><span class="hl-ic" title="'+esc(cat(r.n)[1])+'">'+cat(r.n)[2]+'</span><span class="hl-what">'+d+'</span><span class="hl-crew">'+esc(crewName[r.c]||('Crew #'+r.c))+'</span>'))});
     m.appendChild(box);
     if(list.length>S.show){const b=el('button','hl-more','Show more ('+(list.length-S.show).toLocaleString()+' left)');b.addEventListener('click',()=>{S.show+=500;draw()});m.appendChild(b)}
+  }
+  function drawDA(){
+    if(!FL||!FP){m.appendChild(el('div','note','Loading departures and arrivals across the belt…'));
+      if(!FL&&!FLL)FLL=fetch('flights.php').then(r=>r.json()).then(j=>{FL=j.error?{error:j.error}:j}).catch(e=>{FL={error:String(e&&e.message||e)}}).finally(()=>{FLL=null;if(m.isConnected&&S.belt)draw()});
+      if(!FP&&!FPL)FPL=fetch('flights.php?past=1').then(r=>r.json()).then(j=>{FP=j.error?{error:j.error}:j}).catch(e=>{FP={error:String(e&&e.message||e)}}).finally(()=>{FPL=null;if(m.isConnected&&S.belt)draw()});return}
+    if(FL.error||FP.error){m.appendChild(el('div','note','Could not load the flights: '+esc(FL.error||FP.error)));return}
+    const now=Date.now()/1000,since=now-7*86400,nm=Object.assign({},FP.names||{},FL.names||{}),an=id=>esc(aName[id]||nm[id]||('Asteroid #'+id));
+    const when=t=>new Date(t*1000).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const ago=s=>{const h=s/3600;return h<1?Math.max(1,Math.round(h*60))+' m ago':h<48?Math.round(h)+' h ago':(h/24).toFixed(1)+' d ago'};
+    const ev=[],seen=new Set();
+    (FL.ships||[]).concat(FP.ships||[]).forEach(x=>{
+      if(x[7]>since&&x[7]<=now&&!seen.has('d'+x[0]+'_'+x[7])){seen.add('d'+x[0]+'_'+x[7]);ev.push({t:x[7],a:0,x})}
+      if(x[8]>since&&x[8]<=now&&!seen.has('a'+x[0]+'_'+x[8])){seen.add('a'+x[0]+'_'+x[8]);ev.push({t:x[8],a:1,x})}});
+    ev.sort((a,b)=>b.t-a.t);
+    m.appendChild(el('div','note','Who left and who landed across the whole belt in the last 7 days, newest first – '+ev.length.toLocaleString()+' event'+(ev.length===1?'':'s')+
+      '. Your own ships are highlighted. A ship that has flown again since only shows its latest trip (the game keeps one trip per ship). Updated every 5 minutes at most. Times are in your local time.'));
+    const bar=el('div','hl-bar'),q=el('input');q.placeholder='Search ship, type, crew or asteroid';q.value=S.bq;bar.appendChild(q);m.appendChild(bar);
+    const box=el('div');m.appendChild(box);
+    const fill=()=>{const qq=S.bq.trim().toLowerCase();
+      const tr=ev.map(({t,a,x})=>{const me=mine.has(x[4]),cn=crewName[x[4]]||('Crew #'+x[4]);
+        const txt=[x[1]||'',STYPE[x[2]]||'',cn,aName[x[5]]||nm[x[5]]||'',aName[x[6]]||nm[x[6]]||'',a?'arrived':'departed'].join(' ').toLowerCase();
+        if(qq&&!txt.includes(qq))return '';
+        return '<tr'+(me?' class="hl-me"':'')+'><td data-sort="'+t+'">'+esc(when(t))+' <span class="s">('+ago(now-t)+')</span></td><td>'+(a?'🛬 Arrived':'🛫 Departed')+'</td><td><b>'+esc(x[1]||('Ship #'+x[0]))+'</b>'+(window.GL?window.GL('/ship/'+x[0],'Open this ship in the game'):'')+'</td><td>'+esc(STYPE[x[2]]||'Ship')+'</td><td>'+esc(cn)+(me?' <span class="s">(yours)</span>':'')+'</td>'+
+          '<td>'+an(x[5])+'</td><td>'+an(x[6])+'</td></tr>'}).join('');
+      box.innerHTML=tr?'<div class="wrap"><table><thead><tr><th>When</th><th>Event</th><th>Ship</th><th>Type</th><th>Crew</th><th>From</th><th>To</th></tr></thead><tbody>'+tr+'</tbody></table></div>':'<div class="note">Nothing matches.</div>'};
+    q.addEventListener('input',()=>{S.bq=q.value;fill()});fill();
   }
   function drawBelt(){
     if(!FL){m.appendChild(el('div','note','Loading every ship in flight across the belt…'));

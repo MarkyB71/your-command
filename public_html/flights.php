@@ -5,12 +5,15 @@
 // plus the orbits and names of every asteroid those ships fly between, so the route can be worked out.
 require __DIR__ . '/_api.php';
 const FLIGHTS_SECONDS = 300;
-$ff = $CACHE . '/flights.json';
+// ?past=1 (Departures and Arrivals, community idea – TEST ONLY on ?beta=1, Mark 21 Nov 2026): ships that LANDED in the
+// last 7 days instead of ships in flight (the game keeps a ship's last trip until it flies again). Own cache file.
+$PAST = !empty($_GET['past']);
+$ff = $CACHE . ($PAST ? '/flights-past.json' : '/flights.json');
 $fresh = fn() => is_file($ff) && time() - filemtime($ff) < FLIGHTS_SECONDS;
 if ($fresh()) { readfile($ff); exit; }
 
 // only one visitor rebuilds at a time; others get the last copy (or wait for the new one)
-$lock = fopen($CACHE . '/flights.lock', 'c');
+$lock = fopen($CACHE . ($PAST ? '/flights-past.lock' : '/flights.lock'), 'c');
 if ($lock && !flock($lock, LOCK_EX | LOCK_NB)) {
   if (is_file($ff)) { readfile($ff); exit; }
   flock($lock, LOCK_EX);
@@ -21,7 +24,7 @@ $now = time();
 $gameNow = ($now - 1609459200) * 24;   // the game counts flight times in game seconds (24 × real time)
 $unix = fn($g) => intval(1609459200 + $g / 24);
 $ships = [];
-$q = ['bool' => ['filter' => [['range' => ['Ship.transitArrival' => ['gt' => $gameNow]]]]]];
+$q = ['bool' => ['filter' => [['range' => ['Ship.transitArrival' => $PAST ? ['gt' => $gameNow - 7 * 86400 * 24, 'lte' => $gameNow] : ['gt' => $gameNow]]]]]];
 for ($from = 0; $from < 5000; $from += 1000) {
   $r = try_search('ship_v1', [
     'from' => $from, 'size' => 1000, 'query' => $q, 'sort' => [['id' => 'asc']],
