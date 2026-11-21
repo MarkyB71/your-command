@@ -14,6 +14,9 @@
    System.getRunSystemCall 9 Nov). Uses the hub's own helpers (window.YICDOCK, from vendor/dock.js). */
 (function () {
   'use strict';
+  // SEV (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): several ticked ships share the load evenly, like 🚀 Load a fleet,
+  // instead of filling the first ship before the next.
+  const SEV = /[?&]beta=1\b/.test(location.search);
   if (!/[?&]dock=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK;
   const CARGO = { 2: 2, 3: 2, 4: 2 }; // ship type → cargo slot (Light Transport, Heavy Transport, Shuttle)
@@ -106,7 +109,32 @@
     const k = K(), ast = k.astId(rock), stores = storesOn(rock), left = Object.assign({}, items), taken = {};
     const loads = []; // {ship, items:{p:n}}
     const order = Object.keys(left).sort((a, b) => left[b] * vol(+b) - left[a] * vol(+a));
-    ships.forEach((x) => {
+    if (SEV && ships.length > 1) {
+      // SEV: each ship gets an equal share of the weight, never more than it has room for (water-filling, as in 🚀 Load a fleet),
+      // and every item is shared out in the same proportion, biggest first
+      const fr = ships.map((x) => ({ x, g: x.freeG * 0.995, v: x.freeV * 0.995, ug: 0, uv: 0, t: 0, it: {} }));
+      const W = order.reduce((t, p) => t + left[p] * k.grams(+p), 0);
+      let rest = Math.min(W, fr.reduce((t, f) => t + f.g, 0)), open = fr.slice();
+      while (rest > 1 && open.length) {
+        const each = rest / open.length, small = open.filter((f) => f.g - f.t <= each);
+        if (small.length) { small.forEach((f) => { rest -= f.g - f.t; f.t = f.g; }); open = open.filter((f) => !small.includes(f)); }
+        else { open.forEach((f) => { f.t += each; }); rest = 0; }
+      }
+      const base = Math.max(fr.reduce((t, f) => t + f.t, 0), W) || 1;
+      order.forEach((p) => {
+        const pg = k.grams(+p), pv = vol(+p), tot = left[p];
+        const room = (f) => Math.min(Math.floor((f.g - f.ug) / pg), Math.floor((f.v - f.uv) / pv));
+        const put = (f, n) => { f.it[p] = (f.it[p] || 0) + n; left[p] -= n; f.ug += n * pg; f.uv += n * pv; };
+        fr.forEach((f) => { const n = Math.min(Math.floor(tot * f.t / base), left[p], room(f)); if (n > 0) put(f, n); });
+        // round-off, or what a full ship couldn't take: to the ship furthest below its share that still has room
+        while (left[p] > 0) {
+          const c = fr.filter((f) => room(f) > 0).sort((a, b) => (a.ug - a.t) - (b.ug - b.t))[0];
+          if (!c) break;
+          put(c, Math.min(left[p], room(c)));
+        }
+      });
+      fr.forEach((f) => { if (Object.keys(f.it).length) loads.push({ x: f.x, items: f.it }); });
+    } else ships.forEach((x) => {
       let g = x.freeG * 0.995, v = x.freeV * 0.995; const it = {};
       order.forEach((p) => {
         if (left[p] <= 0) return;
