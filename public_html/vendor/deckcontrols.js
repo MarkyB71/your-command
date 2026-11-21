@@ -135,8 +135,11 @@
       h += '</div>';
     }
     if (window.YICvoice && YICvoice.on) h = h.replace('<div class="dc-in">', '<div class="dc-in">' + voiceRow());
+    if (window.YICnumfmt && YICnumfmt.on) h = h.replace('<div class="dc-in">', '<div class="dc-in">' + numRow());
     scr.innerHTML = h + '</div>';
     wireVoice(scr);
+    const nf = scr.querySelector('select[data-numfmt]');
+    if (nf) nf.addEventListener('change', () => { YICnumfmt.set(nf.value); saved(); try { window.YICredraw && window.YICredraw(); } catch (e) {} });
     scr.querySelectorAll('input[data-k]').forEach((i) =>
       i.addEventListener('change', () => {
         const v = i.type === 'checkbox' ? i.checked : i.value;
@@ -164,6 +167,12 @@
     vs.forEach((v) => { o += '<option value="' + esc(v.name) + '"' + (c === v.name ? ' selected' : '') + '>' + esc(v.name) + ' – ' + esc(v.lang) + '</option>'; });
     return '<h3>Site voice</h3><div class="dc-row"><b>Logistics Hub voice</b><span style="display:block;color:#9fb0c4;font-size:12px">The voice for the airlock and the welcome. These are the voices your browser offers – saved in this browser only. Doesn\'t need the extension.</span>' +
       '<div class="dc-voice"><select data-voice>' + o + '</select><button type="button" data-vtest>▶ Test</button></div></div>';
+  }
+  // ---- Number format (community idea, Mark 21 Nov – TEST ONLY ?beta=1): see vendor/numfmt.js. Saved in this browser; no extension needed.
+  function numRow() {
+    const c = YICnumfmt.get(), op = [['uk', '1,234.5 – comma for thousands, point for decimals'], ['eu', '1.234,5 – point for thousands, comma for decimals'], ['sp', '1 234,5 – space for thousands, comma for decimals']];
+    return '<h3>Number format</h3><div class="dc-row"><b>How numbers are written</b><span style="display:block;color:#9fb0c4;font-size:12px">For the whole site, the Logistics Hub too – saved in this browser only. Doesn\'t need the extension.</span>' +
+      '<div class="dc-voice"><select data-numfmt>' + op.map((o) => '<option value="' + o[0] + '"' + (c === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div></div>';
   }
   function wireVoice(scr) {
     const sel = scr.querySelector('select[data-voice]'), t = scr.querySelector('button[data-vtest]');
