@@ -78,7 +78,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px;position:relative}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}
 .pc-sw a[data-m=from]{color:#ffd24a;border-color:#6b5a1c}.pc-sw a[data-m=from]:hover{background:#2a2410}`;
 const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={units:1,kg:1,t:1e3,kt:1e6};/* units for a bulk item = 1 kg each (Mark, 21 Nov) */
-let CMV=null,REDRAW=null;const UNB=/[?&]beta=1\b/.test(location.search);/* TEST ONLY until Mark says live *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
+let CMV=null,REDRAW=null;const UNB=true;/* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
 fetch('vendor/tidy.js',{cache:'force-cache'}).then(r=>r.text()).then(t=>{const m=/const MV = (\{.*?\});/.exec(t);if(m){CMV=JSON.parse(m[1]);try{REDRAW&&REDRAW()}catch(e){}}}).catch(()=>{});
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
 

@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – The SkippyChain: the amount can be given in units or by weight (kg / t / kt) – a weight on a module shows how many units it makes. Help page updated.
+
 ## 21 Nov 2026 – One viewscreen: the Flight Deck's navigation window is now the same map as the Bridge (buttons at the top, Rocks list, orbit colours), with your ships switched on, a taller window and a Ships tick box. Help page updated.
 
 ## 21 Nov 2026 – Travel refuel check: a rock now only counts as able to refuel from storage or its markets with at least half a tank for the chosen ship (was 1 t). Help page updated.
