@@ -1093,6 +1093,19 @@
       S.calls = Object.keys(mv).map((id) => ({ from: +id, to: dest.id, items: mv[id].items }));
       const lg = S.calls.reduce((t, c) => t + c.items.reduce((s2, [p, a]) => s2 + a * g(p), 0), 0);
       const after = Math.round(Math.max((u[0] + lg) / cp[0], (u[1] + S.calls.reduce((t, c) => t + c.items.reduce((s2, [p, a]) => s2 + a * v(p), 0), 0)) / cp[1]) * 100);
+      // feed the moving crew first (Mark, 21 Nov – TEST ONLY, ?beta=1): same amount and source as Production's feed step –
+      // a year's food at most, from the biggest Food stock on this rock; goes first in the same approval (dock.js S.feedCalls)
+      S.feedCalls = [];
+      const mFeed = () => {
+        const c = S.moverObj; if (!c || c.food >= 0.95) return '';
+        const food = {}; k.onRock().filter(k.isStore).forEach((b) => { food[b.id] = ((k.inv(b) || { contents: [] }).contents || []).reduce((t, z) => t + (z.product === 129 ? z.amount : 0), 0); });
+        const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5), need = Math.floor(c.mates * 1000 * yrs);
+        const sid = Object.keys(food).filter((id) => food[id] > 0).sort((a, b) => food[b] - food[a])[0], src = sid && k.onRock().find((b) => b.id === +sid);
+        const fd = src && need > 0 ? { src: src.id, give: Math.min(need, food[sid]), crew: c.id } : null;
+        if (fd && P.mfeed) S.feedCalls = [fd];
+        return `<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:4px">${c.food < 0.5 ? '⚠ ' + esc(c.name) + ' is hungry – moves will be slower.' : esc(c.name) + ' is ' + Math.round(c.food * 100) + '% fed.'}</div>` +
+          (fd ? `<label style="margin:0"><input type="checkbox" id="pp-mfeed"${P.mfeed ? ' checked' : ''}> Feed ${esc(c.name)} first: ${k.tonnes(fd.give)} Food from ${esc(k.nm(src))}</label>` : '<div class="src">No Food stored on this rock to feed it.</div>') + '</div>';
+      };
       const crewTxt = (c) => esc(c.name) + (c.busy ? ' – busy until ' + esc(c.busy) : ' – ready') + (c.food < 0.5 ? ' – food ' + Math.round(c.food * 100) + '% (hungry, slower)' : '');
       h += `<div class="card"><h2><span class="n">${GMB ? 5 : 4}</span>Move it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(k.nm(dest))} is full. Pick another storage.</div>` :
         `<div class="src">These moves put <b>${k.tonnes(lg / 1000)}</b> into ${esc(k.nm(dest))} (${Math.round(full(dest) * 100)}% → <b>${after}%</b> full):</div>` +
@@ -1100,7 +1113,7 @@
         `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => { const km = k.kmBetween(k.lotOf(mv[id].b), k.lotOf(dest), ast); return `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🗄 ${esc(k.nm(dest))}${km != null ? ' <span class="src">· ' + k.kmTxt(km) + '</span>' : ''}` +
           mv[id].items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>'; }).join('') + '</div>' +
         (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Crew doing the moving</span><select id="pp-mcrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${crewTxt(c)}</option>`).join('')}</select></div>` +
-          (S.moverObj && S.moverObj.food < 0.5 ? '<div class="src" style="color:var(--amber)">⚠ This crew is hungry – moves will be slower.</div>' : '') : `<div class="src" style="color:var(--red)">No crew on ${esc(r)} to do the moving.</div>`) +
+          mFeed() : `<div class="src" style="color:var(--red)">No crew on ${esc(r)} to do the moving.</div>`) +
         `<button class="approve" id="pp-mgo" style="margin-top:10px"${cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (move to ' + esc(k.nm(dest)) + ')'}</button>` +
         `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
         `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) + '</div>';
@@ -1143,7 +1156,8 @@
       if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.mq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.mq[p] = { q: n };
       k.render();
     }));
-    on('pp-mcrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
+    on('pp-mcrew', 'change', (e) => { S.mover = +e.target.value; P.mfeed = false; k.render(); });
+    on('pp-mfeed', 'change', (e) => { P.mfeed = e.target.checked; k.render(); });
     on('pp-mgo', 'click', () => k.approve());
     on('pp-gfind', 'input', (e) => { P.gfind = e.target.value; const pos = e.target.selectionStart; k.render(); const n = document.getElementById('pp-gfind'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } });
     m.querySelectorAll('[data-gadd]').forEach((b) => b.addEventListener('click', () => { P.gm.push(+b.dataset.gadd); P.gfind = ''; k.render(); }));
