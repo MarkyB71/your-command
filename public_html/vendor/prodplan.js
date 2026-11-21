@@ -380,7 +380,7 @@
     const food = {}; k.onRock().filter(k.isStore).forEach((b) => { food[b.id] = ((k.inv(b) || { contents: [] }).contents || []).reduce((t, c) => t + (c.product === 129 ? c.amount : 0), 0); });
     const feedOne = (c, key) => {
       if (!c || c.food >= 0.95) return '';
-      const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5), need = Math.floor(c.mates * 1000 * yrs);
+      const need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food)); /* game's limit: max food - current food (as crewfeed.js; over it = E6030 food limit reached) */
       const sid = Object.keys(food).filter((id) => food[id] > 0).sort((a, b) => food[b] - food[a])[0];
       const src = sid && k.onRock().find((b) => b.id === +sid);
       const f = src && need > 0 ? { src: src.id, give: Math.min(need, food[sid]), crew: c.id } : null;
@@ -1099,7 +1099,7 @@
       const mFeed = () => {
         const c = S.moverObj; if (!c || c.food >= 0.95) return '';
         const food = {}; k.onRock().filter(k.isStore).forEach((b) => { food[b.id] = ((k.inv(b) || { contents: [] }).contents || []).reduce((t, z) => t + (z.product === 129 ? z.amount : 0), 0); });
-        const yrs = Math.min(1, c.food >= 0.5 ? 1 - c.food : (0.75 - c.food) / 0.5), need = Math.floor(c.mates * 1000 * yrs);
+        const need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food)); /* game's limit: max food - current food (as crewfeed.js; over it = E6030 food limit reached) */
         const sid = Object.keys(food).filter((id) => food[id] > 0).sort((a, b) => food[b] - food[a])[0], src = sid && k.onRock().find((b) => b.id === +sid);
         const fd = src && need > 0 ? { src: src.id, give: Math.min(need, food[sid]), crew: c.id } : null;
         if (fd && P.mfeed) S.feedCalls = [fd];
