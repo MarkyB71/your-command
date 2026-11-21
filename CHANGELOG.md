@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 21 Nov 2026 – Logistics Hub › Cargo bay › Export for production: "Spread it over N ships here instead" in step 4 hands the load to Load a fleet, so several ships share it evenly. Help page updated. From a community request.
+
 ## 21 Nov 2026 – Flight Deck › Belt flights: new Departures and Arrivals tab – who left and who landed across the belt in the last 7 days. Also fixed Belt flights sometimes staying on "Loading…". Help page updated. Asked for by a community player.
 
 ## 21 Nov 2026 – Number format: choose 1,234.5, 1.234,5 or 1 234,5 in Deck controls; the whole site follows, Logistics Hub included. Help page updated. Asked for by a community player.
