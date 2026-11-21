@@ -55,6 +55,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
 .en-ed-top button{all:unset;cursor:pointer;padding:4px 10px;border:1px solid #5a302b;border-radius:4px;color:#ffc2bb;font:600 12px system-ui,sans-serif}
 .en-ed-top button:hover,.en-ed-top button:focus-visible{border-color:#e8645a}
 .en-ed-top .en-done{background:#e8645a;color:#0e0807;border-color:#e8645a}
+.en-all{display:flex;gap:6px;align-items:center;font:12px system-ui,sans-serif;color:#ffc2bb;cursor:pointer}
 .en-ed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px;max-height:260px;overflow:auto}
 .en-ed-list label{display:flex;gap:6px;align-items:center;font:12px/1.5 system-ui,sans-serif;color:#d8cbbb;cursor:pointer}
 .en-ed-list label.on{color:#f2ede6}
@@ -157,7 +158,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
     }
 
     // ---- Watch list (HUD) ----
-    let editing = false, eq = '';
+    let editing = false, eq = '', eAll = false; // eAll: picker shows every product, not just raws (Mark, 21 Nov)
     const rockKey = (ai) => ai === '' || !Y.asts[+ai] ? 'all' : String(Y.asts[+ai].id || Y.asts[+ai].name);
     const watched = (ai) => { const w = wLoad()[rockKey(ai)]; return Array.isArray(w) ? w : RAWS; };
     const amt = (p, n) => !n ? 'none' : Y.PR[p] && Y.PR[p][3] ? Math.round(n).toLocaleString() + ' unit' + (Math.round(n) === 1 ? '' : 's') : Y.fmtT(Y.kg(p, n) / 1000);
@@ -199,10 +200,10 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
       if (editing) {
         const on = new Set(W), q = eq.toLowerCase();
         const all = Object.keys(Y.PR).map(Number).filter((p) => p > 0 && Y.PR[p] && Y.PR[p][0])
-          .filter((p) => !q || Y.pn(p).toLowerCase().includes(q))
+          .filter((p) => (eAll || p <= 22 || on.has(p)) && (!q || Y.pn(p).toLowerCase().includes(q)))
           .sort((a, b) => Y.pn(a).localeCompare(Y.pn(b)));
         ed = '<div class="en-ed"><div class="en-ed-top"><input type="search" class="en-eq" placeholder="Find a product…" aria-label="Find a product" value="' + Y.esc(eq) + '">' +
-          '<button type="button" data-w="raws">Raw materials</button><button type="button" data-w="clear">Clear all</button><button type="button" class="en-done" data-w="done">Done</button></div>' +
+          '<label class="en-all"><input type="checkbox" class="en-eall"' + (eAll ? ' checked' : '') + '> Show all products</label><button type="button" data-w="raws">Raw materials</button><button type="button" data-w="clear">Clear all</button><button type="button" class="en-done" data-w="done">Done</button></div>' +
           '<div class="en-ed-list">' + all.map((p) => { const s = st(p); return '<label' + (on.has(p) ? ' class="on"' : '') + '><input type="checkbox" data-p="' + p + '"' + (on.has(p) ? ' checked' : '') + '>' + Y.esc(Y.pn(p)) + (s > 0 ? '<i>' + amt(p, s) + '</i>' : '') + '</label>'; }).join('') + '</div></div>';
       }
       el.innerHTML =
@@ -229,6 +230,7 @@ body.dk-eng #main h2,body.dk-eng #main th{color:#ffc2bb}
         else if (w === 'clear') setW(() => []);
       });
       el.addEventListener('change', (e) => {
+        if (e.target.classList.contains('en-eall')) { eAll = e.target.checked; return drawHud((document.getElementById('ast') || {}).value || ''); }
         const c = e.target.closest('input[data-p]');
         if (!c) return;
         const p = +c.dataset.p;
