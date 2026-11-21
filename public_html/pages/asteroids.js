@@ -343,7 +343,7 @@
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
-      c.innerHTML = (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
+      c.innerHTML = (SH ? '<label title="Show or hide your ships and their courses"><input type="checkbox" data-bm="ships"> Ships</label>' : '') + (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
         (ORB ? '' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>') +
         '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
         '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>';
@@ -456,9 +456,12 @@
           }
           ctx.fillStyle = '#c4adff'; ctx.font = '10px system-ui,sans-serif'; ctx.fillText(ds.length + ' docked', q[0] + 8, q[1] + 16);
         };
+        // Ships tick box (Mark, 21 Nov – beta): hide the ships and courses to declutter; saved in the browser
+        const SHK = 'yic-map-ships';
+        let shipsOn = (() => { try { return localStorage.getItem(SHK) !== '0'; } catch (e) { return true; } })();
         const shipLayer = () => {
-          if (!SH) return;
-          others.forEach((r) => {
+          if (!SH || !shipsOn) return;
+          others.filter((r) => trips.some((t) => t.s.dId === r.id || t.s.oId === r.id) || dock.some((x) => x.dId === r.id)).forEach((r) => {
             const q = proj(r.p);
             ctx.fillStyle = '#7d8899'; ctx.beginPath(); ctx.arc(q[0], q[1], 3, 0, 6.283); ctx.fill();
             ctx.fillStyle = '#8b9ab0'; ctx.font = '11px system-ui,sans-serif'; ctx.fillText(r.name, q[0] + 7, q[1] + 14);
@@ -582,9 +585,9 @@
             ctx.fillStyle = '#e6ebf2';
             ctx.font = '12px system-ui,sans-serif';
             ctx.fillText(a.name, q[0] + 8, q[1] - 6);
-            if (SH) docked(q, a.id);
+            if (SH && shipsOn) docked(q, a.id);
           });
-          if (SH) apL.forEach((a) => docked(proj(a.p), a.id));
+          if (SH && shipsOn) apL.forEach((a) => docked(proj(a.p), a.id));
           shipLayer();
         };
         let raf = 0;
@@ -689,6 +692,8 @@
             show(hit);
           });
           apDraw();
+          const shcb = box.querySelector('[data-bm="ships"]');
+          if (shcb) { shcb.checked = shipsOn; shcb.onchange = () => { shipsOn = shcb.checked; try { localStorage.setItem(SHK, shipsOn ? '1' : '0'); } catch (e) {} frame(); }; }
           if (ORB) {
             const rb = box.querySelector('[data-bm="rocks"]'), rl = document.createElement('div');
             rl.className = 'bm-rl'; rl.hidden = true; box.appendChild(rl);
