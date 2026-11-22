@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 22 Nov 2026 – Extension 0.7.2 is on the Chrome Web Store: much lighter status dots (big rocks no longer slow the game when zoomed out), Buildings card moved top right with a Hide planned sites tick box, deck strip and Buildings card tucked away until you hover, map tags and markets switched in Options, tidier Options page, and the food bar now shows on full crews.
+
 ## 21 Nov 2026 – Logistics Hub: four consoles (Storage · Galley · chair · Production · Cargo bay), opens on Storage. New Storage Management – gather what you want to make into one warehouse or tank farm, with how many to make (units or weight), and feed the moving crew in the same approval. Help page updated.
 
 ## 21 Nov 2026 – The SkippyChain: the amount can be given in units or by weight (kg / t / kt) – a weight on a module shows how many units it makes. Help page updated.
