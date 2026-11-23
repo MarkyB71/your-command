@@ -257,7 +257,7 @@
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
   const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
-  const WFD = /[?&]beta=1\b/.test(location.search); // "waiting for" leaves out finished steps – TEST ONLY (?beta=1), Mark 23 Nov 2026
+  const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over

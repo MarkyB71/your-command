@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 23 Nov 2026 – Logistics Hub › Production plans: "waiting for" no longer lists steps that are already done; if a done step's output hasn't reached the materials store yet, it says so. Help page updated.
+
 ## 23 Nov 2026 – Logistics Hub › Production plans: colour coding – each process's status (done, ready, running, to collect, waiting) has its own colour, with a coloured bar on each row and matching boxes at the top. Help page updated.
 
 ## 22 Nov 2026 – Extension 0.7.2 is on the Chrome Web Store: much lighter status dots (big rocks no longer slow the game when zoomed out), Buildings card moved top right with a Hide planned sites tick box, deck strip and Buildings card tucked away until you hover, map tags and markets switched in Options, tidier Options page, and the food bar now shows on full crews.
