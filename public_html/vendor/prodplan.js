@@ -258,6 +258,7 @@
   }
   const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
+  const FGB = /[?&]beta=1\b/.test(location.search); // ⛽ ship fuel gauge – TEST ONLY (?beta=1), Mark 23 Nov 2026
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
@@ -463,6 +464,16 @@
   // 1 game day = 1 real hour), the ship's propellant now, no crew engine bonus. Light / Heavy Transports only.
   const C = { src: '', pick: {}, mine: {}, chg: {}, rt: {}, to: {}, key: '', busy: false };
   const SHIPT = { 2: 'Light Transport', 3: 'Heavy Transport' };
+  // ⛽ fuel gauge for ships (Mark, 23 Nov – TEST ONLY, ?beta=1): propellant now vs a full tank (4,000 t Light, 24,000 t
+  // Heavy – same as Travel). Bar colours from the game palette: green over half, yellow a quarter to half, red under.
+  const TANK = { 2: 4000, 3: 24000 };
+  const fuelPc = (s) => TANK[s.st] ? Math.max(0, Math.min(1, (s.prop || 0) / TANK[s.st])) : 0;
+  const fuelTxt = (s) => FGB && TANK[s.st] ? ` · ⛽ ${Math.round(fuelPc(s) * 100)}%` : '';
+  const fuelBar = (s) => {
+    if (!FGB || !s || !TANK[s.st]) return '';
+    const f = fuelPc(s), c = f > 0.5 ? '#57ff65' : f >= 0.25 ? '#ffd94f' : '#e0282e';
+    return `<span title="Propellant" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="src">⛽</span><span style="display:inline-block;width:110px;height:10px;border:1px solid ${c};border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden"><span style="display:block;height:100%;width:${(f * 100).toFixed(1)}%;background:${c}"></span></span><span style="color:${c}">${Math.round(f * 100)}%</span><span class="src">${Math.round(s.prop || 0).toLocaleString('en-GB')} t of ${TANK[s.st].toLocaleString('en-GB')} t</span></span>`;
+  };
   let TR = null;
   // Mark (9 Nov, 3rd go): "too much on here. I just want to know how many locations i need to fly in from, are there any
   // ships there or nearest ship available. If multiple rocks can supply then give me the quickest ones available."
@@ -582,7 +593,7 @@
       Q = `<div class="card" id="pp-qcard"><h2><span class="n">4</span>Load a ship</h2>` +
         `<div class="src" style="margin-bottom:8px">Put what <b>${esc(dest)}</b> is missing to make <b>${what}</b> into one of your ships. Pick the asteroid to collect it from, then a ship that is parked there.</div>` +
         `<div class="row"><span class="src">From asteroid</span><select id="pp-qrock">${allR.map((r) => { const pc = Math.round(share(r) * 100), n = at(r).length; return `<option value="${esc(r)}"${r === C.qr ? ' selected' : ''}>${esc(r)} · has ${pc ? pc + '% of it' : 'none of it'} · ${n ? n + ' ship' + (n === 1 ? '' : 's') + ' there' : 'no ship there'}</option>`; }).join('')}</select>` +
-        `<span class="src">into ship</span>${there.length ? `<select id="pp-qship">${there.map((s) => `<option value="${s.id}"${s.id === C.qs ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free</option>`).join('')}</select>` : `<span style="color:var(--amber)">no ship parked there</span>`}</div>`;
+        `<span class="src">into ship</span>${there.length ? `<select id="pp-qship">${there.map((s) => `<option value="${s.id}"${s.id === C.qs ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free${fuelTxt(s)}</option>`).join('')}</select>${fuelBar(there.find((z) => z.id === C.qs))}` : `<span style="color:var(--amber)">no ship parked there</span>`}</div>`;
       const X = mkX(C.qr), qs = there.find((z) => z.id === C.qs);
       S.calls = []; S.startList = []; S.feed = false; S.srcRock = C.qr;
       if (!X.G) Q += `<div class="src" style="margin-top:8px;color:var(--amber)">${esc(C.qr)} has none of what ${esc(dest)} needs – pick another asteroid.</div>`;
@@ -844,10 +855,10 @@
         ships.map((s) => isFull(s)
           ? `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;opacity:.45;cursor:not-allowed" title="Full – unload it in the game first"><input type="checkbox" disabled><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · <b style="color:var(--amber)">Full</b> (${k.tonnes(s.useM / 1000)} on board)</span></label>`
           : `<label style="display:flex;gap:8px;align-items:center;padding:4px 0;cursor:pointer"><input type="checkbox" data-fl="${s.id}"${P.fl.includes(s.id) ? ' checked' : ''}><b>${esc(s.name)}</b> <span class="src">${SHIPT[s.st]} · ` +
-            (s.useM > 0 || s.useV > 0 ? `<b style="color:var(--amber)">${usedPc(s)}% loaded</b> (${k.tonnes(s.useM / 1000)} on board) · ` : 'empty · ') + `${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)} free</span></label>`).join('')
+            (s.useM > 0 || s.useV > 0 ? `<b style="color:var(--amber)">${usedPc(s)}% loaded</b> (${k.tonnes(s.useM / 1000)} on board) · ` : 'empty · ') + `${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)} free</span> ${fuelBar(s)}</label>`).join('')
         : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
     else h += `<div class="card"><h2><span class="n">2</span>Ship to load</h2><div class="src" style="margin-bottom:8px">Your Light and Heavy Transports parked at ${esc(r)}.</div>` +
-      (ships.length ? `<select id="pp-ss">${ships.map((s) => `<option value="${s.id}"${s.id === P.ss ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})</option>`).join('')}</select>`
+      (ships.length ? `<select id="pp-ss">${ships.map((s) => `<option value="${s.id}"${s.id === P.ss ? ' selected' : ''}>${esc(s.name)} · ${SHIPT[s.st]} · ${Math.max(0, Math.round(room(s) * 100))}% space free (${k.tonnes(Math.max(0, s.capM - s.useM) / 1000)})${fuelTxt(s)}</option>`).join('')}</select> ${fuelBar(ships.find((z) => z.id === P.ss) || ships[0])}`
         : `<div class="src" style="color:var(--amber)">✈ No ship is parked at ${esc(r)}. Fly one there in the game first, then come back here to load it.</div>`) + '</div>';
     // Load a fleet (Mark, 15 Nov): how the picked amounts compare with the room in the ticked ships, and a button that
     // scales every item down by the same fraction to fit – the player can then change any amount (more of one, less of another)
