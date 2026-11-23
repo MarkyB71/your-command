@@ -44,7 +44,7 @@
     const on = k.allB().filter((b) => k.rockOf(b) === plan.rock), byId = (id) => on.find((b) => b.id === +id);
     const mat = byId(plan.mat);
     const pool = {}; ((mat && k.inv(mat)) || { contents: [] }).contents.forEach((c) => { pool[c.product] = (pool[c.product] || 0) + c.amount; });
-    const used = new Set();
+    const used = new Set(), doneP = new Set();
     return plan.steps.map((st, i) => {
       const r = R.find((x) => x.name === st.name), pid = k.PID[st.name], bt = r ? k.FBT[r.type] : 0;
       const starts = plan.started[i] || [];
@@ -57,6 +57,7 @@
       const left = Math.max(0, st.runs - startedRuns);
       const o = { i, st, r, bt, left, runningFin, toCollect };
       if (runningFin) o.s = 'run'; else if (toCollect) o.s = 'collect'; else if (!left) o.s = 'done';
+      if (o.s === 'done') doneP.add(String(st.p));
       if (!left) return o;
       // still running but runs left (Mark, 15 Nov – LIVE 18 Nov): "nothing ready" while a second Bioreactor
       // sat free with the inputs there. Now the rest can start in another free building while this one runs.
@@ -70,7 +71,12 @@
       const one = { r, runs: left };
       if (k.capRuns && !k.capRuns(one)) return nope('one run takes longer than the game allows');
       const lack = Object.keys(r.inp).filter((ip) => (pool[ip] || 0) < r.inp[ip] * one.runs);
-      if (lack.length) return nope('waiting for ' + lack.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (lack.length > 3 ? '…' : ''));
+      // WFD (Mark, 23 Nov – TEST ONLY, ?beta=1): leave out inputs whose own step is already done – "waiting for Pump, Computer"
+      // with Computer done. If only done ones are short, say they haven't reached the materials store yet.
+      const lackW = WFD ? lack.filter((ip) => !doneP.has(String(ip))) : lack;
+      const nm3 = (a) => a.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (a.length > 3 ? '…' : '');
+      if (lackW.length) return nope('waiting for ' + nm3(lackW));
+      if (lack.length) return nope(nm3(lack) + ' done – not in ' + k.nm(mat) + ' yet');
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
       if (!b) return nope('no free ' + (k.BTN[bt] || 'building'));
       const to = byId(st.to) || mat;
@@ -251,6 +257,7 @@
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
   const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
+  const WFD = /[?&]beta=1\b/.test(location.search); // "waiting for" leaves out finished steps – TEST ONLY (?beta=1), Mark 23 Nov 2026
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
