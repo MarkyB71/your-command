@@ -258,7 +258,7 @@
   }
   const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
-  const FGB = /[?&]beta=1\b/.test(location.search); // ⛽ ship fuel gauge – TEST ONLY (?beta=1), Mark 23 Nov 2026
+  const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
