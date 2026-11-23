@@ -76,7 +76,9 @@
       const lackW = WFD ? lack.filter((ip) => !doneP.has(String(ip))) : lack;
       const nm3 = (a) => a.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (a.length > 3 ? '…' : '');
       if (lackW.length) return nope('waiting for ' + nm3(lackW));
-      if (lack.length) return nope(nm3(lack) + ' done – not in ' + k.nm(mat) + ' yet');
+      // COMMS (Mark, 23 Nov – TEST ONLY, ?beta=1): a bit of fun – the step is done, the game just hasn't told us yet
+      if (lack.length) return nope(COMMS ? '📡 Waiting for communication – ' + nm3(lack) + ' is done, but the news is still crawling here at the speed of light'
+        : nm3(lack) + ' done – not in ' + k.nm(mat) + ' yet');
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
       if (!b) return nope('no free ' + (k.BTN[bt] || 'building'));
       const to = byId(st.to) || mat;
@@ -259,6 +261,7 @@
   const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
+  const COMMS = /[?&]beta=1\b/.test(location.search); // 📡 "waiting for communication" wording – TEST ONLY (?beta=1), Mark 23 Nov 2026
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
