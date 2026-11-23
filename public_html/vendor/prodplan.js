@@ -107,10 +107,17 @@
     const ready = ss.filter((x) => x.start && pick(x.i)).map((x) => Object.assign(x.start, { crew: P.runner }));
     S.rock = plan.rock; S.calls = []; S.feedCalls = []; S.feed = false; S.mover = P.runner; S.moverObj = runner;
     S.startList = ready;
+    // Colour coding (Mark, 23 Nov – TEST ONLY, ?beta=1): each status its own colour, game palette (theme.js, as used
+    // elsewhere on the site): done green, ready bright green, running blue, to collect yellow, waiting orange (no free
+    // building) or grey (waiting on an earlier step). Summary boxes match.
+    const COL = { done: '#88e675', ready: '#57ff65', run: '#57d5ff', collect: '#ffd94f', wait: '#ff8c1a', waitStep: '#8a96aa' };
+    const colOf = (x) => x.s === 'wait' && !/^no free/.test(x.why || '') ? COL.waitStep : COL[x.s];
+    const sumBox = (n, lab, c) => CCB ? `<div style="border-color:${c};box-shadow:0 0 0 1px ${c}55 inset"><b style="color:${n ? c : '#5c6573'}">${n}</b>${lab}</div>` : null;
     const ICON = { done: '<span class="ok">✓ done</span>', run: '⚙ running', collect: '<span style="color:var(--amber)">✓ finished – collect it in the game</span>', ready: '<span class="ok">▶ ready to start</span>', wait: '<span class="src">⏳ waiting</span>' };
     let h = `<div class="card"><h2><span class="n">📋</span>${esc(k.pname(plan.p))} ${k.amt(plan.p, plan.qty)} on ${esc(plan.rock)}</h2>` +
       `<div class="row"><button type="button" class="dk-shipbtn" id="pp-back" style="cursor:pointer">← All plans / new plan</button><span class="src">Planned ${esc(whenTxt(plan.made / 1000))} · materials in ${esc(byId(plan.mat) ? k.nm(byId(plan.mat)) : '?')}</span></div>` +
-      `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${t.wait}</b>waiting</div></div>` +
+      (CCB ? `<div class="dkp-sum" style="margin-top:10px">${sumBox(t.done, 'done', COL.done)}${sumBox(t.run, 'running', COL.run)}${sumBox(t.col, 'to collect', COL.collect)}${sumBox(t.ready, 'ready now', COL.ready)}${sumBox(t.wait, 'waiting', COL.wait)}</div>` :
+      `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${t.wait}</b>waiting</div></div>`) +
       `<table style="margin-top:10px"><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Status</th></tr></thead><tbody>` +
       ss.map((x) => {
         const st = x.st, b = x.start && x.start.b;
@@ -118,7 +125,9 @@
         const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + cap : '';
         const more = x.start && x.s !== 'ready' ? '<br><span class="ok">▶ ' + esc(x.why) + ' in ' + esc(k.nm(b)) + '</span>' + cap : '';
         const tick = PKB && x.start ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
-        return `<tr><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${ICON[x.s] || ''}${extra}${more || (x.why ? '<br><span class="src">' + esc(x.why) + '</span>' : '')}</td></tr>`;
+        const c = CCB ? colOf(x) : '', rs = CCB ? ` style="box-shadow:inset 4px 0 0 ${c}"` : '', ss2 = CCB ? ` style="color:${c}"` : '';
+        const icon = CCB ? `<b style="color:${c};font-weight:600">${{ done: '✓ done', run: '⚙ running', collect: '✓ finished – collect it in the game', ready: '▶ ready to start', wait: '⏳ waiting' }[x.s] || ''}</b>` : (ICON[x.s] || '');
+        return `<tr${rs}><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${icon}<span${ss2}>${extra}</span>${more || (x.why ? '<br><span class="src"' + ss2 + '>' + esc(x.why) + '</span>' : '')}</td></tr>`;
       }).join('') + '</tbody></table>' +
       (PKB && t.ready > 1 ? '<div class="hint">Tick the ready processes you want to start – only those go in the approval.</div>' : '') +
       (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
@@ -241,6 +250,7 @@
     return '<div class="hint">⛏ You’ll mine these, not make them: ' +
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
+  const CCB = /[?&]beta=1\b/.test(location.search); // plan colour coding – TEST ONLY (?beta=1), Mark 23 Nov 2026
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
