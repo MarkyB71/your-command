@@ -77,7 +77,7 @@
       const nm3 = (a) => a.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (a.length > 3 ? '…' : '');
       if (lackW.length) return nope('waiting for ' + nm3(lackW));
       // COMMS (Mark, 23 Nov – TEST ONLY, ?beta=1): a bit of fun – the step is done, the game just hasn't told us yet
-      if (lack.length) return nope(COMMS ? '📡 Waiting for communication – ' + nm3(lack) + ' is done – confirmation is still crawling here at the speed of light'
+      if (lack.length) return nope(COMMS ? '📡 Confirmation is still crawling here at the speed of light'
         : nm3(lack) + ' done – not in ' + k.nm(mat) + ' yet');
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
       if (!b) return nope('no free ' + (k.BTN[bt] || 'building'));
