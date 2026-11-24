@@ -41,6 +41,8 @@ document.addEventListener('yic-refresh',()=>{FL=null;FP=null});
 /* DAA (community idea, Mark 21 Nov 2026 – LIVE): a "Departures and Arrivals" tab – who left and who landed across the
    whole belt in the last 7 days, newest first. Landed ships come from flights.php?past=1 (the game keeps a ship's last trip until it flies again). */
 const DAA=true; /* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) */let FP=null,FPL=null; /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
+/* CNB (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1): other players' crew names in Belt flights (flights.php 'crews') */
+const CNB=/[?&]beta=1\b/.test(location.search);
 const STYPE={1:'Escape Module',2:'Light Transport',3:'Heavy Transport',4:'Shuttle'};
 const RANGES=[['100','Latest 100 per crew'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days'],['all','Everything']];
 
@@ -166,7 +168,7 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
     const bar=el('div','hl-bar'),q=el('input');q.placeholder='Search ship, type, crew or asteroid';q.value=S.bq;bar.appendChild(q);m.appendChild(bar);
     const box=el('div');m.appendChild(box);
     const fill=()=>{const qq=S.bq.trim().toLowerCase();
-      const tr=ev.map(({t,a,x})=>{const me=mine.has(x[4]),cn=crewName[x[4]]||('Crew #'+x[4]);
+      const tr=ev.map(({t,a,x})=>{const me=mine.has(x[4]),cn=crewName[x[4]]||(CNB&&((FL.crews||{})[x[4]]||(FP.crews||{})[x[4]]))||('Crew #'+x[4]);
         const txt=[x[1]||'',STYPE[x[2]]||'',cn,aName[x[5]]||nm[x[5]]||'',aName[x[6]]||nm[x[6]]||'',a?'arrived':'departed'].join(' ').toLowerCase();
         if(qq&&!txt.includes(qq))return '';
         return '<tr'+(me?' class="hl-me"':'')+'><td data-sort="'+t+'">'+esc(when(t))+' <span class="s">('+ago(now-t)+')</span></td><td>'+(a?'🛬 Arrived':'🛫 Departed')+'</td><td><b>'+esc(x[1]||('Ship #'+x[0]))+'</b>'+(window.GL?window.GL('/ship/'+x[0],'Open this ship in the game'):'')+'</td><td>'+esc(STYPE[x[2]]||'Ship')+'</td><td>'+esc(cn)+(me?' <span class="s">(yours)</span>':'')+'</td>'+
@@ -187,7 +189,7 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
     const bar=el('div','hl-bar'),q=el('input');q.placeholder='Search ship, type, crew or asteroid';q.value=S.bq;bar.appendChild(q);m.appendChild(bar);
     const box=el('div');m.appendChild(box);
     const fill=()=>{const qq=S.bq.trim().toLowerCase();
-      const tr=rows.map(x=>{const me=mine.has(x[4]),cn=crewName[x[4]]||('Crew #'+x[4]);
+      const tr=rows.map(x=>{const me=mine.has(x[4]),cn=crewName[x[4]]||(CNB&&(FL.crews||{})[x[4]])||('Crew #'+x[4]);
         const txt=[x[1]||'',STYPE[x[2]]||'',cn,aName[x[5]]||nm[x[5]]||'',aName[x[6]]||nm[x[6]]||''].join(' ').toLowerCase();
         if(qq&&!txt.includes(qq))return '';
         return '<tr'+(me?' class="hl-me"':'')+'><td><b>'+esc(x[1]||('Ship #'+x[0]))+'</b>'+(window.GL?window.GL('/ship/'+x[0],'Open this ship in the game'):'')+'</td><td>'+esc(STYPE[x[2]]||'Ship')+'</td><td>'+esc(cn)+(me?' <span class="s">(yours)</span>':'')+'</td>'+

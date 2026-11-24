@@ -63,6 +63,16 @@ foreach (array_keys($ids) as $i) if (isset($all[$i])) {
   if (!empty($all[$i]['n'])) $names[$i] = $all[$i]['n'];
 }
 
-$out = json_encode(['fetched' => $now, 'ships' => $ships, 'orbits' => (object)$orbits, 'names' => (object)$names]);
+// crew names (community request from Fristy, 24 Nov 2026): Belt flights showed "Crew #123" for other players' crews.
+// One look-up per rebuild (at most every 5 min) for the crews flying; names are public game data.
+$crews = [];
+$cids = array_values(array_unique(array_filter(array_map(fn($s) => $s[4], $ships))));
+foreach (array_chunk($cids, 500) as $chunk) {
+  $r = try_search('crew_v1', ['size' => 500, '_source' => ['id', 'Name'], 'query' => ['terms' => ['id' => $chunk]]]);
+  if ($r === null) continue;
+  foreach ($r[0] as $c) if (!empty($c['Name']['name'])) $crews[intval($c['id'])] = $c['Name']['name'];
+}
+
+$out = json_encode(['fetched' => $now, 'ships' => $ships, 'orbits' => (object)$orbits, 'names' => (object)$names, 'crews' => (object)$crews]);
 @file_put_contents($ff, $out, LOCK_EX);
 echo $out;
