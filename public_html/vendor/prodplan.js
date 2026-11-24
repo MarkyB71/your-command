@@ -81,6 +81,10 @@
       if (lackW.length) return nope('waiting for ' + nm3(lackW));
       // COMMS (Mark, 23 Nov – TEST ONLY, ?beta=1): a bit of fun – the step is done, the game just hasn't told us yet
       // Mark (24 Nov): still showing 10+ minutes after accepting – some of it may be there but not enough. Say how much.
+      // Mark (24 Nov): "maybe it delivered them to another location?" – look in the rock's other buildings and say where
+      const elsewhere = [];
+      lack.forEach((ip) => on.forEach((x) => { if (x.id === mat.id) return; const n = ((k.inv(x) || { contents: [] }).contents || []).filter((c) => c.product === +ip).reduce((t, c) => t + c.amount, 0); if (n > 0) elsewhere.push([ip, x, n]); }));
+      if (elsewhere.length) { o.wb = elsewhere[0][1].id; return nope('found it: ' + elsewhere.slice(0, 3).map(([ip, x, n]) => k.pname(+ip) + ' ' + k.amt(+ip, n) + ' in ' + k.nm(x)).join(', ') + ' – move it to ' + k.nm(mat)); }
       const partly = lack.filter((ip) => (pool[ip] || 0) > 0);
       if (partly.length) return nope('short in ' + k.nm(mat) + ': ' + partly.map((ip) => k.pname(+ip) + ' ' + k.amt(+ip, pool[ip]) + ' of ' + k.amt(+ip, r.inp[ip] * one.runs)).join(', '));
       if (lack.length) return nope(COMMS ? '📡 Confirmation is still crawling here at the speed of light'
