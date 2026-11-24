@@ -141,7 +141,7 @@
     // building) or grey (waiting on an earlier step). Summary boxes match.
     const wGL = (path, t) => (window.GL && window.GL.on() ? window.GL(path, t) : ' <a href="https://game.influenceth.io' + path + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="' + esc(t) + '">in game ↗</a>');
     const wLink = (x) => { if (!WLB || x.s !== 'wait' || !x.wb || x.start) return ''; const wb = byId(x.wb); return wb ? '<br><span class="src">🏭 ' + esc(k.nm(wb)) + '</span>' + wGL('/building/' + wb.id, 'Open ' + k.nm(wb) + ' in the game') : ''; };
-    // CLB (Mark, 24 Nov – TEST ONLY, ?beta=1): "finished – collect it in the game" gets the same in-game link to the
+    // CLB (Mark, 24 Nov – LIVE 24 Nov): "finished – collect it in the game" gets the same in-game link to the
     // building to collect from, on the row and on the "to collect" box.
     const cLink = (x) => { if (!CLB || x.s !== 'collect' || !x.colB) return ''; const cb = byId(x.colB); return cb ? '<br><span class="src">🏭 ' + esc(k.nm(cb)) + '</span>' + wGL('/building/' + cb.id, 'Open ' + k.nm(cb) + ' in the game to collect it') : ''; };
     const firstC = ss.find((x) => x.s === 'collect' && x.colB && byId(x.colB));
@@ -291,7 +291,7 @@
   const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const COMMS = true; // 📡 "confirmation is crawling" wording – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
-  const CLB = IMB; // link to the building to collect a finished process from – TEST ONLY (?beta=1), 24 Nov 2026
+  const CLB = true; // link to the building to collect a finished process from – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
   const WLB = true; // link to the building a waiting step is waiting on – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
   const FXB = true; // offer moving a done step's output into the materials store – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
