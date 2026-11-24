@@ -93,9 +93,9 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-wrap.sc .pc-kids>.pc-br{padding:16px 4px 0}.pc-big .pc-wrap.sc .pc-kids{padding-top:16px}.pc-big .pc-wrap.sc .pc-kids::before,.pc-big .pc-wrap.sc .pc-kids>.pc-br::before{height:16px}
 .pc-wrap.zm{cursor:grab}.pc-wrap.zm.drag{cursor:grabbing;user-select:none}`;
 const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={units:1,kg:1,t:1e3,kt:1e6};/* units for a bulk item = 1 kg each (Mark, 21 Nov) */
-/* LST (TEST ONLY ?beta=1, Mark 24 Nov 2026): SkippyChain as an indented list (top to bottom, like folders) instead of the wide tree – fits long chains on screen. A "Wide tree"/"List" button swaps between them. */
-const LST=/[?&]beta=1\b/.test(location.search);
-/* Other ways to fit long chains (TEST ONLY ?beta=1, Mark 24 Nov 2026) – the View button flicks through them */
+/* LST (Mark 24 Nov 2026): SkippyChain as an indented list (top to bottom, like folders) instead of the wide tree – fits long chains on screen. A "Wide tree"/"List" button swaps between them. */
+const LST=true;/* LIVE 24 Nov 2026 (tested on ?beta=1 – Mark) */
+/* Other ways to fit long chains (Mark 24 Nov 2026) – picked from the View drop-down */
 const VIEWS=[['tree','Wide tree','dn'],['small','Small cards','dn sc'],['level','One level','dn'],['list','List','ls']];/* Mark 24 Nov: Wrap rows dropped; zoom is on every view */
 try{const v=localStorage.getItem('pcView');if(v&&VIEWS.some(x=>x[0]===v))S.view=v}catch(e){}
 const vw=()=>LST?(S.view||'tree'):'tree',vcls=()=>(VIEWS.find(v=>v[0]===vw())||VIEWS[1])[2];

@@ -2,43 +2,43 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
-## 24 Nov 2026 – TEST (?beta=1): The SkippyChain shown as an indented list (top to bottom, like folders) so long chains fit on screen. A View drop-down picks Wide tree, Small cards, One level or List (remembered in the browser), and every view has zoom (− / + / Fit to screen, drag to move).
+## 24 Nov 2026 – The SkippyChain: new ways to fit long chains on screen. A View drop-down picks Wide tree, Small cards, One level or List (remembered in the browser), and every view has zoom (− / + / Fit to screen, drag to move). Help page updated.
 
-## 24 Nov 2026 – Logistics Hub › Production plans: waiting steps link to the building they're waiting on (also from the waiting box). If a finished step's output landed in another building, the plan says where and offers the move in the same approval; if only some is there it says how much. Help page updated.
+## 24 Nov 2026 – Logistics Hub › Production plans: waiting steps link to the building they're waiting on (also from the waiting box). If a finished step's output landed in another building, the plan says where and offers the move in the same approval; if only some is there it says how much.
 
-## 23 Nov 2026 – Logistics Hub › Cargo bay: fuel gauge for each ship you can pick (propellant against a full tank, green / yellow / red). Help page updated.
+## 23 Nov 2026 – Logistics Hub › Cargo bay: fuel gauge for each ship you can pick (propellant against a full tank, green / yellow / red).
 
-## 23 Nov 2026 – Logistics Hub › Production plans: "waiting for" no longer lists steps that are already done; if a done step's output hasn't reached the materials store yet, it says so. Help page updated.
+## 23 Nov 2026 – Logistics Hub › Production plans: "waiting for" no longer lists steps that are already done; if a done step's output hasn't reached the materials store yet, it says so.
 
-## 23 Nov 2026 – Logistics Hub › Production plans: colour coding – each process's status (done, ready, running, to collect, waiting) has its own colour, with a coloured bar on each row and matching boxes at the top. Help page updated.
+## 23 Nov 2026 – Logistics Hub › Production plans: colour coding – each process's status (done, ready, running, to collect, waiting) has its own colour, with a coloured bar on each row and matching boxes at the top.
 
 ## 22 Nov 2026 – Extension 0.7.2 is on the Chrome Web Store: much lighter status dots (big rocks no longer slow the game when zoomed out), Buildings card moved top right with a Hide planned sites tick box, deck strip and Buildings card tucked away until you hover, map tags and markets switched in Options, tidier Options page, and the food bar now shows on full crews.
 
-## 21 Nov 2026 – Logistics Hub: four consoles (Storage · Galley · chair · Production · Cargo bay), opens on Storage. New Storage Management – gather what you want to make into one warehouse or tank farm, with how many to make (units or weight), and feed the moving crew in the same approval. Help page updated.
+## 21 Nov 2026 – Logistics Hub: four consoles (Storage · Galley · chair · Production · Cargo bay), opens on Storage. New Storage Management – gather what you want to make into one warehouse or tank farm, with how many to make (units or weight), and feed the moving crew in the same approval.
 
-## 21 Nov 2026 – The SkippyChain: the amount can be given in units or by weight (kg / t / kt) – a weight on a module shows how many units it makes. Help page updated.
+## 21 Nov 2026 – The SkippyChain: the amount can be given in units or by weight (kg / t / kt) – a weight on a module shows how many units it makes.
 
-## 21 Nov 2026 – One viewscreen: the Flight Deck's navigation window is now the same map as the Bridge (buttons at the top, Rocks list, orbit colours), with your ships switched on, a taller window and a Ships tick box. Help page updated.
+## 21 Nov 2026 – One viewscreen: the Flight Deck's navigation window is now the same map as the Bridge (buttons at the top, Rocks list, orbit colours), with your ships switched on, a taller window and a Ships tick box.
 
-## 21 Nov 2026 – Travel refuel check: a rock now only counts as able to refuel from storage or its markets with at least half a tank for the chosen ship (was 1 t). Help page updated.
+## 21 Nov 2026 – Travel refuel check: a rock now only counts as able to refuel from storage or its markets with at least half a tank for the chosen ship (was 1 t).
 
-## 21 Nov 2026 – Logistics Hub › Cargo bay › Export for production: "Spread it over N ships here instead" in step 4 hands the load to Load a fleet, so several ships share it evenly. Help page updated. From a community request.
+## 21 Nov 2026 – Logistics Hub › Cargo bay › Export for production: "Spread it over N ships here instead" in step 4 hands the load to Load a fleet, so several ships share it evenly. From a community request.
 
-## 21 Nov 2026 – Flight Deck › Belt flights: new Departures and Arrivals tab – who left and who landed across the belt in the last 7 days. Also fixed Belt flights sometimes staying on "Loading…". Help page updated. Asked for by a community player.
+## 21 Nov 2026 – Flight Deck › Belt flights: new Departures and Arrivals tab – who left and who landed across the belt in the last 7 days. Also fixed Belt flights sometimes staying on "Loading…". Asked for by a community player.
 
-## 21 Nov 2026 – Number format: choose 1,234.5, 1.234,5 or 1 234,5 in Deck controls; the whole site follows, Logistics Hub included. Help page updated. Asked for by a community player.
+## 21 Nov 2026 – Number format: choose 1,234.5, 1.234,5 or 1 234,5 in Deck controls; the whole site follows, Logistics Hub included. Asked for by a community player.
 
-## 21 Nov 2026 – Flight Deck › Travel: distances coloured by how far away each rock is right now (green under 1 AU, lime 1–2, yellow 2–3, red 3+). Help page updated. Asked for by a community player.
+## 21 Nov 2026 – Flight Deck › Travel: distances coloured by how far away each rock is right now (green under 1 AU, lime 1–2, yellow 2–3, red 3+). Asked for by a community player.
 
-## 21 Nov 2026 – System map (the Bridge viewscreen and the Asteroids page): each of your rocks has its own orbit colour, and a Rocks ▾ list shows or hides each one. Adalia Prime moved from the top bar into that list. Help page updated. Asked for by a community player.
+## 21 Nov 2026 – System map (the Bridge viewscreen and the Asteroids page): each of your rocks has its own orbit colour, and a Rocks ▾ list shows or hides each one. Adalia Prime moved from the top bar into that list. Asked for by a community player.
 
 ## 21 Nov 2026 – Watch list fix: each tick box now sits right beside its own product (they were stretched wide, so a click could land on the next product), and ticking no longer jumps the list back to the top. Reported by Mark.
 
-## 21 Nov 2026 – Engineering › Products › Control panel: a watch list. Choose which products to watch for each rock; each dial shows what's in storage plus what's being made right now. Raw materials listed first, "Show all products" for the rest. Help page updated. Asked for by a community player.
+## 21 Nov 2026 – Engineering › Products › Control panel: a watch list. Choose which products to watch for each rock; each dial shows what's in storage plus what's being made right now. Raw materials listed first, "Show all products" for the rest. Asked for by a community player.
 
-## 20 Nov 2026 – ⟳ Refresh Game Data now works on every page: it redraws the page you're on (Travel and planners too) and fetches the belt-wide market, belt flights and recent trades again. Help page updated. Reported by a player.
+## 20 Nov 2026 – ⟳ Refresh Game Data now works on every page: it redraws the page you're on (Travel and planners too) and fetches the belt-wide market, belt flights and recent trades again. Reported by a player.
 
-## 20 Nov 2026 – Crew planner: new Rock drop-down to show just the crews on one rock (also for Best crew for each job). The "Find a crew" box is gone. Help page updated. Asked for by Mark.
+## 20 Nov 2026 – Crew planner: new Rock drop-down to show just the crews on one rock (also for Best crew for each job). The "Find a crew" box is gone. Asked for by Mark.
 
 ## 20 Nov 2026 – Market bug fix: opening a product with lots of listings (e.g. Core Drill, Feldspar on Whole belt) no longer keeps adding "Filter this table" boxes and blanks the table. Reported by a player.
 
@@ -46,7 +46,7 @@ Newest first. Version = the number in the site footer (it rises by one with ever
 
 ## 19 Nov 2026 – Extension 0.7.1 is on the Chrome Web Store: a Buildings card at the top of the game lists your buildings on the rock you're looking at – pick one to jump to it (order set in Options, storage first). New option to hide the deck strip until you hover.
 
-## 18 Nov 2026 – Production plans: a step that's still running but has runs left can now start the rest in another free building of the same type (it used to say "Nothing ready to start yet"). Tick boxes let you choose which ready processes go in the approval. Help page updated. Asked for by Mark.
+## 18 Nov 2026 – Production plans: a step that's still running but has runs left can now start the rest in another free building of the same type (it used to say "Nothing ready to start yet"). Tick boxes let you choose which ready processes go in the approval. Asked for by Mark.
 
 ## 18 Nov 2026 – Construction planner: "in game ↗" link next to the ship on the First send and Then send lines (shows with the extension installed).
 
@@ -60,57 +60,57 @@ Newest first. Version = the number in the site footer (it rises by one with ever
 - Flight Deck: Activity log is now Belt flights – every ship in flight across the belt. Your crews' history stays in the Captain's log.
 - Logistics Hub › Cargo bay: buttons are now Export for production, Load one ship and the new Load a fleet (several ships, about the same weight each; full ships greyed out; you choose what to cut if it won't fit). CLEAR button on items with an amount.
 - Construction planner: materials first, then ⚠ Missing (what none of your rocks has and this rock can't make, e.g. no Shipyard), with an option to fly in the raw materials anyway; share a pick-up load across several ships; fuel slider; new refuel rule.
-- Help page updated.
+-
 
 ## 14 Nov 2026 – Extension 0.6.8 is on the Chrome Web Store: Deck strip (your six Command Deck stations along the bottom of the game) and a gold SkippyChain button on the game's side bar. Help page updated (Extension options, settings switch straight away).
 
-## 14 Nov 2026 – Logistics Hub Cargo bay: new step 4 "Load a ship" – put what your rock is missing to make something into a ship parked on the asteroid you pick; new "📦 Load straight from stock" – pick a rock, a ship parked there, and what to load from its storage; clearer explanations on each step. Things counted one by one now show "units" instead of ×. Help page updated. Asked for by Mark.
+## 14 Nov 2026 – Logistics Hub Cargo bay: new step 4 "Load a ship" – put what your rock is missing to make something into a ship parked on the asteroid you pick; new "📦 Load straight from stock" – pick a rock, a ship parked there, and what to load from its storage; clearer explanations on each step. Things counted one by one now show "units" instead of ×. Asked for by Mark.
 
-## 14 Nov 2026 – New: Site voice – the Logistics Hub airlock and welcome use the most natural-sounding voice your browser offers. Choose another, or no voice, in Deck controls › Site voice (with a ▶ Test button; saved in your browser, no extension needed). Help page updated.
+## 14 Nov 2026 – New: Site voice – the Logistics Hub airlock and welcome use the most natural-sounding voice your browser offers. Choose another, or no voice, in Deck controls › Site voice (with a ▶ Test button; saved in your browser, no extension needed).
 
 ## 14 Nov 2026 – Help page: the Logistics Hub airlock and welcome use your browser's own voice – how to change it.
 
-## 14 Nov 2026 – Logistics Hub Production: a saved plan now shows 🚚 Moves on their way – deliveries still arriving at its materials warehouse, with when they arrive, and links to finish them in the game with the crew that sent them (or at the warehouse, where any crew can). Help page updated.
+## 14 Nov 2026 – Logistics Hub Production: a saved plan now shows 🚚 Moves on their way – deliveries still arriving at its materials warehouse, with when they arrive, and links to finish them in the game with the crew that sent them (or at the warehouse, where any crew can).
 
 ## 14 Nov 2026 – Fix: Production and Construction planners now mine a raw resource on the rock if it can be mined there, instead of flying it in because another rock has some in stock (e.g. Sulfur Dioxide on TRCS Leisure Potato). Reported by Mark.
 
-## 13 Nov 2026 – Logistics Hub: 🗄 Storage tidy is live – rename your buildings with a naming style you choose (every name editable, nothing forced), ↩ put back your old names (saved in your browser before each rename), and gather stock into tidy storage. The rock's name shows in each step's heading. Help page updated.
+## 13 Nov 2026 – Logistics Hub: 🗄 Storage tidy is live – rename your buildings with a naming style you choose (every name editable, nothing forced), ↩ put back your old names (saved in your browser before each rename), and gather stock into tidy storage. The rock's name shows in each step's heading.
 
-## 13 Nov 2026 – Captain's log Today: "Finishing soon" jobs no longer count as needing your attention. Logistics Hub: the same-actions guard (15 minutes) now still works after a page reload – remembered in your browser only. Help page updated.
+## 13 Nov 2026 – Captain's log Today: "Finishing soon" jobs no longer count as needing your attention. Logistics Hub: the same-actions guard (15 minutes) now still works after a page reload – remembered in your browser only.
 
-## 13 Nov 2026 – Captain's log Today: new "Finishing soon" list – jobs that finish within 3 hours, with time left. Help page updated.
+## 13 Nov 2026 – Captain's log Today: new "Finishing soon" list – jobs that finish within 3 hours, with time left.
 
 ## 13 Nov 2026 – Fix: table headings stay on top when you scroll – building pictures and "in game" buttons no longer show through them Today's workload jump links (e.g. Waiting to accept) scroll just the Captain's log, not the whole page, so the list shows properly.
 
-## 13 Nov 2026 – Logistics Hub Production: 📋 your production plans are saved when you approve and listed at the top – see each process done / running / to collect / ready / waiting and start the next ones. MAX button (the most you can make from what's on the rock). Search by input or process. Cargo bay: best ship re-picked as flight times come in (with a warning), full ships marked, clear "Click to load" on rock cards. New welcome line. Help page updated.
+## 13 Nov 2026 – Logistics Hub Production: 📋 your production plans are saved when you approve and listed at the top – see each process done / running / to collect / ready / waiting and start the next ones. MAX button (the most you can make from what's on the rock). Search by input or process. Cargo bay: best ship re-picked as flight times come in (with a warning), full ships marked, clear "Click to load" on rock cards. New welcome line.
 
-## 13 Nov 2026 – Captain's log: ✎ edit a note's text. ⚙ Process boxes get "🚚 Plan it in the Logistics Hub" and 📦 Still needed boxes get "make ›" on each short item – both open Production with the rock, product and amount filled in; if the rock can't make it, the box says which building is missing. Help page updated.
+## 13 Nov 2026 – Captain's log: ✎ edit a note's text. ⚙ Process boxes get "🚚 Plan it in the Logistics Hub" and 📦 Still needed boxes get "make ›" on each short item – both open Production with the rock, product and amount filled in; if the rock can't make it, the box says which building is missing.
 
 ## 13 Nov 2026 – Fix: the Logistics Hub can no longer send the exact same actions twice within 15 minutes (a ship was loaded twice because the game data hadn't caught up after the first Approve). Reported by Mark.
 
-## 13 Nov 2026 – New top bar layout: Play Influence on the left; SWAY, Deck controls (always centred) and Refresh Game Data in the middle; search, Command Deck, wallet and Help on the right. On decks with page buttons the bar has its own line. No more jumping about while the page loads, and no stray Logistics Hub button on load. The airlock now says "Warning. Airlock cycling. Entering the Logistics Hub." Help page updated.
+## 13 Nov 2026 – New top bar layout: Play Influence on the left; SWAY, Deck controls (always centred) and Refresh Game Data in the middle; search, Command Deck, wallet and Help on the right. On decks with page buttons the bar has its own line. No more jumping about while the page loads, and no stray Logistics Hub button on load. The airlock now says "Warning. Airlock cycling. Entering the Logistics Hub."
 
 ## 13 Nov 2026 – Fix: Logistics Hub process starts no longer fail with "E6049: max process time". Very slow processes (e.g. Natural Flavorings Growing – 2 runs) start as many runs as the game allows, and show "⏱ game limit: X of Y runs now – start the rest when it finishes". Reported by Mark.
 
-## 13 Nov 2026 – New deck layout: one deck per crew class and the game buildings it works in. New Mining deck (Core Samples, Lot resources, Resource map, Supply chain). Engineering now holds everything used when making products (Products, planners, Storage status – was Contents –, Deliveries, Leases, Lot leases). Science Lab: Asteroids, Spectral type raws, Bioreactor status. Trade Deck is trading only. Every deck has a status page for its own buildings. Bridge: three stations each side of the chair with building-colour dots; Weapons console removed. Crew Quarters in Habitat yellow, Trade Deck tab in Marketplace green. Feed crews link in Logistics Hub orange. Flight Deck navigation drags the same way as the Bridge. Help page updated.
+## 13 Nov 2026 – New deck layout: one deck per crew class and the game buildings it works in. New Mining deck (Core Samples, Lot resources, Resource map, Supply chain). Engineering now holds everything used when making products (Products, planners, Storage status – was Contents –, Deliveries, Leases, Lot leases). Science Lab: Asteroids, Spectral type raws, Bioreactor status. Trade Deck is trading only. Every deck has a status page for its own buildings. Bridge: three stations each side of the chair with building-colour dots; Weapons console removed. Crew Quarters in Habitat yellow, Trade Deck tab in Marketplace green. Feed crews link in Logistics Hub orange. Flight Deck navigation drags the same way as the Bridge.
 
 ## 12 Nov 2026 – The SkippyChain can now be opened from the game: with extension 0.6.7, a gold "SkippyChain ↗" button in the game's process window opens that product here – same recipe, amount from the runs set in the game, on that rock.
 
-## 11 Nov 2026 – The SkippyChain: change how something is made on one card and every card for that same product in the chain changes too (e.g. Iron from Olivine instead of Taenite). Community request. To undo: set CAS=false in vendor/chain.js. Help page updated.
+## 11 Nov 2026 – The SkippyChain: change how something is made on one card and every card for that same product in the chain changes too (e.g. Iron from Olivine instead of Taenite). Community request. To undo: set CAS=false in vendor/chain.js.
 
-## 11 Nov 2026 – SWAY balance: the top bar now shows the SWAY in your wallet, with the game's SWAY icon, just left of Deck controls (Deck controls now sits in the middle of the bar). Updates every 5 minutes; click to read it again. Help page updated.
+## 11 Nov 2026 – SWAY balance: the top bar now shows the SWAY in your wallet, with the game's SWAY icon, just left of Deck controls (Deck controls now sits in the middle of the bar). Updates every 5 minutes; click to read it again.
 
-## 11 Nov 2026 – Science Lab: new Spectral type raws page – pick an asteroid type (rock specimens under glass) and see which raw materials can be mined there, in test tubes coloured like the game's resource groups. Pick a raw material to see which types have it. Help page updated.
+## 11 Nov 2026 – Science Lab: new Spectral type raws page – pick an asteroid type (rock specimens under glass) and see which raw materials can be mined there, in test tubes coloured like the game's resource groups. Pick a raw material to see which types have it.
 
 ## 10 Nov 2026 – Browser extension 0.6.5 is on the Chrome Web Store: ships in flight on the game's system map – your ships and other players' ships (in your friend / foe tag colours), with routes and where they meet their rock, and a tick box for each group. Help page no longer says "coming in 0.6.5".
 
 ## 10 Nov 2026 – Skippys Sticky Wall: the heading and tabs sit on the top line, with adding notes and Rock colours on their own line underneath.
 
-## 10 Nov 2026 – Captain's log: Notes are now Skippys Sticky Wall. New 📦 Still needed box (pick a building – shows what's still short on the note's rock) and ⚙ Process box (pick a process and runs – shows the building it needs, whether you have one there, and what's still short). Notes with no rock are white. Help page updated.
+## 10 Nov 2026 – Captain's log: Notes are now Skippys Sticky Wall. New 📦 Still needed box (pick a building – shows what's still short on the note's rock) and ⚙ Process box (pick a process and runs – shows the building it needs, whether you have one there, and what's still short). Notes with no rock are white.
 
-## 10 Nov 2026 – Captain's log fix: the Today tab has its own rock picker (starts on All rocks) – it was following the rock picked on another deck. Help page updated.
+## 10 Nov 2026 – Captain's log fix: the Today tab has its own rock picker (starts on All rocks) – it was following the rock picked on another deck.
 
-## 10 Nov 2026 – Captain's log on the Bridge: the captain's chair now opens your Captain's log with three tabs – 🗓 Today (today's workload), 📌 Notes (sticky notes you drag around, tick off, tie to a rock with your own rock colours from 10 game colours, and link together; saved in your browser only) and 📜 Log (everything your crews have done, with Adalia Stardates from the game's own clock). The Bridge consoles roll up while you work on the notes. Deck controls moved to the far left of the top bar, the SkippyChain sits above the chair, and the Weapons console is dimmed on standby. Help page updated.
+## 10 Nov 2026 – Captain's log on the Bridge: the captain's chair now opens your Captain's log with three tabs – 🗓 Today (today's workload), 📌 Notes (sticky notes you drag around, tick off, tie to a rock with your own rock colours from 10 game colours, and link together; saved in your browser only) and 📜 Log (everything your crews have done, with Adalia Stardates from the game's own clock). The Bridge consoles roll up while you work on the notes. Deck controls moved to the far left of the top bar, the SkippyChain sits above the chair, and the Weapons console is dimmed on standby.
 
 ## 10 Nov 2026 – Logistics Hub: a Hub tab in the main deck's top bar, a matching top bar inside the Hub, Bridge-style side walls, and a 🐞 Report a problem button in the Hub.
 
@@ -122,15 +122,15 @@ Newest first. Version = the number in the site footer (it rises by one with ever
 
 ## 9 Nov 2026 – Logistics Hub: a small hidden extra in the airlock for players who don't want to go through it every time. (Not on the Help page – ask Skippy.)
 
-## 9 Nov 2026 – Logistics Hub is now the Logistics Bridge: a viewscreen with consoles, like the Bridge in orange. 🏭 Production (rock, what to make and how much – weight or count, "What's it for?" from building recipes – what you need worked back through the chain, processes in order, where things go with how full afterwards, moves, two crews picked for you with the option to feed them, start processes with finish times). 🚀 Cargo bay (how many rocks to fly in from, the ship there or the nearest one, trips, flight times, and exactly what will be loaded). 🍽 Galley (feed your crews – tick the ones to feed). Crew Quarters: crew cards with crewmate pictures – click a crew to see all its members; 🍽 Feed crews opens the hub. Crew planner: new green look, top part stays put while scrolling. Help page updated.
+## 9 Nov 2026 – Logistics Hub is now the Logistics Bridge: a viewscreen with consoles, like the Bridge in orange. 🏭 Production (rock, what to make and how much – weight or count, "What's it for?" from building recipes – what you need worked back through the chain, processes in order, where things go with how full afterwards, moves, two crews picked for you with the option to feed them, start processes with finish times). 🚀 Cargo bay (how many rocks to fly in from, the ship there or the nearest one, trips, flight times, and exactly what will be loaded). 🍽 Galley (feed your crews – tick the ones to feed). Crew Quarters: crew cards with crewmate pictures – click a crew to see all its members; 🍽 Feed crews opens the hub. Crew planner: new green look, top part stays put while scrolling.
 
-## 9 Nov 2026 – Logistics Hub, Start processes too?: a process that makes a solid (e.g. Magnesium, Boric Acid, Nitric Acid) no longer gets stuck when its output would have gone to a tank farm – the nearest storage that can take it is used. Processes that can't start yet are listed one per line with the reason (e.g. every Refinery on the rock is busy). Help page updated.
+## 9 Nov 2026 – Logistics Hub, Start processes too?: a process that makes a solid (e.g. Magnesium, Boric Acid, Nitric Acid) no longer gets stuck when its output would have gone to a tank farm – the nearest storage that can take it is used. Processes that can't start yet are listed one per line with the reason (e.g. every Refinery on the rock is busy).
 
-## 9 Nov 2026 – Logistics Hub: ↻ Check the game again is now in the pinned header (no scrolling up). Already on its way only lists deliveries not yet finished (it was counting finished ones too), and each has an in game ↗ link to the building it's going to instead of a crew column. Flight deck: ship panel text is always cleaned (security check). Help page updated.
+## 9 Nov 2026 – Logistics Hub: ↻ Check the game again is now in the pinned header (no scrolling up). Already on its way only lists deliveries not yet finished (it was counting finished ones too), and each has an in game ↗ link to the building it's going to instead of a crew column. Flight deck: ship panel text is always cleaned (security check).
 
 ## 9 Nov 2026 – Logistics Hub fix: each step's storage must take all its inputs – no more tank farm picked when an input can't go in one (e.g. Hydrochloric Acid for Boric Acid).
 
-## 9 Nov 2026 – New in the Logistics Hub: 🚀 Load a ship – bring what you need from your other rocks. Choose to send the inputs or what they're made from, which rock, which ships (the load is split across them) and which crew moves it; it only loads the ship, you fly and unload it. 🛒 Or buy it on the belt shows the marketplaces selling the load, with cost and in game ↗ links. Also: the full production plan's stages fold away behind Show the stages, and after sending it names the crew to finish with (with an in game ↗ link). Help page updated.
+## 9 Nov 2026 – New in the Logistics Hub: 🚀 Load a ship – bring what you need from your other rocks. Choose to send the inputs or what they're made from, which rock, which ships (the load is split across them) and which crew moves it; it only loads the ship, you fly and unload it. 🛒 Or buy it on the belt shows the marketplaces selling the load, with cost and in game ↗ links. Also: the full production plan's stages fold away behind Show the stages, and after sending it names the crew to finish with (with an in game ↗ link).
 
 ## 9 Nov 2026 – Logistics Hub: the header (LOGISTICS HUB, the wallet warning and Return to the Bridge) now stays pinned at the top of the screen when you scroll.
 
