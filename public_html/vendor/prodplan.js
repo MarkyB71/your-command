@@ -80,6 +80,9 @@
       if (WLB) o.wb = (lack.map((ip) => runB[String(ip)]).find(Boolean)) || (mat && mat.id) || 0;
       if (lackW.length) return nope('waiting for ' + nm3(lackW));
       // COMMS (Mark, 23 Nov – TEST ONLY, ?beta=1): a bit of fun – the step is done, the game just hasn't told us yet
+      // Mark (24 Nov): still showing 10+ minutes after accepting – some of it may be there but not enough. Say how much.
+      const partly = lack.filter((ip) => (pool[ip] || 0) > 0);
+      if (partly.length) return nope('short in ' + k.nm(mat) + ': ' + partly.map((ip) => k.pname(+ip) + ' ' + k.amt(+ip, pool[ip]) + ' of ' + k.amt(+ip, r.inp[ip] * one.runs)).join(', '));
       if (lack.length) return nope(COMMS ? '📡 Confirmation is still crawling here at the speed of light'
         : nm3(lack) + ' done – not in ' + k.nm(mat) + ' yet');
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
