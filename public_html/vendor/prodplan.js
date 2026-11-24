@@ -84,7 +84,12 @@
       // Mark (24 Nov): "maybe it delivered them to another location?" – look in the rock's other buildings and say where
       const elsewhere = [];
       lack.forEach((ip) => on.forEach((x) => { if (x.id === mat.id) return; const n = ((k.inv(x) || { contents: [] }).contents || []).filter((c) => c.product === +ip).reduce((t, c) => t + c.amount, 0); if (n > 0) elsewhere.push([ip, x, n]); }));
-      if (elsewhere.length) { o.wb = elsewhere[0][1].id; return nope('found it: ' + elsewhere.slice(0, 3).map(([ip, x, n]) => k.pname(+ip) + ' ' + k.amt(+ip, n) + ' in ' + k.nm(x)).join(', ') + ' – move it to ' + k.nm(mat)); }
+      if (elsewhere.length) {
+        o.wb = elsewhere[0][1].id;
+        // FXB (Mark, 24 Nov – TEST ONLY, ?beta=1): "can't it now tell me to move them?" – offer the move in the approval
+        if (FXB) { const want = {}; lack.forEach((ip) => { want[ip] = Math.max(0, r.inp[ip] * one.runs - (pool[ip] || 0)); });
+          o.fix = []; elsewhere.forEach(([ip, x, n]) => { const a = Math.min(n, want[ip]); if (a > 0) { want[ip] -= a; o.fix.push({ from: x.id, to: mat.id, items: [[+ip, a]], fromName: k.nm(x), toName: k.nm(mat) }); } }); }
+        return nope('found it: ' + elsewhere.slice(0, 3).map(([ip, x, n]) => k.pname(+ip) + ' ' + k.amt(+ip, n) + ' in ' + k.nm(x)).join(', ') + ' – move it to ' + k.nm(mat)); }
       const partly = lack.filter((ip) => (pool[ip] || 0) > 0);
       if (partly.length) return nope('short in ' + k.nm(mat) + ': ' + partly.map((ip) => k.pname(+ip) + ' ' + k.amt(+ip, pool[ip]) + ' of ' + k.amt(+ip, r.inp[ip] * one.runs)).join(', '));
       if (lack.length) return nope(COMMS ? '📡 Confirmation is still crawling here at the speed of light'
@@ -129,6 +134,8 @@
     const ready = ss.filter((x) => x.start && pick(x.i)).map((x) => Object.assign(x.start, { crew: P.runner }));
     S.rock = plan.rock; S.calls = []; S.feedCalls = []; S.feed = false; S.mover = P.runner; S.moverObj = runner;
     S.startList = ready;
+    const fixes = FXB ? [].concat(...ss.filter((x) => x.fix && x.fix.length).map((x) => x.fix)) : [];
+    if (fixes.length) S.calls = fixes.map((f) => ({ from: f.from, to: f.to, items: f.items }));
     // Colour coding (Mark, 23 Nov – TEST ONLY, ?beta=1): each status its own colour, game palette (theme.js, as used
     // elsewhere on the site): done green, ready bright green, running blue, to collect yellow, waiting orange (no free
     // building) or grey (waiting on an earlier step). Summary boxes match.
@@ -178,7 +185,8 @@
     h += `<div class="card"><h2><span class="n">▶</span>Start the next ones</h2>` + (cl.length
       ? `<div class="row"><span class="src" style="min-width:150px">⚙ Runs the processes</span><select id="pp-trun">${cl.map((c) => `<option value="${c.id}"${c.id === P.runner ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready now'}</option>`).join('')}</select></div>`
       : '<div class="src" style="color:var(--red)">None of your crews is on this rock.</div>') +
-      `<button class="approve" id="pp-tgo" style="margin-top:10px"${ready.length && runner && !S.busy ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : ready.length ? 'APPROVE IN WALLET (start ' + ready.length + ')' : 'NOTHING READY TO START YET'}</button>` +
+      (fixes.length ? `<div class="src" style="margin-top:8px">🚚 Move to where the plan needs it:<br>${fixes.map((f) => '• ' + f.items.map(([p2, a2]) => esc(k.pname(p2)) + ' ' + k.amt(p2, a2)).join(', ') + ' from <b>' + esc(f.fromName) + '</b> → <b>' + esc(f.toName) + '</b>').join('<br>')}</div>` : '') +
+      `<button class="approve" id="pp-tgo" style="margin-top:10px"${(ready.length || fixes.length) && runner && !S.busy ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : ready.length || fixes.length ? 'APPROVE IN WALLET (' + [fixes.length ? 'move ' + fixes.length : '', ready.length ? 'start ' + ready.length : ''].filter(Boolean).join(' · ') + ')' : 'NOTHING READY TO START YET'}</button>` +
       `<div class="hint">Press ↻ Check the game again to update. A process is ready when its inputs are in the materials warehouse and a building is free.</div>` +
       `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div></div>`;
     return h;
@@ -280,6 +288,7 @@
   const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const COMMS = /[?&]beta=1\b/.test(location.search); // 📡 "waiting for communication" wording – TEST ONLY (?beta=1), Mark 23 Nov 2026
   const WLB = /[?&]beta=1\b/.test(location.search); // link to the building a waiting step is waiting on – TEST ONLY (?beta=1), Mark 23 Nov 2026
+  const FXB = /[?&]beta=1\b/.test(location.search); // offer moving a done step's output into the materials store – TEST ONLY (?beta=1), Mark 24 Nov 2026
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
