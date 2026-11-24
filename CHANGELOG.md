@@ -2,7 +2,7 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
-## 24 Nov 2026 – TEST (?beta=1): The SkippyChain shown as an indented list (top to bottom, like folders) so long chains fit on screen. A View button flicks through six ways to show it: List, Wide tree, Small cards, Zoom (− / + / Fit to screen, drag to move), One level, Wrap rows.
+## 24 Nov 2026 – TEST (?beta=1): The SkippyChain shown as an indented list (top to bottom, like folders) so long chains fit on screen. A View drop-down picks Wide tree, Small cards, One level or List (remembered in the browser), and every view has zoom (− / + / Fit to screen, drag to move).
 
 ## 24 Nov 2026 – Logistics Hub › Production plans: waiting steps link to the building they're waiting on (also from the waiting box). If a finished step's output landed in another building, the plan says where and offers the move in the same approval; if only some is there it says how much. Help page updated.
 

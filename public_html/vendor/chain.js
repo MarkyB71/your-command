@@ -91,14 +91,14 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-wrap.sc .pc-n{width:170px!important;padding:6px 9px;gap:2px}.pc-wrap.sc .pc-top img{width:30px;height:30px}.pc-wrap.sc .pc-nm{font-size:14px}.pc-wrap.sc .pc-q{font-size:13px}
 .pc-wrap.sc .pc-sw,.pc-wrap.sc .pc-fac,.pc-wrap.sc .pc-proc,.pc-wrap.sc .pc-foc,.pc-wrap.sc .pc-use,.pc-wrap.sc .pc-have{display:none}.pc-wrap.sc .pc-n select{font-size:12px;padding:2px}.pc-wrap.sc .pc-tog{font-size:12px}
 .pc-big .pc-wrap.sc .pc-kids>.pc-br{padding:16px 4px 0}.pc-big .pc-wrap.sc .pc-kids{padding-top:16px}.pc-big .pc-wrap.sc .pc-kids::before,.pc-big .pc-wrap.sc .pc-kids>.pc-br::before{height:16px}
-.pc-wrap.zm{cursor:grab;max-height:78vh;overflow:auto}.pc-wrap.zm.drag{cursor:grabbing;user-select:none}
-.pc-big .pc-wrap.wr .pc-kids{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 90px);row-gap:10px}.pc-big .pc-wrap.wr .pc-kids>.pc-br::after{display:none}.pc-big .pc-wrap.wr .pc-kids>.pc-br{border-top:2px solid #2a3648;margin-top:-2px}@media(max-width:1300px){.pc-wrap.ls .pc-n{flex-wrap:wrap}}`;
+.pc-wrap.zm{cursor:grab}.pc-wrap.zm.drag{cursor:grabbing;user-select:none}`;
 const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={units:1,kg:1,t:1e3,kt:1e6};/* units for a bulk item = 1 kg each (Mark, 21 Nov) */
 /* LST (TEST ONLY ?beta=1, Mark 24 Nov 2026): SkippyChain as an indented list (top to bottom, like folders) instead of the wide tree – fits long chains on screen. A "Wide tree"/"List" button swaps between them. */
 const LST=/[?&]beta=1\b/.test(location.search);
 /* Other ways to fit long chains (TEST ONLY ?beta=1, Mark 24 Nov 2026) – the View button flicks through them */
-const VIEWS=[['list','List','ls'],['tree','Wide tree','dn'],['small','Small cards','dn sc'],['zoom','Zoom','dn zm'],['level','One level','dn'],['wrap','Wrap rows','dn wr']];
-const vw=()=>LST?(S.view||'list'):'tree',vcls=()=>(VIEWS.find(v=>v[0]===vw())||VIEWS[1])[2];
+const VIEWS=[['tree','Wide tree','dn'],['small','Small cards','dn sc'],['level','One level','dn'],['list','List','ls']];/* Mark 24 Nov: Wrap rows dropped; zoom is on every view */
+try{const v=localStorage.getItem('pcView');if(v&&VIEWS.some(x=>x[0]===v))S.view=v}catch(e){}
+const vw=()=>LST?(S.view||'tree'):'tree',vcls=()=>(VIEWS.find(v=>v[0]===vw())||VIEWS[1])[2];
 let CMV=null,REDRAW=null;const UNB=true;/* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
 fetch('vendor/tidy.js',{cache:'force-cache'}).then(r=>r.text()).then(t=>{const m=/const MV = (\{.*?\});/.exec(t);if(m){CMV=JSON.parse(m[1]);try{REDRAW&&REDRAW()}catch(e){}}}).catch(()=>{});
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
@@ -232,18 +232,17 @@ export function drawChain(m){
   const backBtn=()=>{;const b=el('button','pc-back big','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
     const go=h=>{tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))};b.addEventListener('click',()=>{if(!HS.length)return;FS.push(cap());go(HS.pop())});;const f=el('button','pc-back big','Forward ▸');f.title=FS.length?'Go forward again to what you were looking at':'Nothing to go forward to';if(!FS.length)f.disabled=true;f.addEventListener('click',()=>{if(!FS.length)return;HS.push(cap());go(FS.pop())});const w=el('span','pc-nav');w.appendChild(b);w.appendChild(f);return w};
   const navTop=inner=>{;const r=inner.firstElementChild;if(!r)return;const d=el('div','pc-navtop');d.appendChild(backBtn());r.prepend(d)};
-  const viewBtn=()=>{const i=Math.max(0,VIEWS.findIndex(v=>v[0]===vw())),g=el('span','pc-nav'),
-      pv=el('button','pc-view','◂'),nx=el('button','pc-view','View: '+VIEWS[i][1]+' ▸');pv.title='Previous view';nx.title='Next view – flick through the ways of showing the chain';
-    const go=d=>{tipHide();S.view=VIEWS[(i+d+VIEWS.length)%VIEWS.length][0];if(S.view==='level'&&S.mode==='from'){S.opened.clear();S.closed.clear();S.all=false}S.zoom=null;draw()};
-    pv.addEventListener('click',()=>go(-1));nx.addEventListener('click',()=>go(1));g.appendChild(pv);g.appendChild(nx);return g};
+  const viewBtn=()=>{const l=el('label',null,'View '),v=el('select','pc-view');v.title='Pick how the chain is shown';
+    v.innerHTML=VIEWS.map(x=>'<option value="'+x[0]+'"'+(x[0]===vw()?' selected':'')+'>'+x[1]+'</option>').join('');
+    v.addEventListener('change',()=>{tipHide();S.view=v.value;try{localStorage.setItem('pcView',S.view)}catch(e){}if(S.view==='level'&&S.mode==='from'){S.opened.clear();S.closed.clear();S.all=false}draw()});l.appendChild(v);return l};
   const zoomBar=(w,inner)=>{const g=el('span','pc-nav'),lab=el('span','pc-zl');
     const set=z=>{S.zoom=Math.max(.2,Math.min(1.5,z));inner.style.zoom=S.zoom;lab.textContent=Math.round(S.zoom*100)+'%';const b=w.nextElementSibling;if(b&&b._fit)b._fit()};
     const fit=()=>{inner.style.zoom=1;set(Math.min(1,(w.clientWidth-10)/inner.scrollWidth))};
     [['−',()=>set((S.zoom||1)-.1)],['+',()=>set((S.zoom||1)+.1)],['Fit to screen',fit]].forEach(([t,f])=>{const b=el('button','pc-view',t);b.addEventListener('click',f);g.appendChild(b)});g.appendChild(lab);
-    w.addEventListener('mousedown',e=>{if(e.button||e.target.closest('.pc-n,button,select,a,input'))return;window.__pcDg={w,x:e.clientX,y:e.clientY,l:w.scrollLeft,t:w.scrollTop};w.classList.add('drag');e.preventDefault()});
-    if(!window.__pcDgW){window.__pcDgW=1;addEventListener('mousemove',e=>{const d=window.__pcDg;if(!d)return;d.w.scrollLeft=d.l-(e.clientX-d.x);d.w.scrollTop=d.t-(e.clientY-d.y)});
+    w.addEventListener('mousedown',e=>{if(e.button||e.target.closest('.pc-n,button,select,a,input'))return;window.__pcDg={w,x:e.clientX,y:e.clientY,l:w.scrollLeft,t:scrollY};w.classList.add('drag');e.preventDefault()});
+    if(!window.__pcDgW){window.__pcDgW=1;addEventListener('mousemove',e=>{const d=window.__pcDg;if(!d)return;d.w.scrollLeft=d.l-(e.clientX-d.x);scrollTo(scrollX,d.t-(e.clientY-d.y))});
       addEventListener('mouseup',()=>{const d=window.__pcDg;if(d){d.w.classList.remove('drag');window.__pcDg=null}})}
-    requestAnimationFrame(()=>S.zoom?set(S.zoom):fit());return g};
+    requestAnimationFrame(()=>set(S.zoom||1));return g};
   const modeSw=()=>{;const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){snap();S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
@@ -290,7 +289,7 @@ export function drawChain(m){
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
     [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));if(LST)bar.appendChild(viewBtn());m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap '+(vw()==='level'?'dn':vcls())),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);if(vw()==='zoom')bar.appendChild(zoomBar(w,inner));navTop(inner);m.appendChild(w)}
+    const w=el('div','pc-wrap '+(vw()==='level'?'dn':vcls())),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);if(LST){w.classList.add('zm');bar.appendChild(zoomBar(w,inner))}navTop(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){REDRAW=draw;const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
@@ -353,7 +352,7 @@ export function drawChain(m){
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap '+vcls());const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);if(vw()==='zoom')bar.appendChild(zoomBar(w,inner));
+    const w=el('div','pc-wrap '+vcls());const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);if(LST){w.classList.add('zm');bar.appendChild(zoomBar(w,inner))}
     if(S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
     if(S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
