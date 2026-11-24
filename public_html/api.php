@@ -50,7 +50,7 @@ if ($crewIds) {
   for ($from = 0; $from < 10000; $from += 500) {
     [$docs, $total] = search('building_v1', [
       'from' => $from, 'size' => 500, 'query' => $q, 'sort' => [['id' => 'asc']],
-      '_source' => ['id', 'Name', 'Building', 'Extractors', 'Processors', 'DryDocks', 'Inventories', 'meta.asteroid', 'Location.locations', 'Control'],
+      '_source' => ['id', 'Name', 'Building', 'Extractors', 'Processors', 'DryDocks', 'Inventories', 'meta.asteroid', 'Location.locations', 'Control', 'Station', 'Dock'], // Station + Dock: habitat / spaceport limits (Fristy's request, 24 Nov 2026)
     ]);
     $allBuildings = array_merge($allBuildings, $docs);
     if (!$docs || count($allBuildings) >= $total) break;

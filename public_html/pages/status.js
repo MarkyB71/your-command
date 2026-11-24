@@ -10,7 +10,9 @@
     build: ['#36a7cd', 'Being built'], built: ['#fab219', 'Built – ready to finish'] };
   // Non-production buildings (Storage / market, Spaceport, Habitat status – ?beta=1)
   Object.assign(STATE, { ok: ['#0ca30c', 'Operating'], warn: ['#fab219', 'Nearly full (75%+)'], full: ['#d03b3b', 'Full (90%+)'] });
-  const RANK = { idle: 0, full: 0, done: 1, built: 1, warn: 1, run: 2, ok: 2, build: 3 };
+  const LIM = /[?&]beta=1\b/.test(location.search); // habitat / spaceport limits – TEST ONLY (?beta=1), Mark 24 Nov 2026
+  Object.assign(STATE, { delay: ['#fab219', 'Launches delayed'], dkfull: ['#d03b3b', 'Full (50 ships)'], hbdrop: ['#fab219', 'Bonus dropping'], hbnone: ['#d03b3b', 'No bonus (1,000)'] });
+  const RANK = { idle: 0, full: 0, dkfull: 0, hbnone: 0, done: 1, built: 1, warn: 1, delay: 1, hbdrop: 1, run: 2, ok: 2, build: 3 };
   // Buildings under construction listed with their time left (LIVE 2 Nov 2026, tested on ?beta=1 – Mark)
   const when = t => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const dot = s => '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + STATE[s][0] +
@@ -101,10 +103,10 @@
       const n = k => g.prod.filter(x => x.s === k).length;
 
       h += '<h2>' + esc(a) + '</h2><div class="note" style="padding:0 0 10px">' + g.prod.length + ' ' + label + ' · ' +
-        (n('ok') + n('warn') + n('full') ? '<b style="color:#4cd04c">' + (n('ok') + n('warn') + n('full')) + ' operating</b>' +
+        (n('ok') + n('warn') + n('full') + n('delay') + n('dkfull') + n('hbdrop') + n('hbnone') ? '<b style="color:#4cd04c">' + (n('ok') + n('warn') + n('full') + n('delay') + n('dkfull') + n('hbdrop') + n('hbnone')) + ' operating</b>' +
           (n('warn') ? ' · <b style="color:#fab219">' + n('warn') + ' nearly full</b>' : '') + (n('full') ? ' · <b style="color:#ff7a7a">' + n('full') + ' full</b>' : '') +
           (n('run') + n('idle') ? ' · ' : '') : '') +
-        (n('run') + n('idle') || !(n('ok') + n('warn') + n('full')) ? '<b style="color:#4cd04c">' + n('run') + ' working</b> · <b style="color:#ff7a7a">' + n('idle') + ' idle</b>' : '') +
+        (n('run') + n('idle') || !(n('ok') + n('warn') + n('full') + n('delay') + n('dkfull') + n('hbdrop') + n('hbnone')) ? '<b style="color:#4cd04c">' + n('run') + ' working</b> · <b style="color:#ff7a7a">' + n('idle') + ' idle</b>' : '') +
         (n('done') ? ' · <b style="color:#fab219">' + n('done') + ' finished, waiting to collect</b>' : '') +
         (n('build') + n('built') ? ' · <b style="color:#36a7cd">' + (n('build') + n('built')) + ' being built</b>' : '') + '</div>';
 
@@ -138,11 +140,27 @@
     if (bt === 7) {
       const nm = (b.Name && b.Name.name) || '';
       const n = nm ? (D.ships || []).filter((x) => !x.fl && x.place === nm).length : 0;
-      return { s: 'ok', what: n ? pl(n, 'ship') + ' of yours docked' : 'None of your ships docked' };
+      const mine = n ? pl(n, 'ship') + ' of yours docked' : 'None of your ships docked';
+      // LIM (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1). Game rules (SDK dock.js): a spaceport holds
+      // 50 ships; launches get a delay once more than 25 are docked – 720 game seconds (30 real seconds) for each ship over 25.
+      if (LIM && b.Dock) {
+        const d = +b.Dock.dockedShips || 0, over = Math.max(0, d - 25), sec = over * 30;
+        const delay = over ? 'launch delay about ' + (sec < 60 ? sec + ' s' : Math.round(sec / 60) + ' min') : (25 - d) + ' more before launches are delayed';
+        return { s: d >= 50 ? 'dkfull' : over ? 'delay' : 'ok', what: d + ' of 50 ships docked (all players) – ' + delay + ' · ' + mine };
+      }
+      return { s: 'ok', what: mine };
     }
     if (bt === 9) {
       const n = (D.crewList || []).filter((c) => c.mates && +c.stn === +b.id).length;
-      return { s: 'ok', what: n ? pl(n, 'crew') + ' stationed here' : 'None of your crews here' };
+      const mine = n ? pl(n, 'crew') + ' stationed here' : 'None of your crews here';
+      // LIM: game rules (SDK station.js): a Habitat holds 1,000 crewmates and gives a +20% bonus; above 500 the bonus
+      // shrinks evenly, down to nothing at 1,000.
+      if (LIM && b.Station) {
+        const p = +b.Station.population || 0, bonus = p > 500 ? 20 * (1 - (Math.min(p, 1000) - 500) / 500) : 20;
+        const left = p < 500 ? (500 - p).toLocaleString('en-GB') + ' more before the bonus starts to drop' : 'bonus now +' + (Math.round(bonus * 10) / 10) + '% (drops to 0 at 1,000)';
+        return { s: p >= 1000 ? 'hbnone' : p > 500 ? 'hbdrop' : 'ok', what: p.toLocaleString('en-GB') + ' of 1,000 crewmates (all players) – full +20% bonus up to 500, ' + left + ' · ' + mine };
+      }
+      return { s: 'ok', what: mine };
     }
     return { s: 'ok', what: '' };
   }
