@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 24 Nov 2026 – Logistics Hub › Production plans: waiting steps link to the building they're waiting on (also from the waiting box). If a finished step's output landed in another building, the plan says where and offers the move in the same approval; if only some is there it says how much. Help page updated.
+
 ## 23 Nov 2026 – Logistics Hub › Cargo bay: fuel gauge for each ship you can pick (propellant against a full tank, green / yellow / red). Help page updated.
 
 ## 23 Nov 2026 – Logistics Hub › Production plans: "waiting for" no longer lists steps that are already done; if a done step's output hasn't reached the materials store yet, it says so. Help page updated.

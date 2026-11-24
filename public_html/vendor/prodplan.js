@@ -286,9 +286,9 @@
   const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
-  const COMMS = /[?&]beta=1\b/.test(location.search); // 📡 "waiting for communication" wording – TEST ONLY (?beta=1), Mark 23 Nov 2026
-  const WLB = /[?&]beta=1\b/.test(location.search); // link to the building a waiting step is waiting on – TEST ONLY (?beta=1), Mark 23 Nov 2026
-  const FXB = /[?&]beta=1\b/.test(location.search); // offer moving a done step's output into the materials store – TEST ONLY (?beta=1), Mark 24 Nov 2026
+  const COMMS = true; // 📡 "confirmation is crawling" wording – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
+  const WLB = true; // link to the building a waiting step is waiting on – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
+  const FXB = true; // offer moving a done step's output into the materials store – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
   const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
