@@ -79,14 +79,25 @@ async function openChain(n, r, a) {
 
 // Toolbar icon: jump back to the Command Deck tab (or open it if none).
 // A deck id (from the deck strip in the game, 0.6.8) also opens that deck on the Command Deck.
-const DECK_IDS = ['flight', 'crew', 'mine', 'sci', 'eng', 'trade', 'chain'];
+const DECK_IDS = ['flight', 'crew', 'mine', 'sci', 'eng', 'trade', 'chain', 'hub'];
 chrome.action.onClicked.addListener(() => goDeck(''));
 async function goDeck(id) {
   const tabs = await chrome.tabs.query({ url: SITE + '/*' });
-  if (!tabs.length) { await chrome.tabs.create({ url: SITE + '/' }); return; }
+  if (!tabs.length) { await chrome.tabs.create({ url: SITE + (id === 'hub' ? '/?dock=1' : '/') }); return; }
   const t = tabs.find(x => x.active) || tabs[0];
   await chrome.tabs.update(t.id, { active: true });
   await chrome.windows.update(t.windowId, { focused: true });
+  // Logistics Hub card (0.7.3, Mark 24 Nov): open the hub in the Command Deck tab – same as the site's own
+  // Logistics Hub tab (adds dock=1, keeps beta=1, drops Captain's log details). Already in the hub: just come to the front.
+  if (id === 'hub') {
+    let u; try { u = new URL(t.url); } catch (e) { u = new URL(SITE + '/'); }
+    if (u.origin !== SITE) u = new URL(SITE + '/');
+    if (u.searchParams.get('dock') === '1') return;
+    ['mk', 'q', 'rock', 'feed'].forEach(x => u.searchParams.delete(x));
+    u.searchParams.set('dock', '1'); u.hash = '';
+    await chrome.tabs.update(t.id, { url: u.toString() });
+    return;
+  }
   if (id) await chrome.scripting.executeScript({
     target: { tabId: t.id },
     world: 'MAIN',

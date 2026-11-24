@@ -14,7 +14,8 @@
     ['mine', 'Mining|Mining', '#ff8c1a', 4, 'extractors running'],
     ['eng', 'Engineering|Eng', '#e8645a', -4, 'jobs running'],
     ['sci', 'Science Lab|Science', '#4f90ff', -8, 'rocks you run'],
-    ['trade', 'Trade Deck|Trade', '#57ff65', -12, 'open listings']
+    ['trade', 'Trade Deck|Trade', '#57ff65', -12, 'open listings'],
+    ['hub', 'Logistics Hub|Hub', '#ffb03b', -14, 'feed · make · load'] // 0.7.3 (Mark, 24 Nov): far right – opens the Logistics Hub
   ];
   const CSS = `
 #yic-strip{position:fixed;left:640px;right:300px;bottom:38px;height:82px;z-index:50;display:flex;gap:8px;align-items:flex-end;pointer-events:none;perspective:700px;font-family:system-ui,sans-serif}
@@ -207,7 +208,7 @@
       return '<div class="st' + (wpn ? ' wpn' : '') + '" data-k="' + k + '" style="--dc:' + col + ';--ry:' + ry + 'deg" title="' +
         (wpn ? 'Weapons – ready for when conflict starts' : 'Enter the ' + name) + '"><div class="scr">' +
         '<div class="h"><span class="fn">' + name + '</span><span class="sn">' + (short || name) + '</span><i class="led"></i></div>' +
-        '<div class="n"><span>' + (wpn ? '⚔' : esc(d.v != null ? d.v : '–')) + '</span>' + (wpn ? '' : '<span class="go">ENTER ▸</span>') + '</div>' +
+        '<div class="n"><span>' + (wpn ? '⚔' : k === 'hub' ? '🚚' : esc(d.v != null ? d.v : '–')) + '</span>' + (wpn ? '' : '<span class="go">ENTER ▸</span>') + '</div>' +
         '<div class="l">' + esc(wpn ? sub : (d.s || sub)) + '</div>' +
         (d.w ? '<div class="w">' + esc(d.w) + '</div>' : '') +
         '</div><div class="base"><i></i><i></i><i></i><i></i></div></div>';

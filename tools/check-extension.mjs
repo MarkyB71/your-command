@@ -165,8 +165,8 @@ try {
       return c && c.parentElement === bar && bar.lastElementChild === c && c.className === 'hudBtn' && !document.getElementById('yic-s');
     }, null, { timeout: 5000 }).then(() => true).catch(() => false);
     check(dock, 'SkippyChain button sits at the bottom of the game side bar (S button tucked away while the deck strip is on)', 'side bar buttons not docked properly: ' + await what());
-    const strip = await gtab.waitForFunction(() => !!document.getElementById('yic-strip') && document.querySelectorAll('#yic-strip [data-k]').length === 6, null, { timeout: 4000 }).then(() => true, () => false);
-    check(strip, 'deck strip is on the game page with its 6 consoles', 'deck strip missing');
+    const strip = await gtab.waitForFunction(() => !!document.getElementById('yic-strip') && document.querySelectorAll('#yic-strip [data-k]').length === 7, null, { timeout: 4000 }).then(() => true, () => false);
+    check(strip, 'deck strip is on the game page with its 6 consoles + Logistics Hub card', 'deck strip missing');
     const unticked = await gtab.waitForFunction(() => document.getElementById('usedTxt').dataset.on === '0', null, { timeout: 3000 }).then(() => true).catch(() => false);
     check(unticked, '"Show Used Deposits" unticked once', '"Show Used Deposits" was not unticked');
     await gtab.click('#usedTxt'); await new Promise(r => setTimeout(r, 1000));

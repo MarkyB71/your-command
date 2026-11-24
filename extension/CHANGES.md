@@ -3,6 +3,9 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
+## 0.7.3 – coming soon
+- **Logistics Hub card** – a new amber card at the far right of the deck strip. Click it to open the Logistics Hub on your Command Deck tab (feed crews, make on this rock, load a ship). You still go through the airlock, and nothing is sent until you approve it in your wallet.
+
 ## 0.7.2 – 22 Nov 2026
 - **Lighter status dots** – all the dots are now drawn on one see-through layer instead of hundreds of separate pieces, so big rocks with hundreds of buildings no longer drag the game's frame rate down when you zoom out.
 - **Buildings card top right** – moved beside the SWAY balance (the game's pop-ups covered it in the middle). Its list has a **Hide planned sites** tick box, and picking a building closes the game's open side panel (My Crews etc.) first.
