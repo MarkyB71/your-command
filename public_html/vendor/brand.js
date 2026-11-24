@@ -72,7 +72,10 @@
       const T=title();
       if(t.dataset.n!==T.join('|')){t.dataset.n=T.join('|');
         t.innerHTML=T[0]==='Skippy\'s Awesome'?'<b class="bw">Skippy&#39;s Awesome</b> <span>Command Deck</span>':esc(T[0])+(T[0]?' ':'')+'<span>'+esc(T[1])+'</span>'+(T[2]?' '+esc(T[2]):'');
-        d.title=T.filter(Boolean).join(' ');}
+      }
+      // Tab title: the Logistics Hub covers the page, so name it (Mark, 24 Nov: tab kept the last page, e.g. "Your Crews")
+      const dt=d.getElementById('dk-ov')?'Logistics Hub':T.filter(Boolean).join(' ');
+      if(d.title!==dt&&!/[?&]beta=1/.test(location.search))d.title=dt; // test tab keeps "Test Site" (testtitle.js)
     }
     // Banner at the very top with the title in the middle, then the menu (sticky), then the Updated/search strip
     if(hd){const main=d.getElementById('main'),hb=hd.querySelector(':scope > .bar'),tr=hd.querySelector(':scope > .toprow');
