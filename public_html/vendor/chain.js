@@ -76,8 +76,21 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-big .pc-kids>.pc-br{padding:7px 0}
 .pc-big .pc-raws{font-size:16px}.pc-big .pc-raws h3{font-size:18px}
 .pc-sw{display:flex;justify-content:space-between;gap:6px;font-size:12px;margin:2px 0}.pc-sw a{color:#8fe3ff;text-decoration:none;border:1px solid #2f5a7a;border-radius:6px;padding:1px 7px;position:relative}.pc-sw a:hover{background:#16314a;text-decoration:underline}.pc-big .pc-sw{font-size:13px}
-.pc-sw a[data-m=from]{color:#ffd24a;border-color:#6b5a1c}.pc-sw a[data-m=from]:hover{background:#2a2410}`;
+.pc-sw a[data-m=from]{color:#ffd24a;border-color:#6b5a1c}.pc-sw a[data-m=from]:hover{background:#2a2410}
+.pc-wrap.ls{overflow:visible}.pc-wrap.ls>.pc-in{width:auto;display:block}.pc-wrap.ls .pc-navtop{justify-content:flex-start}
+.pc-wrap.ls .pc-br{display:block;padding:0}
+.pc-wrap.ls .pc-kids{display:block;padding:0 0 0 30px;margin-left:26px;position:relative}.pc-wrap.ls .pc-kids::before{display:none}
+.pc-wrap.ls .pc-kids>.pc-br{position:relative;padding:8px 0 0}
+.pc-wrap.ls .pc-kids>.pc-br::before{content:'';position:absolute;left:-30px;top:43px;width:28px;height:0;border-top:2px solid #2a3648;border-left:0}
+.pc-wrap.ls .pc-kids>.pc-br::after{content:'';display:block;position:absolute;left:-30px;right:auto;top:0;bottom:0;height:auto;border-top:0;border-left:2px solid #2a3648}
+.pc-wrap.ls .pc-kids>.pc-br:last-child::after{bottom:auto;height:44px}
+.pc-wrap.ls .pc-n{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;width:auto!important;max-width:none;gap:6px 18px;padding:8px 14px}
+.pc-wrap.ls .pc-n .pc-top{min-width:240px}.pc-wrap.ls .pc-n select,.pc-wrap.ls .pc-proc{width:auto;max-width:280px;margin:0}
+.pc-wrap.ls .pc-tog,.pc-wrap.ls .pc-foc{margin:0;text-align:left}
+.pc-view{color:#8fe3ff}@media(max-width:1300px){.pc-wrap.ls .pc-n{flex-wrap:wrap}}`;
 const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={units:1,kg:1,t:1e3,kt:1e6};/* units for a bulk item = 1 kg each (Mark, 21 Nov) */
+/* LST (TEST ONLY ?beta=1, Mark 24 Nov 2026): SkippyChain as an indented list (top to bottom, like folders) instead of the wide tree – fits long chains on screen. A "Wide tree"/"List" button swaps between them. */
+const LST=/[?&]beta=1\b/.test(location.search);
 let CMV=null,REDRAW=null;const UNB=true;/* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
 fetch('vendor/tidy.js',{cache:'force-cache'}).then(r=>r.text()).then(t=>{const m=/const MV = (\{.*?\});/.exec(t);if(m){CMV=JSON.parse(m[1]);try{REDRAW&&REDRAW()}catch(e){}}}).catch(()=>{});
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
@@ -210,6 +223,7 @@ export function drawChain(m){
   const backBtn=()=>{;const b=el('button','pc-back big','◂ Back');b.title=HS.length?'Go back to what you were looking at before':'Nothing to go back to yet';if(!HS.length)b.disabled=true;
     const go=h=>{tipHide();Object.assign(S,{mode:h.mode,prod:h.prod,amt:h.amt,choice:h.choice,closed:h.closed,opened:h.opened,all:h.all,foc:h.foc,focus:null,anchor:null});draw();requestAnimationFrame(()=>scrollTo(0,h.y))};b.addEventListener('click',()=>{if(!HS.length)return;FS.push(cap());go(HS.pop())});;const f=el('button','pc-back big','Forward ▸');f.title=FS.length?'Go forward again to what you were looking at':'Nothing to go forward to';if(!FS.length)f.disabled=true;f.addEventListener('click',()=>{if(!FS.length)return;HS.push(cap());go(FS.pop())});const w=el('span','pc-nav');w.appendChild(b);w.appendChild(f);return w};
   const navTop=inner=>{;const r=inner.firstElementChild;if(!r)return;const d=el('div','pc-navtop');d.appendChild(backBtn());r.prepend(d)};
+  const viewBtn=()=>{const v=el('button','pc-view',S.view==='tree'?'☰ List view':'⇆ Wide tree');v.title='Swap between the indented list and the wide tree';v.addEventListener('click',()=>{S.view=S.view==='tree'?'list':'tree';draw()});return v};
   const modeSw=()=>{;const g=el('span','pc-mode');[['from','Made from'],['use','Used in']].forEach(([v,t])=>{const b=el('button',S.mode===v?'on':null,t);
       b.addEventListener('click',()=>{if(S.mode!==v){snap();S.mode=v;S.foc=null;S.closed.clear();S.opened.clear();S.all=false;draw()}});g.appendChild(b)});return g};
   const tipEl=()=>{let t=document.getElementById('pc-tip');if(!t){t=el('div','pc-tip');t.id='pc-tip';document.body.appendChild(t)}return t};
@@ -255,8 +269,8 @@ export function drawChain(m){
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
-    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap'+' dn'),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);navTop(inner);m.appendChild(w)}
+    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));if(LST)bar.appendChild(viewBtn());m.appendChild(bar);stick(bar);
+    const w=el('div','pc-wrap '+(LST&&S.view!=='tree'?'ls':'dn')),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);navTop(inner);m.appendChild(w)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){REDRAW=draw;const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
@@ -314,12 +328,12 @@ export function drawChain(m){
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
     const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=(UNB?['units','kg','t','kt']:['kg','t','kt']).map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(S.prod<1000){if(cg){const us3=el('select');us3.innerHTML=['units','kg','t','kt'].map(u=>'<option'+(u===S.cunit?' selected':'')+'>'+u+'</option>').join('');us3.title='Units or weight';us3.addEventListener('change',()=>{const v=+am.value||1,was=uf;S.cunit=us3.value;const nf=S.cunit==='units'?1:UF[S.cunit]*1000/cg;S.amt=Math.max(1,Math.floor(v*nf));draw()});l2.appendChild(us3);if(cw)l2.appendChild(document.createTextNode(' = '+S.amt.toLocaleString()+(S.amt===1?' unit':' units')))}else l2.appendChild(document.createTextNode(' each'))}
-    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));
+    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));if(LST)bar.appendChild(viewBtn());
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap dn');const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);
+    const w=el('div','pc-wrap '+(LST&&S.view!=='tree'?'ls':'dn'));const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);
     if(S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
     if(S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
