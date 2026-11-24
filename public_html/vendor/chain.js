@@ -87,7 +87,7 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-wrap.ls .pc-n{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;width:auto!important;max-width:none;gap:6px 18px;padding:8px 14px}
 .pc-wrap.ls .pc-n .pc-top{min-width:240px}.pc-wrap.ls .pc-n select,.pc-wrap.ls .pc-proc{width:auto;max-width:280px;margin:0}
 .pc-wrap.ls .pc-tog,.pc-wrap.ls .pc-foc{margin:0;text-align:left}
-.pc-view{color:#8fe3ff}.pc-zl{color:#8b9ab0;min-width:44px;align-self:center}
+.pc-view{color:#8fe3ff}.pc-zl{color:#8b9ab0;min-width:44px;align-self:center}.pc-zrow{display:flex;justify-content:center;margin:0 0 8px}.pc-zrow .pc-nav{gap:6px;align-items:center}.pc-zrow button{font-size:16px;padding:6px 12px}
 .pc-wrap.sc .pc-n{width:170px!important;padding:6px 9px;gap:2px}.pc-wrap.sc .pc-top img{width:30px;height:30px}.pc-wrap.sc .pc-nm{font-size:14px}.pc-wrap.sc .pc-q{font-size:13px}
 .pc-wrap.sc .pc-sw,.pc-wrap.sc .pc-fac,.pc-wrap.sc .pc-proc,.pc-wrap.sc .pc-foc,.pc-wrap.sc .pc-use,.pc-wrap.sc .pc-have{display:none}.pc-wrap.sc .pc-n select{font-size:12px;padding:2px}.pc-wrap.sc .pc-tog{font-size:12px}
 .pc-big .pc-wrap.sc .pc-kids>.pc-br{padding:16px 4px 0}.pc-big .pc-wrap.sc .pc-kids{padding-top:16px}.pc-big .pc-wrap.sc .pc-kids::before,.pc-big .pc-wrap.sc .pc-kids>.pc-br::before{height:16px}
@@ -289,7 +289,7 @@ export function drawChain(m){
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
     [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));if(LST)bar.appendChild(viewBtn());m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap '+(vw()==='level'?'dn':vcls())),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);if(LST){w.classList.add('zm');bar.appendChild(zoomBar(w,inner))}navTop(inner);m.appendChild(w)}
+    const w=el('div','pc-wrap '+(vw()==='level'?'dn':vcls())),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);if(LST){w.classList.add('zm');const zr=el('div','pc-zrow');zr.appendChild(zoomBar(w,inner));w._zr=zr}navTop(inner);m.appendChild(w);if(w._zr)w.before(w._zr)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){REDRAW=draw;const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
@@ -352,13 +352,13 @@ export function drawChain(m){
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap '+vcls());const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);if(LST){w.classList.add('zm');bar.appendChild(zoomBar(w,inner))}
+    const w=el('div','pc-wrap '+vcls());const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);if(LST){w.classList.add('zm');const zr=el('div','pc-zrow');zr.appendChild(zoomBar(w,inner));w._zr=zr}
     if(S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
     if(S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
         const a=el(last?'b':'a',last?'pc-cur':null,esc(nm));if(!last){a.href='#';a.addEventListener('click',e=>{e.preventDefault();snap();S.foc=i?k:null;S.anchor=null;draw()})}tr.appendChild(a)});
       {const up=el('button','pc-up','▲ Up one level');up.title='Show the box above this one';up.addEventListener('click',()=>{snap();S.foc=ks.length>2?ks.slice(0,-1).join('/'):null;S.anchor=null;draw()});tr.appendChild(up)}
-      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}navTop(inner);m.appendChild(w);
+      const all=el('button','pc-full','Show whole chain');all.addEventListener('click',()=>{snap();S.foc=null;S.anchor=null;draw()});tr.appendChild(all);m.appendChild(tr)}navTop(inner);m.appendChild(w);if(w._zr)w.before(w._zr);
     w.querySelectorAll('.pc-n').forEach(compact);
     const r=Object.entries(raws).sort((a,b)=>b[1]-a[1]);
     m.appendChild(el('div','pc-raws','<h3>'+(S.use!=null?'Still to mine or buy (open branches, after your stock)':'Raw materials in the open branches')+'</h3>'+(r.length?r.map(([k,v])=>{const h=S.use!=null?null:have(+k);const src=ai!==null&&window.YICSRCTXT&&mineHTML(+k,ai,0)?window.YICSRCTXT(k,v,(Y.asts[ai]||{}).id):'';return fu(k,v)+' '+esc(N[k])+(h===null?'':' <span class="pc-have '+(h>=v?'ok':h>0?'part':'')+'">('+(h>=v?'✓ have '+fu(k,h):'have '+fu(k,h))+')</span>')+(src?' <span class="pc-have part">– '+src+'</span>':'')}).join('<br>'):'Open more branches to see them')));
