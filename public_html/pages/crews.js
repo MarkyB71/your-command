@@ -51,6 +51,10 @@
       (astName ? ' at or heading to <b>' + esc(astName) + '</b>' : '') +
       (starving ? ' · <b style="color:#ff7a7a">' + starving + ' crew' + (starving > 1 ? 's' : '') + ' starving</b>' : '') + '</div>';
 
+    // ⬇ Export crews (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1): a spreadsheet (CSV) of every crew
+    // and crewmate – crew make-up, class, collection, title tier and bonuses. Uses all crews, not just the filtered ones.
+    if (XPB) h += '<div style="text-align:center;margin:0 0 10px"><button type="button" id="crExport" style="cursor:pointer">⬇ Export crews (CSV)</button></div>';
+
     // Sort + hide-empty controls
     h += '<div style="text-align:center;margin:0 0 12px"><label style="font-weight:bold">Sort crews by: <select id="crSort">' +
       Object.keys(SORTS).map(k => '<option value="' + k + '"' + (k === window.crSort ? ' selected' : '') + '>' + SORTS[k][0] + '</option>').join('') +
@@ -73,8 +77,37 @@
     m.innerHTML = h;
     Y.fillFacesIn(m);
 
+    if (XPB) m.querySelector('#crExport').addEventListener('click', () => exportCrews(D));
     m.querySelector('#crSort').addEventListener('change', e => { window.crSort = e.target.value; Y.draw(); });
     m.querySelector('#crHide').addEventListener('change', e => { window.crHide = e.target.checked; Y.draw(); });
+  }
+
+  const XPB = /[?&]beta=1\b/.test(location.search);
+  const COLL = { 1: 'Arvad Specialist', 2: 'Arvad Citizen', 3: 'Arvad Leadership', 4: 'Adalian' };
+  function exportCrews(D) {
+    const cm = D.crewmates || {}, CL = typeof CMC !== 'undefined' ? CMC : {}, TR = typeof CMT !== 'undefined' ? CMT : {};
+    const q = (v) => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const head = ['Crew ID', 'Crew name', 'Asteroid', 'Where', 'Food %', 'Status', 'Crewmates in crew', 'Crew make-up',
+      'Crewmate ID', 'Crewmate name', 'Class', 'Collection', 'Title no.', 'Title tier', 'Bonuses'];
+    const rows = [head];
+    (D.crewList || []).slice().sort((a, b) => a.id - b.id).forEach((c) => {
+      const ros = c.roster || [], mix = {};
+      ros.forEach((id) => { const k = CL[(cm[id] || {}).class] || '?'; mix[k] = (mix[k] || 0) + 1; });
+      const crew = [c.id, c.name, c.ast || '', c.place || '', c.food == null ? '' : Math.round(c.food * 100), c.busy ? 'Busy until ' + c.busy : 'Ready', ros.length,
+        Object.keys(mix).map((k) => mix[k] + ' ' + k).join(' · ')];
+      if (!ros.length) { rows.push(crew.concat(['', '', '', '', '', '', ''])); return; }
+      ros.forEach((id) => {
+        const x = cm[id] || {}, t = x.title;
+        rows.push(crew.concat([id, (c.mn && c.mn[id]) || '', CL[x.class] || '', COLL[x.coll] || (x.coll || ''), t || '',
+          t >= 1 && t <= 65 ? Math.floor((t - 1) / 13) + 1 : '',
+          (x.impactful || []).map((i) => TR[i]).filter(Boolean).map((b) => b[0] + ' (' + b[1] + ')').join('; ')]));
+      });
+    });
+    const csv = '\ufeff' + rows.map((r) => r.map(q).join(',')).join('\r\n');
+    const a = document.createElement('a'), n = new Date(), p2 = (x) => String(x).padStart(2, '0');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'crews_' + n.getFullYear() + '-' + p2(n.getMonth() + 1) + '-' + p2(n.getDate()) + '.csv';
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
   function card(c, esc, crewTraits) {
