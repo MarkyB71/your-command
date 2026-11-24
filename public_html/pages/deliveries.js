@@ -10,13 +10,13 @@
     { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
   // Start loading deliveries.php once; redraw when done
-  function load(Y) {
+  function load(Y, cb) {
     if (Y.dlvLoad) return;
     Y.dlvLoad = fetch('deliveries.php?wallet=' + encodeURIComponent(Y.D.wallet || ''), { cache: 'no-store' })
       .then(r => r.json())
       .then(j => { if (j.error) throw new Error(j.error); Y.DLV = j; })
       .catch(e => { Y.DLV = { err0: (e && e.message) || 'error' }; })
-      .finally(() => { Y.dlvLoad = null; if (Y.viewNow === 'V' || Y.viewNow === 'N') Y.draw(); });
+      .finally(() => { Y.dlvLoad = null; if (cb) cb(); else if (Y.viewNow === 'V' || Y.viewNow === 'N') Y.draw(); });
   }
 
   // One section: heading, description, then a table (or an "empty" note)
@@ -27,7 +27,8 @@
       '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>'
        : '<div class="note">' + empty + '</div>');
 
-  function drawDeliveries(m) {
+  function drawDeliveries(m, opt) {
+    opt = opt || {};
     const Y = window.YIC, D = Y.D, esc = Y.esc, pn = Y.pn, fq = Y.fq, ricon = Y.ricon, BT = Y.BT;
     const DLV = Y.DLV;
 
@@ -39,7 +40,7 @@
         return;
       }
       m.innerHTML = '<div class="note">Loading your deliveries…</div>';
-      load(Y);
+      load(Y, opt.trade ? () => { if (document.getElementById('vTD') && document.getElementById('vTD').className === 'on') drawDeliveries(m, opt); } : null);
       return;
     }
 
@@ -92,6 +93,27 @@
       esc(new Date(DLV.fetched * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })) +
       ' (refreshes every 2 minutes)' + (an ? ' · showing <b>' + esc(an) + '</b> only' : '') +
       (DLV.err ? ' · <span style="color:#ff7a7a">' + esc(DLV.err) + '</span>' : '') + '</div>';
+
+    // Trade Deck › Trade deliveries (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1): only deliveries
+    // to and from other players – mostly sales from your marketplaces – so they can be followed from the Trade Deck too.
+    if (opt.trade) {
+      const tradeRecent = recent.filter(r => !(r[3][3] && r[4][3]));
+      h = h.replace('</div>', ' · deliveries to and from other players only – everything is under Engineering › Deliveries</div>');
+      h += section('Waiting to accept', 'Deliveries other players have sent to you. Accept them in the game.',
+        waiting.length, ['What', 'From', 'To', 'Sent'],
+        waiting.map(r => '<tr><td>' + what(r[5]) + '</td><td>' + ent(r[3]) + '</td><td>' + ent(r[4]) + '</td><td class="cls">' +
+          (r[2] ? esc(when(r[2])) : '–') + (r[6] ? '<br><span class="a">for sale</span>' : '') + '</td></tr>'), 'Nothing waiting for you.');
+      h += section('Sent, waiting for the other player', 'Deliveries you sent (mostly from your marketplaces) that the other player has not accepted yet.',
+        sentOut.length, ['What', 'From', 'To', 'Sent'],
+        sentOut.map(r => '<tr><td>' + what(r[5]) + '</td><td>' + ent(r[3]) + '</td><td>' + ent(r[4]) + '</td><td class="cls">' +
+          (r[2] ? esc(when(r[2])) : '–') + '</td></tr>'), 'Nothing waiting on other players.');
+      h += section('Trade deliveries – last 7 days', 'Deliveries to or from other players that arrived in the last 7 days, newest first.',
+        tradeRecent.length, ['', 'What', 'From', 'To', 'Arrived'],
+        tradeRecent.slice(0, 300).map(r => '<tr><td>' + (r[4][3] ? '<span style="color:#4cd04c">In</span>' : '<span style="color:#fab219">Out</span>') + '</td><td>' + what(r[5]) + '</td><td>' + ent(r[3]) + '</td><td>' + ent(r[4]) + '</td><td class="cls">' + esc(when(r[2])) + '</td></tr>'),
+        'No trade deliveries in the last 7 days.');
+      m.innerHTML = h;
+      return;
+    }
 
     h += section('Waiting to accept', 'Deliveries other players have sent to you. Accept them in the game.',
       waiting.length, ['What', 'From', 'To', 'Sent'],
@@ -161,4 +183,27 @@
 
   window.PAGES = window.PAGES || {};
   window.PAGES.V = drawDeliveries;
+
+  // Trade Deck console "Trade deliveries" – TEST ONLY (?beta=1). Added like the deck status pages (pages/status.js).
+  const TDB = /[?&]beta=1\b/.test(location.search);
+  if (TDB) {
+    const hook = () => {
+      const main = document.getElementById('main'), after = document.getElementById('vMS') || document.getElementById('vO');
+      if (!main || !after || document.getElementById('vTD')) return;
+      const b = document.createElement('button');
+      b.id = 'vTD'; b.textContent = 'Trade deliveries';
+      after.after(b);
+      b.addEventListener('click', () => {
+        document.querySelectorAll('button.on').forEach((y) => y.classList.remove('on'));
+        try { window.YIC.view = 'M'; } catch (e) {}
+        b.className = 'on';
+        drawDeliveries(main, { trade: true });
+      });
+    };
+    document.addEventListener('click', (e) => {
+      const t = e.target.closest && e.target.closest('button[id^="v"]'), b = document.getElementById('vTD');
+      if (t && b && t !== b) b.className = '';
+    }, true);
+    setInterval(hook, 700);
+  }
 })();

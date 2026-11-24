@@ -84,6 +84,8 @@ function wNameBox(pen) {
       { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'Bioreactor', pages: ['A', 'RT', 'BS'] },
       { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace', pages: ['K', 'Y', 'M', 'W', 'O', 'MS'] });
   }
+  // Trade deliveries console (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1; page in pages/deliveries.js)
+  if (/[?&]beta=1\b/.test(location.search)) { const td = DECKS.find((d) => d.id === 'trade'); if (td) td.pages.push('TD'); }
   window.YICDECKLIST = DECKS;
   const HUBTAB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   // TOP BAR LAYOUT (Mark, 11 Nov – built 13 Nov, TEST ONLY ?beta=1): left = Play Influence; middle = SWAY, Deck controls,
@@ -259,7 +261,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   const DESC = {
     S: 'Your fleet', R: 'Trip times · launch windows', V: 'In · out · on the way', J: 'What your crews did',
     C: CQBETA0() ? 'All your crews' : 'Who is on duty', Q: 'Swap crewmates around', A: 'Your rocks', X: 'Untouched samples', F: 'Richest lots',
-    E: 'Who can mine what', LL: 'Who leases which lots', RT: 'Raw materials by type', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel', XS: 'Working · idle · time left', BS: 'Food and more · time left', MS: 'Your listings', SS: 'Ships docked', HS: 'Crews stationed',
+    E: 'Who can mine what', LL: 'Who leases which lots', RT: 'Raw materials by type', I: 'Lot levels for each resource', H: 'How things are made', P: 'Stock by product', U: 'What to build where', D: 'What it takes to make it', G: 'Samples ready for fuel', XS: 'Working · idle · time left', BS: 'Food and more · time left', MS: 'Your listings', TD: 'Sent · waiting · last 7 days', SS: 'Ships docked', HS: 'Crews stationed',
     B: "What's in storage", T: 'Jobs running', L: 'Lease end dates', K: 'Listings on the belt',
     Y: 'Buy low · sell high', M: 'Recent trades', W: 'Orders · watch · calculator', O: 'Nearest seller · flight · fuel', ST: 'Rename · tidy storage (test)',
   };
