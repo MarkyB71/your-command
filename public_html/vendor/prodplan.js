@@ -48,14 +48,14 @@
     return plan.steps.map((st, i) => {
       const r = R.find((x) => x.name === st.name), pid = k.PID[st.name], bt = r ? k.FBT[r.type] : 0;
       const starts = plan.started[i] || [];
-      let runningFin = 0, toCollect = 0, startedRuns = 0;
+      let runningFin = 0, toCollect = 0, startedRuns = 0, colB = 0;
       starts.forEach((x) => {
         startedRuns += x.runs;
         const b = byId(x.b), pr = b && (b.Processors || []).find((q) => q.status === 1 && q.runningProcess === pid);
-        if (pr) { if (pr.finishTime > now) { runningFin = Math.max(runningFin, pr.finishTime); runB[String(st.p)] = runB[String(st.p)] || b.id; } else toCollect++; }
+        if (pr) { if (pr.finishTime > now) { runningFin = Math.max(runningFin, pr.finishTime); runB[String(st.p)] = runB[String(st.p)] || b.id; } else { toCollect++; colB = colB || b.id; } }
       });
       const left = Math.max(0, st.runs - startedRuns);
-      const o = { i, st, r, bt, left, runningFin, toCollect };
+      const o = { i, st, r, bt, left, runningFin, toCollect, colB };
       if (runningFin) o.s = 'run'; else if (toCollect) o.s = 'collect'; else if (!left) o.s = 'done';
       if (o.s === 'done') doneP.add(String(st.p));
       if (!left) return o;
@@ -141,6 +141,10 @@
     // building) or grey (waiting on an earlier step). Summary boxes match.
     const wGL = (path, t) => (window.GL && window.GL.on() ? window.GL(path, t) : ' <a href="https://game.influenceth.io' + path + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="' + esc(t) + '">in game ↗</a>');
     const wLink = (x) => { if (!WLB || x.s !== 'wait' || !x.wb || x.start) return ''; const wb = byId(x.wb); return wb ? '<br><span class="src">🏭 ' + esc(k.nm(wb)) + '</span>' + wGL('/building/' + wb.id, 'Open ' + k.nm(wb) + ' in the game') : ''; };
+    // CLB (Mark, 24 Nov – TEST ONLY, ?beta=1): "finished – collect it in the game" gets the same in-game link to the
+    // building to collect from, on the row and on the "to collect" box.
+    const cLink = (x) => { if (!CLB || x.s !== 'collect' || !x.colB) return ''; const cb = byId(x.colB); return cb ? '<br><span class="src">🏭 ' + esc(k.nm(cb)) + '</span>' + wGL('/building/' + cb.id, 'Open ' + k.nm(cb) + ' in the game to collect it') : ''; };
+    const firstC = ss.find((x) => x.s === 'collect' && x.colB && byId(x.colB));
     const firstW = ss.find((x) => x.s === 'wait' && x.wb && !x.start);
     const COL = { done: '#88e675', ready: '#57ff65', run: '#57d5ff', collect: '#ffd94f', wait: '#ff8c1a', waitStep: '#8a96aa' };
     const colOf = (x) => x.s === 'wait' && !/^no free/.test(x.why || '') ? COL.waitStep : COL[x.s];
@@ -148,7 +152,7 @@
     const ICON = { done: '<span class="ok">✓ done</span>', run: '⚙ running', collect: '<span style="color:var(--amber)">✓ finished – collect it in the game</span>', ready: '<span class="ok">▶ ready to start</span>', wait: '<span class="src">⏳ waiting</span>' };
     let h = `<div class="card"><h2><span class="n">📋</span>${esc(k.pname(plan.p))} ${k.amt(plan.p, plan.qty)} on ${esc(plan.rock)}</h2>` +
       `<div class="row"><button type="button" class="dk-shipbtn" id="pp-back" style="cursor:pointer">← All plans / new plan</button><span class="src">Planned ${esc(whenTxt(plan.made / 1000))} · materials in ${esc(byId(plan.mat) ? k.nm(byId(plan.mat)) : '?')}</span></div>` +
-      (CCB ? `<div class="dkp-sum" style="margin-top:10px">${sumBox(t.done, 'done', COL.done)}${sumBox(t.run, 'running', COL.run)}${sumBox(t.col, 'to collect', COL.collect)}${sumBox(t.ready, 'ready now', COL.ready)}${WLB && firstW && byId(firstW.wb) ? sumBox(t.wait, 'waiting' + wGL('/building/' + firstW.wb, 'Open ' + k.nm(byId(firstW.wb)) + ' in the game'), COL.wait) : sumBox(t.wait, 'waiting', COL.wait)}</div>` :
+      (CCB ? `<div class="dkp-sum" style="margin-top:10px">${sumBox(t.done, 'done', COL.done)}${sumBox(t.run, 'running', COL.run)}${CLB && firstC ? sumBox(t.col, 'to collect' + wGL('/building/' + firstC.colB, 'Open ' + k.nm(byId(firstC.colB)) + ' in the game to collect it'), COL.collect) : sumBox(t.col, 'to collect', COL.collect)}${sumBox(t.ready, 'ready now', COL.ready)}${WLB && firstW && byId(firstW.wb) ? sumBox(t.wait, 'waiting' + wGL('/building/' + firstW.wb, 'Open ' + k.nm(byId(firstW.wb)) + ' in the game'), COL.wait) : sumBox(t.wait, 'waiting', COL.wait)}</div>` :
       `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${t.wait}</b>waiting</div></div>`) +
       `<table style="margin-top:10px"><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Status</th></tr></thead><tbody>` +
       ss.map((x) => {
@@ -159,7 +163,7 @@
         const tick = PKB && x.start ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
         const c = CCB ? colOf(x) : '', rs = CCB ? ` style="box-shadow:inset 4px 0 0 ${c}"` : '', ss2 = CCB ? ` style="color:${c}"` : '';
         const icon = CCB ? `<b style="color:${c};font-weight:600">${{ done: '✓ done', run: '⚙ running', collect: '✓ finished – collect it in the game', ready: '▶ ready to start', wait: '⏳ waiting' }[x.s] || ''}</b>` : (ICON[x.s] || '');
-        return `<tr${rs}><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${icon}<span${ss2}>${extra}</span>${more || (x.why ? '<br><span class="src"' + ss2 + '>' + esc(x.why) + '</span>' : '')}${wLink(x)}</td></tr>`;
+        return `<tr${rs}><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${icon}<span${ss2}>${extra}</span>${more || (x.why ? '<br><span class="src"' + ss2 + '>' + esc(x.why) + '</span>' : '')}${wLink(x)}${cLink(x)}</td></tr>`;
       }).join('') + '</tbody></table>' +
       (PKB && t.ready > 1 ? '<div class="hint">Tick the ready processes you want to start – only those go in the approval.</div>' : '') +
       (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
@@ -287,6 +291,7 @@
   const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
   const COMMS = true; // 📡 "confirmation is crawling" wording – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
+  const CLB = IMB; // link to the building to collect a finished process from – TEST ONLY (?beta=1), 24 Nov 2026
   const WLB = true; // link to the building a waiting step is waiting on – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
   const FXB = true; // offer moving a done step's output into the materials store – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
   const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
