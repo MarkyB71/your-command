@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 25 Nov 2026 – Extension 0.7.3 is on the Chrome Web Store: a new amber Logistics Hub card at the far right of the deck strip in the game. Click it to open the Logistics Hub on your Command Deck tab (through the airlock as usual).
+
 ## 24 Nov 2026 – The SkippyChain: new ways to fit long chains on screen. A View drop-down picks Wide tree, Small cards, One level or List (remembered in the browser), and every view has zoom (− / + / Fit to screen, drag to move). Help page updated.
 
 ## 24 Nov 2026 – Logistics Hub › Production plans: waiting steps link to the building they're waiting on (also from the waiting box). If a finished step's output landed in another building, the plan says where and offers the move in the same approval; if only some is there it says how much. Help page updated.

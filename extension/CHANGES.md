@@ -3,7 +3,7 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
-## 0.7.3 – coming soon
+## 0.7.3 – 25 Nov 2026
 - **Logistics Hub card** – a new amber card at the far right of the deck strip. Click it to open the Logistics Hub on your Command Deck tab (feed crews, make on this rock, load a ship). You still go through the airlock, and nothing is sent until you approve it in your wallet.
 
 ## 0.7.2 – 22 Nov 2026
