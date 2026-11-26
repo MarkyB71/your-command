@@ -104,9 +104,11 @@
       // the trip to the extractor + mining time ÷ 8 (SDK Time.getCrewLaborDuration), and a crew can only queue jobs
       // up to 24 h ahead (Crew.CREW_SCHEDULE_BUFFER). Spread over the crews on the rock – earliest free first.
       const cl = k.crews(e.rock);
-      const cost = (c) => Math.ceil(realSecs(y, left) / 8) + (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
+      // E6009 "crew resting" (Mark's first real try, 26 Nov 22:51 – the 10th start failed): the ÷8 + one-way trip guess was
+      // too low. Now counted carefully: mining time ÷ 4 + the trip there AND back, and the queue kept under 20 h.
+      const cost = (c) => Math.ceil(realSecs(y, left) / 4) + 2 * (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
       const qEnd = (c) => Q[c.id] != null ? Q[c.id] : Math.max(now(), k.crewReady(c));
-      const lim = now() + 86400;
+      const lim = now() + 20 * 3600;
       let crew = null, over = false;
       if (M.pick[key] && y > 0 && st) {
         const ch = cl.find((c) => c.id === M.crew[key]);
@@ -142,7 +144,7 @@
       const used = {}; rows.filter((r) => r.on).forEach((r) => { const u = used[r.crew.id] = used[r.crew.id] || { c: r.crew, n: 0, end: 0 }; u.n++; u.end = Math.max(u.end, Q[r.crew.id]); });
       const ul = Object.values(used);
       h += `<div class="card"><h2><span class="n">2</span>Crews</h2>` + (ul.length ? ul.map((u) => `<div class="src" style="margin:3px 0"><b>${esc(u.c.name)}</b> starts ${u.n} · busy until about ${hrs(Math.max(60, u.end - now()))} from now</div>`).join('') : '<div class="src">Nothing ticked.</div>') +
-        '<div class="hint">Each start keeps a crew busy for the trip plus an eighth of the mining time, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock. Pick one in the Crew column to choose yourself.</div></div>';
+        '<div class="hint">Each start keeps a crew busy for a while, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock, counted on the safe side (kept under 20 hours). Pick one in the Crew column to choose yourself.</div></div>';
     }
     if (none.length) h += `<details class="card dkp-fold"><summary>Idle with no core sample on their lot (${none.length})</summary><div class="src">${none.map((e) => esc(k.nm(e.b)) + ' (' + esc(e.rock) + ')').join(' · ')}</div><div class="hint">Take a core sample on that lot in the game first.</div></details>`;
     M.calls = calls;
