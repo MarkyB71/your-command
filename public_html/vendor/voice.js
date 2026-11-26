@@ -4,7 +4,6 @@
 // offers, and the player can choose another (or none) in Deck controls. Choice saved in this browser only.
 // LIVE 14 Nov 2026.
 (function () {
-  const ON = true; // LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   const KEY = 'yic-voice'; // '' = pick for me, '-' = no voice, else a voice name
   // Novelty / old voices that sound robotic – never picked automatically (can still be chosen by hand).
   const ODD = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandma|Grandpa|Rocko|Shelley|Sandy|Flo|Eddy|Reed)\b/i;
@@ -39,7 +38,7 @@
 
   // Put the chosen voice on an utterance. Returns false if the player chose no voice.
   function apply(u) {
-    if (!ON) return true;
+    
     const v = pick();
     if (v === false) return false;
     if (v) { u.voice = v; u.lang = v.lang; }
@@ -47,5 +46,5 @@
   }
 
   try { speechSynthesis.getVoices(); } catch (e) {} // Chrome fills the list a moment after the first ask
-  window.YICvoice = { on: ON, get, set, list, best, pick, apply };
+  window.YICvoice = { on: true, get, set, list, best, pick, apply };
 })();
