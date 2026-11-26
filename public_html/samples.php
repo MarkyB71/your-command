@@ -11,7 +11,9 @@ if ($wallet !== $default && !in_array('*', $allowed, true) && !in_array($wallet,
 }
 
 // ---- cache for 5 minutes ----
-$cf = $CACHE . '/samples_' . sha1($wallet) . '.json';
+// ?used=1 (Logistics Hub ⛏ Mining, 26 Nov 2026): also part-used samples (status 3) with yield left, and the status per row
+$used = !empty($_GET['used']);
+$cf = $CACHE . '/samples_' . ($used ? 'u_' : '') . sha1($wallet) . '.json';
 if (is_file($cf) && time() - filemtime($cf) < 300) { readfile($cf); exit; }
 
 // ---- same fair-use limit as api.php ----
@@ -41,13 +43,14 @@ if ($crewIds) {
     [$docs, $total] = search('deposit_v1', [
       'from' => $from, 'size' => 1000, 'sort' => [['id' => 'asc']],
       '_source' => ['id', 'Deposit', 'Location.location', 'meta.asteroid', 'PrivateSale'],
-      'query' => ['bool' => ['filter' => [['terms' => ['Control.controller.id' => $crewIds]], ['term' => ['Deposit.status' => 2]]]]],
+      'query' => ['bool' => ['filter' => [['terms' => ['Control.controller.id' => $crewIds]], $used ? ['terms' => ['Deposit.status' => [2, 3]]] : ['term' => ['Deposit.status' => 2]]]]],
     ]);
     foreach ($docs as $d) {
+      if ($used && intval($d['Deposit']['remainingYield'] ?? 0) <= 0) continue;
       $rows[] = [intval($d['id']), intval($d['Deposit']['resource'] ?? 0), intval($d['Deposit']['remainingYield'] ?? 0),
-        intval($d['Location']['location']['id'] ?? 0), (string)($d['meta']['asteroid']['name'] ?? ''), empty($d['PrivateSale']) ? 0 : 1];
+        intval($d['Location']['location']['id'] ?? 0), (string)($d['meta']['asteroid']['name'] ?? ''), empty($d['PrivateSale']) ? 0 : 1, intval($d['Deposit']['status'] ?? 0)];
     }
-    if (count($docs) < 1000 || count($rows) >= $total) break;
+    if (count($docs) < 1000 || $from + 1000 >= $total) break;
   }
 }
 

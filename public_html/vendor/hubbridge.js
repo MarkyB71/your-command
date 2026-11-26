@@ -117,7 +117,7 @@
     { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: -8 },
     { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: -13 },
   ];
-  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: 'STORAGE' };
+  const TITLE = { mine: 'MINING', home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: 'STORAGE' };
 
   function station(s, N, mode) {
     let n = '', l = '', sub = '', go = 'Open ▸';
@@ -128,19 +128,21 @@
     else if (s.k === 'store') { n = N.dels; l = N.dels === 1 ? 'delivery on its way' : 'deliveries on their way'; sub = 'Tidy · move · deliveries'; }
     else if (s.m === 'tidy') { if (!window.YICTIDY) { s = Object.assign({}, s, { m: '', off: 'Storage tidy – coming soon' }); n = s.ico; l = s.off; go = 'Coming soon'; } else { n = s.ico; l = 'Storage tidy'; sub = 'Names · moves'; } }
     else { n = s.ico; l = s.off; sub = ''; go = 'Coming soon'; }
-    const on = s.m && s.m === mode && s.k !== 'dels';
+    const on = s.m && (s.m === mode || (mode === 'mine' && s.m === 'make')) && s.k !== 'dels'; // ⛏ Mining sits under Production
     return `<button type="button" class="lb-st${s.off ? ' off' : ''}${on ? ' on' : ''}"${s.m ? ` data-lb="${s.m}"` : ' tabindex="-1"'} style="--dc:${s.col};--ry:${s.ry}deg" title="${esc(s.off || sub.replace(/<[^>]+>/g, ''))}"><span class="lb-sc"><span class="lb-h">${s.ico} ${esc(s.name)}<i class="lb-led"></i></span><span class="lb-n">${n}</span><span class="lb-l">${esc(l)}</span><span class="lb-s">${sub}</span><span class="lb-go">${go}</span></span><span class="lb-base"><i></i><i></i><i></i><i></i></span></button>`;
   }
 
   // the chair: what needs doing (Mark's Bridge has today's workload on the captain's chair)
   function home(scr, S, render) {
     const N = nums(S);
+    if (window.YICMINE && window.YICMINE.count() == null) window.YICMINE.load().then(() => render());
     const t = (m, n, l, go, hot) => `<button type="button" class="lb-t${hot ? ' hot' : ''}" data-lb="${m}"><b>${n}</b><span>${esc(l)}</span><i>${go}</i></button>`;
     scr.innerHTML = `<div class="card"><h2><span class="n">◉</span>What needs doing</h2>
 <div class="hint" style="margin:0 0 6px">Pick a console below, or one of these.</div><div class="lb-todo">` +
       t('feed', N.feed == null ? N.hungry : N.feed, (N.hungry ? N.hungry + ' hungry · ' : '') + 'crews that could be fed', 'Feed crews ▸', N.hungry > 0) +
       t('make', N.idle, 'idle refineries, factories, bioreactors and shipyards', 'Make on this rock ▸', false) +
       t('ship', N.docked, 'ships docked – ready to load', 'Load a ship ▸', false) +
+      (window.YICMINE ? t('mine', window.YICMINE.count() == null ? '…' : window.YICMINE.count(), 'idle extractors with a core sample to mine', 'Mining ▸', false) : '') +
       '</div></div>' + delsCard(S);
     wire(scr, S, render);
   }
@@ -176,7 +178,7 @@
   function screen(main, S, render) {
     if (!document.getElementById('lb-css')) { const st = document.createElement('style'); st.id = 'lb-css'; st.textContent = CSS; document.head.appendChild(st); }
     if (!S.mode) S.mode = 'tidy'; // Storage opens first (LIVE 21 Nov 2026)
-    const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
+    const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' || (S.mode === 'mine' && window.YICMINE) ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {
       main.innerHTML = `<div class="lb${' lbw'}">${BGW}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
@@ -192,6 +194,15 @@
     wire(lb.querySelector('.lb-deck'), S, render);
     const scr = lb.querySelector('#lb-scr');
     if (mode === 'home') { home(scr, S, render); return null; }
+    // ⛏ Mining (Mark, 26 Nov – TEST ONLY ?beta=1, vendor/mining.js): two tabs on the Production screen
+    if ((mode === 'make' || mode === 'mine') && window.YICMINE) {
+      const n = window.YICMINE.count();
+      const b = (v, x) => `<button type="button" class="dk-shipbtn${mode === v ? ' on' : ''}" data-lb="${v}" style="cursor:pointer">${x}</button>`;
+      scr.innerHTML = `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Make on this rock')}${b('mine', '⛏ Mining' + (n ? ' (' + n + ')' : ''))}</div></div><div id="lb-sub2"></div>`;
+      wire(scr, S, render);
+      if (n == null) window.YICMINE.load().then(() => { const t = scr.querySelector('[data-lb="mine"]'); const c = window.YICMINE.count(); if (t && c) t.textContent = '⛏ Mining (' + c + ')'; });
+      return scr.querySelector('#lb-sub2');
+    }
     return scr;
   }
 
