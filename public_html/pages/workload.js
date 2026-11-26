@@ -46,7 +46,6 @@
       food: [],
       prop: [],
     };
-    const SOON = true; // Finishing soon – LIVE 13 Nov 2026 (Mark)
     const soonTxt = (t) => { const m = Math.max(1, Math.round((t - now) / 60)); return 'finishes in ' + (m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm') + ' (' + new Date(t * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ')'; };
     const plan = {};
     let planX = 0;
@@ -105,14 +104,14 @@
         (b.Extractors || []).forEach((e) => {
           if (e.status !== 1) return;
           busy = true;
-          if (SOON && e.finishTime > now && e.finishTime - now < 10800) add('soon', r(1, 'Extracting ' + APP.pn(e.outputProduct) + ' – ' + soonTxt(e.finishTime), e.finishTime));
+          if ((e.finishTime > now) && e.finishTime - now < 10800) add('soon', r(1, 'Extracting ' + APP.pn(e.outputProduct) + ' – ' + soonTxt(e.finishTime), e.finishTime));
           if (e.finishTime <= now)
             add('collect', r(2, 'Extracting ' + APP.pn(e.outputProduct) + ' – finished', e.finishTime));
         });
         (b.Processors || []).forEach((p) => {
           if (p.status !== 1) return;
           busy = true;
-          if (SOON && p.finishTime > now && p.finishTime - now < 10800) { const pq = APP.PROCN[p.runningProcess]; add('soon', r(1, (pq ? pq[0] : 'Process') + ' – ' + soonTxt(p.finishTime), p.finishTime)); }
+          if ((p.finishTime > now) && p.finishTime - now < 10800) { const pq = APP.PROCN[p.runningProcess]; add('soon', r(1, (pq ? pq[0] : 'Process') + ' – ' + soonTxt(p.finishTime), p.finishTime)); }
           if (p.finishTime <= now) {
             const pr = APP.PROCN[p.runningProcess];
             add('collect', r(2, (pr ? pr[0] : 'Process') + ' – finished', p.finishTime));
@@ -121,7 +120,7 @@
         (b.DryDocks || []).forEach((d) => {
           if (d.status !== 1) return;
           busy = true;
-          if (SOON && d.finishTime > now && d.finishTime - now < 10800) add('soon', r(1, 'Ship assembly – ' + soonTxt(d.finishTime), d.finishTime));
+          if ((d.finishTime > now) && d.finishTime - now < 10800) add('soon', r(1, 'Ship assembly – ' + soonTxt(d.finishTime), d.finishTime));
           if (d.finishTime <= now) add('collect', r(2, 'Ship assembly – finished', d.finishTime));
         });
         if (!busy) add('idle', r(1, 'Nothing running'));
@@ -367,7 +366,7 @@
     });
     const SEC = [
       ['collect', 'Ready to collect', 'Finished jobs waiting for you to collect the output.'],
-      ...(SOON ? [['soon', 'Finishing soon', 'Jobs that finish within 3 hours – the orange ones.']] : []),
+      ...([['soon', 'Finishing soon', 'Jobs that finish within 3 hours – the orange ones.']]),
       [
         'risk',
         'Materials at risk',
@@ -407,8 +406,7 @@
         COL[l] +
         ';margin-right:7px;vertical-align:middle"></span>';
     // Finishing soon is for information only – it doesn't count as needing you (Mark, 13 Nov – LIVE 13 Nov 2026)
-    const SOONX = true;
-    const total = SEC.reduce((n, [k]) => n + (SOONX && k === 'soon' ? 0 : S[k].length), 0),
+    const total = SEC.reduce((n, [k]) => n + ((k === 'soon') ? 0 : S[k].length), 0),
       pk = Object.keys(plan).sort(),
       pn_ = pk.reduce((n, k) => n + plan[k], 0);
     const planH = pn_
@@ -440,7 +438,7 @@
         );
       }).join('') +
       '</div>';
-    if (!total && !(SOONX && S.soon.length)) {
+    if (!total && !(S.soon.length)) {
       m.innerHTML = h + '<div class="note">Nothing needs your attention right now.</div>' + planH;
       return;
     }
@@ -582,9 +580,7 @@
   Object.assign(DECKS[3], { k: 'P', alt: '' });
   // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1 (same flag as vendor/decks.js).
   // Six stations, three each side so the chair stays central: one per crew class + its buildings (Mark).
-  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
-  if (BLD)
-    DECKS.splice(0, DECKS.length,
+  DECKS.splice(0, DECKS.length,
       { k: 'C', id: 'crew', name: 'Crew Quarters', role: 'All crews', col: '#ffff00', ry: 15, dots: [['#ffff00'], 'Habitat'] },
       { k: 'S', id: 'flight', name: 'Flight Deck', role: 'Pilot', col: '#9a6bff', ry: 11, dots: [['#19d9ff'], 'Spaceport'] },
       { k: 'X', n: 'MX', id: 'mine', name: 'Mining', role: 'Miner', col: '#ff8c1a', ry: 7, dots: [['#d9352b'], 'Extractor'] },
@@ -694,7 +690,7 @@
       const B = b.Building || {};
       if (B.status === 3 && B.buildingType === 1) wh++;
       // beta: extractors get their own Mining station
-      if (BLD && B.status === 3 && B.buildingType === 2) {
+      if ((B.status === 3) && B.buildingType === 2) {
         const busy = (b.Extractors || []).some((x) => x.status === 1);
         if (busy) xRun++; else xIdle++;
         return;
@@ -717,7 +713,7 @@
       C: [crews.length, crews.length === 1 ? 'crew on duty' : 'crews on duty', '', hungry ? hungry + ' hungry' : 'all crews fed'],
       H: [run, run === 1 ? 'job running' : 'jobs running', pl(idle, 'idle building'), ready ? ready + ' ready to collect' : ''],
       K: [ords, ords === 1 ? 'open listing' : 'open listings', 'Market · Trade finder · History', ''],
-      A: [rocks, rocks === 1 ? 'rock you run' : 'rocks you run', BLD ? 'Asteroids · Spectral types' : 'Asteroids · Core Samples · Lot resources', ''],
+      A: [rocks, rocks === 1 ? 'rock you run' : 'rocks you run', 'Asteroids · Spectral types', ''],
       MX: [xRun, xRun === 1 ? 'extractor running' : 'extractors running', 'Core Samples · Lot resources', xIdle ? pl(xIdle, 'extractor') + ' ready for work' : ''],
       WB: [wh, wh === 1 ? 'warehouse' : 'warehouses', 'Contents · Deliveries · Leases', ''],
     };
@@ -750,8 +746,8 @@
       return (
         '<button type="button" class="st" data-dk="' + d.k + '" data-deck="' + d.id + '"' + (d.alt ? ' data-alt="' + d.alt + '"' : '') +
         ' style="--dc:' + d.col + ';--ry:' + d.ry + 'deg" title="Enter the ' + d.name + '"><span class="st-scr"><span class="st-h">' + APP.esc(d.name) +
-        '<i class="st-led"></i></span><span class="st-r">' + d.role + (BLD ? '' : ' station') + '</span><span class="st-n">' + n[0] + '</span><span class="st-l">' + APP.esc(n[1]) +
-        '</span><span class="st-s">' + (warn ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) + (n[2] && !BLD ? (n[3] ? ' · ' : '') + APP.esc(n[2]) : '') +
+        '<i class="st-led"></i></span><span class="st-r">' + d.role + ('') + '</span><span class="st-n">' + n[0] + '</span><span class="st-l">' + APP.esc(n[1]) +
+        '</span><span class="st-s">' + (warn ? '<b>' + APP.esc(n[3]) + '</b>' : APP.esc(n[3])) + ('') +
         '</span>' + (d.dots ? '<span class="st-dots">' + d.dots[0].map((c) => '<i style="background:' + c + '"></i>').join('') + '<em>' + d.dots[1] + '</em></span>' : '') + '<span class="st-go">Enter deck ▸</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></button>'
       );
     };
@@ -761,9 +757,7 @@
       '<div class="brs-deck">' + station(DECKS[0]) + station(DECKS[1]) + station(DECKS[2]) + '<div class="brs-mid">' + '<button type="button" class="brs-chair" title="The captain\'s chair – today\'s workload on the viewscreen"><span class="brs-cw">' + CHAIR + '<video class="brs-sk" src="media/skippy-chair.mp4" poster="media/skippy-chair.jpg" muted playsinline preload="none" aria-hidden="true"></video></span><span class="brs-cl">Today\'s workload</span></button>' +
       '<button type="button" class="brs-pc" title="The SkippyChain – how everything in the game is made"><b>🔗 SkippyChain</b><span>Full production chain</span><i>Open ▸</i></button></div><style>' + PC_CSS + '</style>' +
       station(DECKS[3]) + station(DECKS[4]) +
-      (BLD ? station(DECKS[5]) + '<style>.st-dots{display:flex;align-items:center;gap:4px;margin-top:6px}.st-dots i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 5px rgba(255,255,255,.25)}.st-dots em{font:normal 11px/1.2 system-ui,sans-serif;color:#8b9ab0;margin-left:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>' :
-      // switched-off console keeps both sides even (Mark, 27 Oct); now the Weapons console, kept for when conflict starts (not linked yet)
-      '<div class="st wpn" role="note" title="Weapons – not in the game yet. This console is kept ready for when conflict starts." style="--dc:#ff9a3d;--ry:-15deg"><span class="st-scr"><span class="st-h">Weapons<i class="st-led"></i></span><span class="st-r">Armoury station</span><span class="st-n">⚔</span><span class="st-l">Weapons store</span><span class="st-s">Ready for when conflict starts</span><span class="st-go">Coming soon</span></span><span class="st-base"><i></i><i></i><i></i><i></i></span></div>') +
+      (station(DECKS[5]) + '<style>.st-dots{display:flex;align-items:center;gap:4px;margin-top:6px}.st-dots i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 5px rgba(255,255,255,.25)}.st-dots em{font:normal 11px/1.2 system-ui,sans-serif;color:#8b9ab0;margin-left:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>') +
       '</div><div class="brs-floor"></div>';
     m.prepend(br);
     const pcb = br.querySelector('.brs-pc');
@@ -865,11 +859,9 @@
     if (window.YICskIntro) return;
     window.YICskIntro = 1;
     // first visit ever only (localStorage) – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark); was once per visit
-    const SK_ONCE = true;
-    const SK_FIRST = true;
     try {
-      const store = SK_FIRST ? localStorage : sessionStorage;
-      if (SK_ONCE && store.getItem('yic-sk-intro')) return;
+      const store = localStorage;
+      if (store.getItem('yic-sk-intro')) return;
       store.setItem('yic-sk-intro', '1');
     } catch (e) {}
     if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
