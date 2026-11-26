@@ -83,8 +83,6 @@ body.dk-flight #main th{color:#c4adff}
   }
 
   // Map controls, select and Adalia Prime – same as the Bridge viewscreen (Mark, 15 Nov 2026 – TEST ONLY, ?beta=1)
-  const ONE = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
-  const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const APK = 'yic-travel-ap';
   // FOC (Mark 21 Nov 2026 – TEST ONLY, ?beta=1): same as the Bridge map – each of your rocks has its own orbit colour (same
   // colours as the Bridge), and a Rocks ▾ list (Adalia Prime at the top) shows or hides each one. Hidden rocks are shared
@@ -107,7 +105,7 @@ body.dk-flight #main th{color:#c4adff}
       dock = ships.filter((s) => !s.fl);
     // ONE VIEWSCREEN (Mark 21 Nov 2026 – LIVE): the Bridge's map (window.YICbeltMap, pages/asteroids.js) with the
     // ships switched on and the Flight Deck's purple – one map for both, buttons at the top. The old drawing below stays for now.
-    if (ONE && window.YICbeltMap) {
+    if (window.YICbeltMap) {
       el.innerHTML = '<div class="fh-win fh-one"><div class="fh-glass"></div><div class="fh-read">In flight <b>' + fly.length + '</b><br>Docked <b>' + dock.length + '</b></div></div>' +
         '<div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
       const win = el.querySelector('.fh-win');
@@ -120,17 +118,17 @@ body.dk-flight #main th{color:#c4adff}
       '<div class="fh-key"><i style="background:' + COL + ';clip-path:polygon(0 50%,100% 0,70% 50%,100% 100%)"></i>ship in flight<br>' +
       '<i style="border-top:1px dashed ' + COL + ';height:0"></i>course<br><i style="background:#c4cdd9;border-radius:50%"></i>your rock<br><span style="opacity:.7">drag to turn</span></div>' +
       '<div class="fh-load">Plotting courses…</div>' +
-      (MC ? '<div class="fh-ctl">' + (FOC ? '<button type="button" data-fh="rocks" title="Show or hide each of your asteroids" aria-expanded="false" style="font-size:13px">Rocks ▴</button>' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-fh="ap"> Adalia Prime</label>') +
+      ('<div class="fh-ctl">' + (FOC ? '<button type="button" data-fh="rocks" title="Show or hide each of your asteroids" aria-expanded="false" style="font-size:13px">Rocks ▴</button>' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-fh="ap"> Adalia Prime</label>') +
         '<button type="button" data-fh="out" title="Zoom out">−</button><button type="button" data-fh="in" title="Zoom in">+</button>' +
         '<button type="button" data-fh="pause" title="Pause the turning">⏸</button><button type="button" data-fh="fs" title="Full screen">⛶</button></div>' +
-        '<div class="fh-card" hidden></div>' : '') + '</div><div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
+        '<div class="fh-card" hidden></div>') + '</div><div class="fh-plate">NAVIGATION</div><div class="fh-lip"></div>';
     const cv = el.querySelector('canvas'),
       ctx = cv.getContext('2d');
     const ocol = {}; // rock id → its colour, in the same order as the Bridge map
     (D.owned || []).filter((a) => a.Orbit && a.Orbit.a).forEach((a, i) => { ocol[+a.id] = OCOL[i % OCOL.length]; });
     let hid = FOC ? hidL() : [];
     const shown = (r) => !(r.mine && hid.includes(r.id));
-    const ids = [...new Set(owned.concat(ships.map((s) => s.dId), fly.map((s) => s.oId), MC ? [1] : []))].filter(Boolean);
+    const ids = [...new Set(owned.concat(ships.map((s) => s.dId), fly.map((s) => s.oId), [1]))].filter(Boolean);
     Promise.all([import('./travel.js?v=' + (Y.VER || 1)), orbitsFor(ids)])
       .then(([T, O]) => {
         if (!el.isConnected) return;
@@ -189,7 +187,7 @@ body.dk-flight #main th{color:#c4adff}
             })
             .filter(Boolean);
           // Adalia Prime when ticked (white diamond); it's still drawn as a plain rock when ships are docked there
-          if (MC && apOn() && O[1]) {
+          if (apOn() && O[1]) {
             let r = rocks.find((x) => x.id === 1);
             if (!r) { const p = at(1, now); if (p) rocks.push((r = { id: 1, p, ring: [], name: 'Adalia Prime', mine: false, n: 0 })); }
             if (r) { r.ap = true; r.name = 'Adalia Prime'; }
@@ -423,7 +421,7 @@ body.dk-flight #main th{color:#c4adff}
             }
           });
           if (best) showShip(best);
-          else if (MC) {
+          else {
             // no ship there: a rock? (your rocks and Adalia Prime) → small card; empty space closes it
             let rk = null,
               rd = 14;
@@ -453,7 +451,7 @@ body.dk-flight #main th{color:#c4adff}
           card.hidden = false;
           frame();
         };
-        if (MC) {
+        {
           const win = el.querySelector('.fh-win'),
             zoom = (k) => { zf = Math.max(1, Math.min(12, zf * k)); frame(); },
             pb = el.querySelector('[data-fh="pause"]'),
