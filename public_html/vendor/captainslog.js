@@ -160,12 +160,10 @@
   const BTYPES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
   const bName = (k) => { try { return window.YICBL[k][0]; } catch (e) { return 'Building'; } };
   const guessB = (t) => { t = String(t || '').toLowerCase(); return BTYPES.find((k) => t.includes(bName(k).toLowerCase())) || '9'; };
-  const NDBETA = true; // 📦 / ⚙ boxes, white no-rock notes, Skippys Sticky Wall – LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   let needsFor = null, procFor = null, editFor = null; // editFor: note being edited (✎, Mark 13 Nov – TEST ONLY)
   // 🚚 notes → Logistics Hub (Mark, 13 Nov – TEST ONLY ?beta=1): a ⚙ box can open Production with its rock, product and
   // amount filled in; a 📦 box's short items each get a "make ›" link. The hub still goes through the airlock and sends
   // nothing until you approve.
-  const HUBLINK = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // can this rock make it? – a finished building of a kind that has a process for it (Mark, 13 Nov: "make ›" on a
   // Habitation Module went through to the hub on TRCS CMS, which has no Shipyard). Returns '' if yes, else what's missing.
   const missingFor = (p, rockId) => {
@@ -204,7 +202,7 @@
         try { nb = ((Y && Y.D && Y.D.allB) || []).filter((b) => b.Building && b.Building.buildingType === FBT[pr[1]] && b.Building.status === 3 && (((b.Location || {}).locations || []).find((l) => l.label === 3) || {}).id === x.rock).length; } catch (e) {}
         if (nb === 0) extra = '<div class="nd-nob">✗ No ' + esc(PT[pr[1]] || 'building') + ' on ' + esc((x.rockName || 'this rock')) + '</div>' + extra;
         else if (nb > 0) extra = '<div class="nd-l ok">✓ ' + nb + ' ' + esc(PT[pr[1]] || 'building') + (nb > 1 ? 's' : '') + ' on the rock</div>' + extra;
-        if (HUBLINK && nb !== 0) { const o = Object.keys(pr[3])[0], rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || ''; extra += '<a class="nd-hub" href="' + esc(hubHref(o, pr[3][o] * n, rn)) + '" title="Opens Production in the Logistics Hub with this filled in – nothing is sent until you approve">🚚 Plan it in the Logistics Hub ›</a>'; }
+        if (nb !== 0) { const o = Object.keys(pr[3])[0], rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || ''; extra += '<a class="nd-hub" href="' + esc(hubHref(o, pr[3][o] * n, rn)) + '" title="Opens Production in the Logistics Hub with this filled in – nothing is sent until you approve">🚚 Plan it in the Logistics Hub ›</a>'; }
       }
     } else if (BL && BL[x.bld]) inp = BL[x.bld][1];
     if (!Y || !inp) return '<div class="nd-l">Still loading…</div>';
@@ -215,7 +213,7 @@
       const need = inp[p], have = stk[p] || 0, left = Math.max(0, need - have);
       if (left > 0) short++;
       const rn = x.rockName || ((rocks().find((r) => r.id === x.rock) || {}).name) || '';
-      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b>' + (HUBLINK && left > 0 && x.kind !== 'proc' ? ((mm) => mm ? '<i class="nd-no" title="' + esc(nm(p) + ' ' + mm) + '">✗ ' + esc(mm.replace(/ – .*/, '')) + '</i>' : '<a class="nd-mk" href="' + esc(hubHref(p, left, rn)) + '" title="Plan making this in the Logistics Hub">make ›</a>')(missingFor(p, x.rock)) : '') + '</div>';
+      return '<div class="nd-r' + (left > 0 ? '' : ' ok') + '" title="Needs ' + esc(fmt(p, need)) + ' · on the rock ' + esc(fmt(p, have)) + '"><span>' + esc(nm(p)) + '</span><b>' + (left > 0 ? esc(fmt(p, left)) : '✓') + '</b>' + ((left > 0) && x.kind !== 'proc' ? ((mm) => mm ? '<i class="nd-no" title="' + esc(nm(p) + ' ' + mm) + '">✗ ' + esc(mm.replace(/ – .*/, '')) + '</i>' : '<a class="nd-mk" href="' + esc(hubHref(p, left, rn)) + '" title="Plan making this in the Logistics Hub">make ›</a>')(missingFor(p, x.rock)) : '') + '</div>';
     }).join('');
     return extra + (short ? '<div class="nd-l">Still needed on the rock:</div>' : '<div class="nd-l ok">✓ Everything is on the rock</div>') + rows;
   }
@@ -242,7 +240,7 @@
     return { x: 2 + Math.random() * 70, py: top + 10 + Math.random() * 200 };
   };
 
-  const TABS = () => '<div class="cl-tabs">' + [['today', '🗓 Today'], ['notes', NDBETA ? '📌 Skippys Sticky Wall' : '📌 Notes'], ['log', '📜 Log']].map((t) => '<button type="button" data-tab="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>').join('') + '</div>';
+  const TABS = () => '<div class="cl-tabs">' + [['today', '🗓 Today'], ['notes', '📌 Skippys Sticky Wall'], ['log', '📜 Log']].map((t) => '<button type="button" data-tab="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>').join('') + '</div>';
   const tabs = (scr) => scr.querySelectorAll('.cl-tabs button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; draw(scr); }));
 
   function draw(scr) {
@@ -276,7 +274,7 @@
       return;
     }
     const ob = scr.querySelector('.cl-board'); if (ob) scrollY = ob.scrollTop;
-    scr.classList.toggle('cl-beta', NDBETA);
+    scr.classList.toggle('cl-beta', true);
     const all = load(), done = all.filter((x) => x.done).length;
     const R = rocks(), opts = (sel) => '<option value="">No rock</option>' + R.map((r) => '<option value="' + r.id + '"' + (sel === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>').join('');
     const needCard = (x) => '<div class="cl-note cl-need" data-n="' + esc(x.id) + '" style="left:' + (x.x || 0) + '%;top:' + (x.py != null ? x.py + 'px' : (x.y || 0) + '%') + ';--rot:0deg' + (x.rock ? ';--rc:' + rockCol(x.rock, R) : '') + '">' +
@@ -287,9 +285,9 @@
       (editFor === x.id ? '<textarea class="cl-ed" data-edt="' + esc(x.id) + '" rows="3">' + esc(x.text) + '</textarea>' : '<span class="t">' + esc(x.text) + '</span>') + '<span class="ft">' +
       (R.length ? '<select data-rock="' + esc(x.id) + '" title="Which rock is this for?">' + opts(x.rock || null) + '</select>' : '<span style="flex:1"></span>') +
       '<input type="checkbox" data-id="' + esc(x.id) + '"' + (x.done ? ' checked' : '') + ' title="' + (x.done ? 'Not done after all' : 'Tick when done') + '">' +
-      (x.rock && NDBETA ? '<button type="button" class="nd" data-nd="' + esc(x.id) + '" title="Show what a building still needs on this rock">📦</button>' : '') +
-      (x.rock && NDBETA ? '<button type="button" class="nd" data-pr="' + esc(x.id) + '" title="Show what a process still needs on this rock">⚙</button>' : '') +
-      (HUBLINK ? '<button type="button" class="ln" data-ed="' + esc(x.id) + '" title="' + (editFor === x.id ? 'Save' : 'Edit this note') + '">' + (editFor === x.id ? '✓' : '✎') + '</button>' : '') +
+      (x.rock ? '<button type="button" class="nd" data-nd="' + esc(x.id) + '" title="Show what a building still needs on this rock">📦</button>' : '') +
+      (x.rock ? '<button type="button" class="nd" data-pr="' + esc(x.id) + '" title="Show what a process still needs on this rock">⚙</button>' : '') +
+      ('<button type="button" class="ln" data-ed="' + esc(x.id) + '" title="' + (editFor === x.id ? 'Save' : 'Edit this note') + '">' + (editFor === x.id ? '✓' : '✎') + '</button>') +
       '<button type="button" class="ln" data-ln="' + esc(x.id) + '" title="Link to another note – then click the other note">🔗</button>' +
       (procFor === x.id ? '<span class="ndp"><input list="cl-procs" data-prn="' + esc(x.id) + '" placeholder="Type to search processes…" value="' + esc(guessP(x.text)) + '"><input type="number" min="1" max="9999" value="1" data-prr="' + esc(x.id) + '" title="How many runs" style="flex:0 0 70px">runs<span style="flex:1"></span><button type="button" data-prgo="' + esc(x.id) + '">Show</button></span>' : '') +
       (needsFor === x.id ? '<span class="ndp"><select data-ndb="' + esc(x.id) + '">' + BTYPES.map((k) => '<option value="' + k + '"' + (k === guessB(x.text) ? ' selected' : '') + '>' + esc(bName(k)) + '</option>').join('') + '</select><button type="button" data-ndgo="' + esc(x.id) + '">Show</button></span>' : '') +
@@ -418,7 +416,7 @@
     // Lines between linked notes, centre to centre; click a line to remove the link
     function lines() {
       const svg = cv.querySelector('.cl-lines'), L = loadL(), col = {};
-      all.forEach((x) => { col[x.id] = x.rock ? rockCol(x.rock, R) : (NDBETA ? '#e6ebf2' : '#8fe3ff'); });
+      all.forEach((x) => { col[x.id] = x.rock ? rockCol(x.rock, R) : ('#e6ebf2'); });
       const mid = (id) => { const n = cv.querySelector('.cl-note[data-n="' + id + '"]'); return n ? [n.offsetLeft + n.offsetWidth / 2, n.offsetTop + n.offsetHeight / 2] : null; };
       svg.innerHTML = L.map((l, i) => {
         const a = mid(l[0]), b = mid(l[1]);
