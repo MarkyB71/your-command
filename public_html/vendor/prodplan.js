@@ -890,7 +890,9 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
       (x.p ? `<div class="row" style="margin-top:8px"><span class="src">${isB ? 'How many' : 'How much'}</span><input type="number" id="pp-fxq" min="0" step="any" value="${esc(x.q)}">` +
         (bulk ? `<select id="pp-fxu" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === x.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
         `<button type="button" class="dk-shipbtn" id="pp-fxgo" style="cursor:pointer;border:1px solid #ffb03b;color:#ffd28a">Fill in step 3</button></div>` : '') +
-      (x.res ? `<div class="hint" style="margin-top:8px">${x.res}</div>` : '') + '</details>';
+      (x.res ? `<div class="hint" style="margin-top:8px">${x.res}</div>` : '') +
+      // short here → make it in Production on this rock, then come back and load it (Mark, 26 Nov)
+      (x.res && (x.short || []).length ? `<div class="row" style="gap:6px;margin-top:6px">${x.short.map(([p, n]) => `<button type="button" class="dk-shipbtn" data-fxmk="${p}" data-q="${n}" style="cursor:pointer;border:1px solid #ffb03b;color:#ffd28a">🏭 Make ${k.amt(p, n)} ${esc(k.pname(p))} in Production ▸</button>`).join('')}</div><div class="hint">Made on ${esc(r)} – then come back here to load it.</div>` : '') + '</details>';
     return h;
   }
   function fillWire(m, k, r, tot) {
@@ -901,8 +903,13 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
     on('pp-fxq', 'change', (e) => { x.q = e.target.value; });
     on('pp-fxu', 'change', (e) => { x.unit = e.target.value; });
     on('pp-fxf', 'input', (e) => { x.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-fxf'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (z) {} } });
+    m.querySelectorAll('[data-fxmk]').forEach((b) => b.addEventListener('click', () => {
+      window.YICPRODGO = { p: +b.dataset.fxmk, q: +b.dataset.q, rock: r };
+      S.mode = 'make'; k.render();
+      const sc = document.querySelector('#dk-ov .lb-scr'); if (sc) sc.scrollTop = 0;
+    }));
     on('pp-fxgo', 'click', () => {
-      const qi = m.querySelector('#pp-fxq'); if (qi) x.q = qi.value;
+      const qi = m.querySelector('#pp-fxq'); if (qi) x.q = qi.value; x.short = [];
       const B = typeof x.p === 'string' ? (window.YICBL || {})[x.p.slice(2)] : null;
       const qty = B ? Math.ceil(+x.q || 0) : k.bulk(x.p) ? Math.round((+x.q || 0) * UNITS[x.unit || 't']) : Math.ceil(+x.q || 0);
       if (!(qty > 0)) { x.res = '<span style="color:var(--amber)">Type how much you want to make.</span>'; k.render(); return; }
@@ -920,10 +927,11 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
       const ps = Object.keys(need).map(Number).filter((p) => need[p] > 0);
       if (!ps.length) { x.res = `<span class="ok">✓ Nothing to bring</span> – ${esc(x.r)} has everything for ${what}. Use 🏭 Production.`; k.render(); return; }
       P.sq = {};
-      const got = [], short = [];
+      const got = [], short = []; x.short = [];
       ps.forEach((p) => {
         const n = Math.min(Math.ceil(need[p]), tot(p));
         if (n > 0) { got.push(p); if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.sq[p] = { q: Math.ceil(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n }; }
+        if (n < need[p]) x.short.push([p, Math.ceil(need[p]) - n]);
         if (n < need[p]) short.push(esc(k.pname(p)) + ' (' + k.amt(p, Math.ceil(need[p]) - n) + ' short)');
       });
       x.res = (W.steps.length ? '' : `<span style="color:var(--amber)">${esc(k.pname(x.p))} can’t be made on ${esc(x.r)} – filled in the finished item instead.</span><br>`) +
