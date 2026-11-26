@@ -179,11 +179,12 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     let h = `<div class="src" style="margin:12px 0 4px"><b>4 · Make it</b></div>` + (freeRef ? `<div class="src">At <b>${esc(k.nm(c.ref))}</b> (free)</div>`
       : `<div class="src" style="color:var(--amber)">No refinery on ${esc(rock)} is free right now – it can start when one finishes.</div>`) + `
 <div class="src" style="margin-top:4px">${esc(c.r.name)} · <b>${c.runs.toLocaleString('en-GB')} runs</b> → <b>${kgTxt(outKg)}</b> straight into ${esc(x.s.name)}'s tank${c.ref && k.procSecs ? ' · about ' + Math.round((k.procSecs(c.r.name, c.runs) || 0) / 360) / 10 + ' h without bonuses' : ''}.</div>`;
-    // not enough for it in one process → The SkippyChain shows how to make the rest (Mark, 26 Nov)
+    // not enough for it in one process → make the short inputs in Production, into the store the refinery takes them from
+    // (Mark, 26 Nov: "point to production for the next part of the chain, so they can start it there")
     if (c.runs < c.wantRuns) {
-      const miss = c.wantRuns - c.runs, u = new URLSearchParams(location.search); u.delete('dock'); u.set('pcn', c.r.name); u.set('pcr', String(miss)); u.set('pca', rock);
+      const short = c.rows.filter((w) => w.rock < c.r.inp[w.p] * c.wantRuns).map((w) => [w.p, Math.ceil(c.r.inp[w.p] * c.wantRuns - w.rock)]);
       h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : (c.runs ? 'Only enough on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.' : 'Not enough on ' + esc(rock) + ' to make any.')}</div>` +
-        (c.capTxt ? '' : `<div class="hint">Short for the rest: ${c.rows.filter((w) => w.rock < c.r.inp[w.p] * c.wantRuns).map((w) => esc(k.pname(w.p)) + ' ' + kgU(w.p, c.r.inp[w.p] * c.wantRuns - w.rock)).join(', ')}. <a href="${esc(location.pathname + '?' + u.toString() + '#vH')}" target="_blank" rel="noopener" style="color:var(--cyan)">🔗 The SkippyChain – how to make ${kgTxt(miss * c.r.out[PROP] * uG() / 1000)} more ↗</a></div>`);
+        (c.capTxt || !short.length ? '' : `<div class="hint">Short for a full tank: ${short.map(([p, n]) => esc(k.pname(p)) + ' ' + kgU(p, n)).join(', ')}.</div><div class="row" style="gap:6px;margin-top:4px">${short.map(([p, n]) => `<button type="button" class="dk-shipbtn" data-sfmk="${p}" data-q="${n}" style="cursor:pointer">🏭 Make ${esc(k.pname(p))} in Production ▸</button>`).join('')}</div><div class="hint">It goes into ${esc(k.nm(c.store))}, ready for the refinery – then come back here.</div>`);
     }
     // inputs: everything already in one store → just say so; otherwise the move section
     if (!c.moves.length && c.runs > 0) h += `<div class="src" style="margin-top:8px"><span class="ok">✓</span> Everything it needs is in <b>${esc(k.nm(c.store))}</b>${c.cands.length > 1 ? ` <select id="sf-store" style="margin-left:6px">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select>` : ''}</div>`;
@@ -236,6 +237,12 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     const again = () => render(host);
     const on = (id, ev, f) => { const e = el.querySelector(id); if (e) e.addEventListener(ev, () => f(e)); };
     el.querySelectorAll('[data-sfship]').forEach((b) => b.addEventListener('click', () => { SF.ship = +b.dataset.sfship; SF.crew = 0; SF.key = ''; SF.how = ''; again(); }));
+    el.querySelectorAll('[data-sfmk]').forEach((b) => b.addEventListener('click', () => {
+      const k = K(), c = SF.cur; if (!c || !c.store) return;
+      window.YICPRODGO = { p: +b.dataset.sfmk, q: +b.dataset.q, rock: c.rock, to: c.store.id }; // output into the refinery's inputs store
+      k.S.mode = 'make'; k.render();
+      const sc = document.querySelector('#dk-ov .lb-scr'); if (sc) sc.scrollTop = 0;
+    }));
     el.querySelectorAll('[data-sfset]').forEach((b) => b.addEventListener('click', () => { SF.set = b.dataset.sfset === '1'; again(); }));
     on('#sf-amt', 'change', (e) => { SF.amt = e.value; again(); });
     on('#sf-unit', 'change', (e) => { SF.unit = e.value; again(); });

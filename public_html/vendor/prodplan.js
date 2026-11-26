@@ -720,6 +720,7 @@
       if (go.rock && rl.includes(go.rock)) S.rock = go.rock;
       P.p = go.p; P.use = ''; P.find = ''; P.track = ''; P.maxTxt = '';
       if (go.ship) { P.for = 'ship'; P.fship = go.ship; } // ⛽ from Fuel a ship: straight into its tank
+      P.fto = go.to ? { p: go.p, id: go.to } : null; // from Fuel a ship (make a short input): the finished goods go into the refinery's inputs store
       if (k.bulk(P.p)) { const q = go.q || 100000; P.unit = q >= 1e6 ? 'kt' : q >= 1000 ? 't' : 'kg'; P.q = Math.ceil(q / UNITS[P.unit] * 1000) / 1000; } else P.q = go.q || 1;
     }
     if (!rl.includes(S.rock)) S.rock = rl[0];
@@ -813,6 +814,7 @@
           W.steps.forEach((s, i) => { if (s === fin) return; const users = W.steps.slice(i + 1).filter((u) => u.r.inp[s.p]);
             if (fb && users.length && users.every((u) => u.from === fb) && fits(fb, Object.keys(s.r.out))) s.to = fb; });
           W.dest = {}; Object.keys(W.stock).forEach((p) => { const users = W.steps.filter((u) => u.r.inp[p]); if (fb && users.length && users.every((u) => u.from === fb)) W.dest[p] = fb; }); }
+        if (P.fto && P.fto.p === P.p) { const tb = byId(P.fto.id); if (tb && (tb.Building.buildingType !== k.TANK || fluid(fin.r))) fin.to = tb; }
         // ⛽ into the ship's tank: never more runs than the room left (the refinery won't start if it can't all fit)
         if (fsh && fin.p === 170 && fluid(fin.r)) { fin.to = { ship: true, id: fsh.id, slot: 1, Name: { name: fsh.name + '’s tank' } }; fin.runs = Math.min(fin.runs, Math.floor(fRoom / fin.r.out[170])); }
         // step 6: the processes to run, in order
@@ -835,6 +837,7 @@
 <div class="row"><span class="src">What it's for</span>${FOR.concat(FUELB && P.p === 170 && fuelShips().length ? [['ship', '⛽ Ship’s tank']] : []).map(([v, t]) => `<button type="button" class="dk-shipbtn${pf === v ? ' on' : ''}" data-for="${v}">${t}</button>`).join('')}</div>
 <table style="margin-top:10px"><tbody>
 ${fsh ? `<tr><td>⛽ Ship’s tank</td><td><select id="pp-fship">${fuelShips().map((s) => `<option value="${s.id}"${s.id === fsh.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select></td><td class="num" style="white-space:nowrap">${Math.round((s0 => (s0.prop || 0) * 1e6 / TANKG[s0.st] * 100)(fsh))}% → ${pc(Math.round(((fsh.prop || 0) * 1e6 + fin.runs * fin.r.out[170] * k.grams(170)) / TANKG[fsh.st] * 100))}</td><td class="src">The Hydrogen Propellant goes straight into the tank – ${fRoom > 0 ? 'room for ' + k.amt(170, fRoom) + ', so it makes no more than that.' : '<span style="color:var(--amber)">the tank is already full.</span>'}</td></tr>` : ''}
+${P.fto && P.fto.p === P.p && fin.to && fin.to.id === P.fto.id ? `<tr><td>⛽ For Fuel a ship</td><td><b>${esc(k.nm(fin.to))}</b></td><td></td><td class="src">The ${esc(k.pname(P.p))} goes here, ready for the refinery that fills the ship.</td></tr>` : ''}
 <tr><td>📦 Materials ${ST.matL.length > ST.wh.length ? 'store' : 'warehouse'}</td><td>${sel('mat', ST.matL)}</td>${aft('mat')}<td class="src">Everything the processes use is gathered here; in-between products land here too.${FUELB && pk > 100 ? `<br><b style="color:#ff4d4d">✗ Won’t fit while the inputs are gathered (${pk}% full before anything is used)</b> – the game refuses the moves.${ST.matL.length > ST.wh.length ? ' Pick a tank farm here, or make less.' : ' Make less, or move things out first.'}` : FUELB && pk >= 90 ? `<br><span style="color:#ffb03b">${pk}% full while the inputs are gathered.</span>` : ''}</td></tr>
 ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(ST.wh), '— don’t use one —')}</td>${fuelUsed ? `<td class="num" style="white-space:nowrap">${ST.full(fuelB)}% → ${pc(after(fuelB))}</td>` : '<td></td>'}<td class="src">Where you make Hydrogen Propellant – the propellant process takes its inputs from here, so they don’t all have to be gathered in the materials warehouse.${fuelB && !fuelUsed && W.steps.some((s) => s.r.out[170]) ? '<br><span style="color:var(--amber)">' + esc(k.nm(fuelB)) + ' is a tank farm and can’t take every input – using the materials warehouse.</span>' : ''}${fuelUsed && pkF > 100 ? `<br><b style="color:#ff4d4d">✗ Won’t fit while the inputs are gathered (${pkF}% full before anything is used)</b> – make less, or move things out first.` : ''}</td></tr>` : ''}
 <tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td>${aft('stock')}<td class="src">Finished goods made for stock.</td></tr>
