@@ -299,6 +299,7 @@
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
   // several ships – it hands the pick-up rock and the amounts to 🚀 Load a fleet, with every ship parked there ticked.
   const EXF = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
+  const FUELB = /[?&]beta=1\b/.test(location.search) && true; // ⛽ Fuel a ship – TEST ONLY (?beta=1), Mark 26 Nov 2026
   const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
@@ -738,6 +739,13 @@
     }
     if (!rl.includes(S.rock)) S.rock = rl[0];
     // Cargo bay, TEST ONLY (?beta=1): load for making something, or just pick what's in stock and put it on a ship (Mark, 14 Nov)
+    // ⛽ Fuel a ship (Mark, 26 Nov – TEST ONLY ?beta=1): vendor/shipfuel.js
+    if (cargo && FUELB && P.cmode === 'fuel') {
+      m.innerHTML = cmodeBar() + '<div id="sf-pg"></div>';
+      m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
+      window.YICFUEL.render(m.querySelector('#sf-pg'));
+      return;
+    }
     if (cargo && QLB && (P.cmode === 'stock' || (FLEET && P.cmode === 'fleet'))) return stockPage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
@@ -848,8 +856,8 @@
     // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Load one ship / Load a fleet
     if (FLEET) {
       const cm = P.cmode || 'make';
-      return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}</div>` +
-        `<div class="hint" style="margin:8px 0 0">${cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
+      return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}${FUELB ? b('fuel', '⛽ Fuel a ship') : ''}</div>` +
+        `<div class="hint" style="margin:8px 0 0">${cm === 'fuel' ? 'Pick a ship parked on a rock – the page works out how much fills its tank and puts it in from storage.' : cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
           : cm === 'fleet' ? 'Pick a rock, tick the ships parked there, and what to load – it’s spread so each ship carries about the same weight.'
           : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
     }
