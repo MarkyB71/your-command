@@ -13,13 +13,12 @@
   // Adalia Prime option (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): a tick box adds Adalia Prime (#1) to the
   // table even though it isn't yours – everyone starts there and most players still fly out from it. Off to start with;
   // the choice is remembered in this browser, so ticking it makes it your default.
-  const APT = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   const AP_ID = 1, APKEY = 'yic-travel-ap';
   let apOrbit = null, apBusy = false;
   const apOn = () => { try { return localStorage.getItem(APKEY) === '1'; } catch (e) { return false; } };
   const apSet = v => { try { localStorage.setItem(APKEY, v ? '1' : '0'); } catch (e) {} };
-  const apBox = () => APT ? ' <label style="margin-left:8px;white-space:nowrap;cursor:pointer"><input type="checkbox" id="trAP"' +
-    (apOn() ? ' checked' : '') + '> Include Adalia Prime</label>' : '';
+  const apBox = () => ' <label style="margin-left:8px;white-space:nowrap;cursor:pointer"><input type="checkbox" id="trAP"' +
+    (apOn() ? ' checked' : '') + '> Include Adalia Prime</label>';
   function apWire(m) {
     const cb = m.querySelector('#trAP'); if (cb) cb.onchange = () => { apSet(cb.checked); drawTravel(m); };
   }
@@ -51,7 +50,6 @@
   // Refuel check with stock (community idea + Mark, 15 Nov 2026 – TEST ONLY, ?beta=1): a rock also counts as a refuel
   // stop if it has Hydrogen Propellant in storage. And a rock with a working Refinery that can get Hydrogen is flagged
   // "can make it if you bring the powders" (Silica Powder + Tungsten Powder) – still the half-propellant rule there.
-  const RFS = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // RFN (Mark 21 Nov 2026 – LIVE, straight in): a rock only counts as "can refuel" from storage or its markets when it has at
   // least HALF A TANK for the ship picked above (was 1 t – far too little: tanks are 4,000 t Light / 24,000 t Heavy / 2,000 t Shuttle).
   // Half a tank matches the half-propellant rule for rocks that can't refuel.
@@ -80,13 +78,13 @@
     REF = {};
     asts.forEach(a => {
       // Adalia Prime: everyone's starting rock – propellant can always be bought at its markets (Mark, 15 Nov)
-      if (RFS && a.id === AP_ID) { REF[a.id] = true; RST[a.id] = 'market'; return; }
+      if (a.id === AP_ID) { REF[a.id] = true; RST[a.id] = 'market'; return; }
       const ast = (D.owned || []).find(x => x.id === a.id) || {};
       const as = (D.asteroids || []).find(x => +x.id === +a.id), st = {};
       ((as && as.buildings) || []).forEach(b => Object.keys(b.items || {}).forEach(k => { st[k] = (st[k] || 0) + +b.items[k]; }));
-      const mk = canMake(Y, D, ast, '170', {}, RFS ? st : null);
+      const mk = canMake(Y, D, ast, '170', {}, st);
       REF[a.id] = mk; RST[a.id] = mk ? 'make' : 'no';
-      if (!RFS || mk) return;
+      if (mk) return;
       const n = +(st[170] || 0);
       const kg = n && Y.kg ? Y.kg(170, n) : n;
       STK[a.id] = kg;
@@ -101,7 +99,6 @@
   }
   // DCL (community idea, Mark 21 Nov 2026 – LIVE): colour the distance by how far it is right now
   // (under 1 AU green, 1–2 lime, 2–3 yellow, 3+ red), so a close rock no longer looks far just because a better window is coming.
-  const DCL = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const auCol = au => au < 1 ? '#3fd68a' : au < 2 ? '#b5e04a' : au < 3 ? '#ffd24a' : '#ff6b6b';
   const WDAYS = 30, WSTEP = 12;                       // next 30 days, a sample every 12 hours
   const TOFS = [];                                    // trip lengths tried: every hour to 2 days, then coarser
@@ -175,7 +172,7 @@
       .sort((a, b) => a.name.localeCompare(b.name));
     // Adalia Prime added when ticked (its orbit is fetched once, then the page redraws)
     let apAdd = false;
-    if (APT && apOn() && !asts.some(a => a.id === AP_ID)) {
+    if (apOn() && !asts.some(a => a.id === AP_ID)) {
       if (!apOrbit) {
         if (!apBusy) {
           apBusy = true;
@@ -221,11 +218,11 @@
       ' Propellant ' + sel('trP', S.prop, [['full', 'Full tank'], ['now', 'What it has now']]) +
       ' Cargo ' + sel('trC', S.cargo, [['empty', 'Empty'], ['full', 'Full'], ['now', 'What it has now']]) +
       ' Leave ' + sel('trL', S.leave, [[0, 'now'], [6, 'in 6 hours'], [12, 'in 12 hours'], [24, 'in 1 day'], [48, 'in 2 days']]) +
-      (RFS ? ' <button class="lwb" id="trFuel" style="margin-left:8px">' + (S.fuel ? '← Back to Travel' : '⛽ Fuel on the belt') + '</button>' : '') +
-      (RFS && S.fuel ? ' From ' + sel('trF', S.from, fromList.map(a => [a.id, a.name])) : '') +
+      (' <button class="lwb" id="trFuel" style="margin-left:8px">' + (S.fuel ? '← Back to Travel' : '⛽ Fuel on the belt') + '</button>') +
+      (S.fuel ? ' From ' + sel('trF', S.from, fromList.map(a => [a.id, a.name])) : '') +
       (!S.fuel && (hidden || S.allAst) ? ' <button class="lwb" id="trAll" style="margin-left:8px">' + (S.allAst ? 'Only asteroids with a crew' : 'Show all asteroids (' + hidden + ' more)') + '</button>' : '') + (S.fuel ? '' : apBox()) + '</div>';
 
-    if (RFS) {
+    {
       const B = window.BELTDATA && window.BELTDATA.get(() => { if (SELL) return; beltFuel(Y, window.BELTDATA.data); if (m.isConnected) drawTravel(m); });
       if (B) beltFuel(Y, B); else if (!window.BELTDATA) SELL = {};
     }
@@ -237,7 +234,7 @@
         '<div class="note" style="padding:10px 0 0">Every asteroid with at least 1 t of Hydrogen Propellant for sale. Price = cheapest listing, market fee included. ' +
         'Trip = quickest flight there leaving at the chosen time with the ship above (it can refuel when it arrives). Click a heading to sort.</div>';
     } else { {
-      if (RFS) {
+      {
         const of = k => asts.filter(a => RST[a.id] === k);
         const mk = of('make'), st = of('stock'), mkt = of('market'), pw = of('powders'), no = of('no');
         const t = kg => Y.fmtT ? Y.fmtT(kg / 1000) : Math.round(kg / 1000) + ' t';
@@ -253,10 +250,6 @@
             return more.length ? '<br>⛽ Propellant is also for sale on <b>' + more.length + '</b> other asteroid' + (more.length === 1 ? '' : 's') + ' across the belt – see <b>⛽ Fuel on the belt</b>.' : '';
           })() : '<br><span class="a">⛽ Checking the belt markets for propellant…</span>') +
           (pw.length || no.length ? '<br><span class="a">Flying to a rock that can\'t refuel yet, the ship only uses half its propellant so it can get back.</span>' : '') + '</div>';
-      } else {
-      const yes = asts.filter(a => ref[a.id]).map(a => esc(a.name)), no = asts.filter(a => !ref[a.id]).map(a => esc(a.name));
-      h += '<div class="note" style="padding:0 0 10px">⛽ <b>Makes its own propellant:</b> ' + (yes.join(', ') || 'none') +
-        (no.length ? '<br>⛽ <b>Can\'t refuel:</b> ' + no.join(', ') + ' – flying there, the ship only uses half its propellant so it can get back.' : '') + '</div>';
       }
     }
     h += '<div id="trInfo" class="note" style="padding:0 0 10px"></div><div class="wrap"><table id="trT"><thead><tr><th>From \\ To</th>' +
@@ -327,7 +320,7 @@
         const au = T.distance(a.o, b.o, dep) / 1.495978707e11;
         const f = await T.fastest(a.o, b.o, dep, reach(b));
         td.innerHTML = (f ? '<b>' + f.tof + ' h</b>' + (f.tof >= 48 ? ' <span class="a">(' + (f.tof / 24).toFixed(1) + ' d)</span>' : '') : '<span class="a">out of range</span>') +
-          '<br>' + (DCL ? '<span style="color:' + auCol(au) + ';font-weight:bold" title="Distance right now">' : '<span class="a">') + au.toFixed(2) + ' AU</span>';
+          '<br>' + ('<span style="color:' + auCol(au) + ';font-weight:bold" title="Distance right now">') + au.toFixed(2) + ' AU</span>';
         td.dataset.h = f ? f.tof : '';
         if (f && (!best[a.id] || f.tof < best[a.id].tof)) best[a.id] = { tof: f.tof, td };
         await new Promise(r => setTimeout(r, 0));
@@ -373,7 +366,7 @@
       let h = '<div class="note" style="padding:0 0 12px">Trip times in the table are coloured by how good leaving <b>now</b> is: ' +
         '<b style="color:hsl(130,80%,62%)">green</b> = about as quick as it gets in the next 30 days, ' +
         '<b style="color:hsl(0,80%,62%)">red</b> = slow now, a better time is coming.' +
-        (DCL ? '<br>Distances are coloured by how far away the rock is right now: <b style="color:#3fd68a">under 1 AU</b>, <b style="color:#b5e04a">1–2 AU</b>, <b style="color:#ffd24a">2–3 AU</b>, <b style="color:#ff6b6b">3 AU or more</b>.' : '') + '</div>' +
+        ('<br>Distances are coloured by how far away the rock is right now: <b style="color:#3fd68a">under 1 AU</b>, <b style="color:#b5e04a">1–2 AU</b>, <b style="color:#ffd24a">2–3 AU</b>, <b style="color:#ff6b6b">3 AU or more</b>.') + '</div>' +
         '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h3>🚀 Launch windows – next 30 days</h3>' + btn + '</div>';
       if (!routes.length) {
         h += '<div class="note" style="padding:4px 0">Click a trip time in the table above to see the best times to leave.</div>';
