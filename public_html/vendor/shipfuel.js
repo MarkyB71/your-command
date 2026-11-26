@@ -194,14 +194,18 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
         const n = Math.ceil(c.r.inp[w.p] * c.wantRuns - w.rock), cm = c.coming[w.p] || [], got = cm.reduce((t, z) => t + z.n, 0);
         return { p: w.p, n, cm, left: Math.max(0, n - got) };
       });
-      h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : (c.runs ? 'Only enough on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.' : 'Not enough on ' + esc(rock) + ' to make any.')}</div>`;
+      // a clear box so it's easy to see (Mark, 26 Nov: "not easy to see – needs to be more visible")
+      h += '<div style="margin:10px 0;padding:10px 14px;border:2px solid #ffb03b;border-radius:10px;background:#ffb03b1a;font-size:1.05em;line-height:1.5">';
+      h += `<div style="color:#ffb03b;font-weight:700">⚠ ${c.capTxt ? esc(c.capTxt) : (c.runs ? 'Only enough on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.' : 'Not enough on ' + esc(rock) + ' to make any.')}</div>`;
+      const bx = (t) => `<div style="margin-top:6px">${t}</div>`;
       if (!c.capTxt && short.length) {
-        h += `<div class="hint">Short for a full tank: ${short.map((z) => esc(k.pname(z.p)) + ' ' + kgU(z.p, z.n)).join(', ')}.</div>`;
-        short.forEach((z) => z.cm.forEach((m) => { h += `<div class="hint">⚙ ${esc(k.pname(z.p))} ${kgU(z.p, m.n)} already being made at ${esc(k.nm(m.b))} – ${m.done ? '<b>finished, collect it in the game</b>' : 'ready about <b>' + when(m.fin) + '</b>'}.</div>`; }));
+        h += bx(`Short for a full tank: <b>${short.map((z) => esc(k.pname(z.p)) + ' ' + kgU(z.p, z.n)).join(', ')}</b>.`);
+        short.forEach((z) => z.cm.forEach((m) => { h += bx(`⚙ <b>${esc(k.pname(z.p))} ${kgU(z.p, m.n)}</b> already being made at <b>${esc(k.nm(m.b))}</b> – ${m.done ? '<b>finished, collect it in the game</b>' : 'ready about <b>' + when(m.fin) + '</b>'}.`); }));
         const need = short.filter((z) => z.left > 0);
         if (need.length) h += `<div class="row" style="gap:6px;margin-top:4px">${need.map((z) => `<button type="button" class="dk-shipbtn" data-sfmk="${z.p}" data-q="${z.left}" style="cursor:pointer">🏭 Make ${z.cm.length ? 'the other ' + kgU(z.p, z.left) + ' ' : ''}${esc(k.pname(z.p))} in Production ▸</button>`).join('')}</div><div class="hint">It goes into ${esc(k.nm(c.store))}, ready for the refinery – then come back here.</div>`;
-        else { const last = Math.max(...short.map((z) => Math.max(0, ...z.cm.map((m) => m.fin)))); h += `<div class="hint"><span class="ok">✓</span> That covers it – come back ${last > Date.now() / 1000 ? 'after <b>' + when(last) + '</b>' : 'once it’s collected'} to fill the tank.</div>`; }
+        else { const last = Math.max(...short.map((z) => Math.max(0, ...z.cm.map((m) => m.fin)))); h += `<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#3fd68a22;border:1px solid #3fd68a;color:#3fd68a;font-weight:700;font-size:1.05em">✓ That covers it – come back ${last > Date.now() / 1000 ? 'after ' + when(last) : 'once it’s collected'} to fill the tank.</div>`; }
       }
+      h += '</div>';
     }
     // inputs: everything already in one store → just say so; otherwise the move section
     if (!c.moves.length && c.runs > 0) h += `<div class="src" style="margin-top:8px"><span class="ok">✓</span> Everything it needs is in <b>${esc(k.nm(c.store))}</b>${c.cands.length > 1 ? ` <select id="sf-store" style="margin-left:6px">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select>` : ''}</div>`;
