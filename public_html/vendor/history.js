@@ -36,11 +36,11 @@ const words=n=>n.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCas
 const HC={},LD={};let HT=0;const S={cat:'',q:'',crew:'',show:300,range:'100',belt:false,bq:''};
 /* Whole belt – ships in flight now (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1). From flights.php: every ship in
    flight across the belt (Escape Modules too), shared by all visitors and rebuilt at most every 5 minutes. */
-const BELT=true; /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */let FL=null,FLL=null;
+ /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */let FL=null,FLL=null;
 document.addEventListener('yic-refresh',()=>{FL=null;FP=null});
 /* DAA (community idea, Mark 21 Nov 2026 – LIVE): a "Departures and Arrivals" tab – who left and who landed across the
    whole belt in the last 7 days, newest first. Landed ships come from flights.php?past=1 (the game keeps a ship's last trip until it flies again). */
-const DAA=true; /* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) */let FP=null,FPL=null; /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
+ /* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) */let FP=null,FPL=null; /* RFX (LIVE 20 Nov): ⟳ Refresh Game Data fetches belt flights again */
 /* CNB (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1): other players' crew names in Belt flights (flights.php 'crews') */
 const CNB=/[?&]beta=1\b/.test(location.search);
 const STYPE={1:'Escape Module',2:'Light Transport',3:'Heavy Transport',4:'Shuttle'};
@@ -111,10 +111,10 @@ export function drawHistory(m,opt){opt=opt||{}; /* opt.into: drawn somewhere els
   function draw(){
     m.innerHTML='';
     /* Mark 15 Nov (test): on the Flight Deck this page is just the whole belt's flights; your crews' log lives in the Captain's log */
-    if(BELT&&!opt.noTitle){m.appendChild(el('h2','hl-title',DAA&&S.bv==='da'?'Belt flights – departures and arrivals':'Belt flights – in flight now'));
-      if(DAA){const tb=el('div','hl-bar');tb.innerHTML='<button type="button" data-bv="now"'+(S.bv!=='da'?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>In flight now</button><button type="button" data-bv="da"'+(S.bv==='da'?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Departures and Arrivals</button>';
+    if(!opt.noTitle){m.appendChild(el('h2','hl-title',(S.bv==='da')?'Belt flights – departures and arrivals':'Belt flights – in flight now'));
+      {const tb=el('div','hl-bar');tb.innerHTML='<button type="button" data-bv="now"'+(S.bv!=='da'?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>In flight now</button><button type="button" data-bv="da"'+(S.bv==='da'?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>Departures and Arrivals</button>';
         tb.querySelectorAll('button').forEach(b=>{b.style.cssText='padding:5px 12px;border-radius:6px;border:1px solid #5fc3e4;cursor:pointer;font-weight:bold;'+(b.classList.contains('on')?'background:#1d3346;color:#fff':'background:#14202c;color:#8fe3ff');b.onclick=()=>{S.bv=b.dataset.bv;draw()}});m.appendChild(tb)}
-      if(DAA&&S.bv==='da')drawDA();else drawBelt();return}
+      if(S.bv==='da')drawDA();else drawBelt();return}
     if(!opt.noTitle)m.appendChild(el('h2','hl-title','Activity log'));
     const H=HC[S.range];
     const rs=el('select');rs.innerHTML=RANGES.map(([k,n])=>'<option value="'+k+'"'+(k===S.range?' selected':'')+'>'+n+'</option>').join('');
@@ -210,7 +210,7 @@ window.YICdrawHistory=drawHistory; // used by the Captain's log on the Bridge (v
   const hook=()=>{
     const r=document.getElementById('vV'),main=document.getElementById('main');
     if(!r||!main||document.getElementById('vJ'))return;
-    const b=document.createElement('button');b.id='vJ';b.textContent=BELT?'Belt flights':'Activity log';r.after(b);
+    const b=document.createElement('button');b.id='vJ';b.textContent='Belt flights';r.after(b);
     b.addEventListener('click',()=>{document.querySelectorAll('button.on').forEach(x=>x.classList.remove('on'));try{window.YIC.view='M'}catch(e){} /* tell the main page an add-on page is showing */b.className='on';drawHistory(main)});
   };
   document.addEventListener('click',e=>{const b=document.getElementById('vJ'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
