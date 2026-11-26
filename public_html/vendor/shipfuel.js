@@ -16,7 +16,7 @@
   const K = () => window.YICDOCK;
   const PROP = 170, PSLOT = 1;
   const UNITS = { kg: 1, t: 1000, kt: 1e6 };
-  const SF = { ship: 0, amt: '', unit: 't', key: '', crew: 0, msg: '', msgErr: false, busy: false, sentAt: 0, how: '', ref: 0, store: 0 };
+  const SF = { ship: 0, amt: '', unit: 't', key: '', crew: 0, msg: '', msgErr: false, busy: false, sentAt: 0, how: '', ref: 0, store: 0, set: false, storePicked: false };
   const TANK = { 1: 2e8, 2: 4e9, 3: 24e9, 4: 2e9 }; // grams of propellant a full tank holds, by ship type
   let host = null;
 
@@ -59,8 +59,10 @@
     if (!sl.find((x) => x.s.id === SF.ship)) SF.ship = (sl.find((x) => x.ok) || sl[0]).s.id;
     const x = sl.find((y) => y.s.id === SF.ship), s = x.s, tankKg = TANK[s.st] / 1000, nowKg = (s.prop || 0) * 1000;
     // 1 ship
-    h += `<div class="src" style="margin-bottom:4px"><b>1 · Ship</b></div><select id="sf-ship">${sl.map((y) => `<option value="${y.s.id}"${y.s.id === SF.ship ? ' selected' : ''}>${esc(y.s.name)} – ${esc(y.ok ? y.rock : y.why)}</option>`).join('')}</select>`;
-    h += `<div class="sl-bar" style="width:260px"><i style="width:${Math.round(Math.min(1, nowKg / tankKg) * 100)}%"></i></div><div class="src">${esc(s.type)} on ${esc(x.rock)} · tank ${kgTxt(nowKg)} of ${kgTxt(tankKg)}${s.useM ? ' · carrying ' + kgTxt(s.useM / 1000) : ''}</div>`;
+    // 1 ship – one card per ship (Mark, 26 Nov 21:03): tank gauge, where it is; parked ones first
+    const pc = (y) => Math.round(Math.min(1, ((y.s.prop || 0) * 1e6) / TANK[y.s.st]) * 100);
+    h += `<div class="src" style="margin-bottom:6px"><b>1 · Ship</b></div><div class="sf-cards">${sl.map((y) => `<button type="button" class="sf-card${y.s.id === SF.ship ? ' on' : ''}${y.ok ? '' : ' off'}" data-sfship="${y.s.id}"><b>${esc(y.s.name)}</b><span class="src">${esc(y.s.type)} · ${esc(y.ok ? y.rock : y.why)}</span><span class="sl-bar" style="width:100%"><i style="width:${pc(y)}%;background:${pc(y) > 50 ? '#57ff65' : pc(y) >= 25 ? '#ffd94f' : '#e0282e'}"></i></span><span class="src">⛽ ${pc(y)}% · ${kgTxt((y.s.prop || 0) * 1000)} of ${kgTxt(TANK[y.s.st] / 1000)}</span></button>`).join('')}</div>
+<style>#dk-ov .sf-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}#dk-ov .sf-card{display:flex;flex-direction:column;gap:3px;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid #ffb03b55;background:#ffffff08;color:var(--ink);cursor:pointer;font:inherit}#dk-ov .sf-card.on{border-color:#ffb03b;box-shadow:0 0 0 1px #ffb03b inset,0 0 10px #ffb03b55;background:#2a1d08}#dk-ov .sf-card.off{opacity:.55}#dk-ov .sf-card .sl-bar{display:block}</style>`;
     if (!x.ok) { el.innerHTML = h + `<div class="hint" style="color:var(--amber)">${esc(s.name)} is ${esc(x.why)} – it has to be parked on a rock to be fuelled.</div></div>`; wire(el); return; }
     const rock = x.rock, key = s.id + '|' + Math.round(nowKg);
     const op = (v, t, cur) => `<option value="${v}"${String(cur) === String(v) ? ' selected' : ''}>${t}</option>`;
@@ -68,20 +70,20 @@
     if (roomKg < 1) h += `<div class="hint" style="color:var(--green)">✓ The tank is already full.</div>`;
     // 3 amount + stock
     if (SF.key !== key) {
-      SF.key = key; SF.msg = '';
+      SF.key = key; SF.msg = ''; SF.set = false; SF.storePicked = false;
       const q = roomKg;
       SF.unit = q >= 1e6 ? 'kt' : q >= 1000 ? 't' : 'kg'; SF.amt = String(Math.ceil(q / UNITS[SF.unit] * 10) / 10);
     }
-    const amtKg = Math.min(Math.max(0, (+SF.amt || 0) * UNITS[SF.unit]), Math.max(0, tankKg - nowKg));
+    const amtKg = SF.set ? Math.min(Math.max(0, (+SF.amt || 0) * UNITS[SF.unit]), roomKg) : roomKg; // Fill is the default (Mark, 26 Nov)
     const units = Math.floor(amtKg * 1000 / uG());
     const M = moves(rock, x, units), haveU = storesOn(rock).reduce((t, b) => t + have(b), 0);
-    h += `<div class="src" style="margin:12px 0 4px"><b>2 · Propellant to put in</b> <span class="src">(fills it to the top)</span></div><div class="row" style="gap:6px"><input type="number" id="sf-amt" min="0" step="any" value="${esc(SF.amt)}"><select id="sf-unit">${['kg', 't', 'kt'].map((u) => op(u, u, SF.unit)).join('')}</select>
-<span class="src">room in the tank: ${kgTxt(Math.max(0, tankKg - nowKg))}</span></div>`;
-    h += `<div class="src" style="margin-top:6px">In storage on ${esc(rock)}: <b>${kgTxt(haveU * uG() / 1000)}</b></div>`;
+    h += `<div class="src" style="margin:12px 0 4px"><b>2 · How much</b></div><div class="row" style="gap:8px"><button type="button" class="dk-shipbtn${SF.set ? '' : ' on'}" data-sfset="0" style="cursor:pointer">⛽ Fill it – ${kgTxt(roomKg)}</button><button type="button" class="dk-shipbtn${SF.set ? ' on' : ''}" data-sfset="1" style="cursor:pointer">Set amount</button>` +
+      (SF.set ? `<input type="number" id="sf-amt" min="0" step="any" value="${esc(SF.amt)}"><select id="sf-unit">${['kg', 't', 'kt'].map((u) => op(u, u, SF.unit)).join('')}</select><span class="src">up to ${kgTxt(roomKg)}</span>` : '') + '</div>';
+    h += `<div class="src" style="margin:12px 0 4px"><b>3 · Propellant from</b> <span class="src">(already made, in storage on ${esc(rock)}: ${kgTxt(haveU * uG() / 1000)})</span></div>`;
     // 🏭 make it at a refinery (Mark, 26 Nov): "most of the time I have the resources to make the propellant, so I only need to
     // move them. I just need to say fill this ship up with fuel made at this refinery." One process, output straight into the tank.
     if (!SF.how) SF.how = haveU >= units ? 'stock' : 'make';
-    h += `<div class="row" style="gap:8px;margin-top:8px">${[['stock', '📦 Propellant from storage'], ['make', '🏭 Make it at a refinery']].map(([v, t]) => `<button type="button" class="dk-shipbtn${SF.how === v ? ' on' : ''}" data-sfhow="${v}" style="cursor:pointer">${t}</button>`).join('')}</div>`;
+    h += `<div class="row" style="gap:8px">${[['stock', '📦 Propellant from storage'], ['make', '🏭 Make it at a refinery']].map(([v, t]) => `<button type="button" class="dk-shipbtn${SF.how === v ? ' on' : ''}" data-sfhow="${v}" style="cursor:pointer">${t}</button>`).join('')}</div>`;
     if (SF.how === 'make') { el.innerHTML = h + makeHTML(rock, x, units, roomKg) + '</div>'; wire(el); return; }
     if (units > 0 && M.short > 0) {
       const sk = M.short * uG() / 1000;
@@ -92,7 +94,7 @@
     const cl = k.crews(rock);
     if (!cl.find((c) => c.id === SF.crew)) SF.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const crew = cl.find((c) => c.id === SF.crew);
-    h += `<div class="src" style="margin:12px 0 4px"><b>3 · Moved by</b></div>`;
+    h += `<div class="src" style="margin:12px 0 4px"><b>4 · Moved by</b></div>`;
     h += cl.length ? `<select id="sf-crew">${cl.map((c) => `<option value="${c.id}"${c.id === SF.crew ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)} – a crew there has to send it.</div>`;
     if (M.out.length && units > 0) h += `<table style="margin-top:8px"><thead><tr><th>From</th><th>Propellant</th><th>To</th></tr></thead><tbody>${M.out.map((mv) => `<tr><td class="src">${esc(k.nm(mv.b))}</td><td>${kgTxt(mv.n * uG() / 1000)}</td><td class="src">${esc(s.name)} – tank</td></tr>`).join('')}</tbody></table>`;
     const wait = SF.sentAt && Date.now() - SF.sentAt < 180000;
@@ -128,6 +130,9 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     if (!cands.length) return { err: 'No warehouse or tank farm on ' + rock + ' that can hold the inputs.' };
     const kg = (b) => Object.keys(r.inp).reduce((t, p) => t + holds(b, p) * k.grams(+p), 0);
     const saved = lsGet()[rock];
+    // all the inputs already in one store → use it, so the refinery can start straight away (Mark, 26 Nov)
+    const wantR = Math.min(Math.floor(units / r.out[PROP]), canDo(r)), hasAll = (b) => wantR > 0 && Object.keys(r.inp).every((p) => holds(b, p) >= r.inp[p] * wantR);
+    if (!SF.storePicked && cands.find(hasAll)) SF.store = (cands.find((b) => b.id === saved && hasAll(b)) || cands.find(hasAll)).id;
     if (!cands.find((b) => b.id === SF.store)) SF.store = (cands.find((b) => b.id === saved) || cands.find((b) => /fuel|propel/i.test(k.nm(b))) || cands.slice().sort((a, b) => kg(b) - kg(a))[0]).id;
     const store = cands.find((b) => b.id === SF.store);
     const km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b));
@@ -160,17 +165,26 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     if (c.err) return `<div class="hint" style="color:var(--amber);margin-top:8px">${esc(c.err)}</div>`;
     const kgU = (p, n) => kgTxt(n * k.grams(p) / 1000);
     const outKg = c.runs * c.r.out[PROP] * uG() / 1000;
-    let h = `<div class="src" style="margin:12px 0 4px"><b>3 · Make it at</b></div><select id="sf-ref">${c.refs.map((b) => `<option value="${b.id}"${b.id === SF.ref ? ' selected' : ''}>${esc(k.nm(b))} – ${k.freeSlot(b) ? 'free' : 'busy'}</option>`).join('')}</select>
+    let h = `<div class="src" style="margin:12px 0 4px"><b>4 · Make it at</b></div><select id="sf-ref">${c.refs.map((b) => `<option value="${b.id}"${b.id === SF.ref ? ' selected' : ''}>${esc(k.nm(b))} – ${k.freeSlot(b) ? 'free' : 'busy'}</option>`).join('')}</select>
 <div class="src" style="margin-top:4px">${esc(c.r.name)} · <b>${c.runs.toLocaleString('en-GB')} runs</b> → <b>${kgTxt(outKg)}</b> straight into ${esc(x.s.name)}'s tank${c.ref && k.procSecs ? ' · about ' + Math.round((k.procSecs(c.r.name, c.runs) || 0) / 360) / 10 + ' h without bonuses' : ''}.</div>`;
-    if (c.runs < c.wantRuns) h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : 'Only enough inputs on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.'}</div>`;
-    h += `<div class="src" style="margin:12px 0 4px"><b>4 · Inputs from</b> <span class="src">(the refinery takes them from this store)</span></div><select id="sf-store">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select>
-<table style="margin-top:8px"><thead><tr><th>Input</th><th class="num">Needs</th><th class="num">In ${esc(k.nm(c.store))}</th><th class="num">To move in</th></tr></thead><tbody>${c.rows.map((w) => `<tr><td>${esc(k.pname(w.p))}</td><td class="num">${kgU(w.p, w.need)}</td><td class="num">${kgU(w.p, Math.min(w.here, w.need))}</td><td class="num">${w.move > 0 ? kgU(w.p, w.move) : '<span class="ok">✓</span>'}${w.short > 0 ? ' <span style="color:#ff4d4d">short ' + kgU(w.p, w.short) + '</span>' : ''}</td></tr>`).join('')}</tbody></table>`;
-    if (c.moves.length) h += `<div class="src" style="margin-top:6px">Moves: ${c.moves.map((m) => esc(k.nm(m.b)) + ' → ' + m.items.map(([p, n]) => esc(k.pname(p)) + ' ' + kgU(p, n)).join(', ')).join(' · ')}</div>
+    // not enough for it in one process → The SkippyChain shows how to make the rest (Mark, 26 Nov)
+    if (c.runs < c.wantRuns) {
+      const miss = c.wantRuns - c.runs, u = new URLSearchParams(location.search); u.delete('dock'); u.set('pcn', c.r.name); u.set('pcr', String(miss)); u.set('pca', rock);
+      h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : (c.runs ? 'Only enough on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.' : 'Not enough on ' + esc(rock) + ' to make any.')}</div>` +
+        (c.capTxt ? '' : `<div class="hint">Short for the rest: ${c.rows.filter((w) => w.rock < c.r.inp[w.p] * c.wantRuns).map((w) => esc(k.pname(w.p)) + ' ' + kgU(w.p, c.r.inp[w.p] * c.wantRuns - w.rock)).join(', ')}. <a href="${esc(location.pathname + '?' + u.toString() + '#vH')}" target="_blank" rel="noopener" style="color:var(--cyan)">🔗 The SkippyChain – how to make ${kgTxt(miss * c.r.out[PROP] * uG() / 1000)} more ↗</a></div>`);
+    }
+    // inputs: everything already in one store → just say so; otherwise the move section
+    if (!c.moves.length && c.runs > 0) h += `<div class="src" style="margin-top:8px"><span class="ok">✓</span> Everything it needs is in <b>${esc(k.nm(c.store))}</b>${c.cands.length > 1 ? ` <select id="sf-store" style="margin-left:6px">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select>` : ''}</div>`;
+    else if (c.runs > 0) {
+      h += `<div class="src" style="margin:12px 0 4px"><b>5 · Move the inputs</b> <span class="src">(the refinery takes them from one store)</span></div><div class="row" style="gap:6px"><span class="src">Into</span><select id="sf-store">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select></div>
+<table style="margin-top:8px"><thead><tr><th>Input</th><th class="num">Needs</th><th class="num">In ${esc(k.nm(c.store))}</th><th class="num">To move in</th></tr></thead><tbody>${c.rows.map((w) => `<tr><td>${esc(k.pname(w.p))}</td><td class="num">${kgU(w.p, w.need)}</td><td class="num">${kgU(w.p, Math.min(w.here, w.need))}</td><td class="num">${w.move > 0 ? kgU(w.p, w.move) : '<span class="ok">✓</span>'}</td></tr>`).join('')}</tbody></table>
+<div class="src" style="margin-top:6px">From: ${c.moves.map((m) => esc(k.nm(m.b)) + ' → ' + m.items.map(([p, n]) => esc(k.pname(p)) + ' ' + kgU(p, n)).join(', ')).join(' · ')}</div>
 <div class="src">${esc(k.nm(c.store))}: ${c.now}% full now → <b style="color:${c.peak > 100 ? '#ff4d4d' : c.peak >= 90 ? '#ffb03b' : '#3fd68a'}">${c.peak}%</b> with the moves in${c.peak > 100 ? ' – <b style="color:#ff4d4d">won’t fit</b>. Pick another store.' : ''}</div>`;
+    }
     // 5 crew
     const cl = k.crews(rock);
     if (!cl.find((q) => q.id === SF.crew)) SF.crew = (cl.find((q) => !q.busy) || cl[0] || {}).id || 0;
-    h += `<div class="src" style="margin:12px 0 4px"><b>5 · Crew</b></div>` + (cl.length ? `<select id="sf-crew">${cl.map((q) => `<option value="${q.id}"${q.id === SF.crew ? ' selected' : ''}>${esc(q.name)}${q.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)}.</div>`);
+    h += `<div class="src" style="margin:12px 0 4px"><b>${c.moves.length ? 6 : 5} · Crew</b></div>` + (cl.length ? `<select id="sf-crew">${cl.map((q) => `<option value="${q.id}"${q.id === SF.crew ? ' selected' : ''}>${esc(q.name)}${q.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)}.</div>`);
     const crew = cl.find((q) => q.id === SF.crew), wait = SF.sentAt && Date.now() - SF.sentAt < 180000;
     const step = c.moves.length ? 'moves' : 'start';
     const ok = c.runs > 0 && crew && (step === 'moves' ? c.peak <= 100 : c.ref && k.freeSlot(c.ref));
@@ -209,14 +223,15 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
   function wire(el) {
     const again = () => render(host);
     const on = (id, ev, f) => { const e = el.querySelector(id); if (e) e.addEventListener(ev, () => f(e)); };
-    on('#sf-ship', 'change', (e) => { SF.ship = +e.value; SF.crew = 0; SF.key = ''; again(); });
+    el.querySelectorAll('[data-sfship]').forEach((b) => b.addEventListener('click', () => { SF.ship = +b.dataset.sfship; SF.crew = 0; SF.key = ''; SF.how = ''; again(); }));
+    el.querySelectorAll('[data-sfset]').forEach((b) => b.addEventListener('click', () => { SF.set = b.dataset.sfset === '1'; again(); }));
     on('#sf-amt', 'change', (e) => { SF.amt = e.value; again(); });
     on('#sf-unit', 'change', (e) => { SF.unit = e.value; again(); });
     on('#sf-crew', 'change', (e) => { SF.crew = +e.value; again(); });
     on('#sf-make', 'click', () => { SF.how = 'make'; SF.msg = ''; again(); });
     on('#sf-go', 'click', () => { if (!SF.busy) send(); });
     on('#sf-ref', 'change', (e) => { SF.ref = +e.value; again(); });
-    on('#sf-store', 'change', (e) => { SF.store = +e.value; const c = SF.cur; if (c && c.rock) { const a = lsGet(); a[c.rock] = SF.store; lsPut(a); } again(); });
+    on('#sf-store', 'change', (e) => { SF.store = +e.value; SF.storePicked = true; const c = SF.cur; if (c && c.rock) { const a = lsGet(); a[c.rock] = SF.store; lsPut(a); } again(); });
     el.querySelectorAll('[data-sfhow]').forEach((b) => b.addEventListener('click', () => { SF.how = b.dataset.sfhow; SF.msg = ''; again(); }));
   }
 
