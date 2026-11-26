@@ -32,9 +32,7 @@ const CSS=`.cp-title{font-size:22px;margin:4px 0 6px;color:#8fe3ff}
 .cp-pool h3{margin:0 0 6px;font-size:15px;color:#8b9ab0;font-weight:600}
 .cp-pool .cp-slots{grid-template-columns:repeat(auto-fill,minmax(70px,90px))}`;
 /* LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): same look as the new Crew Quarters cards / Galley – green, crewmate pictures with class colours */
-const CPBETA=true; /* LIVE 9 Nov 2026 */
 /* RKB (LIVE 20 Nov 2026, tested on ?beta=1 – Mark): rock drop-down in the planner bar – show only the crews on one rock. "Find a crew" box removed (Mark). */
-const RKB=true;
 const CCOL={1:'#884fff',2:'#e0282e',3:'#ff8c1a',4:'#ffd94f',5:'#4f90ff'};
 const CSS_G=`.cp-title{color:#9be8bf}
 .cp-crew{background:#0e1512;border-color:#2c3d35;transition:border-color .15s,box-shadow .15s}
@@ -60,7 +58,7 @@ const store=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
 export function drawCrewPlan(m){
-  if(!document.getElementById('cp-css')){const st=el('style');st.id='cp-css';st.textContent=CSS+(CPBETA?CSS_G:'');document.head.appendChild(st)}
+  if(!document.getElementById('cp-css')){const st=el('style');st.id='cp-css';st.textContent=CSS+(CSS_G);document.head.appendChild(st)}
   const Y=window.YIC;let D;try{D=Y&&Y.D}catch(e){D=null}
   if(!D||!D.crewList){m.innerHTML='<div class="note">Crew data is still loading. Try again in a moment.</div>';return}
   const crewMult=Y.crewMult,CBJ=Y.CBJ,CBNF=Y.CBNF,habEff=Y.habEff,CMC=Y.CMC,cm=D.crewmates||{};
@@ -73,7 +71,7 @@ export function drawCrewPlan(m){
   const home={};Object.entries(S.orig).forEach(([i,r])=>r.forEach(id=>home[id]=+i));
   const mult=(i,ids,a)=>{const ms=ids.map(id=>cm[id]).filter(Boolean);return crewMult(a,ms)*(CBNF[a]?1:habEff(crews[i]))};
   const ai=(document.getElementById('ast')||{}).value;let an=ai===''||ai==null?null:(Y.asts[+ai]||{}).name;
-  if(RKB){if(S.rock==null)S.rock=an||'';an=S.rock||null}
+  if(S.rock==null)S.rock=an||'';an=S.rock||null
   const rocks=[...new Set(crews.map(c=>c.ast).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
 
   function move(id,to){
@@ -84,7 +82,7 @@ export function drawCrewPlan(m){
   function mateEl(id,k){
     const x=cm[id]||{},e=el('div','cp-mate'+(home[id]!=+k?' moved':'')+(S.sel===id?' sel':''),
       '<img src="cimg.php?id='+id+'&s=1" data-face="'+id+'" alt="" loading="lazy"><div class="n" title="'+esc(names[id]||('#'+id))+'">'+esc(names[id]||('#'+id))+'</div><div class="c">'+esc(CMC[x.class]||'')+'</div>');
-    if(CPBETA)e.style.setProperty('--cc',CCOL[x.class]||'#6b7a90');
+    e.style.setProperty('--cc',CCOL[x.class]||'#6b7a90');
     e.draggable=true;e.title=(names[id]||'Crewmate #'+id)+(home[id]!=+k&&home[id]!=null?' · from '+crews[home[id]].name:'');
     e.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',String(id));e.classList.add('dragging')});
     e.addEventListener('dragend',()=>e.classList.remove('dragging'));
@@ -116,7 +114,7 @@ export function drawCrewPlan(m){
     qs.placeholder='Find a crew';qs.value=S.q;qs.addEventListener('input',()=>{S.q=qs.value;const p=qs.selectionStart;draw();const n=m.querySelector('.cp-bar input');n.focus();n.setSelectionRange(p,p)});
     rs.addEventListener('click',()=>{S.plan=JSON.parse(JSON.stringify(S.orig));S.plan[POOL]=[];S.sel=null;save(key,null);draw()});
     const l1=el('label',null,'Show ');l1.appendChild(js);
-    if(RKB){const rk=el('select');rk.innerHTML='<option value="">All rocks</option>'+rocks.map(r=>'<option'+(r===S.rock?' selected':'')+'>'+esc(r)+'</option>').join('');
+    {const rk=el('select');rk.innerHTML='<option value="">All rocks</option>'+rocks.map(r=>'<option'+(r===S.rock?' selected':'')+'>'+esc(r)+'</option>').join('');
       rk.addEventListener('change',()=>{S.rock=rk.value;drawCrewPlan(m)});const l0=el('label',null,'Rock ');l0.appendChild(rk);bar.appendChild(l0)}
     S.q='';[l1,rs].forEach(x=>bar.appendChild(x));
     {const bb=el('button',null,S.best?'← Back to the planner':'Best crew for each job');bb.style.cssText='margin-left:auto;color:#ffd24a;border-color:#6b5a1c';
