@@ -27,7 +27,6 @@ function canMk(Y,D,ast,prod,seen){if(+prod<=22){const c=ast.Celestial||{};const 
 /* Shipyard tab (LIVE 31 Oct 2026, tested on ?beta=1 first) – ship parts such as Habitation Modules; whole ships stay in the Construction planner (they are built in the dry dock, type 5) */
 const PTABS=[1,2,3,4];
 /* HLP (?beta=1, 7 Nov 2026, Mark): another rock counts if it can make an item with only some ingredients flown in from your other rocks (e.g. Lead: Troilite there, Sulfur Dioxide from elsewhere) */
-const HLP=true; /* LIVE 7 Nov 2026 */
 let run=0;
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -130,11 +129,10 @@ export function drawBuildPlan(m){
   /* NFC (community idea, Mark 15 Nov 2026 – TEST ONLY ?beta=1): something none of your rocks has is only followed down to
      raw materials if this rock has the buildings to make it (Habitation Modules on Zolex with no Shipyard were turned into
      raws to fly in). Otherwise it's flagged as missing – buy it, or make it on a rock that can. */
-  const NFC=true; /* LIVE 15 Nov 2026 (tested on ?beta=1 – Mark) */
   const facNeed=r=>{const E=expand(stk,canMine,[[r.id,r.short]],UC1,AW);return E.USED[r.id]?Object.keys(E.fac).filter(t=>!myFac(t)):null};
   /* Mark (21:32): keep the option to fly in the raw materials anyway (S.rawAny – a button in the Missing box) */
-  const chainRows=rows.filter(r=>r.short&&(NFC&&!S.rawAny?((!r.others.length&&(facNeed(r)||[1]).length===0)||makeOK(r)):(!r.others.length||makeOK(r))));
-  const missRows=NFC?rows.filter(r=>r.short&&!r.others.length&&(!chainRows.includes(r)||(S.rawAny&&(facNeed(r)||[1]).length))):[];
+  const chainRows=rows.filter(r=>r.short&&(!S.rawAny?((!r.others.length&&(facNeed(r)||[1]).length===0)||makeOK(r)):(!r.others.length||makeOK(r))));
+  const missRows=rows.filter(r=>r.short&&!r.others.length&&(!chainRows.includes(r)||(S.rawAny&&(facNeed(r)||[1]).length)));
   const EX=expand(stk,canMine,chainRows.map(r=>[r.id,r.short]),UC1,AW),{USED,pool,fly,mine,fac,made}=EX;if(PM)fac[PR[1]]=1;else if(Object.keys(S.cnt).some(k=>isShip(k)&&S.cnt[k]>0))fac[5]=1;
   /* materials your other asteroids hold: fly those in as they are */
   const shortRows=rows.filter(r=>r.short);
@@ -160,7 +158,7 @@ export function drawBuildPlan(m){
     const visF=E=>Object.keys(E.fly).filter(f=>isCnt(f)?E.fly[f]>=0.5:kgOf(f,E.fly[f])>=0.5);
     const E=expand(stk0,mnF(c),[[k,q]],c.uc||(c.uc={}));let left=0;for(const f in E.fly)left+=kgOf(f,E.fly[f]);
     if(left<=Math.max(0.5,kg*0.001))return HC[key]={how:(stk0[k]||0)>=q-1e-9?'stock':+k<=22?'mine':'make',R:E.USED[k],fac:Object.keys(E.fac)};
-    if(!HLP)return HC[key]=null;
+    
     const tryE=X=>{if(!X.USED[k])return null;const need=[];for(const f of visF(X)){const s2=supFrom(f,X.fly[f],c);if(!s2)return null;need.push({k:f,q:X.fly[f],d:s2.d,h:s2.h})}
       return{how:'help',R:X.USED[k],fac:Object.keys(X.fac),need:need.sort((x,y)=>kgOf(y.k,y.q)-kgOf(x.k,x.q)),hk:need.reduce((t,n)=>t+kgOf(n.k,n.q),0)}};
     /* the plain way first; if that needs something none of your rocks has, try again favouring raws your other rocks hold or mine */
@@ -180,12 +178,12 @@ export function drawBuildPlan(m){
     const flH=fls.map(sh=>sh.dId===S.ast?'<div class="bp-fl to">✈ On its way here: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' – '+when(sh.arrT)+'</div>':
       '<div class="bp-fl">✈ In flight: <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' carrying '+amt(id,sh.cg[id])+' to <b>'+esc(sh.ast||'?')+'</b> – '+when(sh.arrT)+'</div>').join('');
     /* the one best option, shown on the closed line */
-    let mk=null;if(HLP&&!(srcs[0]&&srcs[0].have>=q)){for(const c of RK){const r=canOn(c,id,q);if(r&&r.how!=='help'){mk={c,r};break}if(r&&(!mk||r.hk<mk.r.hk))mk={c,r}}} /* a rock that can do it alone, else the one needing least flown in */
+    let mk=null;if(!(srcs[0]&&srcs[0].have>=q)){for(const c of RK){const r=canOn(c,id,q);if(r&&r.how!=='help'){mk={c,r};break}if(r&&(!mk||r.hk<mk.r.hk))mk={c,r}}} /* a rock that can do it alone, else the one needing least flown in */
     const mkTxt=mk?'⚒ make it on <b>'+esc(mk.c.name)+'</b>'+(mk.r.how==='help'?' – '+helpTxt(mk.r):''):'';
     const here2=fls.find(sh=>sh.dId===S.ast),b=srcs[0];let best;
     if(here2)best='<span class="ok">✈ on its way here on <b>'+esc(here2.name)+'</b>, '+when(here2.arrT)+'</span>';
     else if(b&&b.have>=q)best='<span class="ok">from <b>'+esc(b.a.name)+'</b></span>'+(b.ready.length?' <span class="bp-shb">· 🚀 '+esc(b.ready[0].name)+' ready</span>':' <span class="a">· no ship ready there</span>');
-    else if(HLP&&mnA.length)best='<span class="bp-mn">⛏ mine it on <b>'+esc(mnA[0])+'</b></span>';
+    else if(mnA.length)best='<span class="bp-mn">⛏ mine it on <b>'+esc(mnA[0])+'</b></span>';
     else if(mk)best='<span class="part">'+mkTxt+'</span>';
     else if(b)best='<span class="'+(b.have>=q?'ok':'part')+'">from <b>'+esc(b.a.name)+'</b>'+(b.have>=q?'':' (has '+amt(id,b.have)+')')+'</span>'+(b.ready.length?' <span class="bp-shb">· 🚀 '+esc(b.ready[0].name)+' ready</span>':' <span class="a">· no ship ready there</span>');
     else if(mnA.length)best='<span class="bp-mn">⛏ mine it on <b>'+esc(mnA[0])+'</b></span>';
@@ -215,7 +213,7 @@ export function drawBuildPlan(m){
     const posN=pick.filter(c=>!ready(c.id).length).length;
     /* Fleet (community idea, Mark 15 Nov – TEST ONLY ?beta=1): tick several of the ships parked at a pick-up rock; the load is
        shared so each ship carries about the same weight (a ship with less room takes what fits, the others share the rest) */
-    const fleetHTML=(c,kg)=>{if(!NFC)return'';const rd=ready(c.id);if(rd.length<2)return'';
+    const fleetHTML=(c,kg)=>{const rd=ready(c.id);if(rd.length<2)return'';
       S.fleet=S.fleet||{};let sel=(S.fleet[c.id]||[rd[0].id]).filter(id=>rd.some(sh=>sh.id===id));if(!sel.length)sel=[rd[0].id];S.fleet[c.id]=sel;
       const fl=rd.filter(sh=>sel.includes(sh.id)).map(sh=>({sh,g:Math.max(0,(sh.capM-sh.useM)*0.995)/1000,t:0}));
       const cap=fl.reduce((t,f)=>t+f.g,0),tr=cap>0?Math.max(1,Math.ceil(kg/cap)):0,per=tr?kg/tr:0;
@@ -258,7 +256,7 @@ export function drawBuildPlan(m){
     missRows.map(r=>{const nf=facNeed(r);return'<div style="margin:5px 0"><b>'+esc(nm(r.id))+'</b> '+amt(r.id,r.short)+' <span class="a">– '+(nf===null?'no way to make it here':'can\'t be made on '+esc(here.name)+': needs a '+nf.map(t=>esc(PTYPE[t])).join(' and ')+' here')+'. Buy it (Trade Deck › Where to buy), or make it on a rock that has '+(nf&&nf.length?'a '+nf.map(t=>esc(PTYPE[t])).join(' and '):'what it needs')+'.</span></div>'}).join('')+
     '<div style="margin-top:8px"><button type="button" class="bp-rawany" style="padding:5px 12px;border-radius:6px;border:1px solid #ffb547;background:#1d1709;color:#ffd28a;cursor:pointer;font-weight:bold">'+
     (S.rawAny?'✕ Don\'t fly in the raw materials':'✈ Fly in the raw materials anyway')+'</button> <span class="a">'+(S.rawAny?'Showing the raw materials to fly in below – you\'ll still need the building(s) above on '+esc(here.name)+' to make it.':'Adds the raw materials to the Fly in list, for when you\'ll build the missing building first.')+'</span></div></div>':'';
-  if(NFC&&Object.keys(inp).length)h+=MAT+MISS+(shortRows.length?'<div class="bp-two" style="margin-top:14px"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div>':'')+chainHTML+'</div>';
+  if(Object.keys(inp).length)h+=MAT+MISS+(shortRows.length?'<div class="bp-two" style="margin-top:14px"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div>':'')+chainHTML+'</div>';
   else if(Object.keys(inp).length)h+=(shortRows.length?'<div class="bp-two"><div class="bp-l"><h2 style="margin-top:4px">✈ Fly in</h2>'+flyBox+'</div>'+FEW+'</div><div style="margin-top:14px">'+MAT+'</div>'
     :'<div class="bp-two"><div class="bp-l">'+MAT+'</div>'+FEW+'</div>'+(shortRows.length?'<h2 style="margin-top:14px">✈ Fly in</h2>'+flyBox:''))+chainHTML+'</div>';
   m.innerHTML=h;
@@ -267,8 +265,8 @@ export function drawBuildPlan(m){
     m.querySelectorAll('[data-bpfl]').forEach(cb=>cb.onchange=()=>{const[c,sh]=cb.dataset.bpfl.split(':').map(Number);S.fleet=S.fleet||{};let a=(S.fleet[c]||[]).filter(x=>x!==sh);if(cb.checked)a.push(sh);S.fleet[c]=a;drawBuildPlan(m)})}},60);
   /* No ship at a source asteroid: find your nearest ready cargo ship and the flight to get it there first */
   const fillPos=()=>{const sp=[...m.querySelectorAll('.bp-pos')],th=[...m.querySelectorAll('.bp-then')];if(!sp.length&&!th.length)return;
-    const cand=kg=>(D.ships||[]).filter(sh=>true&&sh.prop>0&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
-    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>true&&sh.dId).map(sh=>sh.dId)])].slice(0,200);
+    const cand=kg=>(D.ships||[]).filter(sh=>(sh.prop>0)&&sh.capM>0&&sh.dId&&(kg*1000<=sh.capM||sh.capM>5e7));
+    const ids=[...new Set([S.ast,...sp.map(x=>+x.dataset.to),...th.map(x=>+x.dataset.from),...(D.ships||[]).filter(sh=>sh.dId).map(sh=>sh.dId)])].slice(0,200);
     Promise.all([fetch('orbits.php?ids='+ids.join(',')).then(r=>r.json()).catch(()=>({})),import('./travel.js?v='+(Y.VER||1))]).then(async([j,T])=>{
       const O=j.orbits||{},now=(Date.now()/1000-1609459200)/3600,AU=1.495978707e11;
       /* "Then send it": loaded flight from the source asteroid to the build asteroid with the chosen ship */
@@ -281,14 +279,14 @@ export function drawBuildPlan(m){
         const load=Math.min(+ln.dataset.kg,sh.capM/1000);let f=null;ft.textContent='(working out…)';
         /* NFC (Mark 15 Nov – TEST ONLY): fuel slider (S.fuel 'pct' = S.fpc % of the tank) and the new refuel rule from Navigation:
            the build rock also counts as a refuel stop if it holds 1 t+ of propellant, sells it on the belt, or is Adalia Prime */
-        const SH0=(T.SHIPS||{})[sh.st],pct=NFC&&S.fuel==='pct'&&SH0,full=(S.fuel==='full')&&SH0,P=full?SH0[2]/1000:pct?SH0[2]/1000*(S.fpc||100)/100:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{};
+        const SH0=(T.SHIPS||{})[sh.st],pct=(S.fuel==='pct')&&SH0,full=(S.fuel==='full')&&SH0,P=full?SH0[2]/1000:pct?SH0[2]/1000*(S.fpc||100)/100:sh.prop*1000,dAst=(D.owned||[]).find(x=>x.id===S.ast)||{};
         const refHere=()=>{if(S.ast===1)return true;const a=A.find(x=>x.id===S.ast),n=a&&a.i!==null?((Y.tot[a.i]||{})[170]||0):0;if((Y.kg?Y.kg(170,n):n)>=1000)return true;
           const B=window.BELTDATA&&window.BELTDATA.data;return!!(B&&!B.err&&(B.orders||[]).some(o=>String(o[0])==='170'&&o[1]===2&&o[5]===S.ast&&o[2]>0))};
-        const half=!canMk(Y,D,dAst,'170',{})&&!(NFC&&refHere());
+        const half=!canMk(Y,D,dAst,'170',{})&&!(refHere());
         try{f=await T.fastest(a.o,b.o,now,half?T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load+P/2,P/2):T.maxDeltaV(sh.st,sh.sv||1,bon(sh),load,P),2000)}catch(e){}
         if(me!==run||!ln.isConnected)return;
         ln.querySelector('.bp-shn')||ft.insertAdjacentHTML('beforebegin','<span class="bp-shn"></span>');ln.querySelector('.bp-shn').innerHTML='on <b>'+esc(sh.name)+'</b>'+(window.GL?window.GL('/ship/'+sh.id,'Open this ship in the game'):'')+' ';
-        {ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option>'+(NFC?'<option value="pct"'+(pct?' selected':'')+'>choose how much</option>':'')+'<option value="now"'+(full||pct?'':' selected')+'>propellant as it is now</option></select>'+
+        {ft.innerHTML='('+(f?HW(f.tof):'out of range')+', carrying '+tkg(load)+', <select class="bp-fuel"><option value="full"'+(full?' selected':'')+'>full tank</option>'+('<option value="pct"'+(pct?' selected':'')+'>choose how much</option>')+'<option value="now"'+(full||pct?'':' selected')+'>propellant as it is now</option></select>'+
           (pct?' <input type="range" class="bp-fpc" min="5" max="100" step="5" value="'+(S.fpc||100)+'" style="vertical-align:middle;width:140px"> <b class="bp-fpcl">'+(S.fpc||100)+'% ('+tkg(P)+')</b>':'')+(half?', <b>½ fuel</b>':'')+')';
           const redo=()=>m.querySelectorAll('.bp-then').forEach(x=>{if(x.dataset.ship)thenOne(x)});
           ft.querySelector('.bp-fuel').onchange=e=>{S.fuel=e.target.value;if(S.fuel==='pct'&&!S.fpc)S.fpc=100;redo()};
@@ -297,7 +295,7 @@ export function drawBuildPlan(m){
         let dl=ln.querySelector('.bp-tdet');if(!dl){dl=document.createElement('div');dl.className='bp-tdet';ln.appendChild(dl)}
         const SH=(T.SHIPS||{})[sh.st];if(!SH){dl.textContent='';return}
         const ve=3e4*bon(sh)*(1+((T.VARIANT_BONUS||{})[sh.sv]||0)),dry=SH[1]/1000+load,tank=SH[2]/1000,has=P,t=x=>tkg(x);
-        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(NFC&&!half&&!canMk(Y,D,dAst,'170',{})?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||(S.ast===1?'Adalia Prime':'This rock'))+'</b> has propellant to refuel (in storage or for sale) – the ship can fill up there for the way back.':'')+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
+        if(f){const used=(dry+has)*(1-Math.exp(-f.dv/ve));dl.innerHTML='⛽ Uses about <b>'+t(used)+'</b> of its '+t(has)+(full?' (full tank)':'')+' propellant · leaves '+t(Math.max(0,has-used))+bonTxt(sh)+(!half&&!canMk(Y,D,dAst,'170',{})?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||(S.ast===1?'Adalia Prime':'This rock'))+'</b> has propellant to refuel (in storage or for sale) – the ship can fill up there for the way back.':'')+(half?'<br>⛽ <b>'+esc(dAst.Name&&dAst.Name.name||'This rock')+'</b> can\'t make propellant – only half the tank is used getting there, so it can fly back.':'');return}
         dl.innerHTML='<span class="a">working out what it would take…</span>';
         let best=null;for(let h=6;h<=2000;h+=h<200?6:24){let dv;try{dv=await T.deltaV(a.o,b.o,now,h)}catch(e){continue}if(!best||dv<best.dv)best={h,dv}}
         if(me!==run||!ln.isConnected)return;
