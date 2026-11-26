@@ -28,6 +28,7 @@
     return M.loading;
   }
   const lotIdx = (id) => Math.floor(id / 4294967296);
+  const aboard = (c) => { const r = ((K().D() || {}).crewsRaw || []).find((x) => x.id === c.id); return !!(r && r.Location && r.Location.location && r.Location.location.label === 6); };
   const realSecs = (y, left) => { if (!(y > 0) || !(left > 0)) return 0; const a = Math.sqrt(left / MAXY), b = Math.sqrt(Math.max(0, left - y) / MAXY); return (a - b) * YEAR / 24; };
   const hrs = (s) => s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 * 2 ? (s / 3600).toFixed(1).replace(/\.0$/, '') + ' h' : (s / 86400).toFixed(1).replace(/\.0$/, '') + ' days';
   const capOf = (b) => b.Building.buildingType === K().TANK ? [75e9, 997.5e9] : [1.5e12, 75e9];
@@ -103,17 +104,19 @@
       // CREW (Mark, 26 Nov: "one crew will not be able to do all the extractions"): each start keeps the crew busy for
       // the trip to the extractor + mining time ÷ 8 (SDK Time.getCrewLaborDuration), and a crew can only queue jobs
       // up to 24 h ahead (Crew.CREW_SCHEDULE_BUFFER). Spread over the crews on the rock – earliest free first.
-      const cl = k.crews(e.rock);
-      // E6009 "crew resting" (Mark's first real try, 26 Nov 22:51 – the 10th start failed): the ÷8 + one-way trip guess was
-      // too low. Now counted carefully: mining time ÷ 4 + the trip there AND back, and the queue kept under 20 h.
-      const cost = (c) => Math.ceil(realSecs(y, left) / 4) + 2 * (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
+      // E6009 "crew resting" (26 Nov): the failing starts lined up with crews stationed ABOARD A SHIP (Location label 6)
+      // at the spaceport – only crews stationed in a habitat are used for mining.
+      const cl = k.crews(e.rock).filter((c) => !aboard(c));
+      // Same as the game client (main.js, extraction dialog): trip to the extractor + on-site labour (mining time ÷ 8) +
+      // trip back; a crew can take a new job while its queue ends no more than 24 h from now (client _readyToSequence).
+      const cost = (c) => Math.ceil(realSecs(y, left) / 8) + 2 * (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
       const qEnd = (c) => Q[c.id] != null ? Q[c.id] : Math.max(now(), k.crewReady(c));
-      const lim = now() + 20 * 3600;
+      const lim = now() + 86400;
       let crew = null, over = false;
       if (M.pick[key] && y > 0 && st) {
         const ch = cl.find((c) => c.id === M.crew[key]);
-        if (ch) { crew = ch; over = qEnd(ch) + cost(ch) > lim; }
-        else crew = cl.filter((c) => qEnd(c) + cost(c) <= lim).sort((a, c) => (qEnd(a) + cost(a)) - (qEnd(c) + cost(c)))[0] || null;
+        if (ch) { crew = ch; over = qEnd(ch) > lim; }
+        else crew = cl.filter((c) => qEnd(c) <= lim).sort((a, c) => (qEnd(a) + cost(a)) - (qEnd(c) + cost(c)))[0] || null;
         if (crew && !over) Q[crew.id] = qEnd(crew) + cost(crew);
       }
       const on = M.pick[key] && y > 0 && st && crew && !over;
@@ -135,7 +138,7 @@
             (short && r.st ? `<div class="src" style="color:var(--amber)">only ${k.tonnes(r.y)} fits${r.stores.some((b) => b !== r.st && r.fitsAll(b)) ? '' : ' – no storage here takes it all'}</div>` : '') + `</td>` +
             `<td>${r.stores.length ? `<select data-mst="${r.key}">${r.stores.map((b) => `<option value="${b.id}"${r.st && b.id === r.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${k.kmTxt(r.km(b))}${r.fitsAll(b) ? '' : ' · not all fits'}</option>`).join('')}</select>` : '<span style="color:var(--red)">no storage on this rock</span>'}` +
             (r.st && !r.room ? '<div class="src" style="color:var(--red)">full – pick another</div>' : '') + `</td>` +
-            `<td>${!r.cl.length ? `<span style="color:var(--amber)">no crew on ${esc(r.e.rock)}</span>` : `<select data-mcrew="${r.key}"><option value="">${M.pick[r.key] && r.y && !M.crew[r.key] ? (r.crew ? 'Auto – ' + esc(r.crew.name) : 'Auto – no crew has room') : 'Auto'}</option>${r.cl.map((c) => `<option value="${c.id}"${M.crew[r.key] === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` +
+            `<td>${!r.cl.length ? `<span style="color:var(--amber)">no crew in a habitat on ${esc(r.e.rock)}</span>` : `<select data-mcrew="${r.key}"><option value="">${M.pick[r.key] && r.y && !M.crew[r.key] ? (r.crew ? 'Auto – ' + esc(r.crew.name) : 'Auto – no crew has room') : 'Auto'}</option>${r.cl.map((c) => `<option value="${c.id}"${M.crew[r.key] === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` +
               (M.pick[r.key] && r.y && !r.crew ? '<div class="src" style="color:var(--amber)">every crew’s 24 h queue is full – start this one later</div>' : '') +
               (r.over ? `<div class="src" style="color:var(--red)">${esc(r.crew.name)}’s queue would go past 24 h</div>` : '')}</td>` +
             `<td class="num">${r.y ? '~' + hrs(t) : '–'}</td></tr>`;
@@ -144,7 +147,7 @@
       const used = {}; rows.filter((r) => r.on).forEach((r) => { const u = used[r.crew.id] = used[r.crew.id] || { c: r.crew, n: 0, end: 0 }; u.n++; u.end = Math.max(u.end, Q[r.crew.id]); });
       const ul = Object.values(used);
       h += `<div class="card"><h2><span class="n">2</span>Crews</h2>` + (ul.length ? ul.map((u) => `<div class="src" style="margin:3px 0"><b>${esc(u.c.name)}</b> starts ${u.n} · busy until about ${hrs(Math.max(60, u.end - now()))} from now</div>`).join('') : '<div class="src">Nothing ticked.</div>') +
-        '<div class="hint">Each start keeps a crew busy for a while, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock, counted on the safe side (kept under 20 hours). Pick one in the Crew column to choose yourself.</div></div>';
+        '<div class="hint">Each start keeps a crew busy for a while, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock, the way the game counts it. Pick one in the Crew column to choose yourself. Crews stationed aboard a ship are left out – the game refuses them (“crew resting”).</div></div>';
     }
     if (none.length) h += `<details class="card dkp-fold"><summary>Idle with no core sample on their lot (${none.length})</summary><div class="src">${none.map((e) => esc(k.nm(e.b)) + ' (' + esc(e.rock) + ')').join(' · ')}</div><div class="hint">Take a core sample on that lot in the game first.</div></details>`;
     M.calls = calls;
