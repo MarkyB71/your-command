@@ -270,9 +270,47 @@
   addEventListener('message', e => {
     if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== 'yic-goto-asteroid') return;
     const id = Number(e.data.id); if (!(id > 0)) return;
-    history.pushState({}, '', '/asteroids/' + id);
-    dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+    goAsteroid(id);
   });
+  // Fly the game's camera to an asteroid, the same as clicking it on the belt map: the game's own
+  // "pick this asteroid" and "zoom in" (found by name in the game's React hooks). Camera only – no
+  // game actions. If a game update hides them, fall back to opening the rock's first lot (that zooms in too).
+  let nav = null;
+  function findNav() {
+    let start = null;
+    for (const el of document.querySelectorAll('body *')) {
+      const k = Object.keys(el).find(k => k.startsWith('__reactFiber$'));
+      if (k) { start = el[k]; break; }
+    }
+    if (!start) return null;
+    let f = start; while (f.return) f = f.return;
+    const fns = {}, stack = [f]; let n = 0;
+    while (stack.length && n < 400000) {
+      const x = stack.pop(); n++;
+      for (let h = x.memoizedState, i = 0; h && typeof h === 'object' && 'next' in h && i < 60; h = h.next, i++) {
+        const v = h.memoizedState;
+        if (typeof v === 'function' && v.name && !fns[v.name]) fns[v.name] = v;
+      }
+      if (x.sibling) stack.push(x.sibling);
+      if (x.child) stack.push(x.child);
+    }
+    const zoomNames = Object.keys(fns).filter(k => /zoom/i.test(k) && /status/i.test(k));
+    root.dataset.yicAstNav = 'origin:' + (fns.dispatchOriginSelected ? 'yes' : 'no') + ' zoom:' + (zoomNames.join(',') || 'none');
+    if (!fns.dispatchOriginSelected) return null;
+    return { origin: fns.dispatchOriginSelected, zoom: fns[zoomNames.find(k => /^update/.test(k)) || zoomNames[0]] };
+  }
+  function goAsteroid(id) {
+    try {
+      if (!nav) nav = findNav();
+      if (nav) {
+        nav.origin(id);
+        if (nav.zoom) setTimeout(() => { try { nav.zoom('zooming-in'); } catch (e) {} }, 60);
+        return;
+      }
+    } catch (e) { nav = null; root.dataset.yicAstNav = 'error: ' + e.message; }
+    history.pushState({}, '', '/lot/' + (BigInt(id) + (1n << 32n)).toString());
+    dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  }
   // "Go" from the card: open that building in the game – the same as the game's own /building/ link.
   addEventListener('message', e => {
     if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== 'yic-goto-building') return;

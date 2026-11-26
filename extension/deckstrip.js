@@ -43,7 +43,7 @@
 #yic-strip .pc span{display:block;font-size:11px;color:#f3e2b0;margin:4px 0 5px}
 #yic-strip .pc i{font:normal 700 9px/1 system-ui,sans-serif;letter-spacing:.18em;color:#ffd24a}
 #yic-strip .sn{display:none}#yic-strip.narrow .fn{display:none}#yic-strip.narrow .sn{display:inline}
-#yic-rocktop{position:fixed;top:10px;right:490px;width:230px;z-index:50;font-family:system-ui,sans-serif;cursor:pointer}
+#yic-rocktop{position:fixed;top:10px;right:484px;width:230px;z-index:50;font-family:system-ui,sans-serif;cursor:pointer}
 #yic-rocktop .scr{box-sizing:border-box;height:62px;padding:4px 8px;border-radius:2px 2px 6px 6px;overflow:hidden;background:linear-gradient(0deg,rgba(255,255,255,.03),rgba(0,0,0,.2)),repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0a1119;
  border:1px solid #2a3646;border-bottom:2px solid var(--dc);box-shadow:0 0 12px -5px var(--dc),inset 0 0 18px -9px var(--dc);transition:filter .2s,transform .2s}
 #yic-rocktop:hover .scr{filter:drop-shadow(0 0 10px var(--dc));transform:translateY(2px)}
@@ -105,6 +105,8 @@
 #yic-pop .add input{flex:1;min-width:0;box-sizing:border-box;padding:4px 6px;border-radius:4px;border:1px solid #2a3646;background:#05090e;color:#e6ebf2;font:12px system-ui,sans-serif}
 #yic-pop .add button{cursor:pointer;padding:3px 10px;border-radius:4px;border:1px solid #57d5ff;background:rgba(87,213,255,.12);color:#57d5ff;font:700 11px system-ui,sans-serif}
 #yic-pop .msg{min-height:14px;margin-top:3px;font-size:11px;color:#ff7a7a}
+#yic-rocktop.ah::before{left:auto;right:0;transform:none}
+#yic-asttop.ah::before{left:0;transform:none}
 @keyframes yicLed{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){#yic-strip .led{animation:none}#yic-strip .st,#yic-strip .pc{transition:none}}`;
   // Auto-hide (option, off by default): only the strip's base lights show until you hover over it (Mark, 18 Nov).
