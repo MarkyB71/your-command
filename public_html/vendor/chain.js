@@ -94,12 +94,11 @@ const CSS=`.pc-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margi
 .pc-wrap.zm{cursor:grab}.pc-wrap.zm.drag{cursor:grabbing;user-select:none}`;
 const CNT=new Set([126,127,130,133,144,145,146,147,148,149,150,154,155,156,157,158,165,166,167,168,175,202,204,205,206,207,208,209,210,211,212,214,215,221,222,224,225,226,227,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245]),UF={units:1,kg:1,t:1e3,kt:1e6};/* units for a bulk item = 1 kg each (Mark, 21 Nov) */
 /* LST (Mark 24 Nov 2026): SkippyChain as an indented list (top to bottom, like folders) instead of the wide tree – fits long chains on screen. A "Wide tree"/"List" button swaps between them. */
-const LST=true;/* LIVE 24 Nov 2026 (tested on ?beta=1 – Mark) */
 /* Other ways to fit long chains (Mark 24 Nov 2026) – picked from the View drop-down */
 const VIEWS=[['tree','Wide tree','dn'],['small','Small cards','dn sc'],['level','One level','dn'],['list','List','ls']];/* Mark 24 Nov: Wrap rows dropped; zoom is on every view */
 try{const v=localStorage.getItem('pcView');if(v&&VIEWS.some(x=>x[0]===v))S.view=v}catch(e){}
-const vw=()=>LST?(S.view||'tree'):'tree',vcls=()=>(VIEWS.find(v=>v[0]===vw())||VIEWS[1])[2];
-let CMV=null,REDRAW=null;const UNB=true;/* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
+const vw=()=>S.view||'tree',vcls=()=>(VIEWS.find(v=>v[0]===vw())||VIEWS[1])[2];
+let CMV=null,REDRAW=null;/* LIVE 21 Nov 2026 (tested on ?beta=1 – Mark) *//* grams per unit of counted items (modules etc.), from tidy.js – for kg/t/kt on them (Mark, 21 Nov) */
 fetch('vendor/tidy.js',{cache:'force-cache'}).then(r=>r.text()).then(t=>{const m=/const MV = (\{.*?\});/.exec(t);if(m){CMV=JSON.parse(m[1]);try{REDRAW&&REDRAW()}catch(e){}}}).catch(()=>{});
 /* LIVE v59: "Made from" / "Used in" links on every box, and Used in opens 1 level by default */
 
@@ -143,11 +142,10 @@ const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=nu
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function opts(id,path){return(makers[id]||[]).filter(p=>!/Unbundling/.test(p.name)&&!Object.keys(p.inp).some(k=>path.includes(+k)))}
 /* PCG (LIVE 12 Nov 2026, tested on ?beta=1): "SkippyChain ↗" from the game (extension 0.6.7). To switch off: PCG=false. */
-const PCG=true;
 /* CAS (LIVE 11 Nov 2026, tested on ?beta=1 – community request): changing the recipe on one box changes every box for that same product in the chain.
    Stored in S.choice as 'id:<item id>' so Back/Forward and resets carry it too.
    TO REVERT: set CAS=false (each box goes back to its own recipe choice). */
-const CAS=true,chs=(key,id)=>{const v=CAS?S.choice['id:'+id]:undefined;return v!==undefined?v:S.choice[key]};
+const chs=(key,id)=>{const v=S.choice['id:'+id];return v!==undefined?v:S.choice[key]};
 const inF=k=>!S.foc||k===S.foc||k.startsWith(S.foc+'/');
 function isOpen(key,d){if(vw()==='level'&&S.mode==='from'){const f=S.foc||'r';return f===key||f.startsWith(key+'/')}if(S.foc){if(S.foc.startsWith(key+'/'))return true;d-=S.foc.split('/').length-1}return S.closed.has(key)?false:(S.opened.has(key)||S.all)?true:d<3}
 export function drawChain(m){
@@ -158,7 +156,7 @@ export function drawChain(m){
     if(pp&&N[pp]){S.mode='from';S.prod=pp;if(pp>=1000)S.amt=1}
     if(pa&&window.YIC){const i=(window.YIC.asts||[]).findIndex(x=>x.name===pa),s0=document.getElementById('ast');if(i>=0&&s0){s0.value=String(i)}}
     /* from the game (extension 0.6.7 "SkippyChain ↗" button, no Command Deck tab open): ?pcn=<process name>&pcr=<runs> */
-    const pn=PCG&&q.get('pcn');if(pn)window.__pcGo={n:pn,r:+q.get('pcr')||1};
+    const pn=q.get('pcn');if(pn)window.__pcGo={n:pn,r:+q.get('pcr')||1};
     if(pp||pa||pn){q.delete('pcp');q.delete('pca');q.delete('pcn');q.delete('pcr');const qs=q.toString();history.replaceState(history.state,'',location.pathname+(qs?'?'+qs:'')+location.hash)}}catch(e){}}
   /* a game process (Manufacture Goods / Refine / Bioreactor window): open its main product, amount = runs × output, on that recipe */
   if(window.__pcGo){const g=window.__pcGo;window.__pcGo=null;const p=P.find(x=>x.name===g.n);
@@ -199,7 +197,7 @@ export function drawChain(m){
     const sel=(c,cur)=>{const s=el('select');
       if(isRaw){const m=el('option',null,'Mine it (raw)');m.value=-1;if(cur===-1)m.selected=true;s.appendChild(m)}
       o.forEach(x=>{const op=el('option');op.value=x.i;op.textContent=x.name;if(x===cur)op.selected=true;s.appendChild(op)});
-      if(CAS)s.title='Changes every '+N[id]+' in this chain';s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;if(CAS)S.choice['id:'+id]=+s.value;draw()});c.appendChild(s)};
+      s.title='Changes every '+N[id]+' in this chain';s.addEventListener('change',()=>{anc(key,s);S.choice[key]=+s.value;S.choice['id:'+id]=+s.value;draw()});c.appendChild(s)};
     if(!all.length||!o.length||mine){const c=el('div','pc-n raw',head(id,qty));if(isRaw&&o.length)sel(c,-1);
       c.insertAdjacentHTML('beforeend','<span class="pc-t pc-raw">'+(isRaw?'Raw – mined'+(o.length?' · or made with '+o.length+' recipe'+(o.length>1?'s':''):''):'no recipe without a loop')+'</span>'+(isRaw?mineHTML(id,ai,o.length,qty):''));
       br.appendChild(c);if(inF(key))raws[id]=(raws[id]||0)+qty;return br}
@@ -288,8 +286,8 @@ export function drawChain(m){
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.closed.add('u');draw()});
     const l1=el('label',null,'Product ');l1.appendChild(ps);
-    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));if(LST)bar.appendChild(viewBtn());m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap '+(vw()==='level'?'dn':vcls())),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);if(LST){w.classList.add('zm');const zr=el('div','pc-zrow');zr.appendChild(zoomBar(w,inner));w._zr=zr}navTop(inner);m.appendChild(w);if(w._zr)w.before(w._zr)}
+    [modeSw(),l1,b2].forEach(x=>bar.appendChild(x));bar.appendChild(viewBtn());m.appendChild(bar);stick(bar);
+    const w=el('div','pc-wrap '+(vw()==='level'?'dn':vcls())),inner=el('div','pc-in');inner.appendChild(unode(S.prod,[],'u',0,null));w.appendChild(inner);{w.classList.add('zm');const zr=el('div','pc-zrow');zr.appendChild(zoomBar(w,inner));w._zr=zr}navTop(inner);m.appendChild(w);if(w._zr)w.before(w._zr)}
   const anc=(key,n)=>{const c=n.closest('.pc-n');S.anchor=c?{k:key,top:c.getBoundingClientRect().top,left:c.getBoundingClientRect().left}:null};
   function draw(){REDRAW=draw;const y=scrollY,ow=M0.querySelector('.pc-wrap.dn'),sl=ow?ow.scrollLeft:null;M0.style.minHeight=M0.offsetHeight+'px';draw0();M0.style.minHeight='';scrollTo(scrollX,y);
     const nw=M0.querySelector('.pc-wrap.dn');if(nw)nw.scrollLeft=sl!==null?sl:(nw.scrollWidth-nw.clientWidth)/2;
@@ -341,18 +339,18 @@ export function drawChain(m){
     m.appendChild(el('div','note','Pick a product. Its inputs '+'open out below it'+', back to raw materials. Where there is a dropdown, choose the recipe. '+(Y?'Each card shows what you hold in your warehouses and tank farms'+(ai===null?' across all asteroids':where)+' — use the asteroid box above to narrow it. ':'')+'Recipes from the game\'s own SDK.'));
     const bar=el('div','pc-bar'),ps=el('select'),am=el('input'),b1=el('button',null,'Open all levels'),b2=el('button',null,'Close all');
     fillPs(ps);
-    const bulk=(S.prod<1000)&&!CNT.has(S.prod),cg=UNB&&!bulk&&S.prod<1000&&CMV&&CMV[S.prod]?CMV[S.prod][0]:0;if(!cg||!S.cunit)S.cunit='units';const cw=cg&&S.cunit!=='units',uf=bulk?UF[S.unit]:cw?UF[S.cunit]*1000/cg:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
+    const bulk=(S.prod<1000)&&!CNT.has(S.prod),cg=!bulk&&S.prod<1000&&CMV&&CMV[S.prod]?CMV[S.prod][0]:0;if(!cg||!S.cunit)S.cunit='units';const cw=cg&&S.cunit!=='units',uf=bulk?UF[S.unit]:cw?UF[S.cunit]*1000/cg:1;am.type='number';am.min=bulk?'any':1;am.step='any';am.value=+(S.amt/uf).toPrecision(6);am.style.width='90px';
     ps.addEventListener('change',()=>{snap();S.prod=+ps.value;if(S.prod>=1000)S.amt=1;S.choice={};S.closed.clear();S.opened.clear();S.all=false;S.foc=null;draw()});
     am.addEventListener('change',()=>{S.amt=bulk?Math.max(1,(+am.value||0)*uf):cw?Math.max(1,Math.floor((+am.value||0)*uf)):Math.max(1,Math.round(+am.value||1));draw()});
     b1.addEventListener('click',()=>{S.closed.clear();S.all=true;draw()});
     b2.addEventListener('click',()=>{S.closed.clear();S.opened.clear();S.all=false;S.closed.add(S.foc||'r');draw()});
-    const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=(UNB?['units','kg','t','kt']:['kg','t','kt']).map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(S.prod<1000){if(cg){const us3=el('select');us3.innerHTML=['units','kg','t','kt'].map(u=>'<option'+(u===S.cunit?' selected':'')+'>'+u+'</option>').join('');us3.title='Units or weight';us3.addEventListener('change',()=>{const v=+am.value||1;S.cunit=us3.value;const nf=S.cunit==='units'?1:UF[S.cunit]*1000/cg;S.amt=Math.max(1,Math.floor(v*nf));draw()});l2.appendChild(us3);if(cw)l2.appendChild(document.createTextNode(' = '+S.amt.toLocaleString()+(S.amt===1?' unit':' units')))}else l2.appendChild(document.createTextNode(' each'))}
-    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));if(LST)bar.appendChild(viewBtn());
+    const l1=el('label',null,'Product '),l2=el('label',null,'Amount ');l1.appendChild(ps);l2.appendChild(am);if(bulk){const us2=el('select');us2.innerHTML=(['units','kg','t','kt']).map(u=>'<option'+(u===S.unit?' selected':'')+'>'+u+'</option>').join('');us2.title='Units';us2.addEventListener('change',()=>{const v=+am.value||1;S.unit=us2.value;S.amt=Math.max(1,v*UF[S.unit]);draw()});l2.appendChild(us2)}else if(S.prod<1000){if(cg){const us3=el('select');us3.innerHTML=['units','kg','t','kt'].map(u=>'<option'+(u===S.cunit?' selected':'')+'>'+u+'</option>').join('');us3.title='Units or weight';us3.addEventListener('change',()=>{const v=+am.value||1;S.cunit=us3.value;const nf=S.cunit==='units'?1:UF[S.cunit]*1000/cg;S.amt=Math.max(1,Math.floor(v*nf));draw()});l2.appendChild(us3);if(cw)l2.appendChild(document.createTextNode(' = '+S.amt.toLocaleString()+(S.amt===1?' unit':' units')))}else l2.appendChild(document.createTextNode(' each'))}
+    [modeSw(),l1,l2,b1,b2].forEach(x=>bar.appendChild(x));bar.appendChild(viewBtn());
     if(Y&&Y.asts&&Y.asts.length){const us=el('select');us.className='pc-usesel';
       us.innerHTML='<option value="">Use my stock on (please select)</option>'+Y.asts.map((a,i)=>'<option value="'+i+'"'+(S.use===i?' selected':'')+'>Use my stock on '+esc(a.name)+'</option>').join('');
       us.addEventListener('change',()=>{S.use=us.value===''?null:+us.value;draw()});bar.prepend(us)}
     m.appendChild(bar);stick(bar);
-    const w=el('div','pc-wrap '+vcls());const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);if(LST){w.classList.add('zm');const zr=el('div','pc-zrow');zr.appendChild(zoomBar(w,inner));w._zr=zr}
+    const w=el('div','pc-wrap '+vcls());const inner=el('div','pc-in');inner.appendChild(node(S.prod,S.amt,[],'r'));w.appendChild(inner);{w.classList.add('zm');const zr=el('div','pc-zrow');zr.appendChild(zoomBar(w,inner));w._zr=zr}
     if(S.foc){const f=inner.querySelector('[data-k="'+window.CSS.escape(S.foc)+'"]');if(f){inner.innerHTML='';inner.appendChild(f)}else S.foc=null}
     if(S.foc){const tr=el('div','pc-trail'),ks=S.foc.split('/');tr.appendChild(el('span','pc-tl','Showing: '));
       ks.forEach((x,i)=>{const k=ks.slice(0,i+1).join('/'),nm=N[i?+x:S.prod],last=i===ks.length-1;if(i)tr.appendChild(el('span','pc-sep',' › '));
@@ -386,7 +384,7 @@ export function drawChain(m){
   document.addEventListener('click',e=>{const b=document.getElementById('vH'),t=e.target.closest&&e.target.closest('button[id^="v"]');if(b&&t&&t!==b)b.className=''},true);
   setInterval(hook,700); /* keeps the button in place if the header is rebuilt on refresh */
   /* "SkippyChain ↗" in the game (extension 0.6.7): the extension posts the process, runs and rock here, into this open Command Deck tab */
-  addEventListener('message',e=>{const d=e.data;if(!PCG||e.source!==window||e.origin!==location.origin||!d||d.type!=='yic-chain'||typeof d.n!=='string'||d.n.length>120)return;
+  addEventListener('message',e=>{const d=e.data;if((e.source!==window)||e.origin!==location.origin||!d||d.type!=='yic-chain'||typeof d.n!=='string'||d.n.length>120)return;
     window.__pcGo={n:d.n,r:+d.r||1};
     if(typeof d.a==='string'&&window.YIC){const i=(window.YIC.asts||[]).findIndex(x=>x.name===d.a),s0=document.getElementById('ast');if(i>=0&&s0)s0.value=String(i)}
     const go=(k=0)=>{const b=document.getElementById('vH');if(b){b.click();scrollTo(0,0)}else if(k<40)setTimeout(()=>go(k+1),250)};go()});
