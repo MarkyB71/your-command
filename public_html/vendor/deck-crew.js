@@ -8,11 +8,8 @@
   'use strict';
   if (!window.YICDECKS) return;
   // Crew Quarters in Habitat yellow on ?beta=1 (decks by crew + building – Mark trying it, 13 Nov 2026)
-  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
-  const COL = BLD ? '#ffff00' : '#3fd68a';
-  const P = BLD
-    ? { rgb: '255,255,0', lite: '#fff59a', pale: '#fffbd0', mute: '#a8a68a', d1: '#21200f', d2: '#110f06', d3: '#16150a', d4: '#38361f', d5: '#3d3b24', d6: '#2c2a17', d7: '#1c1b0e' }
-    : { rgb: '63,214,138', lite: '#9be8bf', pale: '#c8f5dc', mute: '#8fa79a', d1: '#16211c', d2: '#0b110e', d3: '#0e1512', d4: '#24382d', d5: '#2c3d35', d6: '#1f2c26', d7: '#141c19' };
+  const COL = '#ffff00';
+  const P = { rgb: '255,255,0', lite: '#fff59a', pale: '#fffbd0', mute: '#a8a68a', d1: '#21200f', d2: '#110f06', d3: '#16150a', d4: '#38361f', d5: '#3d3b24', d6: '#2c2a17', d7: '#1c1b0e' };
   const CLASS_COL = { 1: '#884fff', 2: '#e0282e', 3: '#ff8c1a', 4: '#ffd94f', 5: '#4f90ff' };
   const CSS = `
 body.dk-crew #main{border:1px solid rgba(${P.rgb},.3);border-top:3px solid ${COL};border-radius:0 0 14px 14px;background:linear-gradient(180deg,rgba(${P.rgb},.06),rgba(5,7,10,0) 220px),repeating-linear-gradient(90deg,rgba(${P.rgb},.03) 0 1px,transparent 1px 48px),#070b0d;box-shadow:inset 0 0 40px -18px ${COL},0 0 26px -14px ${COL};margin:0 16px 20px!important}
@@ -76,33 +73,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:${P.lite}}
     return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + m + 'm' : m + 'm';
   }
 
-  function locker(c, raw, Y) {
-    const esc = Y.esc, cms = Y.D.crewmates || {};
-    const now = Date.now() / 1000;
-    const ready = raw && raw.Crew && raw.Crew.readyAt;
-    const busy = ready && ready > now;
-    const hungry = c.food != null && c.food < 0.5;
-    const led = hungry ? '#ff6b6b' : busy ? '#ffab3d' : COL;
-    const pct = Math.round((c.food || 0) * 100);
-    const fcol = c.food == null ? '#5b6677' : c.food >= 0.65 ? COL : c.food >= 0.5 ? '#ffab3d' : '#ff6b6b';
-    const faces = c.roster.map((id) => {
-      const x = cms[id] || {}, col = CLASS_COL[x.class] || '#6b7a90';
-      const nm = (c.mn && c.mn[id]) || 'Crewmate #' + id;
-      return '<img data-face="' + id + '" src="cimg.php?id=' + id + '&s=1" alt="" loading="lazy" title="' + esc(nm) + '" style="border-color:' + col + '">';
-    }).join('');
-    const where = c.place && /^Aboard|^In flight/.test(c.place) ? c.place.split(' · ')[0] : c.ast || c.place || '–';
-    return '<button class="cq-lk" data-crew="' + esc(c.id) + '" title="' + esc(c.name + ' – ' + (c.place || '')) + '">' +
-      '<span class="cq-led' + (hungry ? ' hot' : '') + '" style="--led:' + led + '"></span><span class="cq-vent"></span>' +
-      '<span class="cq-name">' + esc(c.name) + '</span>' +
-      '<span class="cq-win">' + faces + '</span>' +
-      '<span class="cq-lb">Food ' + (c.food == null ? '–' : pct + '%') + (hungry ? ' · hungry' : '') + '</span>' +
-      '<span class="cq-bar"><i style="width:' + pct + '%;background:' + fcol + '"></i></span>' +
-      '<span class="cq-lb">' + esc(where) + '</span>' +
-      '<span class="cq-ft"><span class="cq-st" style="color:' + (busy ? '#ffab3d' : COL) + '">' + (busy ? 'Busy · ' + left(ready - now) : 'Ready') + '</span><span class="cq-hd"></span></span>' +
-      '</button>';
-  }
 
-  const BETA = true; // crew cards LIVE 9 Nov 2026 (were test only)
   function card(c, raw, Y) {
     const esc = Y.esc, cms = Y.D.crewmates || {}, now = Date.now() / 1000;
     const ready = raw && raw.Crew && raw.Crew.readyAt, busy = ready && ready > now;
@@ -177,7 +148,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:${P.lite}}
       '<div class="cq-plate">CREW QUARTERS</div>' +
       '<div class="cq-read"><b>' + crews.length + '</b> crews · <b>' + mates + '</b> crewmates · ' +
       '<b style="color:#ffab3d">' + busyN + '</b> busy' + (hungryN ? ' · <b style="color:#ff6b6b">' + hungryN + '</b> hungry' : '') + '</div>' +
-      (crews.length ? (BETA ? '<div class="cq-row cqg">' + crews.map((c) => card(c, raw[c.id], Y)).join('') + '</div>' : '<div class="cq-row">' + crews.map((c) => locker(c, raw[c.id], Y)).join('') + '</div>') : '<div class="cq-none">No crews yet</div>') +
+      (crews.length ? ('<div class="cq-row cqg">' + crews.map((c) => card(c, raw[c.id], Y)).join('') + '</div>') : '<div class="cq-none">No crews yet</div>') +
       '<div class="cq-bench"></div>';
     el.addEventListener('click', (e) => {
       if (e.target.closest('.cq-back')) {
@@ -189,7 +160,7 @@ body.dk-crew #main h2,body.dk-crew #main th{color:${P.lite}}
       const full = e.target.closest('[data-full]');
       if (full) { openCrew(full.dataset.full, el); return; }
       const t = e.target.closest('[data-crew]');
-      if (t) (BETA ? openMembers : openCrew)(t.dataset.crew, el);
+      if (t) (openMembers)(t.dataset.crew, el);
     });
     if (Y.fillFacesIn) Y.fillFacesIn(el);
   }
