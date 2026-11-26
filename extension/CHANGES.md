@@ -3,6 +3,9 @@
 The browser extension for https://your-command.adalia.academy and the Influence game.
 Newest first. Get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/pbiobnkpgohjcpednldpopbkedlhgpcd) – updates arrive automatically.
 
+## 0.7.4 – coming soon
+- **Asteroids card** – a new card at the top of the game, right of the Buildings card. It lists your asteroids (the ones your crews control or have buildings on), Adalia Prime, and any you add yourself. Pick one and the game's camera flies to it, the same as clicking it on the belt map. Camera only – no game actions.
+
 ## 0.7.3 – 25 Nov 2026
 - **Logistics Hub card** – a new amber card at the far right of the deck strip. Click it to open the Logistics Hub on your Command Deck tab (feed crews, make on this rock, load a ship). You still go through the airlock, and nothing is sent until you approve it in your wallet.
 
