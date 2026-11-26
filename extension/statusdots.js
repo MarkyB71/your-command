@@ -78,6 +78,7 @@
   }
   // mine[ast] = Map(lot -> colour or null); list[ast] = your buildings there (for the deck strip's "On this rock" card)
   let mine = {}, list = {};
+  const crews = new Set(); // your crew ids (from the game's own building lists) – to spot the rocks you own
   const BT = { 1: 'Warehouse', 2: 'Extractor', 3: 'Refinery', 4: 'Bioreactor', 5: 'Factory', 6: 'Shipyard', 7: 'Spaceport', 8: 'Marketplace', 9: 'Habitat', 10: 'Tank Farm' };
   function readBuildings() {
     if (!qc) qc = findQueryClient();
@@ -86,6 +87,7 @@
     qc.getQueryCache().getAll().forEach(q => {
       const k = q.queryKey;
       if (!k || k[0] !== 'entities' || k[1] !== 5 || !k[2] || !Array.isArray(k[2].controllerId) || !k[2].controllerId.length) return;
+      k[2].controllerId.forEach(c => crews.add(Number(c)));
       (Array.isArray(q.state.data) ? q.state.data : []).forEach(b => {
         const L = lotOf(b); if (!L) return;
         const c = colourOf(b, now), B = b.Building || {};
@@ -243,6 +245,34 @@
     const v = ast == null ? '' : JSON.stringify({ ast, name: rockName(ast), b: list[ast] || [] });
     if (v !== rockSent) { rockSent = v; if (v) root.dataset.yicRock = v; else delete root.dataset.yicRock; }
   }
+  // Your asteroids for the deck strip's Asteroids card (0.7.4, Mark 26 Nov): rocks your crews control or
+  // have buildings on, plus Adalia Prime and any you've added yourself. Only what the game has already loaded.
+  let rocksSent = '';
+  function shareRocks() {
+    if (!qc) return;
+    let extra = [];
+    try { extra = (JSON.parse(root.dataset.yicExtraRocks || '[]') || []).map(Number).filter(n => n > 0); } catch (e) {}
+    const names = {}, owned = new Set(Object.keys(list).map(Number));
+    qc.getQueryCache().getAll().forEach(q => {
+      const d = q.state.data;
+      (Array.isArray(d) ? d : [d]).forEach(x => {
+        if (!x || x.label !== 3) return;
+        const id = Number(x.id);
+        if (x.Name && x.Name.name) names[id] = x.Name.name;
+        const c = x.Control && x.Control.controller;
+        if (c && crews.has(Number(c.id))) owned.add(id);
+      });
+    });
+    const mk = id => ({ id, name: names[id] || (id === 1 ? 'Adalia Prime' : 'Asteroid #' + id) });
+    const v = JSON.stringify({ own: [...owned].filter(id => id !== 1).sort((a, b) => a - b).map(mk), extra: extra.map(mk) });
+    if (v !== rocksSent) { rocksSent = v; root.dataset.yicRocks = v; }
+  }
+  addEventListener('message', e => {
+    if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== 'yic-goto-asteroid') return;
+    const id = Number(e.data.id); if (!(id > 0)) return;
+    history.pushState({}, '', '/asteroids/' + id);
+    dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  });
   // "Go" from the card: open that building in the game – the same as the game's own /building/ link.
   addEventListener('message', e => {
     if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== 'yic-goto-building') return;
@@ -256,6 +286,7 @@
     if (!getStore()) return;
     const st = store.getState(), V = st.camera.position.constructor, M = st.camera.matrixWorld.constructor;
     readBuildings();
+    try { shareRocks(); } catch (e) {}
     const rock = findRock(st.scene);
     if (!rock) { clearView(); shareRock(null); note('waiting for an asteroid view'); return; }
     // key: changes when the game draws a different set of lots/icons (zooming, panning, new buildings)
