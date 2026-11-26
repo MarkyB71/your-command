@@ -29,7 +29,9 @@
   }
   const lotIdx = (id) => Math.floor(id / 4294967296);
   const aboard = (c) => { const r = ((K().D() || {}).crewsRaw || []).find((x) => x.id === c.id); return !!(r && r.Location && r.Location.location && r.Location.location.label === 6); };
-  const realSecs = (y, left) => { if (!(y > 0) || !(left > 0)) return 0; const a = Math.sqrt(left / MAXY), b = Math.sqrt(Math.max(0, left - y) / MAXY); return (a - b) * YEAR / 24; };
+  // Game client (main.js): extraction time = (√(left/1e10) − √((left − y)/1e10)) × 1 year ÷ bonus, with yield and left in
+  // GRAMS (units × massPerUnit), then ÷ 24 for real time. (Was in kg – 31.6× too short; found 26 Nov after E6009.)
+  const realSecs = (y, left, p) => { if (!(y > 0) || !(left > 0)) return 0; const g = K().grams(p) || 1000; const a = Math.sqrt(left * g / MAXY), b = Math.sqrt(Math.max(0, left - y) * g / MAXY); return Math.ceil((a - b) * YEAR / 24); };
   const hrs = (s) => s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 * 2 ? (s / 3600).toFixed(1).replace(/\.0$/, '') + ' h' : (s / 86400).toFixed(1).replace(/\.0$/, '') + ' days';
   const capOf = (b) => b.Building.buildingType === K().TANK ? [75e9, 997.5e9] : [1.5e12, 75e9];
   const used = (b) => { const i = K().inv(b) || { mass: 0, volume: 0 }; return [(i.mass || 0) + (i.reservedMass || 0), (i.volume || 0) + (i.reservedVolume || 0)]; };
@@ -107,7 +109,7 @@
       const cl = k.crews(e.rock); // crews aboard a ship CAN mine (Mark, 26 Nov 23:08) – E6009 was something else
       // Same as the game client (main.js, extraction dialog): trip to the extractor + on-site labour (mining time ÷ 8) +
       // trip back; a crew can take a new job while its queue ends no more than 24 h from now (client _readyToSequence).
-      const cost = (c) => Math.ceil(realSecs(y, left) / 8) + 2 * (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
+      const cost = (c) => Math.ceil(realSecs(y, left, p) / 8) + 2 * (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
       const qEnd = (c) => Q[c.id] != null ? Q[c.id] : Math.max(now(), k.crewReady(c));
       const lim = now() + 86400;
       let crew = null, over = false;
@@ -128,7 +130,7 @@
     if (rows.length) {
       h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="mn-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="mn-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th>Crew</th><th class="num">Time</th></tr></thead><tbody>` +
         rows.map((r) => {
-          const t = r.y ? realSecs(r.y, r.left) : 0, short = r.y < r.want;
+          const t = r.y ? realSecs(r.y, r.left, r.p) : 0, short = r.y < r.want;
           return `<tr><td><input type="checkbox" data-mpick="${r.key}"${M.pick[r.key] ? ' checked' : ''}></td>` +
             `<td><b>${esc(k.nm(r.e.b))}</b><div class="src">${esc(r.e.rock)} · lot ${k.lotOf(r.e.b)}</div></td>` +
             `<td>${r.e.samples.length > 1 ? `<select data-msamp="${r.key}">${r.e.samples.map((s) => `<option value="${s[0]}"${s === r.s ? ' selected' : ''}>${esc(k.pname(s[1]))} · ${k.tonnes(s[2])} left${s[6] === 3 ? ' (used before)' : ''}</option>`).join('')}</select>` : `${esc(k.pname(r.p))}<div class="src">${k.tonnes(r.left)} left${r.s[6] === 3 ? ' · used before' : ' · new sample'}</div>`}</td>` +
