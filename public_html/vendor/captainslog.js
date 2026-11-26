@@ -383,7 +383,6 @@
     scr.classList.remove('rolled'); // header always pinned at the top
     board.addEventListener('pointerleave', () => { if (!board.querySelector('.cl-note.drag')) showDeck(scr); });
     board.addEventListener('pointerenter', () => { if (linkFrom) return; /* header stays pinned (Mark, 10 Nov 22:02 – roll-up removed) */ const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); });
-    if (false) { const br = scr.closest('.brs'); if (!br || !br.classList.contains('cl-deckup') || br.classList.contains('cl-deckshow')) deckUp(scr, true); }
     cv.querySelectorAll('.cl-note').forEach((el) => el.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest('input,button,select,a,textarea')) return;
       e.preventDefault();

@@ -351,7 +351,6 @@
       td.onclick = () => { W.sel = td.dataset.f + '_' + td.dataset.t; W.all = false; show(); };
     });
     const k = JSON.stringify([S, REF]); if (k !== wkey) { wkey = k; for (const x in strips) delete strips[x]; }
-    const name = id => esc((asts.find(a => a.id === +id) || {}).name || '');
     const now = (Date.now() / 1000 - 1609459200) / 3600, n = WDAYS * 24 / WSTEP;
     const fmtH = x => x >= 48 ? (x / 24).toFixed(1) + ' days' : x + ' h';
 

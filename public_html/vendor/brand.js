@@ -63,7 +63,6 @@
     }
     // own centred row at the very top of the header
     const hd=d.querySelector('header');
-    if(false&&hd&&hd.firstElementChild!==h1)hd.prepend(h1);
     // Title font: Rye (western whiskey-label style)
     if(h1){const t0=h1.querySelector('.brand-t');if(t0&&t0.style.fontFamily.indexOf('Rye')<0)t0.style.fontFamily='Rye,Jura,serif'}
     // Title follows the page: landing = Skippy's Awesome Command Deck, others = Your <Group> <Page>
@@ -112,20 +111,7 @@
   }
   setInterval(tick,300);tick();
   // Title shrinks to fit between the banner's page label and the edges; if it would get too small, the small label hides
-  function fit(){
-    return; /* the decks hide the old header – nothing to fit (29 Oct tidy) */
-    const h=document.querySelector('h1.brand'),t=h&&h.querySelector('.brand-t'),b=document.querySelector('#pgband');if(!t)return;
-    const W=document.documentElement.clientWidth;
-    if(W<=700){if(h.style.fontSize)h.style.fontSize='';b&&b.classList.remove('yic-nolab');return}
-    const fs=parseFloat(getComputedStyle(h).fontSize)||40,per=t.scrollWidth/fs;   // text width per px of font size
-    const logos=[...h.children].filter(c=>c!==t).reduce((s,c)=>s+c.getBoundingClientRect().width,0),gap=(parseFloat(getComputedStyle(h).columnGap)||0)*(h.children.length-1);
-    const wb=[...document.querySelectorAll('header button')].find(x=>/wallet/i.test(x.textContent));
-    const edge=(lab)=>{let c=16;if(lab&&b){b.querySelectorAll('.pg,.pn').forEach(e=>{const r=e.getBoundingClientRect();if(r.width)c=Math.max(c,r.right+14)})}
-      if(wb){const r=wb.getBoundingClientRect(),hr=h.getBoundingClientRect();if(r.bottom>hr.top+4)c=Math.max(c,W-r.left+8)}return c};
-    const size=lab=>Math.min(40,Math.floor((W-2*edge(lab)-logos-gap)/per));
-    let n=size(true),hide=false;if(n<26){hide=true;b&&b.classList.add('yic-nolab');n=Math.max(18,Math.min(25,size(false)))}else b&&b.classList.remove('yic-nolab');
-    if(h.style.fontSize!==n+'px')h.style.setProperty('font-size',n+'px','important');
-    if(!document.getElementById('fit-css')){const st=document.createElement('style');st.id='fit-css';st.textContent='#pgband.yic-nolab .pg,#pgband.yic-nolab .pn{visibility:hidden}h1.brand .brand-t{white-space:nowrap}';document.head.appendChild(st)}}
+  function fit(){} /* the decks hide the old header – nothing to fit (29 Oct tidy) */
   // Updated/wallet lines and the Download button stay together, on the right, on one row
   function ic(){const bar=document.querySelector('.bar[data-mv="1"]');if(!bar)return;
     if(!document.getElementById('ic-css')){const st=document.createElement('style');st.id='ic-css';st.textContent='.bar .yic-ic{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}.bar .yic-ic>[data-inf="1"]{margin-left:0}.bar [data-srch="2"]{margin-left:0!important}';document.head.appendChild(st)}

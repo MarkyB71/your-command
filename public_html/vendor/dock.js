@@ -172,9 +172,6 @@
   function airlockSound() {
     let A; try { A = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
     const t0 = A.currentTime + 0.05, out = A.createGain(); out.gain.value = 0.5; out.connect(A.destination);
-    const tone = (f, a, b, vol, type) => { const o = A.createOscillator(), g = A.createGain(); o.type = type || 'square'; o.frequency.value = f;
-      g.gain.setValueAtTime(0, a); g.gain.linearRampToValueAtTime(vol, a + 0.02); g.gain.setValueAtTime(vol, b - 0.04); g.gain.linearRampToValueAtTime(0, b);
-      o.connect(g); g.connect(out); o.start(a); o.stop(b + 0.05); };
     // klaxon: three rising whoops
     for (let k = 0; k < 3; k++) { const a = t0 + k * 0.9, o = A.createOscillator(), g = A.createGain(); o.type = 'sawtooth';
       o.frequency.setValueAtTime(420, a); o.frequency.linearRampToValueAtTime(820, a + 0.7);
@@ -427,7 +424,7 @@ ${R.map(route).join('')}
     P.rows.forEach((r) => { const a = avail[P.dest.id]; if (a) a[r.p] = Math.max(0, (a[r.p] || 0) - Math.max(0, Math.min(r.there, r.need) - r.onway)); r.from.forEach(([b, q]) => { avail[b.id][r.p] -= q; }); });
     const okIn = (b, ip) => b.Building.buildingType !== TANK || TANKOK.has(ip);
     const TANKFIX = true; // LIVE 9 Nov 2026
-    const dests = {}, add = {}, dl = {}, incA = {};
+    const add = {}, dl = {}, incA = {};
     const put = (from, to, ip, q, why) => { const k = from.id + '>' + to.id; (dl[k] = dl[k] || { b: from, to, items: [], why: new Set() }).items.push({ p: ip, a: q }); dl[k].why.add(why);
       add[to.id] = add[to.id] || [0, 0]; add[to.id][0] += q * grams(ip); add[to.id][1] += q * (MV[ip] || [1000, 1000])[1]; };
     C.steps.forEach((st) => {
@@ -563,7 +560,6 @@ ${R.map(route).join('')}
   //   run_system('SendDelivery', [5, fromId, 2, n, (product, amount)×n, 5, toId, 2, 1, crewId])
   //   run_system('ResupplyFood', [5, buildingId, 2, food, 1, crewId])
   const DISPATCHER = '0x0422d33a3638dcc4c62e72e1d6942cd31eb643ef596ccac2351e0e21f6cd4bf4';
-  const OWNER = '0x0631acdbf5a79758cbcc84301b387aebfb5c0ec7476aa48a0ceb98662973c5ce'; // Mark's wallet – test only
   const hex = (n) => '0x' + BigInt(n).toString(16);
   const short = (t) => '0x' + [...t].map((ch) => ch.charCodeAt(0).toString(16).padStart(2, '0')).join('');
   const sameAddr = (a, b) => { try { return BigInt(a) === BigInt(b); } catch (e) { return false; } };
@@ -604,7 +600,7 @@ ${R.map(route).join('')}
   // batches (15 / 30 / 50 / All, like storage tidy) and are checked against the game data just before sending.
   const BATCHES = [15, 30, 50, 'All'];
   function checks(calls) {
-    const errs = [], d = D(), now = Date.now();
+    const errs = [], now = Date.now();
     if (!S.dataAt || now - S.dataAt > 10 * 60000) errs.push('The game data is over 10 minutes old – press ↻ Check the game again first.');
     const c = S.moverObj;
     if (!c) errs.push('No crew picked.'); else if (crewReady(c) - now / 1000 > 86400) errs.push(c.name + ' already has more than 24 hours of jobs queued.');
@@ -818,7 +814,6 @@ ${R.map(route).join('')}
           let m = 1; Object.keys(x.r.inp).forEach((ip) => { const y = maker[ip]; if (y && y !== x) m = Math.max(m, lvl(y, seen) + 1); }); return (x.lv = m); };
         C.steps.forEach((x) => lvl(x));
         const mined = Object.keys(C.mine), fl = Object.keys(C.fly);
-        const top = Math.max(1, ...C.steps.map((x) => x.lv + (mined.length ? 1 : 0)));
         const stages = []; if (mined.length) stages.push({ t: 'Mine', items: mined.map((p) => ({ mine: +p })) });
         for (let l = 1; l <= Math.max(0, ...C.steps.map((x) => x.lv)); l++) { const it = C.steps.filter((x) => x.lv === l); if (it.length) stages.push({ t: 'Make', items: it }); }
         stages.push({ t: 'Final', items: [{ fin: true }] });

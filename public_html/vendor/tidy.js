@@ -73,7 +73,7 @@
   const sameAddr = (a, b) => { try { return BigInt(a) === BigInt(b); } catch (e) { return false; } };
   const pname = (p) => { try { return (Y().pn && Y().pn(p)) || '#' + p; } catch (e) { return '#' + p; } };
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (kg / 1000).toLocaleString('en-GB', { maximumFractionDigits: 1 })) + ' t';
-  const amt = (p, a) => ((MV[p] || [1000])[0] === 1000 ? tonnes(a) : true ? a.toLocaleString('en-GB') + (a === 1 ? ' unit' : ' units') : '× ' + a.toLocaleString('en-GB')); // "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
+  const amt = (p, a) => ((MV[p] || [1000])[0] === 1000 ? tonnes(a) : a.toLocaleString('en-GB') + (a === 1 ? ' unit' : ' units')); // "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   const lotIdx = (b) => { const l = ((b.Location && b.Location.locations) || []).find((x) => x.label === 4); return l ? Math.floor(l.id / 4294967296) : 0; };
   const nm = (b) => (b && b.Name && b.Name.name) || '';
   const inv = (b) => (b.Inventories || []).find((x) => x.slot === SLOT && x.status === 1);
@@ -659,26 +659,6 @@ ${plan.fill.sort((a, b) => Math.max(b[1], b[2]) - Math.max(a[1], a[2])).map(([n,
 
   // In the Logistics Hub (Mark, 10 Nov – moved there, beta): dock.js draws it on the viewscreen via YICTIDY.render(el)
   let hubEl = null;
-  const isOn = () => { if (hubEl && hubEl.isConnected) return true; const b = document.getElementById('vST'); return !!(b && b.className === 'on'); };
+  const isOn = () => !!(hubEl && hubEl.isConnected);
   window.YICTIDY = { render: (el) => { hubEl = el; page(el); } };
-  // hidden "Storage tidy" page button – the Engineering deck shows it as a console (decks.js, beta only)
-  const hook = () => {
-    const after = document.getElementById('vB'), main = document.getElementById('main');
-    if (!after || !main || document.getElementById('vST')) return;
-    const b = document.createElement('button');
-    b.id = 'vST'; b.textContent = 'Storage tidy';
-    after.after(b);
-    b.addEventListener('click', () => {
-      document.querySelectorAll('button.on').forEach((x) => x.classList.remove('on'));
-      try { window.YIC.view = 'M'; } catch (e) {}
-      b.className = 'on';
-      S.msg = '';
-      page(main);
-    });
-  };
-  document.addEventListener('click', (e) => {
-    const b = document.getElementById('vST'), t = e.target.closest && e.target.closest('button[id^="v"]');
-    if (b && t && t !== b) b.className = '';
-  }, true);
-  // setInterval(hook, 700); // Engineering page button retired – Storage tidy lives in the Logistics Hub now (Mark, 10 Nov)
 })();

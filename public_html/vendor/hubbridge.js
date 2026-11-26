@@ -157,7 +157,6 @@
   function home(scr, S, render) {
     const N = nums(S);
     const t = (m, n, l, go, hot) => `<button type="button" class="lb-t${hot ? ' hot' : ''}" data-lb="${m}"><b>${n}</b><span>${esc(l)}</span><i>${go}</i></button>`;
-    const del = (S.incList || []).length;
     scr.innerHTML = `<div class="card"><h2><span class="n">◉</span>What needs doing</h2>
 <div class="hint" style="margin:0 0 6px">Pick a console below, or one of these.</div><div class="lb-todo">` +
       t('feed', N.feed == null ? N.hungry : N.feed, (N.hungry ? N.hungry + ' hungry · ' : '') + 'crews that could be fed', 'Feed crews ▸', N.hungry > 0) +

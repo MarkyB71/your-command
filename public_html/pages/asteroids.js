@@ -295,7 +295,7 @@
   // opts.fsEl = the element to put in full screen. Any change here shows on the Bridge and the Flight Deck alike.
   function beltMap(m, opts) {
     opts = opts || {};
-    const SH = !!opts.ships, FLT = opts.theme === 'flight', ACC = FLT ? '#9a6bff' : '#5fc3e4';
+    const SH = !!opts.ships, FLT = opts.theme === 'flight';
     const box = document.createElement('div');
     box.style.cssText =
       'position:relative;margin:0 0 16px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#0d1622 0%,#05070a 70%)';

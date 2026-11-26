@@ -161,7 +161,6 @@
     const P = S.prop === 'full' ? tank : Math.min(tank, propNowKg);
     const burn = (dv, wet) => wet * (1 - Math.exp(-dv / ve));
     const dep = (Date.now() / 1000 - 1609459200) / 3600 + S.leave;
-    const depH = Math.floor(dep);
     // Economy: the trip length (up to 365 h) that burns the least propellant
     const STEPS = [];
     for (let x = 1; x <= 48; x++) STEPS.push(x);

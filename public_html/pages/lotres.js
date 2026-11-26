@@ -299,7 +299,7 @@
       L2 = L2.slice().sort((x, y) => cmp(K.get(x), K.get(y)));
     }
     const
-      lim = APP.lfMode === 'ext' || true ? L2.length : 30;
+      lim = L2.length;
     if (!L2.length)
       h +=
         '<div class="note">' +
