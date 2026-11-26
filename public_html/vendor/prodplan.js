@@ -340,7 +340,7 @@
     const most = wh.map((b) => [b, holdsKg(b)]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
     // materials in a TANK FARM when everything gathered there can go in one (Mark, 26 Nov: 23,000 t of Hydrogen for
     // propellant is 4× a whole warehouse by space – 'inventory volume exceeded'; a tank farm holds 13× the space)
-    const matTF = W && W.steps && W.steps.length && W.steps.every((st) => Object.keys(st.r.inp).every((ip) => k.TANKOK.has(+ip)) && (st === W.steps[W.steps.length - 1] || Object.keys(st.r.out).every((o) => k.TANKOK.has(+o)))) ? tf : [];
+    const matTF = FUELB && W && W.steps && W.steps.length && W.steps.every((st) => Object.keys(st.r.inp).every((ip) => k.TANKOK.has(+ip)) && (st === W.steps[W.steps.length - 1] || Object.keys(st.r.out).every((o) => k.TANKOK.has(+o)))) ? tf : [];
     const matL = wh.concat(matTF);
     let mat = pick('mat', /material|input|stag|process/i, matL, (most || [roomy])[0] && (most || [roomy])[0].id);
     return { wh, tf, full, matL, mat, stock: pick('stock', /stock|store/i, wh, mat), market: pick('market', /market|distrib|sell|trade|export/i, wh, mat), build: pick('build', /build|construct|site/i, wh, mat), tank: ok(saved.tank, tf) ? saved.tank : '' };
@@ -811,7 +811,7 @@
           '<div class="hint">Earlier steps make what later steps need. Times are without crew or building bonuses.</div></div>';
         // step 7: where things go
         const after = fullAfter(W, ST, byId), pk = peakMat(W, ST, byId);
-        P.peakBad = pk > 100;
+        P.peakBad = FUELB && pk > 100; // TEST ONLY (?beta=1) with Fuel a ship, 26 Nov
         const pc = (n) => `<b style="color:${n > 100 ? '#ff4d4d' : n >= 90 ? '#ff6b6b' : n >= 75 ? '#ffb03b' : '#3fd68a'}">${n}%</b>`;
         const aft = (key) => { const b = byId(ST[key]); if (!b) return '<td></td>'; const a = after(b), n = ST.full(b); return `<td class="num" style="white-space:nowrap">${n}% → ${pc(a)}${a > 100 ? ' <span style="color:#ff4d4d">won’t fit</span>' : ''}</td>`; };
         const sel = (key, list, none) => `<select data-st="${key}">${none ? `<option value="">${none}</option>` : ''}${list.map((b) => `<option value="${b.id}"${b.id === ST[key] ? ' selected' : ''}>${esc(k.nm(b))} · ${ST.full(b)}% full</option>`).join('')}</select>`;
@@ -819,7 +819,7 @@
 <div class="row"><span class="src">What it's for</span>${FOR.concat(FUELB && P.p === 170 && fuelShips().length ? [['ship', '⛽ Ship’s tank']] : []).map(([v, t]) => `<button type="button" class="dk-shipbtn${pf === v ? ' on' : ''}" data-for="${v}">${t}</button>`).join('')}</div>
 <table style="margin-top:10px"><tbody>
 ${fsh ? `<tr><td>⛽ Ship’s tank</td><td><select id="pp-fship">${fuelShips().map((s) => `<option value="${s.id}"${s.id === fsh.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select></td><td class="num" style="white-space:nowrap">${Math.round((s0 => (s0.prop || 0) * 1e6 / TANKG[s0.st] * 100)(fsh))}% → ${pc(Math.round(((fsh.prop || 0) * 1e6 + fin.runs * fin.r.out[170] * k.grams(170)) / TANKG[fsh.st] * 100))}</td><td class="src">The Hydrogen Propellant goes straight into the tank – ${fRoom > 0 ? 'room for ' + k.amt(170, fRoom) + ', so it makes no more than that.' : '<span style="color:var(--amber)">the tank is already full.</span>'}</td></tr>` : ''}
-<tr><td>📦 Materials ${ST.matL.length > ST.wh.length ? 'store' : 'warehouse'}</td><td>${sel('mat', ST.matL)}</td>${aft('mat')}<td class="src">Everything the processes use is gathered here; in-between products land here too.${pk > 100 ? `<br><b style="color:#ff4d4d">✗ Won’t fit while the inputs are gathered (${pk}% full before anything is used)</b> – the game refuses the moves.${ST.matL.length > ST.wh.length ? ' Pick a tank farm here, or make less.' : ' Make less, or move things out first.'}` : pk >= 90 ? `<br><span style="color:#ffb03b">${pk}% full while the inputs are gathered.</span>` : ''}</td></tr>
+<tr><td>📦 Materials ${ST.matL.length > ST.wh.length ? 'store' : 'warehouse'}</td><td>${sel('mat', ST.matL)}</td>${aft('mat')}<td class="src">Everything the processes use is gathered here; in-between products land here too.${FUELB && pk > 100 ? `<br><b style="color:#ff4d4d">✗ Won’t fit while the inputs are gathered (${pk}% full before anything is used)</b> – the game refuses the moves.${ST.matL.length > ST.wh.length ? ' Pick a tank farm here, or make less.' : ' Make less, or move things out first.'}` : FUELB && pk >= 90 ? `<br><span style="color:#ffb03b">${pk}% full while the inputs are gathered.</span>` : ''}</td></tr>
 <tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td>${aft('stock')}<td class="src">Finished goods made for stock.</td></tr>
 <tr><td>🛒 Market store</td><td>${sel('market', ST.wh)}</td>${aft('market')}<td class="src">Finished goods made to sell.</td></tr>
 <tr><td>🏗 Building store</td><td>${sel('build', ST.wh)}</td>${aft('build')}<td class="src">Finished goods for your own building.</td></tr>
