@@ -95,7 +95,7 @@
     if (!cl.find((c) => c.id === SF.crew)) SF.crew = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
     const crew = cl.find((c) => c.id === SF.crew);
     h += `<div class="src" style="margin:12px 0 4px"><b>4 · Moved by</b></div>`;
-    h += cl.length ? `<select id="sf-crew">${cl.map((c) => `<option value="${c.id}"${c.id === SF.crew ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)} – a crew there has to send it.</div>`;
+    h += crewHTML(cl, rock);
     if (M.out.length && units > 0) h += `<table style="margin-top:8px"><thead><tr><th>From</th><th>Propellant</th><th>To</th></tr></thead><tbody>${M.out.map((mv) => `<tr><td class="src">${esc(k.nm(mv.b))}</td><td>${kgTxt(mv.n * uG() / 1000)}</td><td class="src">${esc(s.name)} – tank</td></tr>`).join('')}</tbody></table>`;
     const wait = SF.sentAt && Date.now() - SF.sentAt < 180000;
     const can = k.isOwner() && !SF.busy && !wait && units > 0 && M.out.length && crew;
@@ -109,6 +109,15 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     wire(el);
   }
 
+  // crew: the best ready crew on the rock is picked for you (Mark, 26 Nov: "or the crew if it picks the best") – k.crews() is
+  // sorted ready first, then free transport distance, then speed. Only when none is ready is there a choice.
+  function crewHTML(cl, rock) {
+    const esc = K().esc, ready = cl.filter((q) => !q.busy);
+    if (!cl.length) return `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)} – a crew there has to do it.</div>`;
+    if (ready.length) { if (!ready.find((q) => q.id === SF.crew)) SF.crew = ready[0].id; return `<div class="src">By <b>${esc(ready.find((q) => q.id === SF.crew).name)}</b> (ready)</div>`; }
+    if (!cl.find((q) => q.id === SF.crew)) SF.crew = cl[0].id;
+    return `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)} is ready – pick one to queue it:</div><select id="sf-crew">${cl.map((q) => `<option value="${q.id}"${q.id === SF.crew ? ' selected' : ''}>${esc(q.name)} – busy</option>`).join('')}</select>`;
+  }
   // ---------- 🏭 make it at a refinery ----------
   const SKEY = 'sk_fuel_store'; // inputs store per rock, remembered in this browser
   const lsGet = () => { try { return JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) { return {}; } };
@@ -187,7 +196,7 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     // 5 crew
     const cl = k.crews(rock);
     if (!cl.find((q) => q.id === SF.crew)) SF.crew = (cl.find((q) => !q.busy) || cl[0] || {}).id || 0;
-    h += `<div class="src" style="margin:12px 0 4px"><b>${c.moves.length ? 6 : 5} · Crew</b></div>` + (cl.length ? `<select id="sf-crew">${cl.map((q) => `<option value="${q.id}"${q.id === SF.crew ? ' selected' : ''}>${esc(q.name)}${q.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)}.</div>`);
+    h += `<div class="src" style="margin:12px 0 4px"><b>${c.moves.length ? 6 : 5} · Crew</b></div>` + crewHTML(cl, rock);
     const crew = cl.find((q) => q.id === SF.crew), wait = SF.sentAt && Date.now() - SF.sentAt < 180000;
     const step = c.moves.length ? 'moves' : 'start';
     const ok = c.runs > 0 && crew && (step === 'moves' ? c.peak <= 100 : c.ref && k.freeSlot(c.ref));
