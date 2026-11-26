@@ -79,7 +79,7 @@
       h += `<div class="card"><div class="src">${out.length ? 'None of your idle extractors has a core sample with yield left on its lot.' : 'No idle extractors right now.'}</div></div>`;
     }
     // plan: per extractor, sample, amount, storage, crew
-    const promised = {}; // store id → [g, v]
+    const promised = {}, Q = {}; // store id → [g, v]; crew id → when its queue ends (this plan)
     const calls = [], rows = [];
     ready.forEach((e) => {
       const key = e.b.id + ':' + e.slot;
@@ -100,18 +100,30 @@
       }
       const room = st ? roomFor(st, p, pr(st)[0], pr(st)[1]) : 0;
       const y = Math.min(want, room);
-      const cl = k.crews(e.rock), free = cl.filter((c) => !c.busy);
-      let crew = cl.find((c) => c.id === M.crew[e.rock]) || free[0] || cl[0];
-      const on = M.pick[key] && y > 0 && st && crew;
+      // CREW (Mark, 26 Nov: "one crew will not be able to do all the extractions"): each start keeps the crew busy for
+      // the trip to the extractor + mining time ÷ 8 (SDK Time.getCrewLaborDuration), and a crew can only queue jobs
+      // up to 24 h ahead (Crew.CREW_SCHEDULE_BUFFER). Spread over the crews on the rock – earliest free first.
+      const cl = k.crews(e.rock);
+      const cost = (c) => Math.ceil(realSecs(y, left) / 8) + (k.tripSecs(k.kmBetween(c.lot, k.lotOf(e.b), k.astId(e.rock)), c) || 0);
+      const qEnd = (c) => Q[c.id] != null ? Q[c.id] : Math.max(now(), k.crewReady(c));
+      const lim = now() + 86400;
+      let crew = null, over = false;
+      if (M.pick[key] && y > 0 && st) {
+        const ch = cl.find((c) => c.id === M.crew[key]);
+        if (ch) { crew = ch; over = qEnd(ch) + cost(ch) > lim; }
+        else crew = cl.filter((c) => qEnd(c) + cost(c) <= lim).sort((a, c) => (qEnd(a) + cost(a)) - (qEnd(c) + cost(c)))[0] || null;
+        if (crew && !over) Q[crew.id] = qEnd(crew) + cost(crew);
+      }
+      const on = M.pick[key] && y > 0 && st && crew && !over;
       if (on) {
         promised[st.id] = [pr(st)[0] + y * (k.grams(p) || 1000), pr(st)[1] + y * volOf(p)];
         calls.push({ e, s, y, st, crew, p });
       }
       const fitsAll = (b) => b === st ? room >= want : roomFor(b, p, pr(b)[0], pr(b)[1]) >= want;
-      rows.push({ e, key, s, p, left, st, stores, room, y, want, crew, cl, km, fitsAll });
+      rows.push({ e, key, s, p, left, st, stores, room, y, want, crew, cl, km, fitsAll, over, on, ends: crew ? Q[crew.id] : 0 });
     });
     if (rows.length) {
-      h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="mn-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="mn-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th class="num">Time</th></tr></thead><tbody>` +
+      h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="mn-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="mn-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th>Crew</th><th class="num">Time</th></tr></thead><tbody>` +
         rows.map((r) => {
           const t = r.y ? realSecs(r.y, r.left) : 0, short = r.y < r.want;
           return `<tr><td><input type="checkbox" data-mpick="${r.key}"${M.pick[r.key] ? ' checked' : ''}></td>` +
@@ -121,15 +133,16 @@
             (short && r.st ? `<div class="src" style="color:var(--amber)">only ${k.tonnes(r.y)} fits${r.stores.some((b) => b !== r.st && r.fitsAll(b)) ? '' : ' – no storage here takes it all'}</div>` : '') + `</td>` +
             `<td>${r.stores.length ? `<select data-mst="${r.key}">${r.stores.map((b) => `<option value="${b.id}"${r.st && b.id === r.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${k.kmTxt(r.km(b))}${r.fitsAll(b) ? '' : ' · not all fits'}</option>`).join('')}</select>` : '<span style="color:var(--red)">no storage on this rock</span>'}` +
             (r.st && !r.room ? '<div class="src" style="color:var(--red)">full – pick another</div>' : '') + `</td>` +
+            `<td>${!r.cl.length ? `<span style="color:var(--amber)">no crew on ${esc(r.e.rock)}</span>` : `<select data-mcrew="${r.key}"><option value="">${M.pick[r.key] && r.y && !M.crew[r.key] ? (r.crew ? 'Auto – ' + esc(r.crew.name) : 'Auto – no crew has room') : 'Auto'}</option>${r.cl.map((c) => `<option value="${c.id}"${M.crew[r.key] === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` +
+              (M.pick[r.key] && r.y && !r.crew ? '<div class="src" style="color:var(--amber)">every crew’s 24 h queue is full – start this one later</div>' : '') +
+              (r.over ? `<div class="src" style="color:var(--red)">${esc(r.crew.name)}’s queue would go past 24 h</div>` : '')}</td>` +
             `<td class="num">${r.y ? '~' + hrs(t) : '–'}</td></tr>`;
         }).join('') + '</tbody></table><div class="hint">Time is without crew or building bonuses. The amount is in tonnes; it’s capped at what’s left in the sample and the room in the storage.</div></div>';
-      // crews per rock
-      const rocks = [...new Set(rows.map((r) => r.e.rock))];
-      h += `<div class="card"><h2><span class="n">2</span>Crew</h2>` + rocks.map((rk) => {
-        const r = rows.find((x) => x.e.rock === rk), cl = r.cl;
-        if (!cl.length) return `<div class="src" style="color:var(--amber)">No crew on ${esc(rk)} – a crew there has to start the mining.</div>`;
-        return `<div class="row" style="margin:4px 0"><span class="src" style="min-width:9em">${esc(rk)}</span><select data-mcrew="${esc(rk)}">${cl.map((c) => `<option value="${c.id}"${r.crew && c.id === r.crew.id ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy (queued)' : ' – ready'}</option>`).join('')}</select></div>`;
-      }).join('') + '<div class="hint">One crew per rock starts every extractor there. A busy crew queues it (up to 24 hours ahead).</div></div>';
+      // crews used and how far ahead their queue goes
+      const used = {}; rows.filter((r) => r.on).forEach((r) => { const u = used[r.crew.id] = used[r.crew.id] || { c: r.crew, n: 0, end: 0 }; u.n++; u.end = Math.max(u.end, Q[r.crew.id]); });
+      const ul = Object.values(used);
+      h += `<div class="card"><h2><span class="n">2</span>Crews</h2>` + (ul.length ? ul.map((u) => `<div class="src" style="margin:3px 0"><b>${esc(u.c.name)}</b> starts ${u.n} · busy until about ${hrs(Math.max(60, u.end - now()))} from now</div>`).join('') : '<div class="src">Nothing ticked.</div>') +
+        '<div class="hint">Each start keeps a crew busy for the trip plus an eighth of the mining time, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock. Pick one in the Crew column to choose yourself.</div></div>';
     }
     if (none.length) h += `<details class="card dkp-fold"><summary>Idle with no core sample on their lot (${none.length})</summary><div class="src">${none.map((e) => esc(k.nm(e.b)) + ' (' + esc(e.rock) + ')').join(' · ')}</div><div class="hint">Take a core sample on that lot in the game first.</div></details>`;
     M.calls = calls;
@@ -145,7 +158,7 @@
     host.querySelectorAll('[data-msamp]').forEach((x) => x.addEventListener('change', () => { M.samp_[x.dataset.msamp] = +x.value; delete M.amt[x.dataset.msamp]; re(); }));
     host.querySelectorAll('[data-mamt]').forEach((x) => x.addEventListener('change', () => { M.amt[x.dataset.mamt] = x.value; re(); }));
     host.querySelectorAll('[data-mst]').forEach((x) => x.addEventListener('change', () => { M.store[x.dataset.mst] = +x.value; re(); }));
-    host.querySelectorAll('[data-mcrew]').forEach((x) => x.addEventListener('change', () => { M.crew[x.dataset.mcrew] = +x.value; re(); }));
+    host.querySelectorAll('[data-mcrew]').forEach((x) => x.addEventListener('change', () => { if (x.value) M.crew[x.dataset.mcrew] = +x.value; else delete M.crew[x.dataset.mcrew]; re(); }));
     const q = (id) => host.querySelector(id);
     if (q('#mn-rock')) q('#mn-rock').addEventListener('change', (e) => { M.rock = e.target.value; re(); });
     if (q('#mn-all')) q('#mn-all').addEventListener('click', () => { rows.forEach((r) => { M.pick[r.key] = true; }); re(); });
