@@ -166,7 +166,14 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     let g = i.mass + (i.reservedMass || 0), v = i.volume + (i.reservedVolume || 0);
     Object.values(mv).forEach((m) => m.items.forEach(([p, n]) => { const q = MV[p] || [1000, 1000]; g += n * q[0]; v += n * q[1]; }));
     const peak = Math.round(Math.max(g / c[0], v / c[1]) * 100), now = Math.round(Math.max((i.mass + (i.reservedMass || 0)) / c[0], (i.volume + (i.reservedVolume || 0)) / c[1]) * 100);
-    return { r, refs, ref, cands, store, runs, wantRuns, avail, capTxt: one.capTxt, rows, moves: Object.values(mv), peak, now, x };
+    // already being made on this rock (Mark, 26 Nov: "can it check to see if there is already some in production?"):
+    // running (or finished, not yet collected) processes whose outputs include an input – processor.recipes runs × output per run
+    const PROCN = (window.YIC && window.YIC.PROCN) || {}, nowS = Date.now() / 1000, coming = {};
+    all.forEach((b) => (b.Processors || []).forEach((q) => {
+      if (q.status !== 1 || !q.runningProcess) return; const pr = PROCN[q.runningProcess]; if (!pr || !pr[1]) return;
+      Object.keys(r.inp).forEach((p) => { const per = pr[1][p]; if (!per) return; const n = Math.floor((q.recipes || 0) * per); if (n > 0) (coming[p] = coming[p] || []).push({ b, n, fin: q.finishTime || 0, done: (q.finishTime || 0) <= nowS }); });
+    }));
+    return { r, refs, ref, cands, store, runs, wantRuns, avail, capTxt: one.capTxt, rows, moves: Object.values(mv), peak, now, x, coming };
   }
   function makeHTML(rock, x, units) {
     const k = K(), esc = k.esc, c = makePlan(rock, x, units);
@@ -182,9 +189,19 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     // not enough for it in one process → make the short inputs in Production, into the store the refinery takes them from
     // (Mark, 26 Nov: "point to production for the next part of the chain, so they can start it there")
     if (c.runs < c.wantRuns) {
-      const short = c.rows.filter((w) => w.rock < c.r.inp[w.p] * c.wantRuns).map((w) => [w.p, Math.ceil(c.r.inp[w.p] * c.wantRuns - w.rock)]);
-      h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : (c.runs ? 'Only enough on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.' : 'Not enough on ' + esc(rock) + ' to make any.')}</div>` +
-        (c.capTxt || !short.length ? '' : `<div class="hint">Short for a full tank: ${short.map(([p, n]) => esc(k.pname(p)) + ' ' + kgU(p, n)).join(', ')}.</div><div class="row" style="gap:6px;margin-top:4px">${short.map(([p, n]) => `<button type="button" class="dk-shipbtn" data-sfmk="${p}" data-q="${n}" style="cursor:pointer">🏭 Make ${esc(k.pname(p))} in Production ▸</button>`).join('')}</div><div class="hint">It goes into ${esc(k.nm(c.store))}, ready for the refinery – then come back here.</div>`);
+      const when = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const short = c.rows.filter((w) => w.rock < c.r.inp[w.p] * c.wantRuns).map((w) => {
+        const n = Math.ceil(c.r.inp[w.p] * c.wantRuns - w.rock), cm = c.coming[w.p] || [], got = cm.reduce((t, z) => t + z.n, 0);
+        return { p: w.p, n, cm, left: Math.max(0, n - got) };
+      });
+      h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : (c.runs ? 'Only enough on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.' : 'Not enough on ' + esc(rock) + ' to make any.')}</div>`;
+      if (!c.capTxt && short.length) {
+        h += `<div class="hint">Short for a full tank: ${short.map((z) => esc(k.pname(z.p)) + ' ' + kgU(z.p, z.n)).join(', ')}.</div>`;
+        short.forEach((z) => z.cm.forEach((m) => { h += `<div class="hint">⚙ ${esc(k.pname(z.p))} ${kgU(z.p, m.n)} already being made at ${esc(k.nm(m.b))} – ${m.done ? '<b>finished, collect it in the game</b>' : 'ready about <b>' + when(m.fin) + '</b>'}.</div>`; }));
+        const need = short.filter((z) => z.left > 0);
+        if (need.length) h += `<div class="row" style="gap:6px;margin-top:4px">${need.map((z) => `<button type="button" class="dk-shipbtn" data-sfmk="${z.p}" data-q="${z.left}" style="cursor:pointer">🏭 Make ${z.cm.length ? 'the other ' + kgU(z.p, z.left) + ' ' : ''}${esc(k.pname(z.p))} in Production ▸</button>`).join('')}</div><div class="hint">It goes into ${esc(k.nm(c.store))}, ready for the refinery – then come back here.</div>`;
+        else { const last = Math.max(...short.map((z) => Math.max(0, ...z.cm.map((m) => m.fin)))); h += `<div class="hint"><span class="ok">✓</span> That covers it – come back ${last > Date.now() / 1000 ? 'after <b>' + when(last) + '</b>' : 'once it’s collected'} to fill the tank.</div>`; }
+      }
     }
     // inputs: everything already in one store → just say so; otherwise the move section
     if (!c.moves.length && c.runs > 0) h += `<div class="src" style="margin-top:8px"><span class="ok">✓</span> Everything it needs is in <b>${esc(k.nm(c.store))}</b>${c.cands.length > 1 ? ` <select id="sf-store" style="margin-left:6px">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select>` : ''}</div>`;
