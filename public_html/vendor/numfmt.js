@@ -3,13 +3,12 @@
    ('yic-numfmt'): uk = 1,234.5 (as now) · eu = 1.234,5 · sp = 1 234,5. Works by giving every number's toLocaleString
    the chosen style, so the whole site follows (dates are not touched). Loaded before app.js. */
 (function () {
-  const NFM = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const K = 'yic-numfmt', LOC = { eu: 'de-DE', sp: 'fr-FR' };
   const get = () => { try { return localStorage.getItem(K) || 'uk'; } catch (e) { return 'uk'; } };
   const orig = Number.prototype.toLocaleString;
-  if (NFM) Number.prototype.toLocaleString = function (loc, opt) {
+  Number.prototype.toLocaleString = function (loc, opt) {
     const f = get();
     return LOC[f] ? orig.call(this, LOC[f], opt) : orig.call(this, loc, opt);
   };
-  window.YICnumfmt = { on: NFM, get, set: (v) => { try { localStorage.setItem(K, v); } catch (e) {} } };
+  window.YICnumfmt = { on: true, get, set: (v) => { try { localStorage.setItem(K, v); } catch (e) {} } };
 })();
