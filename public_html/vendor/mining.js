@@ -204,5 +204,5 @@
       say(/reject|cancel|abort|denied|User/i.test(t) && !/Checked just before/.test(t) ? 'Cancelled in the wallet – nothing was changed.' : 'Not sent: ' + (/^Checked just before/.test(t) ? t : K().esc(t)), true);
     }
   }
-  window.YICMINE = { render, count, load: loadSamples };
+  window.YICMINE = { render, count, load: loadSamples, plan: () => (M.calls || []).map((c) => ({ ext: c.e.b.id, name: K().nm(c.e.b), rock: c.e.rock, slot: c.e.slot, dep: c.s[0], y: c.y, store: c.st.id, crew: c.crew.id, crewName: c.crew.name })) };
 })();
