@@ -23,9 +23,7 @@
   // A plan is saved (this browser only – Mark: "fine for now") when its approval is sent. Reopening Production lists the
   // plans; one shows each process as ✓ done / ⚙ running / ▶ ready / ⏳ waiting, read from the game (processors running
   // that process in the buildings this plan started it in), and the ready ones can be started from there.
-  const TRACK = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   const PKEY = 'sk_prod_plans';
-  const MVLINK = true; // 🚚 moves + crew links on a plan – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function plansGet() { try { return JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { return []; } }
   function plansPut(a) { try { localStorage.setItem(PKEY, JSON.stringify(a)); } catch (e) {} }
   const myPlans = () => { const k = K(), w = String((k.D() && k.D().wallet) || '').toLowerCase(); return plansGet().filter((x) => !x.wallet || x.wallet === w); };
@@ -61,7 +59,7 @@
       if (!left) return o;
       // still running but runs left (Mark, 15 Nov – LIVE 18 Nov): "nothing ready" while a second Bioreactor
       // sat free with the inputs there. Now the rest can start in another free building while this one runs.
-      if (o.s) { o.why = left.toLocaleString('en-GB') + ' runs still to start after this'; if (!PKB) return o; }
+      if (o.s) { o.why = left.toLocaleString('en-GB') + ' runs still to start after this';  }
       const busy = o.s;
       o.s = o.s || 'wait';
       const nope = (why) => { if (!busy) o.why = why; return o; };
@@ -73,11 +71,11 @@
       const lack = Object.keys(r.inp).filter((ip) => (pool[ip] || 0) < r.inp[ip] * one.runs);
       // WFD (Mark, 23 Nov – TEST ONLY, ?beta=1): leave out inputs whose own step is already done – "waiting for Pump, Computer"
       // with Computer done. If only done ones are short, say they haven't reached the materials store yet.
-      const lackW = WFD ? lack.filter((ip) => !doneP.has(String(ip))) : lack;
+      const lackW = lack.filter((ip) => !doneP.has(String(ip)));
       const nm3 = (a) => a.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (a.length > 3 ? '…' : '');
       // WLB (Mark, 23 Nov – TEST ONLY, ?beta=1): link to the building it's waiting on – the one making the missing input,
       // else the materials store it has to reach
-      if (WLB) o.wb = (lack.map((ip) => runB[String(ip)]).find(Boolean)) || (mat && mat.id) || 0;
+      o.wb = (lack.map((ip) => runB[String(ip)]).find(Boolean)) || (mat && mat.id) || 0;
       if (lackW.length) return nope('waiting for ' + nm3(lackW));
       // COMMS (Mark, 23 Nov – TEST ONLY, ?beta=1): a bit of fun – the step is done, the game just hasn't told us yet
       // Mark (24 Nov): still showing 10+ minutes after accepting – some of it may be there but not enough. Say how much.
@@ -87,17 +85,16 @@
       if (elsewhere.length) {
         o.wb = elsewhere[0][1].id;
         // FXB (Mark, 24 Nov – TEST ONLY, ?beta=1): "can't it now tell me to move them?" – offer the move in the approval
-        if (FXB) { const want = {}; lack.forEach((ip) => { want[ip] = Math.max(0, r.inp[ip] * one.runs - (pool[ip] || 0)); });
+        { const want = {}; lack.forEach((ip) => { want[ip] = Math.max(0, r.inp[ip] * one.runs - (pool[ip] || 0)); });
           o.fix = []; elsewhere.forEach(([ip, x, n]) => { const a = Math.min(n, want[ip]); if (a > 0) { want[ip] -= a; o.fix.push({ from: x.id, to: mat.id, items: [[+ip, a]], fromName: k.nm(x), toName: k.nm(mat) }); } }); }
         return nope('found it: ' + elsewhere.slice(0, 3).map(([ip, x, n]) => k.pname(+ip) + ' ' + k.amt(+ip, n) + ' in ' + k.nm(x)).join(', ') + ' – move it to ' + k.nm(mat)); }
       const partly = lack.filter((ip) => (pool[ip] || 0) > 0);
       if (partly.length) return nope('short in ' + k.nm(mat) + ': ' + partly.map((ip) => k.pname(+ip) + ' ' + k.amt(+ip, pool[ip]) + ' of ' + k.amt(+ip, r.inp[ip] * one.runs)).join(', '));
-      if (lack.length) return nope(COMMS ? '📡 Confirmation is still crawling here at the speed of light'
-        : nm3(lack) + ' done – not in ' + k.nm(mat) + ' yet');
+      if (lack.length) return nope('📡 Confirmation is still crawling here at the speed of light');
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
       if (!b) {
         // the building of that type that frees up first
-        if (WLB) { const fin = (x) => Math.min(...(x.Processors || []).filter((q) => q.status === 1).map((q) => q.finishTime || Infinity), Infinity); o.wb = (on.filter((x) => x.Building.buildingType === bt).sort((x, y) => fin(x) - fin(y))[0] || {}).id || 0; }
+        { const fin = (x) => Math.min(...(x.Processors || []).filter((q) => q.status === 1).map((q) => q.finishTime || Infinity), Infinity); o.wb = (on.filter((x) => x.Building.buildingType === bt).sort((x, y) => fin(x) - fin(y))[0] || {}).id || 0; }
         return nope('no free ' + (k.BTN[bt] || 'building'));
       }
       const to = byId(st.to) || mat;
@@ -130,48 +127,46 @@
     // ticked by default; only the ticked ones go in the approval. "Ready" already means its inputs are there and a building
     // is free, so nothing ticked here waits on another process finishing.
     P.noStart = P.noStart || {};
-    const pick = (i) => !(PKB && P.noStart[plan.id + ':' + i]);
+    const pick = (i) => !(P.noStart[plan.id + ':' + i]);
     const ready = ss.filter((x) => x.start && pick(x.i)).map((x) => Object.assign(x.start, { crew: P.runner }));
     S.rock = plan.rock; S.calls = []; S.feedCalls = []; S.feed = false; S.mover = P.runner; S.moverObj = runner;
     S.startList = ready;
-    const fixes = FXB ? [].concat(...ss.filter((x) => x.fix && x.fix.length).map((x) => x.fix)) : [];
+    const fixes = [].concat(...ss.filter((x) => x.fix && x.fix.length).map((x) => x.fix));
     if (fixes.length) S.calls = fixes.map((f) => ({ from: f.from, to: f.to, items: f.items }));
     // Colour coding (Mark, 23 Nov – TEST ONLY, ?beta=1): each status its own colour, game palette (theme.js, as used
     // elsewhere on the site): done green, ready bright green, running blue, to collect yellow, waiting orange (no free
     // building) or grey (waiting on an earlier step). Summary boxes match.
     const wGL = (path, t) => (window.GL && window.GL.on() ? window.GL(path, t) : ' <a href="https://game.influenceth.io' + path + '" target="influencegame" rel="noopener" style="color:var(--cyan)" title="' + esc(t) + '">in game ↗</a>');
-    const wLink = (x) => { if (!WLB || x.s !== 'wait' || !x.wb || x.start) return ''; const wb = byId(x.wb); return wb ? '<br><span class="src">🏭 ' + esc(k.nm(wb)) + '</span>' + wGL('/building/' + wb.id, 'Open ' + k.nm(wb) + ' in the game') : ''; };
+    const wLink = (x) => { if ((x.s !== 'wait') || !x.wb || x.start) return ''; const wb = byId(x.wb); return wb ? '<br><span class="src">🏭 ' + esc(k.nm(wb)) + '</span>' + wGL('/building/' + wb.id, 'Open ' + k.nm(wb) + ' in the game') : ''; };
     // CLB (Mark, 24 Nov – LIVE 24 Nov): "finished – collect it in the game" gets the same in-game link to the
     // building to collect from, on the row and on the "to collect" box.
-    const cLink = (x) => { if (!CLB || x.s !== 'collect' || !x.colB) return ''; const cb = byId(x.colB); return cb ? '<br><span class="src">🏭 ' + esc(k.nm(cb)) + '</span>' + wGL('/building/' + cb.id, 'Open ' + k.nm(cb) + ' in the game to collect it') : ''; };
+    const cLink = (x) => { if ((x.s !== 'collect') || !x.colB) return ''; const cb = byId(x.colB); return cb ? '<br><span class="src">🏭 ' + esc(k.nm(cb)) + '</span>' + wGL('/building/' + cb.id, 'Open ' + k.nm(cb) + ' in the game to collect it') : ''; };
     const firstC = ss.find((x) => x.s === 'collect' && x.colB && byId(x.colB));
     const firstW = ss.find((x) => x.s === 'wait' && x.wb && !x.start);
     const COL = { done: '#88e675', ready: '#57ff65', run: '#57d5ff', collect: '#ffd94f', wait: '#ff8c1a', waitStep: '#8a96aa' };
     const colOf = (x) => x.s === 'wait' && !/^no free/.test(x.why || '') ? COL.waitStep : COL[x.s];
-    const sumBox = (n, lab, c) => CCB ? `<div style="border-color:${c};box-shadow:0 0 0 1px ${c}55 inset"><b style="color:${n ? c : '#5c6573'}">${n}</b>${lab}</div>` : null;
-    const ICON = { done: '<span class="ok">✓ done</span>', run: '⚙ running', collect: '<span style="color:var(--amber)">✓ finished – collect it in the game</span>', ready: '<span class="ok">▶ ready to start</span>', wait: '<span class="src">⏳ waiting</span>' };
+    const sumBox = (n, lab, c) => `<div style="border-color:${c};box-shadow:0 0 0 1px ${c}55 inset"><b style="color:${n ? c : '#5c6573'}">${n}</b>${lab}</div>`;
     let h = `<div class="card"><h2><span class="n">📋</span>${esc(k.pname(plan.p))} ${k.amt(plan.p, plan.qty)} on ${esc(plan.rock)}</h2>` +
       `<div class="row"><button type="button" class="dk-shipbtn" id="pp-back" style="cursor:pointer">← All plans / new plan</button><span class="src">Planned ${esc(whenTxt(plan.made / 1000))} · materials in ${esc(byId(plan.mat) ? k.nm(byId(plan.mat)) : '?')}</span></div>` +
-      (CCB ? `<div class="dkp-sum" style="margin-top:10px">${sumBox(t.done, 'done', COL.done)}${sumBox(t.run, 'running', COL.run)}${CLB && firstC ? sumBox(t.col, 'to collect' + wGL('/building/' + firstC.colB, 'Open ' + k.nm(byId(firstC.colB)) + ' in the game to collect it'), COL.collect) : sumBox(t.col, 'to collect', COL.collect)}${sumBox(t.ready, 'ready now', COL.ready)}${WLB && firstW && byId(firstW.wb) ? sumBox(t.wait, 'waiting' + wGL('/building/' + firstW.wb, 'Open ' + k.nm(byId(firstW.wb)) + ' in the game'), COL.wait) : sumBox(t.wait, 'waiting', COL.wait)}</div>` :
-      `<div class="dkp-sum" style="margin-top:10px"><div class="good"><b>${t.done}</b>done</div><div><b>${t.run}</b>running</div><div><b>${t.col}</b>to collect</div><div class="good"><b>${t.ready}</b>ready now</div><div><b>${t.wait}</b>waiting</div></div>`) +
+      (`<div class="dkp-sum" style="margin-top:10px">${sumBox(t.done, 'done', COL.done)}${sumBox(t.run, 'running', COL.run)}${firstC ? sumBox(t.col, 'to collect' + wGL('/building/' + firstC.colB, 'Open ' + k.nm(byId(firstC.colB)) + ' in the game to collect it'), COL.collect) : sumBox(t.col, 'to collect', COL.collect)}${sumBox(t.ready, 'ready now', COL.ready)}${firstW && byId(firstW.wb) ? sumBox(t.wait, 'waiting' + wGL('/building/' + firstW.wb, 'Open ' + k.nm(byId(firstW.wb)) + ' in the game'), COL.wait) : sumBox(t.wait, 'waiting', COL.wait)}</div>`) +
       `<table style="margin-top:10px"><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Status</th></tr></thead><tbody>` +
       ss.map((x) => {
         const st = x.st, b = x.start && x.start.b;
         const cap = x.start && x.start.capTxt ? '<br><span class="src">⏱ ' + esc(x.start.capTxt) + '</span>' : '';
         const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + cap : '';
         const more = x.start && x.s !== 'ready' ? '<br><span class="ok">▶ ' + esc(x.why) + ' in ' + esc(k.nm(b)) + '</span>' + cap : '';
-        const tick = PKB && x.start ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
-        const c = CCB ? colOf(x) : '', rs = CCB ? ` style="box-shadow:inset 4px 0 0 ${c}"` : '', ss2 = CCB ? ` style="color:${c}"` : '';
-        const icon = CCB ? `<b style="color:${c};font-weight:600">${{ done: '✓ done', run: '⚙ running', collect: '✓ finished – collect it in the game', ready: '▶ ready to start', wait: '⏳ waiting' }[x.s] || ''}</b>` : (ICON[x.s] || '');
+        const tick = x.start ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
+        const c = colOf(x), rs = ` style="box-shadow:inset 4px 0 0 ${c}"`, ss2 = ` style="color:${c}"`;
+        const icon = `<b style="color:${c};font-weight:600">${{ done: '✓ done', run: '⚙ running', collect: '✓ finished – collect it in the game', ready: '▶ ready to start', wait: '⏳ waiting' }[x.s] || ''}</b>`;
         return `<tr${rs}><td>${tick}${x.i + 1}</td><td>${esc(st.name)}</td><td>${esc(k.pname(st.p))}</td><td class="num">${st.runs.toLocaleString('en-GB')}${x.left && x.left < st.runs ? '<br><span class="src">' + x.left.toLocaleString('en-GB') + ' left</span>' : ''}</td><td>${icon}<span${ss2}>${extra}</span>${more || (x.why ? '<br><span class="src"' + ss2 + '>' + esc(x.why) + '</span>' : '')}${wLink(x)}${cLink(x)}</td></tr>`;
       }).join('') + '</tbody></table>' +
-      (PKB && t.ready > 1 ? '<div class="hint">Tick the ready processes you want to start – only those go in the approval.</div>' : '') +
+      ((t.ready > 1) ? '<div class="hint">Tick the ready processes you want to start – only those go in the approval.</div>' : '') +
       (t.col ? '<div class="hint" style="color:var(--amber)">Finished processes must be collected in the game before their outputs can be used and the building is free.</div>' : '') + '</div>';
     // 🚚 the moves for this plan, with in-game links to finish them (Mark, 14 Nov – TEST ONLY, ?beta=1): processes sat
     // "waiting for stock" and there was no quick way to the crew that sent the moves. Deliveries into the materials
     // warehouse that aren't finished yet; the crew that sent them is saved on the plan from now on (older plans
     // just get the warehouse link – any crew can finish a delivery there).
-    if (MVLINK) {
+    {
       const now = Date.now() / 1000, ow = (S.incList || []).filter((r) => r[4][0] === 5 && r[4][1] === +plan.mat);
       if (ow.length) {
         const mv = k.crews(plan.rock).find((c) => c.id === plan.mover), matB = byId(plan.mat), ready = ow.filter((r) => r[2] <= now).length;
@@ -270,10 +265,7 @@
   // ---------- MAX (Mark, 13 Nov – TEST ONLY, ?beta=1): "use all the Pyroxene I have to make Sodium Tungstate" ----------
   // The most of the target that can be made from what's on the rock now (storage, deliveries on the way, by-products) –
   // nothing to fly in, buy or mine. Found by doubling then halving the amount. Says which input runs out first.
-  const MAXB = true; // MAX, search by input/process, Cargo bay ship fixes – LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
   // 🗄 Storage Management (Mark, 14 Nov – TEST ONLY, ?beta=1): pick what's in storage on a rock and send it to one of its warehouses / tank farms
-  const SMB = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
-  const GMB = true; // 🧪 Gather to make + how many to make – LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   // ⛏ "No, don't do that – I'll mine it" (Mark, 14 Nov – TEST ONLY, ?beta=1): when the plan makes a raw resource
   // (e.g. Sulfur Dioxide from Sulfuric Acid), the player can say they'll mine it instead. The planner then puts it on
   // the mine list rather than making it. Remembered in this browser; "make it again" undoes it.
@@ -287,20 +279,9 @@
     return '<div class="hint">⛏ You’ll mine these, not make them: ' +
       n.map((p) => `${k.esc(k.pname(p))} <button type="button" class="dk-shipbtn" data-mkagain="${p}" style="cursor:pointer;padding:1px 6px">make it again</button>`).join(' · ') + '</div>';
   }
-  const CCB = true; // plan colour coding – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
-  const WFD = true; // "waiting for" leaves out finished steps – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
-  const FGB = true; // ⛽ ship fuel gauge – LIVE 23 Nov 2026 (tested on ?beta=1 – Mark)
-  const COMMS = true; // 📡 "confirmation is crawling" wording – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
-  const CLB = true; // link to the building to collect a finished process from – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
-  const WLB = true; // link to the building a waiting step is waiting on – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
-  const FXB = true; // offer moving a done step's output into the materials store – LIVE 24 Nov 2026 (tested on ?beta=1 – Mark)
-  const PKB = true; // pick which ready process to start + start the rest of a running step elsewhere – LIVE 18 Nov 2026 (tested on ?beta=1 – Mark)
-  const FLEET = true; // Load a fleet + button names + CLEAR – LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
   // several ships – it hands the pick-up rock and the amounts to 🚀 Load a fleet, with every ship parked there ticked.
-  const EXF = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const FUELB = /[?&]beta=1\b/.test(location.search) && true; // ⛽ Fuel a ship – TEST ONLY (?beta=1), Mark 26 Nov 2026
-  const QLB = true; // Cargo bay: "put stuff to make X into ship Y on asteroid Z", load straight from stock, clearer words, "units" – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
     if (!ok(1)) { const W = work(target, 1); return { q: 0, by: Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number) }; }
@@ -504,9 +485,9 @@
   // Heavy – same as Travel). Bar colours from the game palette: green over half, yellow a quarter to half, red under.
   const TANK = { 2: 4000, 3: 24000 };
   const fuelPc = (s) => TANK[s.st] ? Math.max(0, Math.min(1, (s.prop || 0) / TANK[s.st])) : 0;
-  const fuelTxt = (s) => FGB && TANK[s.st] ? ` · ⛽ ${Math.round(fuelPc(s) * 100)}%` : '';
+  const fuelTxt = (s) => TANK[s.st] ? ` · ⛽ ${Math.round(fuelPc(s) * 100)}%` : '';
   const fuelBar = (s) => {
-    if (!FGB || !s || !TANK[s.st]) return '';
+    if (!s || !TANK[s.st]) return '';
     const f = fuelPc(s), c = f > 0.5 ? '#57ff65' : f >= 0.25 ? '#ffd94f' : '#e0282e';
     return `<span title="Propellant" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="src">⛽</span><span style="display:inline-block;width:110px;height:10px;border:1px solid ${c};border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden"><span style="display:block;height:100%;width:${(f * 100).toFixed(1)}%;background:${c}"></span></span><span style="color:${c}">${Math.round(f * 100)}%</span><span class="src">${Math.round(s.prop || 0).toLocaleString('en-GB')} t of ${TANK[s.st].toLocaleString('en-GB')} t</span></span>`;
   };
@@ -540,7 +521,7 @@
     // TEST ONLY (?beta=1): every other rock of yours, and what one rock alone can give (not just what's left after quicker rocks)
     const allR = [...new Set(k.allB().filter(k.isStore).map(k.rockOf).filter(Boolean))].filter((r) => r !== dest);
     const mkX = (r) => { const got = {}; let G = 0, V = 0; Object.keys(items).forEach((p) => { const n = Math.min(items[p], rockHas(r, p)); if (n > 0) { got[p] = n; G += n * g(p); V += n * v(p); } }); return { r, ast: k.astId(r), got, G, V }; };
-    if (QLB && !allR.includes(C.qr)) C.qr = pk.length ? pk[0].r : (allR[0] || '');
+    if (!allR.includes(C.qr)) C.qr = pk.length ? pk[0].r : (allR[0] || '');
     // the load list for ship s on rock X.r: storage → ship, item by item, crew, approve (Mark, 9 Nov)
     function loadHTML(X, s, trips) {
       let o = '';
@@ -578,14 +559,14 @@
         const leg = rt(x.r) < 1e6 ? rt(x.r) : null;
         const done = away == null || leg == null ? null : away + trips * leg + (trips - 1) * leg;
         // full already (Mark, 13 Nov – Skippys Last LT had 2,000 t of Sulfur Dioxide on board: "0 t in 0 moves") – TEST ONLY
-        const full = MAXB && ((s.capM - s.useM) < s.capM * 0.01 || (s.capV - s.useV) < s.capV * 0.01);
+        const full = (s.capM - s.useM) < s.capM * 0.01 || (s.capV - s.useV) < s.capV * 0.01;
         return { s, there, trips, away, refuel: f && f.refuel, done, full };
       }).sort((a, b) => (a.full - b.full) || (a.done ?? 1e9) - (b.done ?? 1e9) || (b.there - a.there));
       x.opts = opts;
       // Mark (13 Nov, TEST ONLY ?beta=1): the ship was picked before the flight times were worked out and then kept –
       // now the best ship is picked again as the times come in, until you pick one yourself; when it changes, a warning
       // says so. If you picked one and a quicker one turns up, it says that instead.
-      if (MAXB && opts[0]) {
+      if (opts[0]) {
         const was = C.pick[x.r], top = opts[0];
         if (!C.mine[x.r]) { if (was && was !== top.s.id && top.done != null) C.chg[x.r] = was; C.pick[x.r] = top.s.id; }
         else if (!opts.find((o) => o.s.id === was)) { C.pick[x.r] = top.s.id; C.mine[x.r] = false; }
@@ -595,30 +576,30 @@
       } else if (!opts.find((o) => o.s.id === (C.pick[x.r] || 0))) C.pick[x.r] = opts[0] ? opts[0].s.id : 0;
       x.best = opts.find((o) => o.s.id === C.pick[x.r]);
     });
-    let h = QLB ? `<div class="card"><h2><span class="n">🚀</span>Where to collect it from</h2><div class="src" style="margin-bottom:8px">Your other rocks that have what ${esc(dest)} is missing – quickest flight first. Each card shows the ship there (or the nearest one), how many trips, and how long it all takes. Click a rock to load from it in step 4.</div>` : `<div class="card"><h2><span class="n">🚀</span>Fly it in to ${esc(dest)}</h2>`;
+    let h = `<div class="card"><h2><span class="n">🚀</span>Where to collect it from</h2><div class="src" style="margin-bottom:8px">Your other rocks that have what ${esc(dest)} is missing – quickest flight first. Each card shows the ship there (or the nearest one), how many trips, and how long it all takes. Click a rock to load from it in step 4.</div>`;
     if (!pk.length) { el.innerHTML = h + '<div class="src" style="color:var(--amber)">None of your other rocks has any of it in stock – it all has to be bought or mined.</div></div>'; return; }
     // short = not ENOUGH in stock on your other rocks (Mark, 9 Nov: "3 items not on any of your rocks? That can't be right"
     // – they were partly in stock). Says how much is short and which of your rocks has the buildings to make it.
     const R = k.recipes(), types = {};
     k.allB().forEach((b) => { const r = k.rockOf(b); if (r && r !== dest) (types[r] = types[r] || new Set()).add(b.Building.buildingType); });
     const makers = (p) => Object.keys(types).filter((r) => R.some((x) => x.out[p] && !/Unbundling/.test(x.name) && types[r].has(k.FBT[x.type])));
-    h += `<div class="src" style="font-size:1.1em;margin-bottom:8px">You need to fly in from <b>${pk.length} rock${pk.length === 1 ? '' : 's'}</b>.${MAXB && !QLB ? ' <span class="src">Click a rock to load its ship.</span>' : ''}</div>` +
+    h += `<div class="src" style="font-size:1.1em;margin-bottom:8px">You need to fly in from <b>${pk.length} rock${pk.length === 1 ? '' : 's'}</b>.${''}</div>` +
       (short.length ? `<div class="src" style="margin-bottom:10px"><span class="short">Not enough in stock on your rocks:</span>` + short.map((p) => { const mk = makers(+p); return `<div style="margin-top:3px">• <b>${esc(k.pname(+p))}</b> – short by ${k.amt(+p, left[p])}${mk.length ? ' · <span class="ok">can be made on ' + mk.map(esc).join(', ') + '</span>' : ' · buy it or mine it'}</div>`; }).join('') + '</div>' : '');
     h += pk.map((x) => {
-      const b = x.best, sel = x.r === (QLB ? C.qr : C.src);
+      const b = x.best, sel = x.r === (C.qr);
       const shipLine = !b ? `<span style="color:var(--amber)">${shipsTxt || 'No ship can get there.'}</span>`
         : b.there ? `🚀 <b>${esc(b.s.name)}</b> is there · ${SHIPT[b.s.st]}${b.full ? ' <span style="color:var(--amber)">(full – unload it first)</span>' : ''}`
           : `🚀 Nearest: <b>${esc(b.s.name)}</b> · ${b.s.sst === 'f' ? 'flying to ' : 'at '}${esc(astName(b.s.dId))} · ${b.away == null ? '…' : hrsTxt(b.away) + ' away'}${b.refuel ? ' <span style="color:var(--amber)">(refuel first)</span>' : ''}`;
       return `<div class="dkp-t${sel ? ' fin' : ''}" data-src="${esc(x.r)}" style="cursor:pointer;margin-bottom:8px;display:block">
 <div class="dkp-n">${esc(x.r)} <span class="src" style="font-weight:400">· ${k.tonnes(x.G / 1000)} · ${hrsTxt(rt(x.r) < 1e6 ? rt(x.r) : null)} flight to ${esc(dest)}</span></div>
-<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}${MAXB && b ? (b.there && b.full ? `<div class="src" style="margin-top:8px;color:var(--amber)">⚠ ${esc(b.s.name)} is full – unload it in the game first</div>` : b.there ? `<div style="margin-top:8px"><span class="dk-shipbtn" style="display:inline-block;padding:4px 12px;border-radius:8px;background:${sel ? '#ffb03b' : '#2a1d08'};color:${sel ? '#1a1000' : '#ffd28a'};border:1px solid #ffb03b;font-weight:700">📦 ${sel ? (QLB ? 'Picked in step 4 ↑' : 'Loading list below ↓') : 'Click to load ' + esc(b.s.name) + ' now'}</span></div>` : `<div class="src" style="margin-top:8px;color:var(--dim)">✈ No ship here yet – fly one here in the game first</div>`) : ''}
+<div class="src" style="margin-top:4px">${shipLine}${b ? ' · ' + b.trips + ' trip' + (b.trips === 1 ? '' : 's') + ' · all done in <b>' + hrsTxt(b.done) + '</b>' : ''}</div>${x.warn ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ ${esc(x.warn)}</div>` : ''}${b ? (b.there && b.full ? `<div class="src" style="margin-top:8px;color:var(--amber)">⚠ ${esc(b.s.name)} is full – unload it in the game first</div>` : b.there ? `<div style="margin-top:8px"><span class="dk-shipbtn" style="display:inline-block;padding:4px 12px;border-radius:8px;background:${sel ? '#ffb03b' : '#2a1d08'};color:${sel ? '#1a1000' : '#ffd28a'};border:1px solid #ffb03b;font-weight:700">📦 ${sel ? ('Picked in step 4 ↑') : 'Click to load ' + esc(b.s.name) + ' now'}</span></div>` : `<div class="src" style="margin-top:8px;color:var(--dim)">✈ No ship here yet – fly one here in the game first</div>`) : ''}
 <div class="dkp-s" style="margin-top:4px">${Object.keys(x.got).sort((p1, p2) => x.got[p2] * g(p2) - x.got[p1] * g(p1)).map((p) => esc(k.pname(+p))).slice(0, 6).join(', ')}${Object.keys(x.got).length > 6 ? ' and ' + (Object.keys(x.got).length - 6) + ' more' : ''}</div></div>`;
     }).join('');
     // folded details: by material, and what to buy
     h += `<details class="dkp-fold"><summary>Details – by material</summary><table><thead><tr><th>Material</th><th class="num">Need</th><th>From</th><th>Short</th></tr></thead><tbody>` +
       Object.keys(items).sort((a, b) => items[b] * g(b) - items[a] * g(a)).map((p) => `<tr><td>${esc(k.pname(+p))}</td><td class="num">${k.amt(+p, items[p])}</td><td class="src">${pk.filter((x) => x.got[p]).map((x) => k.amt(+p, x.got[p]) + ' ' + esc(x.r)).join('<br>') || '–'}</td><td>${left[p] > 0 ? '<span class="short">' + k.amt(+p, left[p]) + '</span>' + (window.YICSRCTXT ? '<div class="hint" style="margin:2px 0 0">' + (window.YICSRCTXT(+p, left[p], k.astId(dest)) || '') + '</div>' : '') : '<span class="ok">✓</span>'}</td></tr>`).join('') + '</tbody></table></details>';
     let Q = '';
-    if (QLB) {
+    {
       // Mark (14 Nov, TEST ONLY ?beta=1): "I need to put stuff to make X into ship Y on asteroid Z" – X is step 2 at the
       // top, Z the pick-up rock, Y a ship parked there. Clicking a rock card below fills it in.
       const at = (r) => ships.filter((s) => s.sst === 'd' && s.dId === k.astId(r));
@@ -635,7 +616,7 @@
       if (!X.G) Q += `<div class="src" style="margin-top:8px;color:var(--amber)">${esc(C.qr)} has none of what ${esc(dest)} needs – pick another asteroid.</div>`;
       else if (!qs) Q += `<div class="src" style="margin-top:8px;color:var(--amber)">✈ No ship is parked at ${esc(C.qr)}. Fly one there in the game first, then come back here to load it.</div>`;
       else Q += loadHTML(X, qs, Math.max(1, Math.ceil(Math.max(X.G / (qs.capM * 0.995), X.V / (qs.capV * 0.995)))));
-      if (EXF && FLEET && X.G && there.length > 1) {
+      if (X.G && there.length > 1) {
         Q += `<div class="row" style="margin-top:10px"><button type="button" class="dk-shipbtn" id="pp-qfleet" style="cursor:pointer;padding:5px 12px;border:1px solid #ffb03b;color:#ffd28a">🚀 Spread it over ${there.length} ships here instead</button>` +
           `<span class="src">opens Load a fleet with this load and every ship parked at ${esc(C.qr)} ticked</span></div>`;
         C.qfleet = () => {
@@ -646,42 +627,11 @@
       }
       Q += `<div class="hint">This only loads the ship. You fly it to ${esc(dest)} and unload it in the game yourself.</div></div>`;
       h += `<div class="hint">Flight times: quickest route leaving now, loaded with a full tank; ships getting there with the propellant they have now. Light / Heavy Transports only.</div>`;
-    } else {
-    // the picked rock: change ship, and load it if it's there
-    if (!pk.find((x) => x.r === C.src)) C.src = pk[0].r;
-    const X = pk.find((x) => x.r === C.src), pick = X.best;
-    S.calls = []; S.startList = []; S.feed = false; S.srcRock = C.src;
-    h += `<div style="margin-top:12px;padding-top:10px;border-top:1px solid #3a2c18"><div class="row"><span class="src"><b>${esc(C.src)}</b> – ship</span><select id="pp-cship">${X.opts.map((o) => `<option value="${o.s.id}"${o.s.id === C.pick[C.src] ? ' selected' : ''}>${esc(o.s.name)} · ${o.full ? 'FULL · ' : ''}${o.there ? 'there now' : o.away == null ? '…' : hrsTxt(o.away) + ' away'} · ${o.trips} trip${o.trips === 1 ? '' : 's'}${o.done != null ? ' · done in ' + hrsTxt(o.done) : ''}</option>`).join('')}</select></div>`;
-    if (pick && pick.there) {
-      const cl = k.crews(C.src);
-      if (!cl.find((c) => c.id === S.mover)) S.mover = (cl.find((c) => !c.busy) || cl[0] || {}).id || 0;
-      S.moverObj = cl.find((c) => c.id === S.mover);
-      let fg = (pick.s.capM - pick.s.useM) * 0.995, fv = (pick.s.capV - pick.s.useV) * 0.995; const mv = {};
-      Object.keys(X.got).sort((a, b) => X.got[b] * v(b) - X.got[a] * v(a)).forEach((p) => {
-        let n = Math.min(X.got[p], Math.floor(fg / g(p)), Math.floor(fv / v(p))); if (n <= 0) return;
-        fg -= n * g(p); fv -= n * v(p);
-        stores(C.src).map((b) => [b, have(b, p), k.kmBetween(k.lotOf(b), pick.s.lot, X.ast) ?? 1e9]).filter((z) => z[1] > 0).sort((a, b) => a[2] - b[2]).forEach(([b, hv]) => {
-          if (n <= 0) return; const q = Math.min(n, hv); n -= q; (mv[b.id] = mv[b.id] || { b, items: [] }).items.push([+p, q]);
-        });
-      });
-      S.calls = Object.keys(mv).map((id) => ({ from: +id, to: pick.s.id, ship: true, slot: 2, items: mv[id].items }));
-      const lg = S.calls.reduce((t, c) => t + c.items.reduce((u, [p, a]) => u + a * g(p), 0), 0);
-      // what will be loaded, shown before the wallet asks (Mark, 9 Nov): storage → ship, item by item
-      if (MAXB && !S.calls.length) h += `<div class="src" style="margin-top:8px;color:var(--amber)">⚠ Nothing fits – ${esc(pick.s.name)} is full (${k.tonnes(pick.s.useM / 1000)} on board${pick.s.carry ? ', ' + esc(pick.s.carry) : ''}). Unload it in the game first, or pick another ship.</div>`;
-      else h += `<div class="src" style="margin-top:8px">Load ${esc(pick.s.name)}${pick.trips > 1 ? ' – trip 1 of ' + pick.trips : ''}: <b>${k.tonnes(lg / 1000)}</b> in ${S.calls.length} move${S.calls.length === 1 ? '' : 's'}:</div>` +
-        `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🚀 ${esc(pick.s.name)}` +
-          mv[id].items.map(([p, a]) => `<div class="src" style="margin-left:16px">└ ${esc(k.pname(p))} <b>${k.amt(p, a)}</b></div>`).join('') + '</div>').join('') + '</div>' +
-        (cl.length ? `<div class="row" style="margin-top:6px"><span class="src">Moved by</span><select id="pp-ccrew">${cl.map((c) => `<option value="${c.id}"${c.id === S.mover ? ' selected' : ''}>${esc(c.name)}${c.busy ? ' – busy until ' + esc(c.busy) : ' – ready'}</option>`).join('')}</select></div>` : `<div class="src" style="color:var(--red)">No crew on ${esc(C.src)} to do the loading.</div>`) +
-        `<button class="approve" id="pp-cgo" style="margin-top:10px"${S.calls.length && cl.length && !S.busy ? '' : ' disabled'}>${S.busy ? 'WAITING FOR YOUR WALLET…' : 'APPROVE IN WALLET (load ' + esc(pick.s.name) + ')'}</button>` +
-        `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`;
-    } else if (pick) h += `<div class="src" style="margin-top:8px;color:var(--amber)">Fly ${esc(pick.s.name)} to ${esc(C.src)} in the game first${pick.away != null ? ' (about ' + hrsTxt(pick.away) + ')' : ''}, then come back here to load it.</div>`;
-    h += `</div><div class="hint">This only loads a ship – you fly it and unload it in the game. Flight times: quickest route leaving now (site's route maths), loaded with a full tank; getting there with the propellant it has now. Light / Heavy Transports only.</div>`;
     }
     el.innerHTML = Q + h + '</div>';
     { const qf = el.querySelector('#pp-qfleet'); if (qf && C.qfleet) qf.addEventListener('click', C.qfleet); }
     el.querySelectorAll('[data-src]').forEach((r) => r.addEventListener('click', () => {
-      if (QLB) { C.qr = r.dataset.src; C.qs = 0; k.render(); const q = document.getElementById('pp-qcard'); if (q) q.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-      C.src = r.dataset.src; k.render();
+      { C.qr = r.dataset.src; C.qs = 0; k.render(); const q = document.getElementById('pp-qcard'); if (q) q.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     }));
     const qr = el.querySelector('#pp-qrock'); if (qr) qr.addEventListener('change', () => { C.qr = qr.value; C.qs = 0; k.render(); });
     const qsh = el.querySelector('#pp-qship'); if (qsh) qsh.addEventListener('change', () => { C.qs = +qsh.value; k.render(); });
@@ -746,17 +696,17 @@
       window.YICFUEL.render(m.querySelector('#sf-pg'));
       return;
     }
-    if (cargo && QLB && (P.cmode === 'stock' || (FLEET && P.cmode === 'fleet'))) return stockPage(m);
+    if (cargo && (P.cmode === 'stock' || (P.cmode === 'fleet'))) return stockPage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
-    if (TRACK && !cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
+    if (!cargo && P.track) { const pl = myPlans().find((x) => x.id === P.track); if (pl) return finish(m, trackHTML(pl)); P.track = ''; }
     const types = new Set(k.onRock().map((b) => b.Building.buildingType));
     const canHere = (p) => k.recipes().some((r) => r.out[p] && !/Unbundling/.test(r.name) && types.has(k.FBT[r.type]));
     const prods = products();
     const f = P.find.trim().toLowerCase();
     // search by input or process too (Mark, 13 Nov – TEST ONLY, ?beta=1): "Pyroxene" also finds what's made FROM it,
     // e.g. Sodium Chromate from Pyroxene Acid Leaching. via(p) = the matching process, shown on the button.
-    const via = (p) => { if (!MAXB || !f || k.pname(p).toLowerCase().includes(f)) return null; return k.recipes().find((r) => r.out[p] && !/Unbundling/.test(r.name) && (r.name.toLowerCase().includes(f) || Object.keys(r.inp).some((ip) => k.pname(+ip).toLowerCase().includes(f)))) || null; };
+    const via = (p) => { if (!f || k.pname(p).toLowerCase().includes(f)) return null; return k.recipes().find((r) => r.out[p] && !/Unbundling/.test(r.name) && (r.name.toLowerCase().includes(f) || Object.keys(r.inp).some((ip) => k.pname(+ip).toLowerCase().includes(f)))) || null; };
     const hit = (p) => !f || k.pname(p).toLowerCase().includes(f) || !!via(p);
     // a new search clears the old pick if it no longer matches (Mark, 9 Nov: "it remembers the first search")
     if (P.p && !hit(P.p)) { P.p = 0; P.use = ''; }
@@ -764,17 +714,17 @@
     const bulk = P.p ? k.bulk(P.p) : true;
     const qty = P.p ? Math.max(0, bulk ? Math.round((+P.q || 0) * UNITS[P.unit]) : Math.ceil(+P.q || 0)) : 0;
 
-    let h = TRACK && !cargo ? plansListHTML() : '';
-    if (cargo && QLB) h += cmodeBar();
-    h += `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2>${cargo && QLB ? '<div class="src" style="margin-bottom:8px">The rock where you’ll make it. The ship brings what this rock is missing here.</div>' : ''}<select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
-    h += `<div class="card"><h2><span class="n">2</span>What to make</h2>${cargo && QLB ? '<div class="src" style="margin-bottom:8px">What you want to make there, and how much. The page works out everything it needs and what that rock is short of.</div>' : ''}<div class="row">
-<input type="search" id="pp-find" placeholder="${MAXB ? '🔍 Product, input or process…' : '🔍 Search…'}" value="${esc(P.find)}">
+    let h = !cargo ? plansListHTML() : '';
+    if (cargo) h += cmodeBar();
+    h += `<div class="card"><h2><span class="n">1</span>${cargo ? 'Rock to make it on' : 'Rock'}</h2>${cargo ? '<div class="src" style="margin-bottom:8px">The rock where you’ll make it. The ship brings what this rock is missing here.</div>' : ''}<select id="pp-rock">${rl.map((r) => `<option${r === S.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>`;
+    h += `<div class="card"><h2><span class="n">2</span>What to make</h2>${cargo ? '<div class="src" style="margin-bottom:8px">What you want to make there, and how much. The page works out everything it needs and what that rock is short of.</div>' : ''}<div class="row">
+<input type="search" id="pp-find" placeholder="${'🔍 Product, input or process…'}" value="${esc(P.find)}">
 <select id="pp-p" style="flex:1 1 320px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === P.p ? ' selected' : ''}>${esc(k.pname(p))}${canHere(p) ? '' : ' (can’t make on this rock)'}</option>`).join('')}</select></div>` +
       (f && !P.p ? `<div class="dkp-chips" style="margin-top:8px">${shown.slice(0, 40).map((p) => { const v = via(p); return `<button type="button" data-pp="${p}" class="dk-shipbtn" style="cursor:pointer"${v ? ` title="${esc(v.name)}"` : ''}>${esc(k.pname(p))}${v ? ` <span class="src" style="font-size:.85em">← ${esc(v.name)}</span>` : ''}</button>`; }).join('') || '<span class="src">Nothing matches.</span>'}</div>` : '') +
       (P.p ? `<div class="row" style="margin-top:10px"><span class="src">How much</span><input type="number" id="pp-q" min="0" step="any" value="${esc(P.q)}">` +
-        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : (QLB ? '<span class="src" style="display:inline-block;min-width:4.2em">units</span>' : '<span class="src">×</span>')) +
-        (MAXB ? `<button type="button" class="dk-shipbtn" id="pp-max" style="cursor:pointer" title="As much as you can make from what’s on this rock now">MAX</button>` : '') + '</div>' +
-        (MAXB && P.maxTxt ? `<div class="hint">${P.maxTxt}</div>` : '') + forHTML() : '') + '</div>';
+        (bulk ? `<select id="pp-u" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === P.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : ('<span class="src" style="display:inline-block;min-width:4.2em">units</span>')) +
+        (`<button type="button" class="dk-shipbtn" id="pp-max" style="cursor:pointer" title="As much as you can make from what’s on this rock now">MAX</button>`) + '</div>' +
+        (P.maxTxt ? `<div class="hint">${P.maxTxt}</div>` : '') + forHTML() : '') + '</div>';
 
     if (P.p && qty > 0) {
       const W = work(P.p, qty);
@@ -844,7 +794,7 @@
 <tr><td>🛢 Tank farm</td><td>${ST.tf.length ? sel('tank', ST.tf, '— don’t use one —') : '<span class="src">none on this rock</span>'}</td>${aft('tank')}<td class="src">Finished goods that are all fluid (e.g. Hydrogen Propellant).</td></tr>
 </tbody></table><div class="hint">Full now → full when the plan is done: <span style="color:#3fd68a">green</span> under 75%, <span style="color:#ffb03b">amber</span> 75–89%, <span style="color:#ff6b6b">red</span> 90% or more. Remembered for ${esc(S.rock)} in this browser.</div></div>`;
         h += movesHTML(W, ST, byId);
-        if (TRACK) P.snap = snapPlan(W, ST, qty);
+        P.snap = snapPlan(W, ST, qty);
       }
     }
     P.shipItems = null;
@@ -854,19 +804,17 @@
   function cmodeBar() {
     const b = (v, t) => `<button type="button" class="dk-shipbtn${(P.cmode || 'make') === v ? ' on' : ''}" data-cmode="${v}" style="cursor:pointer">${t}</button>`;
     // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Load one ship / Load a fleet
-    if (FLEET) {
+    {
       const cm = P.cmode || 'make';
       return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}${FUELB ? b('fuel', '⛽ Fuel a ship') : ''}</div>` +
         `<div class="hint" style="margin:8px 0 0">${cm === 'fuel' ? 'Pick a ship parked on a rock – the page works out how much fills its tank and puts it in from storage.' : cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
           : cm === 'fleet' ? 'Pick a rock, tick the ships parked there, and what to load – it’s spread so each ship carries about the same weight.'
           : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
     }
-    return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Load what’s needed to make something')}${b('stock', '📦 Load straight from stock')}</div>` +
-      `<div class="hint" style="margin:8px 0 0">${(P.cmode || 'make') === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
   }
   // "I'd also like to be able to just pick what's in stock on a rock and send it to a ship" (Mark, 14 Nov)
   function stockPage(m) {
-    const FL = FLEET && P.cmode === 'fleet'; // 🚀 Load a fleet (Mark, 15 Nov – own button)
+    const FL = P.cmode === 'fleet'; // 🚀 Load a fleet (Mark, 15 Nov – own button)
     const k = K(), esc = k.esc, S = k.S, d = k.D() || {}, rl = k.rocks();
     const SHIPT = { 2: 'Light Transport', 3: 'Heavy Transport' };
     const g = (p) => k.grams(+p), v = (p) => (k.mv()[p] || [1000, 1000])[1];
@@ -931,9 +879,9 @@
       (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th><th>Load</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.sq[p] || {}, bulk = k.bulk(p);
         return `<tr><td>${esc(k.pname(p))}</td><td class="num">${k.amt(p, tot(p))}</td><td><div class="row" style="gap:6px;margin:0"><input type="number" min="0" step="any" data-sq="${p}" value="${esc(x.q || '')}" placeholder="0">` +
-          (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : (QLB ? '<span class="src" style="display:inline-block;min-width:4.2em">units</span>' : '<span class="src">×</span>')) +
+          (bulk ? `<select data-su="${p}" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === (x.unit || 't') ? ' selected' : ''}>${u}</option>`).join('')}</select>` : ('<span class="src" style="display:inline-block;min-width:4.2em">units</span>')) +
           // an item with an amount gets CLEAR instead of ALL, to take it off easily (Mark, 15 Nov – TEST ONLY)
-          (FLEET && want(p) > 0 ? `<button type="button" class="dk-shipbtn" data-sclr="${p}" style="cursor:pointer">CLEAR</button>`
+          ((want(p) > 0) ? `<button type="button" class="dk-shipbtn" data-sclr="${p}" style="cursor:pointer">CLEAR</button>`
             : `<button type="button" class="dk-shipbtn" data-sall="${p}" style="cursor:pointer">ALL</button>`) + `</div></td></tr>`;
       }).join('') + '</tbody></table>' : `<div class="src" style="margin-top:8px">${f ? 'Nothing matches.' : 'Nothing in storage on ' + esc(r) + '.'}</div>`) + fitBar() + '</div>';
     // step 4: the moves – storage → ship, nearest storage to the ship first; capped at the ship's free space
@@ -1086,7 +1034,7 @@
     const makes = (p, x, have) => { let lim = null, runs = Infinity; Object.keys(x.inp).forEach((ip) => { const n = Math.floor(have(+ip) / x.inp[ip]); if (n < runs) { runs = n; lim = +ip; } }); return { q: (runs === Infinity ? 0 : runs) * x.out[p], lim }; };
     P.gm = P.gm.filter((p) => rOf(p).length);
     let gmAt = -1;
-    if (GMB) {
+    {
       const gf = (P.gfind || '').trim().toLowerCase();
       const can = gf ? products().filter((p) => !P.gm.includes(p) && rOf(p).length && k.pname(p).toLowerCase().includes(gf)).slice(0, 12) : [];
       h += `<div class="card"><h2><span class="n">3</span>What do you want to make? <span class="src">(optional)</span></h2><div class="src" style="margin-bottom:8px">Pick one or more things – the whole chain to make them is listed, coloured by how many steps down. Type how many to make (or press MAX) and step 4 fills in what to move into ${dest ? esc(k.nm(dest)) : 'the storage above'}.</div>` +
@@ -1100,7 +1048,7 @@
     // bar in step 4. Step 4 then lists only what's needed.
     const LV = ['#57ff65', '#36a7cd', '#884fff', '#ff8c1a', '#e0282e', '#ffd94f', '#88e675', '#4f90ff'], lc = (d) => LV[(d - 1) % LV.length];
     const stopAt = new Set(IMB ? mineGet() : []), rows = {}, need = new Map();
-    if (GMB) P.gm.forEach((top) => {
+    P.gm.forEach((top) => {
       const out = rows[top] = [];
       const walk = (p, path, d) => {
         const go = !stopAt.has(p) && !k.canMine(p) && rOf(p).length && !path.includes(p) && d < 9;
@@ -1119,7 +1067,7 @@
     // modules and other counted items: units, or a weight turned into whole units (Mark, 21 Nov)
     const gqty = (p) => { const x = P.gq[p]; if (!x || !(+x.q > 0)) return 0; if (k.bulk(+p)) return x.unit === 'units' ? Math.floor(+x.q) : Math.round(+x.q * UNITS[x.unit || 't']); /* 1 unit of a bulk item = 1 kg */ const u = x.unit || 'units'; return u === 'units' ? Math.floor(+x.q) : Math.floor(+x.q * UNITS[u] * 1000 / k.grams(+p)); };
     const typed = P.gm.some((p) => gqty(p) > 0), nLbl = typed ? 'Needed' : 'Used at MAX';
-    if (GMB && P.gm.length) {
+    if (P.gm.length) {
       // how many to make (Mark, 21 Nov – TEST ONLY, ?beta=1): a typed amount per pick, else MAX
       const key = r + '|' + P.gm.join(',') + '|' + P.mdest + '|' + (S.msg || '').length + '|' + JSON.stringify(P.gq);
       if (P.gnk !== key) {
@@ -1136,7 +1084,7 @@
     const useAmt = (p) => Math.max(0, Math.min(tot(p), (gneed[p] || 0) - inDest(p)));
     const setQ = (p, n) => { if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.mq[p] = { q: Math.ceil(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.mq[p] = { q: n }; };
     const prods = Object.keys(stock).map(Number).filter((p) => (!need.size || need.has(p)) && (!f || k.pname(p).toLowerCase().includes(f))).sort((a, b) => Math.min(...(need.get(a) || [99])) - Math.min(...(need.get(b) || [99])) || !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
-    h += `<div class="card"><h2><span class="n">${GMB ? 4 : 3}</span>What to move</h2><div class="src" style="margin-bottom:8px">${need.size ? 'Only what your picks in step 3 need, from the other storage on ' + esc(r) + '.' : 'Everything in the other storage on ' + esc(r) + '.'} Type how much of each to move, or press ALL.</div>` +
+    h += `<div class="card"><h2><span class="n">${4}</span>What to move</h2><div class="src" style="margin-bottom:8px">${need.size ? 'Only what your picks in step 3 need, from the other storage on ' + esc(r) + '.' : 'Everything in the other storage on ' + esc(r) + '.'} Type how much of each to move, or press ALL.</div>` +
       `<input type="search" id="pp-mfind" placeholder="🔍 Search…" value="${esc(P.mfind || '')}">` +
       (prods.length ? `<table style="margin-top:8px"><thead><tr><th>Item</th><th class="num">In stock</th>${need.size ? '<th class="num">' + nLbl + '</th>' : ''}<th>Move</th></tr></thead><tbody>` + prods.map((p) => {
         const x = P.mq[p] || {}, bulk = k.bulk(p), no = tank && !k.TANKOK.has(p);
@@ -1178,7 +1126,7 @@
           (fd ? `<label style="margin:0"><input type="checkbox" id="pp-mfeed"${P.mfeed ? ' checked' : ''}> Feed ${esc(c.name)} first: ${k.tonnes(fd.give)} Food from ${esc(k.nm(src))}</label>` : '<div class="src">No Food stored on this rock to feed it.</div>') + '</div>';
       };
       const crewTxt = (c) => esc(c.name) + (c.busy ? ' – busy until ' + esc(c.busy) : ' – ready') + (c.food < 0.5 ? ' – food ' + Math.round(c.food * 100) + '% (hungry, slower)' : '');
-      h += `<div class="card"><h2><span class="n">${GMB ? 5 : 4}</span>Move it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(k.nm(dest))} is full. Pick another storage.</div>` :
+      h += `<div class="card"><h2><span class="n">${5}</span>Move it</h2>` + (!S.calls.length ? `<div class="src" style="color:var(--amber)">⚠ Nothing fits – ${esc(k.nm(dest))} is full. Pick another storage.</div>` :
         `<div class="src">These moves put <b>${k.tonnes(lg / 1000)}</b> into ${esc(k.nm(dest))} (${Math.round(full(dest) * 100)}% → <b>${after}%</b> full):</div>` +
         (cut ? `<div class="src" style="margin-top:4px;color:var(--amber)">⚠ Not all of it fits – ${esc(k.nm(dest))} takes what it has room for (up to 95%).</div>` : '') +
         `<div style="margin:6px 0 0 4px;padding-left:12px;border-left:2px solid #ffb03b55">` + Object.keys(mv).map((id) => { const km = k.kmBetween(k.lotOf(mv[id].b), k.lotOf(dest), ast); return `<div style="margin:6px 0"><b>${esc(k.nm(mv[id].b))}</b> → 🗄 ${esc(k.nm(dest))}${km != null ? ' <span class="src">· ' + k.kmTxt(km) + '</span>' : ''}` +
@@ -1189,7 +1137,7 @@
         `<div class="hint">Your wallet will ask you to approve these moves. Nothing happens in the game until you do.</div>` +
         `<div id="dk-msg" class="hint" style="display:${S.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${S.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${S.msgErr ? '#ffb3ae' : 'var(--ink)'}">${S.msg || ''}</div>`) + '</div>';
     }
-    if (GMB && gmAt >= 0) {
+    if (gmAt >= 0) {
       const moved = {}; S.calls.forEach((c) => c.items.forEach(([p, a]) => { moved[p] = (moved[p] || 0) + a; }));
       const recLine = (p, x, rs, pad) => `<div class="src" style="margin:2px 0 2px ${pad}px">` + (rs.length > 1 ? `<select data-grec="${p}" style="min-width:0">${rs.map((y) => `<option value="${y.i}"${y === x ? ' selected' : ''}>${esc(y.name)}</option>`).join('')}</select>` : '⚙ ' + esc(x.name)) + '</div>';
       const legend = [...new Set([].concat(...[...need.values()]))].sort((a, b) => a - b).map((d) => dot(d) + `<span class="src" style="margin-right:10px">${d} step${d > 1 ? 's' : ''} down</span>`).join('');
@@ -1273,7 +1221,7 @@
     on('pp-start', 'change', (e) => { P.start = e.target.checked; k.render(); });
     // step 10: save the plan once its approval is sent (TEST ONLY)
     const sent = () => !S.msgErr && /Sent to the game/.test(S.msg || '');
-    on('pp-go', 'click', async () => { const snap = P.snap; S.msg = ''; await k.approve(); if (TRACK && snap && sent()) { noteStarts(snap, S.batchStart); savePlan(snap); P.track = snap.id; k.render(); } });
+    on('pp-go', 'click', async () => { const snap = P.snap; S.msg = ''; await k.approve(); if (snap && sent()) { noteStarts(snap, S.batchStart); savePlan(snap); P.track = snap.id; k.render(); } });
     on('pp-tgo', 'click', async () => { const id = P.track; S.msg = ''; await k.approve(); if (sent()) { const pl = plansGet().find((x) => x.id === id); if (pl) { noteStarts(pl, S.batchStart); savePlan(pl); } k.render(); } });
     on('pp-trun', 'change', (e) => { P.runner = +e.target.value; k.render(); });
     on('pp-back', 'click', () => { P.track = ''; S.msg = ''; k.render(); });
@@ -1290,5 +1238,5 @@
     m.querySelectorAll('[data-mkagain]').forEach((b) => b.addEventListener('click', () => { minePut(mineGet().filter((x) => x !== +b.dataset.mkagain)); P.maxTxt = ''; k.render(); }));
   }
 
-  window.YICPROD = { render, work, planStatus, maxMake, store: SMB ? storePage : null };
+  window.YICPROD = { render, work, planStatus, maxMake, store: storePage };
 })();
