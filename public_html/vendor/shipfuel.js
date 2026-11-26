@@ -165,7 +165,10 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     if (c.err) return `<div class="hint" style="color:var(--amber);margin-top:8px">${esc(c.err)}</div>`;
     const kgU = (p, n) => kgTxt(n * k.grams(p) / 1000);
     const outKg = c.runs * c.r.out[PROP] * uG() / 1000;
-    let h = `<div class="src" style="margin:12px 0 4px"><b>4 · Make it at</b></div><select id="sf-ref">${c.refs.map((b) => `<option value="${b.id}"${b.id === SF.ref ? ' selected' : ''}>${esc(k.nm(b))} – ${k.freeSlot(b) ? 'free' : 'busy'}</option>`).join('')}</select>
+    // a free refinery is picked for you (Mark, 26 Nov: "it doesn't need the refinery option if there is one free")
+    const freeRef = c.ref && k.freeSlot(c.ref);
+    let h = `<div class="src" style="margin:12px 0 4px"><b>4 · Make it</b></div>` + (freeRef ? `<div class="src">At <b>${esc(k.nm(c.ref))}</b> (free)</div>`
+      : `<div class="src" style="color:var(--amber)">No refinery on ${esc(rock)} is free right now – it can start when one finishes.</div>`) + `
 <div class="src" style="margin-top:4px">${esc(c.r.name)} · <b>${c.runs.toLocaleString('en-GB')} runs</b> → <b>${kgTxt(outKg)}</b> straight into ${esc(x.s.name)}'s tank${c.ref && k.procSecs ? ' · about ' + Math.round((k.procSecs(c.r.name, c.runs) || 0) / 360) / 10 + ' h without bonuses' : ''}.</div>`;
     // not enough for it in one process → The SkippyChain shows how to make the rest (Mark, 26 Nov)
     if (c.runs < c.wantRuns) {
@@ -189,8 +192,8 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     const step = c.moves.length ? 'moves' : 'start';
     const ok = c.runs > 0 && crew && (step === 'moves' ? c.peak <= 100 : c.ref && k.freeSlot(c.ref));
     const can = k.isOwner() && !SF.busy && !wait && ok;
-    h += `<div style="margin-top:12px"><button id="sf-go" class="dkp-rc" style="border-color:var(--amber);color:#ffd28a"${can ? '' : ' disabled'}>${step === 'moves' ? '🚚 Approve – move the inputs (' + c.moves.length + ')' : '⛽ Approve – start ' + esc(k.nm(c.ref || {})) + ', ' + kgTxt(outKg) + ' into the tank'}</button></div>
-<div class="hint">${step === 'moves' ? 'The refinery can only start once the inputs are in ' + esc(k.nm(c.store)) + ' – when the moves have arrived, come back here and the button starts it.' : c.ref && !k.freeSlot(c.ref) ? '<span style="color:var(--amber)">' + esc(k.nm(c.ref)) + ' is busy – pick a free refinery.</span>' : 'Everything is in ' + esc(k.nm(c.store)) + ' – this starts the refinery.'}</div>
+    h += `<div style="margin-top:12px"><button id="sf-go" class="dkp-rc" style="border-color:var(--amber);color:#ffd28a"${can ? '' : ' disabled'}>${step === 'moves' ? '🚚 Approve – move the inputs (' + c.moves.length + ')' : '⛽ Approve – start making ' + kgTxt(outKg) + ' into the tank'}</button></div>
+<div class="hint">${step === 'moves' ? 'The refinery can only start once the inputs are in ' + esc(k.nm(c.store)) + ' – when the moves have arrived, come back here and the button starts it.' : c.ref && !k.freeSlot(c.ref) ? '<span style="color:var(--amber)">Waiting for a free refinery.</span>' : 'Everything is in ' + esc(k.nm(c.store)) + ' – this starts the refinery.'}</div>
 <div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – wait a moment, then ↻ Check the game again.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>
 <div id="sf-msg" class="hint" style="display:${SF.msg ? 'block' : 'none'};margin-top:8px;padding:10px 12px;border-radius:8px;border:1px solid ${SF.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${SF.msgErr ? '#ffb3ae' : 'var(--ink)'}">${SF.msg || ''}</div>`;
     SF.cur.step = step; SF.cur.crewObj = crew;
