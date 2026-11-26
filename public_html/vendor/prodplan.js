@@ -30,7 +30,7 @@
   function snapPlan(W, ST, qty) {
     const k = K();
     return { id: 'p' + Date.now(), wallet: String((k.D() && k.D().wallet) || '').toLowerCase(), rock: k.S.rock, p: P.p, qty, mat: ST.mat, made: Date.now(),
-      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0, ship: s.to && s.to.ship ? 1 : 0 })), started: {}, mover: k.S.mover || 0 };
+      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0, ship: s.to && s.to.ship ? 1 : 0, from: s.from ? s.from.id : 0 })), started: {}, mover: k.S.mover || 0 };
   }
   function noteStarts(plan, list) {
     (list || []).forEach((c) => { if (c.i == null) return; (plan.started[c.i] = plan.started[c.i] || []).push({ b: c.b.id, runs: c.runs, at: Math.floor(Date.now() / 1000) }); });
@@ -41,9 +41,11 @@
     const k = K(), R = k.recipes(), now = Date.now() / 1000;
     const on = k.allB().filter((b) => k.rockOf(b) === plan.rock), byId = (id) => on.find((b) => b.id === +id);
     const mat = byId(plan.mat);
-    const pool = {}; ((mat && k.inv(mat)) || { contents: [] }).contents.forEach((c) => { pool[c.product] = (pool[c.product] || 0) + c.amount; });
+    // each step takes its inputs from its own store: the materials warehouse, or the fuel processing store (26 Nov)
+    const pools = {}, poolOf = (b) => { if (!b) return {}; if (!pools[b.id]) { const q = pools[b.id] = {}; (k.inv(b) || { contents: [] }).contents.forEach((c) => { q[c.product] = (q[c.product] || 0) + c.amount; }); } return pools[b.id]; };
     const used = new Set(), doneP = new Set(), runB = {};
     return plan.steps.map((st, i) => {
+      const org = (st.from && byId(st.from)) || mat, pool = poolOf(org);
       const r = R.find((x) => x.name === st.name), pid = k.PID[st.name], bt = r ? k.FBT[r.type] : 0;
       const starts = plan.started[i] || [];
       let runningFin = 0, toCollect = 0, startedRuns = 0, colB = 0;
@@ -64,7 +66,7 @@
       o.s = o.s || 'wait';
       const nope = (why) => { if (!busy) o.why = why; return o; };
       if (!r) return nope('recipe not found');
-      if (!mat) return nope('materials warehouse not found');
+      if (!org) return nope('materials warehouse not found');
       if (!pid) return nope('can’t be started from here');
       const one = { r, runs: left };
       if (k.capRuns && !k.capRuns(one)) return nope('one run takes longer than the game allows');
@@ -75,21 +77,21 @@
       const nm3 = (a) => a.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (a.length > 3 ? '…' : '');
       // WLB (Mark, 23 Nov – TEST ONLY, ?beta=1): link to the building it's waiting on – the one making the missing input,
       // else the materials store it has to reach
-      o.wb = (lack.map((ip) => runB[String(ip)]).find(Boolean)) || (mat && mat.id) || 0;
+      o.wb = (lack.map((ip) => runB[String(ip)]).find(Boolean)) || (org && org.id) || 0;
       if (lackW.length) return nope('waiting for ' + nm3(lackW));
       // COMMS (Mark, 23 Nov – TEST ONLY, ?beta=1): a bit of fun – the step is done, the game just hasn't told us yet
       // Mark (24 Nov): still showing 10+ minutes after accepting – some of it may be there but not enough. Say how much.
       // Mark (24 Nov): "maybe it delivered them to another location?" – look in the rock's other buildings and say where
       const elsewhere = [];
-      lack.forEach((ip) => on.forEach((x) => { if (x.id === mat.id) return; const n = ((k.inv(x) || { contents: [] }).contents || []).filter((c) => c.product === +ip).reduce((t, c) => t + c.amount, 0); if (n > 0) elsewhere.push([ip, x, n]); }));
+      lack.forEach((ip) => on.forEach((x) => { if (x.id === org.id) return; const n = ((k.inv(x) || { contents: [] }).contents || []).filter((c) => c.product === +ip).reduce((t, c) => t + c.amount, 0); if (n > 0) elsewhere.push([ip, x, n]); }));
       if (elsewhere.length) {
         o.wb = elsewhere[0][1].id;
         // FXB (Mark, 24 Nov – TEST ONLY, ?beta=1): "can't it now tell me to move them?" – offer the move in the approval
         { const want = {}; lack.forEach((ip) => { want[ip] = Math.max(0, r.inp[ip] * one.runs - (pool[ip] || 0)); });
-          o.fix = []; elsewhere.forEach(([ip, x, n]) => { const a = Math.min(n, want[ip]); if (a > 0) { want[ip] -= a; o.fix.push({ from: x.id, to: mat.id, items: [[+ip, a]], fromName: k.nm(x), toName: k.nm(mat) }); } }); }
-        return nope('found it: ' + elsewhere.slice(0, 3).map(([ip, x, n]) => k.pname(+ip) + ' ' + k.amt(+ip, n) + ' in ' + k.nm(x)).join(', ') + ' – move it to ' + k.nm(mat)); }
+          o.fix = []; elsewhere.forEach(([ip, x, n]) => { const a = Math.min(n, want[ip]); if (a > 0) { want[ip] -= a; o.fix.push({ from: x.id, to: org.id, items: [[+ip, a]], fromName: k.nm(x), toName: k.nm(org) }); } }); }
+        return nope('found it: ' + elsewhere.slice(0, 3).map(([ip, x, n]) => k.pname(+ip) + ' ' + k.amt(+ip, n) + ' in ' + k.nm(x)).join(', ') + ' – move it to ' + k.nm(org)); }
       const partly = lack.filter((ip) => (pool[ip] || 0) > 0);
-      if (partly.length) return nope('short in ' + k.nm(mat) + ': ' + partly.map((ip) => k.pname(+ip) + ' ' + k.amt(+ip, pool[ip]) + ' of ' + k.amt(+ip, r.inp[ip] * one.runs)).join(', '));
+      if (partly.length) return nope('short in ' + k.nm(org) + ': ' + partly.map((ip) => k.pname(+ip) + ' ' + k.amt(+ip, pool[ip]) + ' of ' + k.amt(+ip, r.inp[ip] * one.runs)).join(', '));
       if (lack.length) return nope('📡 Confirmation is still crawling here at the speed of light');
       const b = on.filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
       if (!b) {
@@ -101,7 +103,7 @@
       used.add(b.id); Object.keys(r.inp).forEach((ip) => { pool[ip] -= r.inp[ip] * one.runs; });
       if (busy) o.why = 'the other ' + one.runs.toLocaleString('en-GB') + ' runs can start now';
       else o.s = 'ready';
-      o.start = { i, b, slot: k.freeSlot(b), r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: mat, to };
+      o.start = { i, b, slot: k.freeSlot(b), r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: org, to };
       return o;
     });
   }
@@ -343,21 +345,25 @@
     const matTF = FUELB && W && W.steps && W.steps.length && W.steps.every((st) => Object.keys(st.r.inp).every((ip) => k.TANKOK.has(+ip)) && (st === W.steps[W.steps.length - 1] || Object.keys(st.r.out).every((o) => k.TANKOK.has(+o)))) ? tf : [];
     const matL = wh.concat(matTF);
     let mat = pick('mat', /material|input|stag|process/i, matL, (most || [roomy])[0] && (most || [roomy])[0].id);
-    return { wh, tf, full, matL, mat, stock: pick('stock', /stock|store/i, wh, mat), market: pick('market', /market|distrib|sell|trade|export/i, wh, mat), build: pick('build', /build|construct|site/i, wh, mat), tank: ok(saved.tank, tf) ? saved.tank : '' };
+    // ⛽ fuel processing store (Mark, 26 Nov – TEST ONLY ?beta=1): "There is a fuel processing tank farm" – the propellant
+    // process takes its inputs from there. Guessed from the name, else none; the player picks it in step 5.
+    const fuel = FUELB ? (ok(saved.fuel, wh.concat(tf)) ? saved.fuel : saved.fuel === '' ? '' : ((tf.concat(wh)).find((b) => /fuel|propel/i.test(k.nm(b))) || {}).id || '') : '';
+    return { wh, tf, full, matL, mat, fuel, stock: pick('stock', /stock|store/i, wh, mat), market: pick('market', /market|distrib|sell|trade|export/i, wh, mat), build: pick('build', /build|construct|site/i, wh, mat), tank: ok(saved.tank, tf) ? saved.tank : '' };
   }
   // ---------- steps 8–9: moves into the materials warehouse, crew, start what can start, approve ----------
   // Sent through the hub's own approve() (vendor/dock.js – same checks, batches and wallet path as before):
   // S.calls = deliveries, S.startList = process starts.
   // moves: what the plan takes from storage, gathered into the materials warehouse (nearest storage first)
   function calcMoves(W, ST, mat) {
-    const k = K(), stores = ST.wh.concat(ST.tf), km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b));
+    const k = K(), stores = ST.wh.concat(ST.tf), km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b)), mat0 = mat;
     const have = (b, p) => ((k.inv(b) || { contents: [] }).contents || []).filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0);
     const dl = {}, short = [];
     Object.keys(W.stock).forEach((p) => {
-      p = +p; let left = W.stock[p] - Math.min(W.stock[p], k.holds(mat, p));
+      p = +p; const mat = (W.dest && W.dest[p]) || mat0; // where this input is used (materials warehouse or fuel processing store)
+      let left = W.stock[p] - Math.min(W.stock[p], k.holds(mat, p));
       stores.filter((b) => b.id !== mat.id && have(b, p) > 0).sort((a, b) => (km(a, mat) ?? 1e9) - (km(b, mat) ?? 1e9)).forEach((b) => {
         if (left <= 0) return; const q = Math.min(left, have(b, p)); left -= q;
-        (dl[b.id] = dl[b.id] || { from: b.id, to: mat.id, b, items: [] }).items.push([p, q]);
+        (dl[b.id + '>' + mat.id] = dl[b.id + '>' + mat.id] || { from: b.id, to: mat.id, b, tb: mat, items: [] }).items.push([p, q]);
       });
       if (left > 0) short.push(p);
     });
@@ -368,23 +374,23 @@
   // End state, by weight or space (whichever is fuller); by-products counted in full.
   // how full the materials store gets while the inputs are gathered (all moves arrived, nothing used yet) – the game
   // refuses a move that won't fit ('inventory volume exceeded'), and the whole approval fails with it (Mark, 26 Nov)
-  function peakMat(W, ST, byId) {
-    const k = K(), MV = k.mv(), mat = byId(ST.mat); if (!mat) return 0;
-    const i = k.inv(mat) || { mass: 0, volume: 0 }, c = mat.Building.buildingType === k.TANK ? [75e9, 997.5e9] : [1.5e12, 75e9];
+  function peakMat(W, ST, byId, b) {
+    const k = K(), MV = k.mv(), mat = byId(ST.mat); b = b || mat; if (!mat || !b) return 0;
+    const i = k.inv(b) || { mass: 0, volume: 0 }, c = b.Building.buildingType === k.TANK ? [75e9, 997.5e9] : [1.5e12, 75e9];
     let g = i.mass + (i.reservedMass || 0), v = i.volume + (i.reservedVolume || 0);
-    calcMoves(W, ST, mat).moves.forEach((mv) => mv.items.forEach(([p, a]) => { const x = MV[p] || [1000, 1000]; g += a * x[0]; v += a * x[1]; }));
+    calcMoves(W, ST, mat).moves.filter((mv) => (mv.tb || mat).id === b.id).forEach((mv) => mv.items.forEach(([p, a]) => { const x = MV[p] || [1000, 1000]; g += a * x[0]; v += a * x[1]; }));
     return Math.round(Math.max(g / c[0], v / c[1]) * 100);
   }
   function fullAfter(W, ST, byId) {
     const k = K(), MV = k.mv(), mat = byId(ST.mat), d = {};
     const add = (b, p, n) => { if (!b || !n || b.ship) return; const v = MV[p] || [1000, 1000]; const x = (d[b.id] = d[b.id] || [0, 0]); x[0] += n * v[0]; x[1] += n * v[1]; };
     if (mat) {
-      calcMoves(W, ST, mat).moves.forEach((mv) => mv.items.forEach(([p, a]) => { add(mv.b, p, -a); add(mat, p, a); }));
+      calcMoves(W, ST, mat).moves.forEach((mv) => mv.items.forEach(([p, a]) => { add(mv.b, p, -a); add(mv.tb || mat, p, a); }));
       Object.keys(W.mine).forEach((p) => add(mat, +p, W.mine[p]));
       Object.keys(W.fly).forEach((p) => add(mat, +p, W.fly[p]));
     }
     W.steps.forEach((st) => {
-      Object.keys(st.r.inp).forEach((ip) => add(mat, +ip, -st.r.inp[ip] * st.runs));
+      Object.keys(st.r.inp).forEach((ip) => add(st.from || mat, +ip, -st.r.inp[ip] * st.runs));
       Object.keys(st.r.out).forEach((o) => add(st.to, +o, st.r.out[o] * st.runs));
     });
     return (b) => {
@@ -409,7 +415,7 @@
     const { moves, short } = calcMoves(W, ST, mat);
     // moves crew (Mark, 9 Nov): ranked by the real trip times of THIS plan's moves – free distance and speed
     // (Logistician +5% surface transport speed is in the speed bonus) both count; ready crews first
-    const moveSecs = (c) => moves.reduce((t, x) => t + (k.tripSecs(km(x.b, mat), c) || 0), 0);
+    const moveSecs = (c) => moves.reduce((t, x) => t + (k.tripSecs(km(x.b, x.tb || mat), c) || 0), 0);
     const byM = cl.slice().sort((a, b) => (!!a.busy - !!b.busy) || moveSecs(a) - moveSecs(b) || b.free - a.free || b.speed - a.speed);
     if (!P.moverSet || !cl.find((c) => c.id === S.mover)) S.mover = (byM[0] || {}).id || 0;
     const byP = cl.slice().sort((a, b) => (!!a.busy - !!b.busy) || pBonus(b) - pBonus(a));
@@ -418,9 +424,10 @@
     S.moverObj = crew;
     // starts: in order, each process whose inputs are ALREADY in the materials warehouse (deliveries have to be
     // finished first) and that has a free building of its type
-    const pool = {}; ((k.inv(mat) || { contents: [] }).contents || []).forEach((c) => { pool[c.product] = (pool[c.product] || 0) + c.amount; });
+    const pools = {}, poolOf = (b) => { if (!pools[b.id]) { const q = pools[b.id] = {}; ((k.inv(b) || { contents: [] }).contents || []).forEach((c) => { q[c.product] = (q[c.product] || 0) + c.amount; }); } return pools[b.id]; };
     const used = new Set(), ready = [], wait = [];
     W.steps.forEach((st, i) => {
+      const org = st.from || mat, pool = poolOf(org); // its inputs come from its own store (materials warehouse or fuel processing store)
       const lack = Object.keys(st.r.inp).filter((ip) => (pool[ip] || 0) < st.r.inp[ip] * st.runs);
       const bt = k.FBT[st.r.type], b = k.onRock().filter((x) => x.Building.buildingType === bt && k.freeSlot(x) && !used.has(x.id))[0];
       if (lack.length) { wait.push([i, st, 'waiting for ' + lack.map((ip) => k.pname(+ip)).slice(0, 3).join(', ') + (lack.length > 3 ? '…' : '')]); return; }
@@ -431,7 +438,7 @@
       if (k.capRuns && !k.capRuns(one)) { wait.push([i, st, 'one run takes longer than the game allows']); return; }
       used.add(b.id);
       Object.keys(st.r.inp).forEach((ip) => { pool[ip] -= st.r.inp[ip] * one.runs; });
-      ready.push({ i, b, slot: k.freeSlot(b), r: st.r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: mat, to: st.to, crew: P.runner || S.mover });
+      ready.push({ i, b, slot: k.freeSlot(b), r: st.r, p: st.p, runs: one.runs, capTxt: one.capTxt, from: org, to: st.to, crew: P.runner || S.mover });
     });
     S.calls = moves.map((x) => ({ from: x.from, to: x.to, items: x.items }));
     S.startList = P.start ? ready : [];
@@ -452,8 +459,9 @@
     const feedM = feedOne(crew, 'm'), feedR = runner && runner.id !== (crew && crew.id) ? feedOne(runner, 'r') : '';
     S.feedCalls = feeds; S.feed = false;
     const tot = S.calls.length + S.startList.length + feeds.length;
-    let h = `<div class="card"><h2><span class="n">6</span>Moves into ${esc(k.nm(mat))} (${moves.length})</h2>` +
-      (moves.length ? `<table><thead><tr><th>From</th><th>Goods</th><th class="num">Trip</th></tr></thead><tbody>${moves.map((x) => { const d = km(x.b, mat); return `<tr><td>${esc(k.nm(x.b))}</td><td>${x.items.map(([p, a]) => esc(k.pname(p)) + ' ' + k.amt(p, a)).join('<br>')}</td><td class="num">${d == null ? '' : k.kmTxt(d) + ' · ' + k.tripTxt(k.tripSecs(d, crew))}</td></tr>`; }).join('')}</tbody></table>`
+    const multi = moves.some((x) => x.tb && x.tb.id !== mat.id); // some go to the fuel processing store (26 Nov)
+    let h = `<div class="card"><h2><span class="n">6</span>${multi ? 'Moves' : 'Moves into ' + esc(k.nm(mat))} (${moves.length})</h2>` +
+      (moves.length ? `<table><thead><tr><th>From</th>${multi ? '<th>To</th>' : ''}<th>Goods</th><th class="num">Trip</th></tr></thead><tbody>${moves.map((x) => { const d = km(x.b, x.tb || mat); return `<tr><td>${esc(k.nm(x.b))}</td>${multi ? `<td>${esc(k.nm(x.tb || mat))}</td>` : ''}<td>${x.items.map(([p, a]) => esc(k.pname(p)) + ' ' + k.amt(p, a)).join('<br>')}</td><td class="num">${d == null ? '' : k.kmTxt(d) + ' · ' + k.tripTxt(k.tripSecs(d, crew))}</td></tr>`; }).join('')}</tbody></table>`
         : '<div class="src"><span class="ok">✓ Nothing to move</span> – what the plan takes from storage is already there (or on its way).</div>') +
       (short.length ? `<div class="hint" style="color:var(--amber)">Not enough on this rock yet: ${short.map((p) => esc(k.pname(p))).join(', ')}.</div>` : '') +
       (Object.keys(W.mine).length ? `<div class="hint">⛏ Mine into ${esc(k.nm(mat))}: ${Object.keys(W.mine).map((p) => esc(k.pname(+p)) + ' ' + k.amt(+p, W.mine[p])).join(', ')}.</div>` : '') +
@@ -798,6 +806,13 @@
         const fin = W.steps[W.steps.length - 1];
         const fluid = (r) => Object.keys(r.out).every((o) => k.TANKOK.has(+o));
         W.steps.forEach((s) => { s.to = s === fin ? (ST.tank && fluid(s.r) ? byId(ST.tank) : byId(ST[pf])) : byId(ST.mat); });
+        // ⛽ fuel processing store (Mark, 26 Nov – TEST ONLY ?beta=1): the propellant process takes its inputs from there, and the
+        // in-between products it needs are sent there; the inputs it needs from storage are moved there (W.dest)
+        { const fb = ST.fuel ? byId(ST.fuel) : null, fits = (b, ps) => !b || b.Building.buildingType !== k.TANK || ps.every((p) => k.TANKOK.has(+p));
+          W.steps.forEach((s) => { s.from = fb && s.r.out[170] && fits(fb, Object.keys(s.r.inp)) ? fb : byId(ST.mat); });
+          W.steps.forEach((s, i) => { if (s === fin) return; const users = W.steps.slice(i + 1).filter((u) => u.r.inp[s.p]);
+            if (fb && users.length && users.every((u) => u.from === fb) && fits(fb, Object.keys(s.r.out))) s.to = fb; });
+          W.dest = {}; Object.keys(W.stock).forEach((p) => { const users = W.steps.filter((u) => u.r.inp[p]); if (fb && users.length && users.every((u) => u.from === fb)) W.dest[p] = fb; }); }
         // ⛽ into the ship's tank: never more runs than the room left (the refinery won't start if it can't all fit)
         if (fsh && fin.p === 170 && fluid(fin.r)) { fin.to = { ship: true, id: fsh.id, slot: 1, Name: { name: fsh.name + '’s tank' } }; fin.runs = Math.min(fin.runs, Math.floor(fRoom / fin.r.out[170])); }
         // step 6: the processes to run, in order
@@ -810,8 +825,9 @@
           }).join('') + '</tbody></table>' +
           '<div class="hint">Earlier steps make what later steps need. Times are without crew or building bonuses.</div></div>';
         // step 7: where things go
-        const after = fullAfter(W, ST, byId), pk = peakMat(W, ST, byId);
-        P.peakBad = FUELB && pk > 100; // TEST ONLY (?beta=1) with Fuel a ship, 26 Nov
+        const after = fullAfter(W, ST, byId), pk = peakMat(W, ST, byId), fuelB = ST.fuel ? byId(ST.fuel) : null, pkF = fuelB ? peakMat(W, ST, byId, fuelB) : 0;
+        const fuelUsed = fuelB && W.steps.some((s) => s.from === fuelB);
+        P.peakBad = FUELB && (pk > 100 || (fuelUsed && pkF > 100)); // TEST ONLY (?beta=1) with Fuel a ship, 26 Nov
         const pc = (n) => `<b style="color:${n > 100 ? '#ff4d4d' : n >= 90 ? '#ff6b6b' : n >= 75 ? '#ffb03b' : '#3fd68a'}">${n}%</b>`;
         const aft = (key) => { const b = byId(ST[key]); if (!b) return '<td></td>'; const a = after(b), n = ST.full(b); return `<td class="num" style="white-space:nowrap">${n}% → ${pc(a)}${a > 100 ? ' <span style="color:#ff4d4d">won’t fit</span>' : ''}</td>`; };
         const sel = (key, list, none) => `<select data-st="${key}">${none ? `<option value="">${none}</option>` : ''}${list.map((b) => `<option value="${b.id}"${b.id === ST[key] ? ' selected' : ''}>${esc(k.nm(b))} · ${ST.full(b)}% full</option>`).join('')}</select>`;
@@ -820,6 +836,7 @@
 <table style="margin-top:10px"><tbody>
 ${fsh ? `<tr><td>⛽ Ship’s tank</td><td><select id="pp-fship">${fuelShips().map((s) => `<option value="${s.id}"${s.id === fsh.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select></td><td class="num" style="white-space:nowrap">${Math.round((s0 => (s0.prop || 0) * 1e6 / TANKG[s0.st] * 100)(fsh))}% → ${pc(Math.round(((fsh.prop || 0) * 1e6 + fin.runs * fin.r.out[170] * k.grams(170)) / TANKG[fsh.st] * 100))}</td><td class="src">The Hydrogen Propellant goes straight into the tank – ${fRoom > 0 ? 'room for ' + k.amt(170, fRoom) + ', so it makes no more than that.' : '<span style="color:var(--amber)">the tank is already full.</span>'}</td></tr>` : ''}
 <tr><td>📦 Materials ${ST.matL.length > ST.wh.length ? 'store' : 'warehouse'}</td><td>${sel('mat', ST.matL)}</td>${aft('mat')}<td class="src">Everything the processes use is gathered here; in-between products land here too.${FUELB && pk > 100 ? `<br><b style="color:#ff4d4d">✗ Won’t fit while the inputs are gathered (${pk}% full before anything is used)</b> – the game refuses the moves.${ST.matL.length > ST.wh.length ? ' Pick a tank farm here, or make less.' : ' Make less, or move things out first.'}` : FUELB && pk >= 90 ? `<br><span style="color:#ffb03b">${pk}% full while the inputs are gathered.</span>` : ''}</td></tr>
+${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(ST.wh), '— don’t use one —')}</td>${fuelUsed ? `<td class="num" style="white-space:nowrap">${ST.full(fuelB)}% → ${pc(after(fuelB))}</td>` : '<td></td>'}<td class="src">Where you make Hydrogen Propellant – the propellant process takes its inputs from here, so they don’t all have to be gathered in the materials warehouse.${fuelB && !fuelUsed && W.steps.some((s) => s.r.out[170]) ? '<br><span style="color:var(--amber)">' + esc(k.nm(fuelB)) + ' is a tank farm and can’t take every input – using the materials warehouse.</span>' : ''}${fuelUsed && pkF > 100 ? `<br><b style="color:#ff4d4d">✗ Won’t fit while the inputs are gathered (${pkF}% full before anything is used)</b> – make less, or move things out first.` : ''}</td></tr>` : ''}
 <tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td>${aft('stock')}<td class="src">Finished goods made for stock.</td></tr>
 <tr><td>🛒 Market store</td><td>${sel('market', ST.wh)}</td>${aft('market')}<td class="src">Finished goods made to sell.</td></tr>
 <tr><td>🏗 Building store</td><td>${sel('build', ST.wh)}</td>${aft('build')}<td class="src">Finished goods for your own building.</td></tr>
