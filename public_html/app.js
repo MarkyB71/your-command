@@ -361,9 +361,8 @@ async function bgTick(force){
 /* RFX (LIVE 20 Nov 2026, tested on ?beta=1 – Mark; player report): ⟳ Refresh Game Data did nothing on many pages – add-on pages and Travel
    skipped the redraw, belt-wide data (market, belt flights, trades) was only fetched once per visit, and a refresh while the
    background check was running was dropped. Now: wait for that check, fetch, tell the belt pages to drop their copies, redraw the page you're on. */
-const RFX=true;
 window.YICrefreshNow=async()=>{
- if(!RFX)return bgTick(true); /* ⟳ Refresh on the decks: fetch now, no page rebuild */
+  /* ⟳ Refresh on the decks: fetch now, no page rebuild */
  for(let i=0;bgBusy&&i<100;i++)await new Promise(r=>setTimeout(r,200));
  await bgTick(true);
  if(window.BELTDATA)window.BELTDATA.data=null;
