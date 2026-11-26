@@ -307,15 +307,13 @@
     if (opts.label) box.querySelector('canvas + .a').textContent = opts.label;
     // Map controls (community idea, Mark 15 Nov 2026 – TEST ONLY, ?beta=1): full screen, pause the turning, zoom
     // (buttons, or the mouse wheel while full screen so the page still scrolls normally).
-    const MC = true; // LIVE 15 Nov 2026 (tested on ?beta=1 – Mark)
     // ORB (community idea, Mark 21 Nov 2026 – LIVE): each of your rocks gets its own orbit colour,
     // and a "Rocks" list to show or hide each one (saved in the browser, 'yic-map-hide').
-    const ORB = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
     const OCOL = ['#5fc3e4', '#ffb84a', '#7be07b', '#ff7ab6', '#b48cff', '#ffe66b', '#ff8a5c', '#5ce1c4', '#9fb4ff', '#e0e0e0'];
     const HK = 'yic-map-hide';
     const hidL = () => { try { return JSON.parse(localStorage.getItem(HK)) || []; } catch (e) { return []; } };
     const hidS = (a) => { try { localStorage.setItem(HK, JSON.stringify(a)); } catch (e) {} };
-    if (MC) {
+    {
       box.classList.add('bm-box');
       if (!document.getElementById('bm-css')) {
         const st = document.createElement('style'); st.id = 'bm-css';
@@ -344,8 +342,8 @@
         document.head.appendChild(st);
       }
       const c = document.createElement('div'); c.className = 'bm-ctl';
-      c.innerHTML = (ORB ? '<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>' : '') +
-        (ORB ? '' : '<label title="Show Adalia Prime on the map (same setting as Navigation)"><input type="checkbox" data-bm="ap"> Adalia Prime</label>') +
+      c.innerHTML = ('<button type="button" data-bm="rocks" title="Show or hide each of your asteroids" aria-expanded="false">Rocks ▾</button>') +
+        ('') +
         '<button type="button" data-bm="out" title="Zoom out">−</button><button type="button" data-bm="in" title="Zoom in">+</button>' +
         '<button type="button" data-bm="pause" title="Pause the turning">⏸</button><button type="button" data-bm="fs" title="Full screen">⛶</button>' +
         (SH ? '<label title="Show or hide your ships and their courses"><input type="checkbox" data-bm="ships"> Ships</label>' : '');
@@ -412,8 +410,8 @@
             return { ...a, p, ring };
           })
           .filter((a) => a.p);
-        me.forEach((a, i) => (a.col = ORB ? OCOL[i % OCOL.length] : '#5fc3e4'));
-        let hid = ORB ? hidL() : [];
+        me.forEach((a, i) => (a.col = OCOL[i % OCOL.length]));
+        let hid = hidL();
         const vis = () => me.filter((a) => !hid.includes(a.id));
         box.querySelector('.bm-load').remove();
         // ---- ships (Flight Deck): courses of ships in flight, docked ships beside their rock ----
@@ -539,9 +537,9 @@
             ctx.fillRect(q[0], q[1], 1.2, 1.2);
           });
           vis().forEach((a) => {
-            ctx.strokeStyle = ORB ? a.col : 'rgba(95,195,228,0.35)';
-            ctx.globalAlpha = ORB ? 0.6 : 1;
-            ctx.lineWidth = ORB ? 1.3 : 1;
+            ctx.strokeStyle = a.col;
+            ctx.globalAlpha = 0.6;
+            ctx.lineWidth = 1.3;
             ctx.beginPath();
             a.ring.forEach((p, i) => {
               const q = proj(p);
@@ -625,7 +623,7 @@
         });
         cv.style.touchAction = 'none';
         cv.style.cursor = 'grab';
-        if (MC) {
+        {
           const zoom = (k) => { zf = Math.max(1, Math.min(12, zf * k)); frame(); };
           const pb = box.querySelector('[data-bm="pause"]'), fb = box.querySelector('[data-bm="fs"]');
           box.querySelector('[data-bm="in"]').onclick = () => zoom(1.3);
@@ -696,7 +694,7 @@
           apDraw();
           const shcb = box.querySelector('[data-bm="ships"]');
           if (shcb) { shcb.checked = shipsOn; shcb.onchange = () => { shipsOn = shcb.checked; try { localStorage.setItem(SHK, shipsOn ? '1' : '0'); } catch (e) {} frame(); }; }
-          if (ORB) {
+          {
             const rb = box.querySelector('[data-bm="rocks"]'), rl = document.createElement('div');
             rl.className = 'bm-rl'; rl.hidden = true; box.appendChild(rl);
             const list = () => {
