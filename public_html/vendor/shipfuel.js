@@ -171,5 +171,5 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     }
   }
 
-  window.YICFUEL = { render, _test: { SF, plan, moves, ships } };
+  window.YICFUEL = { render, _test: { SF, moves, ships } };
 })();
