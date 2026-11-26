@@ -13,7 +13,7 @@
   'use strict';
   if (!/[?&]beta=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK;
-  const M = { samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
+  const M = { rock: '', samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
   const MAXY = 10000e6, YEAR = 365 * 86400;
   const now = () => Date.now() / 1000;
 
@@ -64,10 +64,16 @@
   function render(host) {
     const k = K(), esc = k.esc;
     if (!M.samp && !M.err) { host.innerHTML = '<div class="card"><div class="src">Reading your core samples…</div></div>'; loadSamples().then(() => k.render()); return; }
-    const { out, done } = list();
+    const all = list();
+    // pick an asteroid (Mark, 26 Nov): only rocks with an idle or finished extractor
+    const rl = [...new Set(all.out.concat(all.done).map((e) => e.rock))].sort();
+    if (M.rock && !rl.includes(M.rock)) M.rock = '';
+    const mine = (e) => !M.rock || e.rock === M.rock;
+    const out = all.out.filter(mine), done = all.done.filter(mine);
     const ready = out.filter((e) => e.samples.length), none = out.filter((e) => !e.samples.length);
     let h = `<div class="card"><h2><span class="n">⛏</span>Restart mining</h2><div class="src">Idle extractors that have a core sample with yield left on the same lot. Each one mines everything left in its sample, as long as the storage has room – change the amount if you want less.</div>` +
-      (M.err ? `<div class="src" style="color:var(--red);margin-top:8px">${esc(M.err)}</div>` : '') + '</div>';
+      (M.err ? `<div class="src" style="color:var(--red);margin-top:8px">${esc(M.err)}</div>` : '') +
+      (rl.length > 1 ? `<div class="row" style="margin-top:10px"><span class="src">Asteroid</span><select id="mn-rock"><option value="">All asteroids</option>${rl.map((r) => `<option${r === M.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>` : '') + '</div>';
     if (done.length) h += `<div class="card"><div class="src" style="color:var(--amber)">⏳ ${done.length} extractor${done.length > 1 ? 's have' : ' has'} finished but not been collected: ${done.map((e) => '<b>' + esc(k.nm(e.b)) + '</b> (' + esc(e.rock) + ')').join(', ')}. Finish ${done.length > 1 ? 'them' : 'it'} in the game first, then ↻ Check the game again.</div></div>`;
     if (!ready.length) {
       h += `<div class="card"><div class="src">${out.length ? 'None of your idle extractors has a core sample with yield left on its lot.' : 'No idle extractors right now.'}</div></div>`;
@@ -103,7 +109,7 @@
       rows.push({ e, key, s, p, left, st, stores, room, y, want, crew, cl, km });
     });
     if (rows.length) {
-      h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th class="num">Time</th></tr></thead><tbody>` +
+      h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="mn-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="mn-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th class="num">Time</th></tr></thead><tbody>` +
         rows.map((r) => {
           const t = r.y ? realSecs(r.y, r.left) : 0, short = r.y < r.want;
           return `<tr><td><input type="checkbox" data-mpick="${r.key}"${M.pick[r.key] ? ' checked' : ''}></td>` +
@@ -138,6 +144,10 @@
     host.querySelectorAll('[data-mamt]').forEach((x) => x.addEventListener('change', () => { M.amt[x.dataset.mamt] = x.value; re(); }));
     host.querySelectorAll('[data-mst]').forEach((x) => x.addEventListener('change', () => { M.store[x.dataset.mst] = +x.value; re(); }));
     host.querySelectorAll('[data-mcrew]').forEach((x) => x.addEventListener('change', () => { M.crew[x.dataset.mcrew] = +x.value; re(); }));
+    const q = (id) => host.querySelector(id);
+    if (q('#mn-rock')) q('#mn-rock').addEventListener('change', (e) => { M.rock = e.target.value; re(); });
+    if (q('#mn-all')) q('#mn-all').addEventListener('click', () => { rows.forEach((r) => { M.pick[r.key] = true; }); re(); });
+    if (q('#mn-none')) q('#mn-none').addEventListener('click', () => { rows.forEach((r) => { M.pick[r.key] = false; }); re(); });
     const go = host.querySelector('#mn-go'); if (go) go.addEventListener('click', () => { if (!M.busy) send(); });
   }
 
