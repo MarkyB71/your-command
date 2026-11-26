@@ -90,14 +90,15 @@
       const km = (b) => { const d = k.kmBetween(k.lotOf(e.b), k.lotOf(b), k.astId(e.rock)); return d == null ? 9e9 : d; };
       const pr = (b) => promised[b.id] || [0, 0];
       const last = e.x.destination && e.x.destination.id;
-      // default storage: where it went last time if it still has room, else the nearest with room
+      const want = M.amt[key] != null ? Math.min(left, Math.max(0, Math.round(+M.amt[key] * 1000))) : left;
+      // default storage (Mark, 26 Nov: "pick a storage that will take everything, or there will be part samples left"):
+      // where it went last time if ALL of it fits, else the nearest that takes all of it, else the one with the most room
       let st = stores.find((b) => b.id === M.store[key]);
       if (!st) {
-        const fits = (b) => roomFor(b, p, pr(b)[0], pr(b)[1]) >= Math.min(left, 1000);
-        st = stores.find((b) => b.id === last && fits(b)) || stores.filter(fits).sort((a, c) => km(a) - km(c))[0] || stores.sort((a, c) => km(a) - km(c))[0];
+        const rm = (b) => roomFor(b, p, pr(b)[0], pr(b)[1]), fits = (b) => rm(b) >= want;
+        st = stores.find((b) => b.id === last && fits(b)) || stores.filter(fits).sort((a, c) => km(a) - km(c))[0] || stores.slice().sort((a, c) => rm(c) - rm(a))[0];
       }
       const room = st ? roomFor(st, p, pr(st)[0], pr(st)[1]) : 0;
-      const want = M.amt[key] != null ? Math.min(left, Math.max(0, Math.round(+M.amt[key] * 1000))) : left;
       const y = Math.min(want, room);
       const cl = k.crews(e.rock), free = cl.filter((c) => !c.busy);
       let crew = cl.find((c) => c.id === M.crew[e.rock]) || free[0] || cl[0];
@@ -106,7 +107,8 @@
         promised[st.id] = [pr(st)[0] + y * (k.grams(p) || 1000), pr(st)[1] + y * volOf(p)];
         calls.push({ e, s, y, st, crew, p });
       }
-      rows.push({ e, key, s, p, left, st, stores, room, y, want, crew, cl, km });
+      const fitsAll = (b) => b === st ? room >= want : roomFor(b, p, pr(b)[0], pr(b)[1]) >= want;
+      rows.push({ e, key, s, p, left, st, stores, room, y, want, crew, cl, km, fitsAll });
     });
     if (rows.length) {
       h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="mn-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="mn-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th class="num">Time</th></tr></thead><tbody>` +
@@ -116,8 +118,8 @@
             `<td><b>${esc(k.nm(r.e.b))}</b><div class="src">${esc(r.e.rock)} · lot ${k.lotOf(r.e.b)}</div></td>` +
             `<td>${r.e.samples.length > 1 ? `<select data-msamp="${r.key}">${r.e.samples.map((s) => `<option value="${s[0]}"${s === r.s ? ' selected' : ''}>${esc(k.pname(s[1]))} · ${k.tonnes(s[2])} left${s[6] === 3 ? ' (used before)' : ''}</option>`).join('')}</select>` : `${esc(k.pname(r.p))}<div class="src">${k.tonnes(r.left)} left${r.s[6] === 3 ? ' · used before' : ' · new sample'}</div>`}</td>` +
             `<td class="num"><input type="number" min="0" step="any" data-mamt="${r.key}" value="${M.amt[r.key] != null ? esc(M.amt[r.key]) : +(r.left / 1000).toFixed(3)}" style="width:100px"> t` +
-            (short && r.st ? `<div class="src" style="color:var(--amber)">only ${k.tonnes(r.y)} fits</div>` : '') + `</td>` +
-            `<td>${r.stores.length ? `<select data-mst="${r.key}">${r.stores.map((b) => `<option value="${b.id}"${r.st && b.id === r.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${k.kmTxt(r.km(b))}</option>`).join('')}</select>` : '<span style="color:var(--red)">no storage on this rock</span>'}` +
+            (short && r.st ? `<div class="src" style="color:var(--amber)">only ${k.tonnes(r.y)} fits${r.stores.some((b) => b !== r.st && r.fitsAll(b)) ? '' : ' – no storage here takes it all'}</div>` : '') + `</td>` +
+            `<td>${r.stores.length ? `<select data-mst="${r.key}">${r.stores.map((b) => `<option value="${b.id}"${r.st && b.id === r.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${k.kmTxt(r.km(b))}${r.fitsAll(b) ? '' : ' · not all fits'}</option>`).join('')}</select>` : '<span style="color:var(--red)">no storage on this rock</span>'}` +
             (r.st && !r.room ? '<div class="src" style="color:var(--red)">full – pick another</div>' : '') + `</td>` +
             `<td class="num">${r.y ? '~' + hrs(t) : '–'}</td></tr>`;
         }).join('') + '</tbody></table><div class="hint">Time is without crew or building bonuses. The amount is in tonnes; it’s capped at what’s left in the sample and the room in the storage.</div></div>';
