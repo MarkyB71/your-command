@@ -61,19 +61,7 @@
 @media (max-width:760px){#dk-ov .lb-deck{grid-template-columns:1fr 1fr;perspective:none}#dk-ov .lb-chair{grid-column:1/-1;order:-1;flex-direction:row;justify-content:center;gap:10px}#dk-ov .lb-chair svg{max-width:60px}#dk-ov .lb-st,#dk-ov .lb-st:hover,#dk-ov .lb-st.on{transform:none}#dk-ov .lb-vs{width:96%}#dk-ov .lb-scr{clip-path:none}}
 @media (prefers-reduced-motion:reduce){#dk-ov .lb-led,#dk-ov .lb-bl{animation:none}#dk-ov .lb-st{transition:none}}
 `;
-  const BG =
-    '<svg class="lb-bg" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><defs>' +
-    '<linearGradient id="lbW" x1="0" x2="1"><stop offset="0" stop-color="#140e08"/><stop offset="1" stop-color="#20170c"/></linearGradient>' +
-    '<linearGradient id="lbW2" x1="1" x2="0"><stop offset="0" stop-color="#140e08"/><stop offset="1" stop-color="#20170c"/></linearGradient>' +
-    '<radialGradient id="lbF" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#2a1d0e"/><stop offset="1" stop-color="#07060a"/></radialGradient></defs>' +
-    '<rect width="1000" height="620" fill="url(#lbF)"/>' +
-    '<polygon points="0,0 1000,0 940,18 60,18" fill="#1a130a"/>' +
-    '<line x1="100" y1="9" x2="900" y2="9" stroke="#ffb03b" stroke-opacity=".35" stroke-width="2"/>' +
-    '<polygon points="0,0 60,18 60,460 0,620" fill="url(#lbW)"/>' +
-    '<polygon points="1000,0 940,18 940,460 1000,620" fill="url(#lbW2)"/>' +
-    '<path d="M60,460 Q500,500 940,460" stroke="#ffb03b" stroke-opacity=".18" stroke-width="2" fill="none"/></svg>';
   // Side walls like the Bridge's (Mark, 10 Nov 2026): wall panels, two lines, a glowing bar and blinking lights
-  const WALLS = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   const BGW =
     '<svg class="lb-bg" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><defs>' +
     '<linearGradient id="lbW" x1="0" x2="1"><stop offset="0" stop-color="#140e08"/><stop offset="1" stop-color="#20170c"/></linearGradient>' +
@@ -122,7 +110,6 @@
   }
 
   // Hub tidy-up (Mark, 14 Nov – TEST ONLY ?beta=1): 4 consoles, 2 each side. Deliveries + Storage Management go into Storage.
-  const ORG = true; // LIVE 21 Nov 2026 (tested on ?beta=1 – Mark)
   const STATIONS4 = [
     // order left to right (Mark, 21 Nov): Storage · Galley · chair · Production · Cargo bay
     { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: 13, k: 'store' },
@@ -130,15 +117,7 @@
     { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: -8 },
     { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: -13 },
   ];
-  const STATIONS = [
-    { m: 'make', name: 'Production', ico: '🏭', col: '#ffb03b', ry: 15 },
-    { m: 'ship', name: 'Cargo bay', ico: '🚀', col: '#ff8a1f', ry: 11 },
-    { m: 'feed', name: 'Galley', ico: '🍽', col: '#ffc45e', ry: 7 },
-    { m: 'home', name: 'Deliveries', ico: '🚚', col: '#ffd28a', ry: -7, k: 'dels' },
-    { m: 'tidy', name: 'Storage', ico: '🗄', col: '#c98a3a', ry: -11 }, // Storage tidy (LIVE 13 Nov 2026 – switched off when tidy.js isn't loaded)
-    { m: '', name: 'Spare', ico: '·', col: '#8a6a3a', ry: -15, off: 'Kept free for future tools' },
-  ];
-  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: ORG ? 'STORAGE' : 'STORAGE TIDY' };
+  const TITLE = { home: 'WHAT NEEDS DOING', make: 'MAKE ON THIS ROCK', ship: 'LOAD A SHIP', feed: 'FEED CREWS', tidy: 'STORAGE' };
 
   function station(s, N, mode) {
     let n = '', l = '', sub = '', go = 'Open ▸';
@@ -196,16 +175,16 @@
   // called at the top of dock.js render(): draws the bridge, returns the viewscreen to draw the tool into
   function screen(main, S, render) {
     if (!document.getElementById('lb-css')) { const st = document.createElement('style'); st.id = 'lb-css'; st.textContent = CSS; document.head.appendChild(st); }
-    if (!S.mode) S.mode = ORG ? 'tidy' : 'home'; // Storage opens first (LIVE 21 Nov 2026)
+    if (!S.mode) S.mode = 'tidy'; // Storage opens first (LIVE 21 Nov 2026)
     const mode = S.mode === 'ship' || S.mode === 'feed' || S.mode === 'home' || S.mode === 'tidy' ? S.mode : 'make';
     let lb = main.querySelector('.lb');
     if (!lb) {
-      main.innerHTML = `<div class="lb${WALLS ? ' lbw' : ''}">${WALLS ? BGW : BG}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
+      main.innerHTML = `<div class="lb${' lbw'}">${BGW}<div class="lb-vs"><div class="lb-scr" id="lb-scr"></div><div class="lb-plate"></div></div><div class="lb-deck"></div><div class="lb-floor"></div></div>`;
       lb = main.querySelector('.lb');
     }
     const N = nums(S);
-    const st = (ORG ? STATIONS4 : STATIONS).map((s) => station(s, N, mode)), half = ORG ? 2 : 3;
-    lb.querySelector('.lb-deck').classList.toggle('lb4', ORG);
+    const st = (STATIONS4).map((s) => station(s, N, mode)), half = 2;
+    lb.querySelector('.lb-deck').classList.toggle('lb4', true);
     lb.querySelector('.lb-deck').innerHTML = st.slice(0, half).join('') +
       `<button type="button" class="lb-chair${mode === 'home' ? ' on' : ''}" data-lb="home" title="The logistics officer's chair – what needs doing">${CHAIR}<span class="lb-cl">What needs doing</span></button>` +
       st.slice(half).join('');
@@ -216,5 +195,5 @@
     return scr;
   }
 
-  window.YICHUBBRIDGE = { screen, storage: ORG ? storage : null };
+  window.YICHUBBRIDGE = { screen, storage: storage };
 })();
