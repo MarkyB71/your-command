@@ -875,14 +875,19 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
     if (!rl.includes(x.r)) x.r = rl.find((y) => y !== r) || r;
     const f = (x.find || '').trim().toLowerCase();
     const shown = products().filter((p) => !f || k.pname(p).toLowerCase().includes(f));
-    if (x.p && !shown.includes(x.p)) x.p = 0;
-    const bulk = x.p ? k.bulk(x.p) : true;
+    // buildings and ships too (Mark, 26 Nov): their construction materials, from window.YICBL (vendor/buildplan.js)
+    const BLx = Object.entries(window.YICBL || {}).filter(([, v]) => !f || v[0].toLowerCase().includes(f)).sort((a, b) => a[1][0].localeCompare(b[1][0]));
+    const bS = BLx.filter(([key]) => /^s\d$/.test(key)), bB = BLx.filter(([key]) => !/^s\d$/.test(key));
+    const isB = typeof x.p === 'string';
+    if (x.p && !(isB ? BLx.some(([key]) => 'b:' + key === x.p) : shown.includes(x.p))) x.p = 0;
+    const bulk = x.p && !isB ? k.bulk(x.p) : !x.p;
+    const og = (lab, l) => l.length ? `<optgroup label="${lab}">${l.map(([key, v]) => `<option value="b:${key}"${'b:' + key === x.p ? ' selected' : ''}>${esc(v[0])}</option>`).join('')}</optgroup>` : '';
     let h = `<details class="card dkp-fold" id="pp-fx"${x.open ? ' open' : ''}><summary><b>🏭 Fill it for something to make</b> <span class="src">(optional)</span></summary>` +
       `<div class="src" style="margin:8px 0">Pick what you want to make and where. The page works out what that rock is missing and fills in step 3 from what’s on ${esc(r)}.</div>` +
       `<div class="row"><span class="src">Make it on</span><select id="pp-fxr">${rl.map((y) => `<option${y === x.r ? ' selected' : ''}>${esc(y)}</option>`).join('')}</select></div>` +
       `<div class="row" style="margin-top:8px"><span class="src">What</span><input type="search" id="pp-fxf" placeholder="🔍 Search…" value="${esc(x.find || '')}">` +
-      `<select id="pp-fxp" style="flex:1 1 260px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === x.p ? ' selected' : ''}>${esc(k.pname(p))}</option>`).join('')}</select></div>` +
-      (x.p ? `<div class="row" style="margin-top:8px"><span class="src">How much</span><input type="number" id="pp-fxq" min="0" step="any" value="${esc(x.q)}">` +
+      `<select id="pp-fxp" style="flex:1 1 260px"><option value="0">${f ? (shown.length + BLx.length) + ' found – pick one' : '— pick what to make —'}</option>${og('🏗 Buildings', bB)}${og('🚀 Ships', bS)}${shown.length ? `<optgroup label="📦 Products">${shown.map((p) => `<option value="${p}"${p === x.p ? ' selected' : ''}>${esc(k.pname(p))}</option>`).join('')}</optgroup>` : ''}</select></div>` +
+      (x.p ? `<div class="row" style="margin-top:8px"><span class="src">${isB ? 'How many' : 'How much'}</span><input type="number" id="pp-fxq" min="0" step="any" value="${esc(x.q)}">` +
         (bulk ? `<select id="pp-fxu" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === x.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
         `<button type="button" class="dk-shipbtn" id="pp-fxgo" style="cursor:pointer;border:1px solid #ffb03b;color:#ffd28a">Fill in step 3</button></div>` : '') +
       (x.res ? `<div class="hint" style="margin-top:8px">${x.res}</div>` : '') + '</details>';
@@ -892,18 +897,26 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
     const x = P.fx, esc = k.esc, S = k.S, on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
     const d = m.querySelector('#pp-fx'); if (d) d.addEventListener('toggle', () => { x.open = d.open; });
     on('pp-fxr', 'change', (e) => { x.r = e.target.value; x.res = ''; k.render(); });
-    on('pp-fxp', 'change', (e) => { x.p = +e.target.value; x.res = ''; k.render(); });
+    on('pp-fxp', 'change', (e) => { const v = e.target.value; x.p = /^b:/.test(v) ? v : +v; if (typeof x.p === 'string' && !(+x.q > 0)) x.q = 1; x.res = ''; k.render(); });
     on('pp-fxq', 'change', (e) => { x.q = e.target.value; });
     on('pp-fxu', 'change', (e) => { x.unit = e.target.value; });
     on('pp-fxf', 'input', (e) => { x.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-fxf'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (z) {} } });
     on('pp-fxgo', 'click', () => {
       const qi = m.querySelector('#pp-fxq'); if (qi) x.q = qi.value;
-      const qty = k.bulk(x.p) ? Math.round((+x.q || 0) * UNITS[x.unit || 't']) : Math.ceil(+x.q || 0);
+      const B = typeof x.p === 'string' ? (window.YICBL || {})[x.p.slice(2)] : null;
+      const qty = B ? Math.ceil(+x.q || 0) : k.bulk(x.p) ? Math.round((+x.q || 0) * UNITS[x.unit || 't']) : Math.ceil(+x.q || 0);
       if (!(qty > 0)) { x.res = '<span style="color:var(--amber)">Type how much you want to make.</span>'; k.render(); return; }
-      const keep = S.rock; let W;
-      try { S.rock = x.r; W = work(x.p, qty); } finally { S.rock = keep; }
-      const what = k.amt(x.p, qty) + ' ' + esc(k.pname(x.p));
-      const need = W.steps.length ? W.fly : { [x.p]: qty };
+      // a building or ship: each construction material worked back on its own, and what's missing added up
+      const parts = B ? Object.entries(B[1]).map(([p, n]) => [+p, n * qty]) : [[x.p, qty]];
+      const keep = S.rock, need = {}; let cant = [];
+      try {
+        S.rock = x.r;
+        // for a building or ship, what's already on the rock you'll build it on counts first
+        const has = (p) => k.onRock().filter(k.isStore).reduce((t, b) => t + (((k.inv(b) || { contents: [] }).contents || []).filter((c) => c.product === p).reduce((u, c) => u + c.amount, 0)), 0);
+        parts.forEach(([p, n0]) => { const n = B ? Math.max(0, n0 - has(p)) : n0; if (!(n > 0)) return; const W = work(p, n); if (W.steps.length) Object.keys(W.fly).forEach((q) => { need[q] = (need[q] || 0) + W.fly[q]; }); else { need[p] = (need[p] || 0) + n; if (!B) cant.push(p); } });
+      } finally { S.rock = keep; }
+      const what = B ? qty + ' × ' + esc(B[0]) : k.amt(x.p, qty) + ' ' + esc(k.pname(x.p));
+      const W = { steps: cant.length ? [] : [1] };
       const ps = Object.keys(need).map(Number).filter((p) => need[p] > 0);
       if (!ps.length) { x.res = `<span class="ok">✓ Nothing to bring</span> – ${esc(x.r)} has everything for ${what}. Use 🏭 Production.`; k.render(); return; }
       P.sq = {};
