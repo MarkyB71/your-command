@@ -283,6 +283,10 @@
   }
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
   // several ships – it hands the pick-up rock and the amounts to 🚀 Load a fleet, with every ship parked there ticked.
+  // MRG (Mark, 26 Nov 2026 – TEST ONLY ?beta=1): Export for production and Load one ship merged – one flow: rock → ship →
+  // what to put on it, with an optional "Fill it for something to make" that works out what the rock you'll make it on
+  // is missing and fills the amounts in from this rock's storage. The Export for production button goes.
+  const MRG = /[?&]beta=1\b/.test(location.search);
   const FUELB = /[?&]beta=1\b/.test(location.search) && true; // ⛽ Fuel a ship – TEST ONLY (?beta=1), Mark 26 Nov 2026
   // ⛽ Make propellant straight into a ship's tank (Mark, 26 Nov – TEST ONLY ?beta=1): "the game does that – it's too hard to
   // work out how much to make, and if you make too much the refinery won't let you start". Step 5 gets a "Ship's tank" choice
@@ -732,6 +736,7 @@
       window.YICFUEL.render(m.querySelector('#sf-pg'));
       return;
     }
+    if (cargo && MRG && (!P.cmode || P.cmode === 'make')) P.cmode = 'stock';
     if (cargo && (P.cmode === 'stock' || (P.cmode === 'fleet'))) return stockPage(m);
     // step 10 (TEST ONLY): a saved plan open → show where it's up to; otherwise the list of plans goes above step 1
     P.snap = null;
@@ -858,11 +863,61 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
     // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Load one ship / Load a fleet
     {
       const cm = P.cmode || 'make';
-      return `<div class="card"><div class="row" style="gap:8px">${b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}${FUELB ? b('fuel', '⛽ Fuel a ship') : ''}</div>` +
+      return `<div class="card"><div class="row" style="gap:8px">${MRG ? '' : b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}${FUELB ? b('fuel', '⛽ Fuel a ship') : ''}</div>` +
         `<div class="hint" style="margin:8px 0 0">${cm === 'fuel' ? 'Pick a ship parked on a rock – the page works out how much fills its tank and puts it in from storage.' : cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
           : cm === 'fleet' ? 'Pick a rock, tick the ships parked there, and what to load – it’s spread so each ship carries about the same weight.'
-          : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.'}</div></div>`;
+          : (MRG ? 'Pick a rock, a ship parked there, and what to put on it – type amounts yourself, or let the page fill them in for something you want to make.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.')}</div></div>`;
     }
+  }
+  // 🏭 Fill it for something to make (MRG, TEST ONLY): P.fx = { r: rock to make it on, p, q, unit, find, open, res }
+  function fillHTML(k, r, rl, tot) {
+    const esc = k.esc, x = P.fx = P.fx || { r: '', p: 0, q: '', unit: 't', find: '' };
+    if (!rl.includes(x.r)) x.r = rl.find((y) => y !== r) || r;
+    const f = (x.find || '').trim().toLowerCase();
+    const shown = products().filter((p) => !f || k.pname(p).toLowerCase().includes(f));
+    if (x.p && !shown.includes(x.p)) x.p = 0;
+    const bulk = x.p ? k.bulk(x.p) : true;
+    let h = `<details class="card dkp-fold" id="pp-fx"${x.open ? ' open' : ''}><summary><b>🏭 Fill it for something to make</b> <span class="src">(optional)</span></summary>` +
+      `<div class="src" style="margin:8px 0">Pick what you want to make and where. The page works out what that rock is missing and fills in step 3 from what’s on ${esc(r)}.</div>` +
+      `<div class="row"><span class="src">Make it on</span><select id="pp-fxr">${rl.map((y) => `<option${y === x.r ? ' selected' : ''}>${esc(y)}</option>`).join('')}</select></div>` +
+      `<div class="row" style="margin-top:8px"><span class="src">What</span><input type="search" id="pp-fxf" placeholder="🔍 Search…" value="${esc(x.find || '')}">` +
+      `<select id="pp-fxp" style="flex:1 1 260px"><option value="0">${f ? shown.length + ' found – pick one' : '— pick what to make —'}</option>${shown.map((p) => `<option value="${p}"${p === x.p ? ' selected' : ''}>${esc(k.pname(p))}</option>`).join('')}</select></div>` +
+      (x.p ? `<div class="row" style="margin-top:8px"><span class="src">How much</span><input type="number" id="pp-fxq" min="0" step="any" value="${esc(x.q)}">` +
+        (bulk ? `<select id="pp-fxu" style="min-width:0">${Object.keys(UNITS).map((u) => `<option${u === x.unit ? ' selected' : ''}>${u}</option>`).join('')}</select>` : '<span class="src" style="display:inline-block;min-width:4.2em">units</span>') +
+        `<button type="button" class="dk-shipbtn" id="pp-fxgo" style="cursor:pointer;border:1px solid #ffb03b;color:#ffd28a">Fill in step 3</button></div>` : '') +
+      (x.res ? `<div class="hint" style="margin-top:8px">${x.res}</div>` : '') + '</details>';
+    return h;
+  }
+  function fillWire(m, k, r, tot) {
+    const x = P.fx, esc = k.esc, S = k.S, on = (id, ev, fn) => { const e = m.querySelector('#' + id); if (e) e.addEventListener(ev, fn); };
+    const d = m.querySelector('#pp-fx'); if (d) d.addEventListener('toggle', () => { x.open = d.open; });
+    on('pp-fxr', 'change', (e) => { x.r = e.target.value; x.res = ''; k.render(); });
+    on('pp-fxp', 'change', (e) => { x.p = +e.target.value; x.res = ''; k.render(); });
+    on('pp-fxq', 'change', (e) => { x.q = e.target.value; });
+    on('pp-fxu', 'change', (e) => { x.unit = e.target.value; });
+    on('pp-fxf', 'input', (e) => { x.find = e.target.value; const pos = e.target.selectionStart; k.render(); const n = m.querySelector('#pp-fxf'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (z) {} } });
+    on('pp-fxgo', 'click', () => {
+      const qi = m.querySelector('#pp-fxq'); if (qi) x.q = qi.value;
+      const qty = k.bulk(x.p) ? Math.round((+x.q || 0) * UNITS[x.unit || 't']) : Math.ceil(+x.q || 0);
+      if (!(qty > 0)) { x.res = '<span style="color:var(--amber)">Type how much you want to make.</span>'; k.render(); return; }
+      const keep = S.rock; let W;
+      try { S.rock = x.r; W = work(x.p, qty); } finally { S.rock = keep; }
+      const what = k.amt(x.p, qty) + ' ' + esc(k.pname(x.p));
+      const need = W.steps.length ? W.fly : { [x.p]: qty };
+      const ps = Object.keys(need).map(Number).filter((p) => need[p] > 0);
+      if (!ps.length) { x.res = `<span class="ok">✓ Nothing to bring</span> – ${esc(x.r)} has everything for ${what}. Use 🏭 Production.`; k.render(); return; }
+      P.sq = {};
+      const got = [], short = [];
+      ps.forEach((p) => {
+        const n = Math.min(Math.ceil(need[p]), tot(p));
+        if (n > 0) { got.push(p); if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.sq[p] = { q: Math.ceil(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n }; }
+        if (n < need[p]) short.push(esc(k.pname(p)) + ' (' + k.amt(p, Math.ceil(need[p]) - n) + ' short)');
+      });
+      x.res = (W.steps.length ? '' : `<span style="color:var(--amber)">${esc(k.pname(x.p))} can’t be made on ${esc(x.r)} – filled in the finished item instead.</span><br>`) +
+        (got.length ? `<span class="ok">✓ Filled in ${got.length} item${got.length > 1 ? 's' : ''}</span> that ${esc(x.r)} is missing for ${what}.` : `${esc(r)} has none of what ${esc(x.r)} is missing for ${what}.`) +
+        (short.length ? `<br><span style="color:var(--amber)">Not enough on ${esc(r)}:</span> ${short.join(' · ')}` : '');
+      k.render();
+    });
   }
   // "I'd also like to be able to just pick what's in stock on a rock and send it to a ship" (Mark, 14 Nov)
   function stockPage(m) {
@@ -924,6 +979,7 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
           : `<b style="color:var(--green)">✓ fits</b> · ${k.tonnes((x.cg - x.W) / 1000)} room left</span>`) + '</div>' +
         (over ? '<div class="hint">Lower some amounts above (or tick another ship) until it fits – you choose what goes.</div>' : '');
     };
+    if (MRG) h += fillHTML(k, r, rl, tot);
     const f = (P.sfind || '').trim().toLowerCase();
     const prods = Object.keys(stock).map(Number).filter((p) => !f || k.pname(p).toLowerCase().includes(f)).sort((a, b) => !!want(b) - !!want(a) || k.pname(a).localeCompare(k.pname(b)));
     h += `<div class="card"><h2><span class="n">3</span>What to put on it</h2><div class="src" style="margin-bottom:8px">Everything in storage on ${esc(r)}. Type how much of each to load, or press ALL.</div>` +
@@ -1048,6 +1104,7 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
       if (k.bulk(p)) { const u = n >= 1e6 ? 'kt' : n >= 1000 ? 't' : 'kg'; P.sq[p] = { q: Math.floor(n / UNITS[u] * 1000) / 1000, unit: u }; } else P.sq[p] = { q: n };
       k.render();
     }));
+    if (MRG) fillWire(m, k, r, tot);
     on('pp-ccrew', 'change', (e) => { S.mover = +e.target.value; k.render(); });
     on('pp-cgo', 'click', () => k.approve());
   }
