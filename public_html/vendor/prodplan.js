@@ -286,8 +286,8 @@
   // MRG (Mark, 26 Nov 2026 – TEST ONLY ?beta=1): Export for production and Load one ship merged – one flow: rock → ship →
   // what to put on it, with an optional "Fill it for something to make" that works out what the rock you'll make it on
   // is missing and fills the amounts in from this rock's storage. The Export for production button goes.
-  const MRG = /[?&]beta=1\b/.test(location.search);
-  const FUELB = /[?&]beta=1\b/.test(location.search) && true; // ⛽ Fuel a ship – TEST ONLY (?beta=1), Mark 26 Nov 2026
+  const MRG = true; // LIVE 26 Nov 2026 (tested on ?beta=1 – Mark)
+  const FUELB = true; // ⛽ Fuel a ship – LIVE 26 Nov 2026 (tested on ?beta=1 – Mark)
   // ⛽ Make propellant straight into a ship's tank (Mark, 26 Nov – TEST ONLY ?beta=1): "the game does that – it's too hard to
   // work out how much to make, and if you make too much the refinery won't let you start". Step 5 gets a "Ship's tank" choice
   // for Hydrogen Propellant when a ship is parked on the rock: the last process outputs into the ship's propellant slot

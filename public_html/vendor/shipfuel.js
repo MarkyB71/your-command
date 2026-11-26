@@ -12,7 +12,7 @@
    Uses the hub's own helpers (window.YICDOCK, vendor/dock.js). */
 (function () {
   'use strict';
-  if (!/[?&]dock=1\b/.test(location.search) || !/[?&]beta=1\b/.test(location.search)) return;
+  if (!/[?&]dock=1\b/.test(location.search)) return; // LIVE 26 Nov 2026 (tested on ?beta=1 – Mark)
   const K = () => window.YICDOCK;
   const PROP = 170, PSLOT = 1;
   const UNITS = { kg: 1, t: 1000, kt: 1e6 };
