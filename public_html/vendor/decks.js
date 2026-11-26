@@ -71,31 +71,23 @@ function wNameBox(pen) {
   // Decks by BUILDING colour (Mark, 12 Nov 2026) – TEST ONLY on ?beta=1. Players see the building
   // colours while playing, and new buildings in Discovery just get a new deck. Colours = the game's
   // Building Categories (same table as the extension's lotcolours.js). Old layout stays for everyone else.
-  const BLD = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
-  if (BLD) {
-    // Each deck = one crew class + the buildings it works in (Mark, 12 Nov 2026, 2nd try);
-    // colour = its crew. Trade Deck = trading only; storage, deliveries and leases are used when making
-    // products, so they sit in Engineering (Mark, 13 Nov).
-    DECKS.splice(1, DECKS.length - 1,
+  DECKS.splice(1, DECKS.length - 1,
       { id: 'crew', name: 'Crew Quarters', ico: '👥', col: '#ffff00', bld: 'Habitat', pages: ['C', 'Q', 'HS'] },
       { id: 'flight', name: 'Flight Deck', ico: '🚀', col: '#9a6bff', bld: 'Spaceport', pages: ['S', 'R', 'J', 'SS'] },
       { id: 'mine', name: 'Mining', ico: '⛏', col: '#ff8c1a', bld: 'Extractor', pages: ['X', 'F', 'I', 'E', 'XS'] },
       { id: 'eng', name: 'Engineering', ico: '🏭', col: '#e8645a', bld: 'Refinery · Factory · Shipyard · Warehouse', pages: ['P', 'U', 'D', 'T', 'B', 'V', 'L', 'LL'] },
       { id: 'sci', name: 'Science Lab', ico: '🔬', col: '#4f90ff', bld: 'Bioreactor', pages: ['A', 'RT', 'BS'] },
       { id: 'trade', name: 'Trade Deck', ico: '💰', col: '#57ff65', bld: 'Marketplace', pages: ['K', 'Y', 'M', 'W', 'O', 'MS'] });
-  }
   // Trade deliveries console (Fristy, community request – Mark 24 Nov 2026, TEST ONLY ?beta=1; page in pages/deliveries.js)
   if (/[?&]beta=1\b/.test(location.search)) { const td = DECKS.find((d) => d.id === 'trade'); if (td) td.pages.push('TD'); }
   window.YICDECKLIST = DECKS;
-  const HUBTAB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   // TOP BAR LAYOUT (Mark, 11 Nov – built 13 Nov, TEST ONLY ?beta=1): left = Play Influence; middle = SWAY, Deck controls,
   // Refresh Game Data; right (personal corner) = Search, Command Deck, wallet + ✎, Help. Done with CSS order + auto margins
   // (sway.js skips its own centring and midRf() leaves Refresh in the row while this is on).
-  const BAR2 = true; // LIVE 13 Nov 2026 (tested on ?beta=1 – Mark)
-  window.YICBAR2 = BAR2;
+  window.YICBAR2 = true;
   // the page can rebuild <head>/<body> after this script runs (Mark saw it come and go in Brave), so tools() puts it back
   const bar2Css = () => {
-    if (!BAR2 || document.getElementById('dkbar2-css')) return;
+    if (document.getElementById('dkbar2-css')) return;
     const st = document.createElement('style');
     st.id = 'dkbar2-css';
     st.textContent = 'html body #dktools{flex:1 1 560px!important;margin-left:0!important}' +
@@ -114,7 +106,7 @@ function wNameBox(pen) {
   // Deck controls dead centre of the bar (Mark, 13 Nov): SWAY's left margin is worked out so the middle of Deck controls
   // sits at the middle of the bar; Refresh's auto margin pushes the right-hand group over. Only when the row is on one line.
   const centreDc = () => {
-    if (!BAR2) return;
+    
     const t = document.getElementById('dktools'), sw = document.getElementById('swbal'), dc = document.getElementById('cl-dc'), pl = document.getElementById('play');
     if (!t || !sw || !dc || !pl || !t.parentNode) return;
     const bar = t.parentNode.getBoundingClientRect(), r = dc.getBoundingClientRect(), p = pl.getBoundingClientRect();
@@ -127,14 +119,12 @@ function wNameBox(pen) {
     if (Math.abs(want - cur) > 1) sw.style.setProperty('margin-left', want + 'px', 'important');
     t.classList.add('c2'); // shown once placed – no jump on load (Mark, 13 Nov)
   };
-  if (BAR2) { setInterval(() => { bar2Css(); centreDc(); }, 1000); window.addEventListener('resize', centreDc); const t0 = Date.now(); const fast = () => { centreDc(); if (Date.now() - t0 > 3000) { const t = document.getElementById('dktools'); if (t) t.classList.add('c2'); } if (Date.now() - t0 < 8000) requestAnimationFrame(fast); }; requestAnimationFrame(fast); } // shown after 3 s whatever happens // cheap checks once a second
-  if (HUBTAB) {
-    document.addEventListener('click', (e) => {
+  { setInterval(() => { bar2Css(); centreDc(); }, 1000); window.addEventListener('resize', centreDc); const t0 = Date.now(); const fast = () => { centreDc(); if (Date.now() - t0 > 3000) { const t = document.getElementById('dktools'); if (t) t.classList.add('c2'); } if (Date.now() - t0 < 8000) requestAnimationFrame(fast); }; requestAnimationFrame(fast); } // shown after 3 s whatever happens // cheap checks once a second
+  document.addEventListener('click', (e) => {
       if (!e.target.closest || !e.target.closest('.dk-hubtab')) return;
       e.preventDefault(); e.stopPropagation();
       location.href = (() => { const u = new URLSearchParams(location.search); ['mk', 'q', 'rock'].forEach((x) => u.delete(x)); u.set('dock', '1'); return location.pathname + '?' + u.toString(); })(); // drop Captain's log link details (mk/q/rock) so the Hub opens normally (Mark, 21 Nov)
     }, true);
-  }
 
   const CSS = `
 body > header{display:none!important}
@@ -267,8 +257,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   };
   const PIECE = { mine: 'Drill rig', store: 'Cargo racks', flight: 'Navigation', crew: 'Lockers', sci: 'Specimen rack', eng: 'Control panel', trade: 'Exchange board', grind: 'Duty board' };
   // LIVE 9 Nov 2026 (tested on ?beta=1 – Mark): Crew Quarters shows crew cards instead of lockers, and its Crews console opens them
-  const CQBETA = true;
-  if (CQBETA) PIECE.crew = 'All crews';
+  PIECE.crew = 'All crews';
   const SEAT = { mine: 'Drill console', store: 'Loading desk', flight: "Pilot's seat", crew: 'Mess table', sci: 'Lab bench', eng: 'Reactor core', trade: 'Trading counter', grind: 'Work bench' };
   const ROOM_CSS = `
 #deckroom{position:relative;margin:14px 16px 0;border-radius:14px;overflow:hidden;background:#04060a;border:1px solid #1d2734;box-shadow:0 0 40px rgba(0,0,0,.6) inset}
@@ -496,7 +485,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
           return markRoom(room);
         }
         const t = e.target.closest('.dkr-st');
-        if (t && CQBETA && d.id === 'crew' && t.dataset.pg === 'C') { touched(); return window.YICgoDeck('crew'); }
+        if (t && d.id === 'crew' && t.dataset.pg === 'C') { touched(); return window.YICgoDeck('crew'); }
         if (t) {
           touched();
           scr = true;
@@ -655,7 +644,7 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
           '"><i class="dl"></i>' + x.name + '</button>' +
           // Logistics Hub as a deck tab, in its orange, right after The Bridge so it's one click to switch (Mark, 10 Nov 2026)
           // – TEST ONLY (?beta=1); replaces the tool-row button
-          (HUBTAB && i === 0 ? '<button type="button" class="dk dk-hubtab" style="--dc:#ffb03b" title="Opens the page that acts in the game – it only sends what you approve in your wallet"><i class="dl"></i>Logistics Hub</button>' : ''),
+          ((i === 0) ? '<button type="button" class="dk dk-hubtab" style="--dc:#ffb03b" title="Opens the page that acts in the game – it only sends what you approve in your wallet"><i class="dl"></i>Logistics Hub</button>' : ''),
       ).join('') +
       '</div><div class="dk-sub">' +
       (have.length > 1
@@ -670,26 +659,14 @@ body:has(#deckbar .dk-hubtab) #dkhub{display:none!important}
   function midRf(db) {
     const sub = db.querySelector('.dk-sub'), rb = document.getElementById('dkrf');
     if (!sub || !rb) return;
-    if (BAR2) { const t = document.getElementById('dktools'); rb.classList.remove('mid'); sub.classList.remove('rfm'); if (t && rb.parentNode !== t) t.appendChild(rb); return; }
-    if (rb.parentNode !== sub) sub.appendChild(rb);
-    rb.classList.add('glo'); // same glow as Play Influence (Mark, 8 Nov 2026)
-    sub.classList.add('rfm');
-    rb.classList.add('mid');
-    const r = rb.getBoundingClientRect(), pgs = sub.querySelectorAll('.pg'), t = document.getElementById('dktools');
-    const last = pgs.length ? pgs[pgs.length - 1].getBoundingClientRect() : null, tr = t ? t.getBoundingClientRect() : null;
-    const hit = window.innerWidth <= 700 || (last && last.right + 8 > r.left) || (tr && tr.width && tr.left < r.right + 8 && tr.top < r.bottom);
-    if (hit) {
-      rb.classList.remove('mid');
-      sub.classList.remove('rfm');
-      if (t && rb.parentNode !== t) t.appendChild(rb);
-    }
+    { const t = document.getElementById('dktools'); rb.classList.remove('mid'); sub.classList.remove('rfm'); if (t && rb.parentNode !== t) t.appendChild(rb); return; }
   }
   window.addEventListener('resize', () => { const db = document.getElementById('deckbar'); if (db) midRf(db); });
   let lastDeck = '';
   function tools(db) {
     bar2Css();
     // another deck: hide the middle again and place it straight away, so it doesn't slide across (Mark, 13 Nov)
-    if (BAR2) { const on = (db.querySelector('.dk.on') || {}).textContent || ''; if (on !== lastDeck) { lastDeck = on; if (tray) { tray.classList.remove('c2'); const sw = document.getElementById('swbal'); if (sw) sw.style.removeProperty('margin-left'); } const t0 = Date.now(); const f = () => { centreDc(); if (Date.now() - t0 > 1500 && tray) tray.classList.add('c2'); else requestAnimationFrame(f); }; requestAnimationFrame(f); } }
+    { const on = (db.querySelector('.dk.on') || {}).textContent || ''; if (on !== lastDeck) { lastDeck = on; if (tray) { tray.classList.remove('c2'); const sw = document.getElementById('swbal'); if (sw) sw.style.removeProperty('margin-left'); } const t0 = Date.now(); const f = () => { centreDc(); if (Date.now() - t0 > 1500 && tray) tray.classList.add('c2'); else requestAnimationFrame(f); }; requestAnimationFrame(f); } }
     if (!tray) {
       tray = document.createElement('div');
       tray.id = 'dktools';
