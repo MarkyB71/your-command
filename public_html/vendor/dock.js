@@ -33,7 +33,6 @@
   const SLOT = 2, WAREHOUSE = 1, TANK = 10;
   const BTN = { 3: 'Refinery', 4: 'Bioreactor', 5: 'Factory', 6: 'Shipyard' };
   const FBT = { 1: 3, 2: 5, 3: 4, 4: 6, 5: 6 }; // recipe type -> building type (chain.js)
-  const OUTFIX = true; // output storage that can take solids, clearer can't-start reasons, one per line – LIVE 9 Nov 2026 (tested on ?beta=1 – Mark)
   const TANKOK = new Set([1, 2, 3, 4, 5, 6, 7, 8, 23, 24, 27, 33, 50, 66, 73, 76, 116, 169, 170, 180, 184, 185, 220]);
   const CAP = { 1: [1.5e12, 75e9], 10: [75e9, 997.5e9] }; // grams, volume
   const FOOD = 129;
@@ -54,15 +53,11 @@
   const grams = (p) => (MV[p] || [1000, 1000])[0];
   const bulk = (p) => grams(p) === 1000;
   const tonnes = (kg) => (kg >= 10000 ? Math.round(kg / 1000).toLocaleString('en-GB') : (+(kg / 1000).toFixed(kg >= 1000 ? 1 : 3)).toLocaleString('en-GB')) + ' t';
-  const UNITB = true; // "units" instead of × for things counted one by one – LIVE 14 Nov 2026 (tested on ?beta=1 – Mark)
-  const amt = (p, u) => (bulk(p) ? tonnes(u) : UNITB ? Math.ceil(u).toLocaleString('en-GB') + (Math.ceil(u) === 1 ? ' unit' : ' units') : '× ' + Math.ceil(u).toLocaleString('en-GB')); // 1 unit of a bulk product = 1 kg
+  const amt = (p, u) => (bulk(p) ? tonnes(u) : (Math.ceil(u).toLocaleString('en-GB') + (Math.ceil(u) === 1 ? ' unit' : ' units'))); // 1 unit of a bulk product = 1 kg
 
   // Load a ship (Mark, 9 Nov 2026) – LIVE 9 Nov 2026: vendor/shipload.js fills #dk-ship under "Short on this rock"
-  const SHIPS = true; // LIVE 9 Nov 2026
   // 🐞 Report a problem inside the hub (Mark, 10 Nov 2026). Opens the site's report box (vendor/report.js).
-  const REPHUB = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   // Hub top bar like the main deck's tab bar (Mark, 10 Nov 2026)
-  const TOPBAR = true; // LIVE 10 Nov 2026 (tested on ?beta=1 – Mark)
   const S = { bs: 30, calls: [], msg: '', msgErr: false, busy: false, by: 'out', ok: false, rock: '', dest: 0, bld: 0, proc: -1, runs: 1000, crew: 0, feed: false, ready: false };
 
   // ---------- overlay + airlock ----------
@@ -71,14 +66,10 @@
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap'; document.head.appendChild(l);
     const st = document.createElement('style'); st.textContent = CSS + '#dk-ov .dk-top{background:linear-gradient(180deg,rgba(18,13,7,.97),rgba(7,5,3,.96))!important}#dk-ov .dk-top .stripe{height:6px}#dk-ov .dkt-row{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;padding:8px 0 0}#dk-ov .dkt{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0;padding:9px 18px 8px;font:700 13px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8b9ab0;background:#0c1118;border:1px solid #243041;border-bottom:0;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);transition:color .15s,background .15s}#dk-ov .dkt::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}#dk-ov a.dkt:hover,#dk-ov a.dkt:focus-visible{color:var(--cyan);background:#121a24}#dk-ov .dkt.on{cursor:default;color:#1a1000;background:var(--amber);border-color:var(--amber);box-shadow:0 0 18px var(--amber)}#dk-ov .dkt.on::before{background:#1a1000;box-shadow:none}#dk-ov .dkt-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;padding:0 0 6px 10px}#dk-ov .dkt-tools .live{font-size:12px;padding:4px 10px}@media (min-width:1100px){#dk-ov .dkt-row{position:relative}#dk-ov .dkt-tools{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:4px 0 0}}#dk-ov .dkt-tools .dk-br{font-size:12px;border-radius:8px;padding:5px 10px;background:#121a26;border-color:#2a3648}#dk-ov .dkt-tools .dk-br:hover,#dk-ov .dkt-tools .dk-br:focus-visible{border-color:var(--cyan)}#dk-ov .dkt-sub{display:flex;justify-content:center;padding:8px 0 10px;border-top:2px solid var(--amber);box-shadow:0 -1px 10px -2px var(--amber)}#dk-ov .dkt-sub .dkp-rc{margin:0;font:700 13px system-ui,sans-serif;padding:6px 16px;color:#ffe2b0;background:#2a1d08;border:1px solid var(--amber);box-shadow:0 0 8px rgba(255,176,59,.8),0 0 22px rgba(255,138,31,.5);text-shadow:0 0 8px rgba(255,176,59,.8)}#dk-ov .dkt-sub .dkp-rc:hover,#dk-ov .dkt-sub .dkp-rc:focus-visible{color:#fff;box-shadow:0 0 14px rgba(255,210,140,1),0 0 36px rgba(255,138,31,.9)}#dk-ov .dkt-sub .dkp-rc:disabled{opacity:.6;box-shadow:none}@media (max-width:700px){#dk-ov .dkt-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}#dk-ov .dkt{flex:none}#dk-ov .dkt-tools .live{display:none}}#dk-ov .dk-rep{text-align:center;margin:18px auto 6px;padding-top:12px;border-top:1px solid #4a3416;max-width:640px;color:var(--dim);font-size:14px}#dk-ov .dk-rep a{display:inline-block;margin:4px 5px;padding:5px 12px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;background:#2a1d08;color:#ffd28a;border:1px solid var(--amber)}#dk-ov .dk-rep a:hover,#dk-ov .dk-rep a:focus-visible{box-shadow:0 0 10px rgba(255,176,59,.45)}#dk-ov input[type=number]{width:110px!important;flex:none!important}#dk-ov tr,#dk-ov tr:hover td{background:none!important}#dk-ov .card{border:0!important}#dk-ov .dk-bview{width:100%;height:100%;object-fit:cover;display:block;background:#0b0e14}#dk-ov .dkv{position:fixed;inset:0;z-index:5;background:#05070c;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4vmin;animation:fadein .7s;cursor:pointer}#dk-ov .dkv.out{opacity:0;transition:opacity .6s}#dk-ov .dkv-win{position:relative;width:100%;height:100%;border-radius:4vmin;overflow:hidden;box-shadow:0 0 0 1.4vmin #1a202b,0 0 0 1.8vmin #3b4558,0 0 0 3vmin #141922,0 0 60px #000 inset}#dk-ov .dkv-win svg{width:100%;height:100%;display:block}#dk-ov .dkv-r{fill:none;stroke:#8fe3ff;stroke-width:2;opacity:.45;stroke-dasharray:10 8;animation:dkvdash 1.2s linear infinite}@keyframes dkvdash{to{stroke-dashoffset:-36}}#dk-ov .dkv-c{fill:#ffb03b;filter:drop-shadow(0 0 6px #ffb03b)}#dk-ov .dkv-bi{mix-blend-mode:screen}#dk-ov .dkv-bl{animation:dkvbl 1.4s ease-in-out infinite alternate}@keyframes dkvbl{from{opacity:.2}to{opacity:1}}#dk-ov .dkv-sm{animation:dkvsm 2s ease-out infinite}@keyframes dkvsm{from{transform:translateY(0) scale(.6);opacity:.6}to{transform:translateY(-30px) scale(1.6);opacity:0}}#dk-ov .dkv-ship{position:absolute;width:22vmin;height:auto;filter:drop-shadow(0 0 10px #8fe3ff55);pointer-events:none}#dk-ov .dkv-ship.s1{left:4%;top:46%;animation:dkvf1 9s ease-in-out forwards}#dk-ov .dkv-ship.s2{left:72%;top:6%;width:14vmin;animation:dkvf2 9s ease-in-out forwards}#dk-ov .dkv-ship.s3{top:26%;left:60%;width:9vmin;animation:dkvf3 6s ease-in-out forwards}@keyframes dkvf1{0%{transform:translate(0,0) rotate(-8deg) scale(1);opacity:0}12%{opacity:1}100%{transform:translate(18vw,-30vh) rotate(-14deg) scale(.55);opacity:1}}@keyframes dkvf2{0%{transform:translate(0,0) rotate(10deg) scale(.6);opacity:0}15%{opacity:1}100%{transform:translate(-12vw,26vh) rotate(4deg) scale(1);opacity:1}}@keyframes dkvf3{0%{transform:translateY(40px);opacity:0}30%{opacity:1}100%{transform:translateY(-30px) translateX(80px);opacity:1}}#dk-ov .dkv-glass{position:absolute;inset:0;background:linear-gradient(120deg,#ffffff10 0%,transparent 30%,transparent 70%,#ffffff08 100%);pointer-events:none}#dk-ov .dkv-cap{position:absolute;left:0;right:0;top:9%;text-align:center;color:var(--dim);letter-spacing:.2em;font-size:clamp(12px,1.6vmin,20px);text-transform:uppercase}#dk-ov .dkv-cap span{display:block;color:var(--amber);font-size:2.4em;letter-spacing:.25em;font-weight:700;text-shadow:0 0 18px #ff8a1f88}#dk-ov .dkv-warn{display:inline-block;margin-top:1.4em;padding:.55em 1.4em;border-radius:40px;font-weight:700;font-size:1.35em;letter-spacing:.14em;color:#1a1000;background:linear-gradient(#ffc45e,#ff8a1f);box-shadow:0 0 22px #ff8a1f99;animation:dkvwarn 1.2s ease-in-out infinite alternate}@keyframes dkvwarn{from{box-shadow:0 0 10px #ff8a1f66}to{box-shadow:0 0 34px #ff8a1fcc}}#dk-ov .dkv-skip{position:absolute;right:3%;bottom:3%;color:#5c6577;font-size:13px;letter-spacing:.1em}#dk-ov .dkp-sv{display:flex;flex-direction:column;gap:6px}#dk-ov .dkp-svi{display:flex;align-items:center;gap:8px;background:#0b0e14;border:1px solid #232a37;border-radius:10px;padding:8px 12px}#dk-ov .dkp-svi.on{border-color:#ffb03b88}#dk-ov .dkp-svi a{flex:1;color:var(--ink);text-decoration:none}#dk-ov .dkp-svi a span{display:block;color:var(--dim);font-size:.85em}#dk-ov .dkp-svi button{background:none;border:0;color:var(--dim);cursor:pointer;font-size:1.1em}#dk-ov .dkp-rc{margin-top:10px;background:#0d1d26;border:1px solid #8fe3ff66;color:var(--cyan);border-radius:8px;padding:6px 14px;font:600 1em Rajdhani,sans-serif;cursor:pointer}#dk-ov .dkp-sum{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0}#dk-ov .dkp-sum>div{background:#0b0e14;border:1px solid #2a3140;border-radius:10px;padding:8px 14px;color:var(--dim);font-size:.9em;min-width:110px}#dk-ov .dkp-sum b{display:block;font-size:1.7em;color:var(--ink);line-height:1.1}#dk-ov .dkp-sum .good b{color:var(--green)}#dk-ov .dkp-sum .bad b{color:#c4a8ff}#dk-ov .dkp-st{margin:14px 0 4px;border-left:3px solid #ffb03b55;padding-left:12px}#dk-ov .dkp-st.fly{border-left-color:#9a6bff88}#dk-ov .dkp-sh{font-weight:700;letter-spacing:.06em;color:var(--ink);margin-bottom:8px}#dk-ov .dkp-sh span{color:var(--amber);margin-right:10px;text-transform:uppercase;font-size:.85em}#dk-ov .dkp-st.fly .dkp-sh span{color:#c4a8ff}#dk-ov .dkp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}#dk-ov .dkp-t{display:flex;gap:10px;align-items:flex-start;background:#0b0e14;border:1px solid #232a37;border-radius:10px;padding:10px 12px}#dk-ov .dkp-t.mine{border-color:#3fd68a44}#dk-ov .dkp-t.fin{border-color:#ffb03b88;box-shadow:0 0 14px #ff8a1f22}#dk-ov .dkp-ic{width:44px!important;height:44px!important;object-fit:contain;flex:none;border-radius:6px;background:#141923}#dk-ov .dkp-n{font-weight:700;font-size:1.05em}#dk-ov .dkp-s{color:var(--dim);font-size:.88em;line-height:1.25}#dk-ov .dkp-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}#dk-ov .dkp-chips span{background:#1a2030;border-radius:12px;padding:1px 9px;font-size:.82em;color:#cdd6e3}#dk-ov .dkp-to{margin-top:6px;font-size:.85em;color:#cdd6e3}#dk-ov .dkp-to b{color:var(--amber)}#dk-ov .dkp-ch{margin-top:4px;font-size:.82em;color:var(--dim)}#dk-ov .dkp-ch summary{cursor:pointer}#dk-ov .dkp-ch select{margin-top:4px;min-width:0!important;font-size:1em}#dk-ov input[type=search]{background:#0b0e14!important;color:var(--ink)!important;border:1px solid #3a4356!important;border-radius:6px;padding:7px 10px;font:600 1em Rajdhani,sans-serif;width:auto!important}#dk-ov a.yicg{color:var(--cyan);font-size:.85em;margin-left:8px;white-space:nowrap}#dk-ov .dk-br{color:var(--cyan);text-decoration:none;font-weight:700;letter-spacing:.06em;border:1px solid #8fe3ff66;border-radius:20px;padding:4px 14px}#dk-ov .dk-br:hover{background:#8fe3ff18}#dk-ov:not(.indock){padding:2vmin}#dk-ov .wrap{max-width:none!important;width:100%;height:calc(100vh - 4vmin);gap:2vmin}#dk-ov .chamber{flex:1 1 auto!important;height:100%;aspect-ratio:auto!important}#dk-ov .panel{flex:0 0 clamp(320px,28vw,560px)!important;font-size:clamp(13px,min(1.25vw,2.1vh),22px);padding:2.2vmin 2.4vmin;max-height:100%;overflow:auto}#dk-ov input[type=checkbox]{width:1.25em!important;min-width:0!important;max-width:1.25em!important;height:1.25em!important;flex:0 0 1.25em!important;margin:0!important;padding:0!important}#dk-ov .panel label{width:auto!important}#dk-ov .panel h1{font-size:2em}#dk-ov .panel .sub,#dk-ov .panel ul,#dk-ov .panel label,#dk-ov .panel .warn,#dk-ov .panel .back{font-size:1em}#dk-ov .panel .btn{font-size:1.15em;padding:1.6vmin}#dk-ov .sign{font-size:clamp(12px,1.6vmin,22px)}#dk-ov .door .lbl{font-size:clamp(11px,1.8vmin,24px)}#dk-ov #dockpg{max-width:none!important;padding:0 3vw 40px;font-size:clamp(15px,1.1vw,20px)}#dk-ov .card h2{font-size:1.25em}#dk-ov table{font-size:1em}#dk-ov select{font-size:1em}@media (max-width:900px){#dk-ov .wrap{height:auto}#dk-ov .chamber{height:auto;aspect-ratio:16/11!important}}'; document.head.appendChild(st);
     const ov = document.createElement('div'); ov.id = 'dk-ov';
-    ov.innerHTML = WRAP + '<div id="dockpg">' + (TOPBAR
-      // Mark (10 Nov, TEST ONLY): the top like the main deck – deck tabs (The Bridge · Logistics Hub) and a tool row under a glowing line
-      ? '<div class="dhead dk-top"><div class="stripe"></div><div class="dkt-row"><a href="#" data-dkback class="dkt" title="Return to the Bridge">The Bridge</a><h1 class="dkt on">LOGISTICS HUB</h1>' +
+    ov.innerHTML = WRAP + '<div id="dockpg">' + ('<div class="dhead dk-top"><div class="stripe"></div><div class="dkt-row"><a href="#" data-dkback class="dkt" title="Return to the Bridge">The Bridge</a><h1 class="dkt on">LOGISTICS HUB</h1>' +
         '<div class="dkt-tools"><div class="live"><i></i>THIS PAGE CAN SEND GAME ACTIONS WHEN APPROVED<i></i></div></div></div>' +
-        '<div class="dkt-sub"><button id="dk-hrc" class="dkp-rc" title="Fetch fresh game data">↻ Check the game again</button></div></div>'
-      : '<div class="dhead"><div class="stripe"></div><div class="in"><h1>LOGISTICS HUB</h1>' +
-      '<div class="live"><i></i>THIS PAGE SENDS GAME ACTIONS FROM YOUR WALLET</div>' + '<button id="dk-hrc" class="dkp-rc" style="margin:0" title="Fetch fresh game data">↻ Check the game again</button>' + '<a href="#" data-dkback class="dk-br">◂ Return to the Bridge</a></div></div>') + '<div id="dk-main"></div>' +
-      (REPHUB ? '<div class="dk-rep">Found something not working? <a href="#" id="dk-repb">🐞 Report a problem</a></div>' : '') +
+        '<div class="dkt-sub"><button id="dk-hrc" class="dkp-rc" title="Fetch fresh game data">↻ Check the game again</button></div></div>') + '<div id="dk-main"></div>' +
+      ('<div class="dk-rep">Found something not working? <a href="#" id="dk-repb">🐞 Report a problem</a></div>') +
       '<div class="mocknote">Game data, pictures and art © Unstoppable Games (Influence), used with credit under CC BY-NC 4.0 · Not an official Influence site · <a href="#" data-dkback style="color:var(--cyan)">return to the Bridge</a></div></div>';
     // Mark (8 Nov): the airlock window looks out at one of the game's buildings – a different one each time –
     // and opening the doors shows the whole building
@@ -122,11 +113,11 @@
   // SECRET AIRLOCK BYPASS (Mark, 9 Nov – LIVE 9 Nov 2026): the kPa gauge on the left wall is really a knob. Click it
   // to turn it – next time the hub opens straight in, no airlock. Nothing shows it's clickable; Mark tells players who ask.
   // To get the airlock back: double-click LOGISTICS HUB at the top of the hub. Saved only in this browser (localStorage).
-  const BYKEY = 'sk_airlock_bypass', BYBETA = true; // LIVE 9 Nov 2026 (tested on ?beta=1 – Mark)
-  const bypassOn = () => { try { return BYBETA && localStorage.getItem(BYKEY) === '1'; } catch (e) { return false; } };
+  const BYKEY = 'sk_airlock_bypass'; // LIVE 9 Nov 2026 (tested on ?beta=1 – Mark)
+  const bypassOn = () => { try { return localStorage.getItem(BYKEY) === '1'; } catch (e) { return false; } };
   function knob(ov, setSign) {
     const g = ov.querySelector('g[transform="translate(135 340)"]');
-    if (!g || !BYBETA) return;
+    if (!g) return;
     const needle = g.querySelector('line');
     const show = () => { if (needle) { needle.style.transformOrigin = '0 0'; needle.style.transition = 'transform .5s'; needle.style.transform = bypassOn() ? 'rotate(95deg)' : ''; } };
     show();
@@ -423,7 +414,6 @@ ${R.map(route).join('')}
     // the final step's stock is already spoken for
     P.rows.forEach((r) => { const a = avail[P.dest.id]; if (a) a[r.p] = Math.max(0, (a[r.p] || 0) - Math.max(0, Math.min(r.there, r.need) - r.onway)); r.from.forEach(([b, q]) => { avail[b.id][r.p] -= q; }); });
     const okIn = (b, ip) => b.Building.buildingType !== TANK || TANKOK.has(ip);
-    const TANKFIX = true; // LIVE 9 Nov 2026
     const add = {}, dl = {}, incA = {};
     const put = (from, to, ip, q, why) => { const k = from.id + '>' + to.id; (dl[k] = dl[k] || { b: from, to, items: [], why: new Set() }).items.push({ p: ip, a: q }); dl[k].why.add(why);
       add[to.id] = add[to.id] || [0, 0]; add[to.id][0] += q * grams(ip); add[to.id][1] += q * (MV[ip] || [1000, 1000])[1]; };
@@ -434,10 +424,10 @@ ${R.map(route).join('')}
       const mv = S.moverObj;
       const takesAll = (b) => Object.keys(st.use).every((ip) => okIn(b, +ip));
       const cand = store.map((b) => ({ b, kg: Object.keys(st.use).reduce((t, ip) => okIn(b, +ip) ? t + Math.min(avail[b.id][ip] || 0, st.use[ip]) * grams(+ip) : t, 0), t: st.bld ? (tripSecs(lotKm(b, st.bld), mv) ?? 0) : 0, k: st.bld ? (lotKm(b, st.bld) ?? 0) : 0 }))
-        .filter((x) => x.kg > 0 && (!TANKFIX || takesAll(x.b))).sort((x, y) => (x.t > 0) - (y.t > 0) || y.kg - x.kg || x.k - y.k);
+        .filter((x) => x.kg > 0 && (takesAll(x.b))).sort((x, y) => (x.t > 0) - (y.t > 0) || y.kg - x.kg || x.k - y.k);
       // Mark (9 Nov): a tank farm was picked for Boric Acid although it can't take Hydrochloric Acid – only storage
       // that can take ALL of the step's inputs is picked; if none holds any, the nearest one that can (LIVE 9 Nov 2026)
-      const fit = TANKFIX && !cand[0] ? store.filter(takesAll).sort((x, y) => (st.bld ? (lotKm(x, st.bld) ?? 1e9) - (lotKm(y, st.bld) ?? 1e9) : 0))[0] : null;
+      const fit = !cand[0] ? store.filter(takesAll).sort((x, y) => (st.bld ? (lotKm(x, st.bld) ?? 1e9) - (lotKm(y, st.bld) ?? 1e9) : 0))[0] : null;
       st.star = cand[0] ? cand[0].b.id : fit ? fit.id : P.dest.id;
       const d = byId((S.stepDest || {})[st.r.i]) || byId(st.star);
       st.dest = d;
@@ -509,9 +499,8 @@ ${R.map(route).join('')}
       // Mark (9 Nov): every row said "ready" though only a couple needed finishing – the list was taking the 7-day
       // list of FINISHED deliveries (status 2 = complete). Not finished yet = status 4 (sent: on its way, or ready
       // to finish) plus anything still arriving. Finished ones are already in the storage, so no longer counted twice. (LIVE 9 Nov 2026, tested on ?beta=1 – Mark)
-      const NEWDEL = true;
-      const src = NEWDEL ? (j.pending || []).filter((r) => r[1] === 4).concat(j.transit || []) : (j.transit || []).concat(j.recent || []);
-      src.forEach((r) => { if ((NEWDEL ? ![2, 4].includes(r[1]) : r[1] !== 2) || r[4][0] !== 5) return; (inc[r[4][1]] = inc[r[4][1]] || []).push(...r[5]); list.push(r); });
+      const src = (j.pending || []).filter((r) => r[1] === 4).concat(j.transit || []);
+      src.forEach((r) => { if ((![2, 4].includes(r[1])) || r[4][0] !== 5) return; (inc[r[4][1]] = inc[r[4][1]] || []).push(...r[5]); list.push(r); });
       S.inc = inc; S.incList = list; S.incErr = j.err || null;
     } catch (e) { S.incErr = 'Deliveries on their way could not be loaded.'; }
   }
@@ -751,9 +740,9 @@ ${R.map(route).join('')}
     let CM = null, PC = null;
 
     // Two modes at the top (Mark, 9 Nov – LIVE 9 Nov): make on this rock (as before) or load a ship on another rock for it
-    const shipMode = SHIPS && S.mode === 'ship';
+    const shipMode = S.mode === 'ship';
     let h = planBar();
-    if (SHIPS && !LB) h += modeBar(shipMode ? 'ship' : 'make');
+    if (!LB) h += modeBar(shipMode ? 'ship' : 'make');
     h += `<div class="card"><h2><span class="n">1</span>${shipMode ? 'Rock to make it on' : 'Rock'}</h2><select id="dk-rock">${rl.map((r) => opt(r, r, S.rock)).join('')}</select></div>`;
     h += `<div class="card"><h2><span class="n">2</span>What to make</h2><div class="row">
 <select id="dk-by">${opt('out', 'Pick by what it makes', S.by)}${opt('proc', 'Pick by process name', S.by)}</select>
@@ -793,12 +782,11 @@ ${R.map(route).join('')}
       { const ids = new Set(onRock().filter(isStore).map((b) => b.id)), bn = (id) => nm(onRock().find((b) => b.id === id)) || 'Building #' + id, now = Date.now() / 1000;
         const ow = (S.incList || []).filter((r) => ids.has(r[4][1]));
         // Mark (9 Nov): any crew can receive a delivery – an in-game link to where it's going is all that's needed (LIVE 9 Nov 2026, tested on ?beta=1 – Mark)
-        const TOLINK = true;
         if (ow.length) h += `<div class="card"><h2><span class="n">🚚</span>Already on its way on ${esc(S.rock)}</h2><div class="hint" style="margin:0 0 8px">Deliveries you've sent that haven't been finished yet. They count as already there, so they aren't sent again.</div><table><thead><tr><th>From</th><th>Goods</th><th>To</th><th>Status</th></tr></thead><tbody>` +
-          ow.map((r) => `<tr><td class="src">${esc(r[3][0] === 5 ? bn(r[3][1]) : 'elsewhere')}</td><td>${r[5].map((x) => esc(pname(x[0])) + ' ' + amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(bn(r[4][1]))}${TOLINK ? bLink(r[4][1], 'Open ' + bn(r[4][1]) + ' in the game – any crew can finish the delivery there') : ''}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
+          ow.map((r) => `<tr><td class="src">${esc(r[3][0] === 5 ? bn(r[3][1]) : 'elsewhere')}</td><td>${r[5].map((x) => esc(pname(x[0])) + ' ' + amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(bn(r[4][1]))}${bLink(r[4][1], 'Open ' + bn(r[4][1]) + ' in the game – any crew can finish the delivery there')}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
           `</tbody></table>${S.incErr ? '<div class="hint" style="color:var(--amber)">' + esc(S.incErr) + '</div>' : ''}</div>`; }
       if (P.fly.length) h += `<div class="card fly"><h2><span class="n">✈</span>Short on this rock</h2><div class="hint" style="margin:0 0 8px">Not enough in your storage here. First see if this rock can mine or make it – otherwise fly it in. This page does not fly ships or start processes.</div>
-<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th>${SHIPS ? '<th></th>' : ''}</tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td>${SHIPS ? `<td><button class="dk-shipbtn${S.ship && S.ship.p === f.p ? ' on' : ''}" data-ship="${f.p}" data-shipq="${f.q}">🚀 Load a ship</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` + (SHIPS ? '<div id="dk-ship"></div>' : '');
+<table><thead><tr><th>Input</th><th class="num">Short by</th><th>Here on ${esc(S.rock)}</th><th>Or fly in from</th>${'<th></th>'}</tr></thead><tbody>${P.fly.map((f) => `<tr><td>${esc(pname(f.p))}</td><td class="num short">${amt(f.p, f.q)}</td><td class="src">${f.here ? '<span' + (typeof f.here === 'string' || f.here.ok ? ' class="ok"' : '') + '>' + (f.here.txt || f.here) + '</span>' : '<span style="color:var(--dim)">can\'t mine or make it here</span>'}</td><td class="src">${f.where || 'not on your other rocks – try the market'}</td>${`<td><button class="dk-shipbtn${S.ship && S.ship.p === f.p ? ' on' : ''}" data-ship="${f.p}" data-shipq="${f.q}">🚀 Load a ship</button></td>`}</tr>`).join('')}</tbody></table></div>` + ('<div id="dk-ship"></div>');
       // full production plan on this rock (Mark, 8 Nov)
       if (P.fly.length) {
         const C = chainPlan(P), on = onRock();
@@ -832,12 +820,12 @@ ${R.map(route).join('')}
         };
         const nDel = CM ? CM.deliveries.length + P.moves.length : P.moves.length;
         // Mark (9 Nov): the full plan takes a lot of room – stages folded away behind an arrow (LIVE 9 Nov 2026)
-        const FOLD = true, nBad = C.steps.filter((x) => x.bad).length;
+        const nBad = C.steps.filter((x) => x.bad).length;
         h += `<div class="card"><h2><span class="n">🧭</span>Full production plan on ${esc(S.rock)}</h2>
 <div class="dkp-sum"><div><b>${C.steps.length + 1}</b>processes</div>${mined.length ? `<div><b>${mined.length}</b>to mine</div>` : ''}<div><b>${bset.size || 1}</b>building type${(bset.size || 1) === 1 ? '' : 's'}</div><div><b>${nDel}</b>deliveries</div><div class="${fl.length ? 'bad' : 'good'}"><b>${fl.length || '✓'}</b>${fl.length ? 'to fly in' : 'all made here'}</div></div>
 ${Object.keys(C.byUsed || {}).length ? `<div class="hint" style="margin:6px 0 0"><span class="ok">♻ Uses by-products made along the way: ${Object.keys(C.byUsed).map((q) => esc(pname(q)) + ' ' + amt(+q, C.byUsed[q])).join(', ')}</span></div>` : ''}<div class="hint" style="margin:6px 0 10px">Work down the stages. Everything in a stage only needs things from the stages above it. Stock on the rock is moved for you (step 7); things you make or mine – send the output where the tile says.</div>
-${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle="window.YICplanOpen=this.open"><summary>Show the stages${nBad ? ' <span style="color:var(--red)">· ✗ ' + nBad + ' to fix</span>' : ''}</summary>` : ''}${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i + 1}</span>${st.t === 'Mine' ? 'Mine raw materials' : st.t === 'Final' ? 'The final product' : st.items.length + ' process' + (st.items.length === 1 ? '' : 'es')}</div><div class="dkp-g">${st.items.map(tile).join('')}</div></div>`).join('')}` +
-          (FOLD ? '</details>' : '') + (fl.length ? `<div class="dkp-st fly"><div class="dkp-sh"><span>✈</span>Still to fly in – can't mine or make it here</div><div class="dkp-g">${fl.map((p) => { const w = window.YICSRCTXT && window.YICSRCTXT(+p, C.fly[p], astId(S.rock)); return `<div class="dkp-t">${icon(p)}<div><div class="dkp-n">${amt(+p, C.fly[p])} ${esc(pname(p))}</div><div class="dkp-s">${w || 'not on your other rocks – try the market'}</div></div></div>`; }).join('')}</div></div>` : '') + '</div>';
+${`<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle="window.YICplanOpen=this.open"><summary>Show the stages${nBad ? ' <span style="color:var(--red)">· ✗ ' + nBad + ' to fix</span>' : ''}</summary>`}${stages.map((st, i) => `<div class="dkp-st"><div class="dkp-sh"><span>Stage ${i + 1}</span>${st.t === 'Mine' ? 'Mine raw materials' : st.t === 'Final' ? 'The final product' : st.items.length + ' process' + (st.items.length === 1 ? '' : 'es')}</div><div class="dkp-g">${st.items.map(tile).join('')}</div></div>`).join('')}` +
+          ('</details>') + (fl.length ? `<div class="dkp-st fly"><div class="dkp-sh"><span>✈</span>Still to fly in – can't mine or make it here</div><div class="dkp-g">${fl.map((p) => { const w = window.YICSRCTXT && window.YICSRCTXT(+p, C.fly[p], astId(S.rock)); return `<div class="dkp-t">${icon(p)}<div><div class="dkp-n">${amt(+p, C.fly[p])} ${esc(pname(p))}</div><div class="dkp-s">${w || 'not on your other rocks – try the market'}</div></div></div>`; }).join('')}</div></div>` : '') + '</div>';
       }
       // crew + feeding
       const c = cl.find((x) => x.id === S.crew);
@@ -893,7 +881,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
           // Mark (9 Nov): processes that make a solid (Magnesium, Boric Acid, Ammonium Chloride, Nitric Acid…) were stuck
           // because their output was going to the tank farm where the next step's inputs wait. One output storage takes ALL
           // of a process's outputs, so pick the nearest storage that can take them all and has room (LIVE 9 Nov 2026)
-          if (OUTFIX && c.to.Building.buildingType === TANK && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) {
+          if ((c.to.Building.buildingType === TANK) && Object.keys(c.r.out).some((o) => !TANKOK.has(+o))) {
             const pb = c.fin ? c.bl : c.bld || c.from, tank = c.to;
             const roomFor = (t) => { const i = inv(t) || { mass: 0, volume: 0 }, cp = CAP[t.Building.buildingType], a = addTo[t.id] || { g: 0, v: 0 }, o2 = outAdd[t.id] || [0, 0];
               const og = Object.keys(c.r.out).reduce((x, o) => x + c.r.out[o] * c.runs * grams(+o), 0), ov = Object.keys(c.r.out).reduce((x, o) => x + c.r.out[o] * c.runs * (MV[o] || [1000, 1000])[1], 0);
@@ -921,7 +909,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
           }
           if (b) { used.add(b.id); ready.push(Object.assign(c, { b, slot: freeSlot(b) })); const o2 = outAdd[c.to.id] = outAdd[c.to.id] || [0, 0]; o2[0] += c.outG - c.inG; o2[1] += c.outV - c.inV; } else {
             // Mark (9 Nov): say WHY there's no building – none on the rock, all busy, or the free ones already used by this approval (LIVE 9 Nov 2026)
-            if (OUTFIX) { const kind = BTN[bt] || 'building', all = on.filter((x) => x.Building.buildingType === bt && x.Building.status === 3);
+            { const kind = BTN[bt] || 'building', all = on.filter((x) => x.Building.buildingType === bt && x.Building.status === 3);
               c.why = !all.length ? 'no ' + kind + ' on ' + S.rock : all.some((x) => freeSlot(x)) ? 'the free ' + kind + ' is already taken by another process in this approval' : 'every ' + kind + ' on ' + S.rock + ' is busy'; }
             wait.push(c); }
         });
@@ -933,8 +921,8 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
           (S.start && ready.length && S.moverObj ? `<div class="hint" style="margin-bottom:8px">${esc(S.moverObj.name)} will be busy until about ${new Date(qEnd * 1000).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} (the game allows up to 24 hours of queued jobs).</div>` : '') +
           (S.start ? (ready.length ? `<div class="dkp-g">${ready.map((c) => `<div class="dkp-t${c.fin ? ' fin' : ''}"><img src="rimg.php?p=${c.p}" alt="" loading="lazy" class="dkp-ic"><div><div class="dkp-n">▶ ${esc(c.r.name)}</div><div class="dkp-chips"><span>× ${c.runs.toLocaleString('en-GB')} runs</span><span>${esc(nm(c.b))}${GLk('/building/' + c.b.id, 'Open ' + nm(c.b) + ' in the game')}</span></div><div class="dkp-to">inputs from <b>${esc(nm(c.from))}</b> · output to <b>${esc(nm(c.to))}</b></div>${c.moved ? `<div class="dkp-ch">${esc(c.moved)}</div>` : ''}${c.capTxt ? `<div class="dkp-ch">⏱ ${esc(c.capTxt)}</div>` : ''}</div></div>`).join('')}</div>`
             : '<div class="src">Nothing can start right now – no process has all its inputs sitting in its storage yet.</div>') +
-            (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but can't start yet:${OUTFIX ? '<br>' + wait.map((c) => '• ' + esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('<br>') : ' ' + wait.map((c) => esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('; ') + '.'}</div>` : '') +
-            (after.length ? `<div class="hint">${after.length} can start next time, once this approval's moves have arrived:${OUTFIX ? '<br>' + after.map((c) => '• ' + esc(c.r.name)).join('<br>') : ' ' + after.map((c) => esc(c.r.name)).join(', ') + '.'}</div>` : '') +
+            (wait.length ? `<div class="hint" style="color:var(--amber)">${wait.length} more ${wait.length === 1 ? 'is' : 'are'} ready but can't start yet:${'<br>' + wait.map((c) => '• ' + esc(c.r.name) + ' – ' + esc(c.why || 'no free building')).join('<br>')}</div>` : '') +
+            (after.length ? `<div class="hint">${after.length} can start next time, once this approval's moves have arrived:${'<br>' + after.map((c) => '• ' + esc(c.r.name)).join('<br>')}</div>` : '') +
             (later > 0 ? `<div class="hint">${later} more can start once the steps before them finish.</div>` : '') : '') + '</div>';
         S.nStart = S.start ? ready.length : 0;
       }
@@ -961,7 +949,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
     m.querySelectorAll('[data-ship]').forEach((b) => b.addEventListener('click', () => { const p = +b.dataset.ship; S.ship = S.ship && S.ship.p === p ? null : { p, q: +b.dataset.shipq }; render(); if (S.ship) { const e = document.getElementById('dk-ship'); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
     m.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; S.ship = null; render(); }));
     if (shipMode && window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) window.YICSHIP.render(e, { items: shipNeed, what: rec.name, runs: S.runs }); }
-    else if (SHIPS && window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) { if (S.ship && !(P && P.fly.find((f) => f.p === S.ship.p))) S.ship = null; window.YICSHIP.render(e, S.ship); } }
+    else if (window.YICSHIP) { const e = document.getElementById('dk-ship'); if (e) { if (S.ship && !(P && P.fly.find((f) => f.p === S.ship.p))) S.ship = null; window.YICSHIP.render(e, S.ship); } }
     const on = (id, ev, f) => { const e = document.getElementById(id); if (e) e.addEventListener(ev, f); };
     on('dk-rock', 'change', (e) => { S.rock = e.target.value; S.dest = 0; S.destSet = false; S.bld = 0; S.proc = -1; S.crew = 0; S.feed = false; render(); });
     on('dk-dest', 'change', (e) => { S.dest = +e.target.value; S.destSet = true; render(); });
@@ -1010,7 +998,7 @@ ${FOLD ? `<details class="dkp-fold"${window.YICplanOpen ? ' open' : ''} ontoggle
     });
   }
   // for vendor/shipload.js (test only) – the hub's own helpers, so both work the same way
-  if (SHIPS) window.YICDOCK = { S, D, esc, nm, inv, isStore, rockOf, allB, pname, amt, grams, bulk, tonnes, astId, lotOf, kmBetween, tripSecs, tripTxt, kmTxt, crews, crewReady,
+  window.YICDOCK = { S, D, esc, nm, inv, isStore, rockOf, allB, pname, amt, grams, bulk, tonnes, astId, lotOf, kmBetween, tripSecs, tripTxt, kmTxt, crews, crewReady,
     holds: (b, p) => holds(b, p), recipes: () => R || [], mv: () => MV, render: () => render(), loadDeliveries: () => loadDeliveries(), wallets, account, sameAddr, isOwner, hex, short, DISPATCHER, SLOT, TANK, BTN, FBT,
     canMine, onRock, procB, freeSlot, busyTxt, rocks, procSecs, capRuns, incoming, GLk, TANKOK, CAP,
     approve: () => approve(), PID, BATCHES };
