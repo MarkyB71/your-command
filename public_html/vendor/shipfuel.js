@@ -16,7 +16,7 @@
   const K = () => window.YICDOCK;
   const PROP = 170, PSLOT = 1;
   const UNITS = { kg: 1, t: 1000, kt: 1e6 };
-  const SF = { ship: 0, amt: '', unit: 't', key: '', crew: 0, msg: '', msgErr: false, busy: false, sentAt: 0 };
+  const SF = { ship: 0, amt: '', unit: 't', key: '', crew: 0, msg: '', msgErr: false, busy: false, sentAt: 0, how: '', ref: 0, store: 0 };
   const TANK = { 1: 2e8, 2: 4e9, 3: 24e9, 4: 2e9 }; // grams of propellant a full tank holds, by ship type
   let host = null;
 
@@ -78,10 +78,15 @@
     h += `<div class="src" style="margin:12px 0 4px"><b>2 · Propellant to put in</b> <span class="src">(fills it to the top)</span></div><div class="row" style="gap:6px"><input type="number" id="sf-amt" min="0" step="any" value="${esc(SF.amt)}"><select id="sf-unit">${['kg', 't', 'kt'].map((u) => op(u, u, SF.unit)).join('')}</select>
 <span class="src">room in the tank: ${kgTxt(Math.max(0, tankKg - nowKg))}</span></div>`;
     h += `<div class="src" style="margin-top:6px">In storage on ${esc(rock)}: <b>${kgTxt(haveU * uG() / 1000)}</b></div>`;
+    // 🏭 make it at a refinery (Mark, 26 Nov): "most of the time I have the resources to make the propellant, so I only need to
+    // move them. I just need to say fill this ship up with fuel made at this refinery." One process, output straight into the tank.
+    if (!SF.how) SF.how = haveU >= units ? 'stock' : 'make';
+    h += `<div class="row" style="gap:8px;margin-top:8px">${[['stock', '📦 Propellant from storage'], ['make', '🏭 Make it at a refinery']].map(([v, t]) => `<button type="button" class="dk-shipbtn${SF.how === v ? ' on' : ''}" data-sfhow="${v}" style="cursor:pointer">${t}</button>`).join('')}</div>`;
+    if (SF.how === 'make') { el.innerHTML = h + makeHTML(rock, x, units, roomKg) + '</div>'; wire(el); return; }
     if (units > 0 && M.short > 0) {
       const sk = M.short * uG() / 1000;
-      h += `<div class="hint" style="color:var(--amber)">Short by ${kgTxt(sk)}. Production can make it and put it straight into the tank (no more than fits).</div>
-<button type="button" id="sf-make" class="dk-shipbtn" style="margin-top:6px">🏭 Make ${kgTxt(sk)} straight into the tank ▸</button>`;
+      h += `<div class="hint" style="color:var(--amber)">Short by ${kgTxt(sk)}. A refinery on this rock can make it straight into the tank.</div>
+<button type="button" id="sf-make" class="dk-shipbtn" style="margin-top:6px">🏭 Make it at a refinery instead ▸</button>`;
     }
     // 4 crew + moves
     const cl = k.crews(rock);
@@ -102,6 +107,105 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     wire(el);
   }
 
+  // ---------- 🏭 make it at a refinery ----------
+  const SKEY = 'sk_fuel_store'; // inputs store per rock, remembered in this browser
+  const lsGet = () => { try { return JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) { return {}; } };
+  const lsPut = (o) => { try { localStorage.setItem(SKEY, JSON.stringify(o)); } catch (e) {} };
+  const holds = (b, p) => ((K().inv(b) || { contents: [] }).contents || []).filter((c) => c.product === +p).reduce((t, c) => t + c.amount, 0);
+  const capOf = (b) => b.Building.buildingType === K().TANK ? [75e9, 997.5e9] : [1.5e12, 75e9];
+  function makePlan(rock, x, units) {
+    const k = K(), all = k.allB().filter((b) => k.rockOf(b) === rock);
+    const recs = k.recipes().filter((r) => r.out[PROP] && k.PID[r.name]);
+    const stores = all.filter((b) => k.isStore(b));
+    const onRockU = (p) => stores.reduce((t, b) => t + holds(b, p), 0);
+    // the recipe that can do the most runs from what's on the rock (normally Hydrogen Cryocooling: 97 Hydrogen + 2 Silica Powder + 1 Tungsten Powder → 100)
+    const canDo = (r) => Math.min(...Object.keys(r.inp).map((p) => Math.floor(onRockU(p) / r.inp[p])));
+    const r = recs.filter((q) => all.some((b) => b.Building.buildingType === k.FBT[q.type])).sort((a, b) => canDo(b) - canDo(a))[0];
+    if (!r) return { err: 'No refinery on ' + rock + ' that can make Hydrogen Propellant.' };
+    const bt = k.FBT[r.type], refs = all.filter((b) => b.Building.buildingType === bt && b.Building.status === 3);
+    const fits = (b) => b.Building.buildingType !== k.TANK || Object.keys(r.inp).every((p) => k.TANKOK.has(+p));
+    const cands = stores.filter(fits);
+    if (!cands.length) return { err: 'No warehouse or tank farm on ' + rock + ' that can hold the inputs.' };
+    const kg = (b) => Object.keys(r.inp).reduce((t, p) => t + holds(b, p) * k.grams(+p), 0);
+    const saved = lsGet()[rock];
+    if (!cands.find((b) => b.id === SF.store)) SF.store = (cands.find((b) => b.id === saved) || cands.find((b) => /fuel|propel/i.test(k.nm(b))) || cands.slice().sort((a, b) => kg(b) - kg(a))[0]).id;
+    const store = cands.find((b) => b.id === SF.store);
+    const km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b));
+    if (!refs.find((b) => b.id === SF.ref)) SF.ref = (refs.slice().sort((a, b) => (!k.freeSlot(a) - !k.freeSlot(b)) || ((km(a, store) ?? 1e9) - (km(b, store) ?? 1e9)))[0] || {}).id || 0;
+    const ref = refs.find((b) => b.id === SF.ref);
+    // runs: fill the tank (never more than fits), no more than the inputs on the rock allow, and the game's max process time
+    const wantRuns = Math.floor(units / r.out[PROP]), avail = canDo(r);
+    const one = { r, runs: Math.min(wantRuns, avail) };
+    if (k.capRuns && one.runs > 0 && !k.capRuns(one)) one.runs = 0;
+    const runs = one.runs;
+    // moves into the inputs store, nearest first
+    const mv = {}, rows = [];
+    Object.keys(r.inp).forEach((p) => {
+      const need = r.inp[p] * runs, here = holds(store, p); let left = Math.max(0, need - here);
+      stores.filter((b) => b.id !== store.id && holds(b, p) > 0).sort((a, b) => (km(a, store) ?? 1e9) - (km(b, store) ?? 1e9)).forEach((b) => {
+        if (left <= 0) return; const n = Math.min(left, holds(b, p)); left -= n; (mv[b.id] = mv[b.id] || { b, items: [] }).items.push([+p, n]);
+      });
+      rows.push({ p: +p, need, here, move: Math.max(0, need - here) - left, short: left, rock: onRockU(p) });
+    });
+    // will the inputs store hold everything moved in? (the game refuses a move that won't fit – 'inventory volume exceeded')
+    const MV = k.mv(), i = k.inv(store) || { mass: 0, volume: 0 }, c = capOf(store);
+    let g = i.mass + (i.reservedMass || 0), v = i.volume + (i.reservedVolume || 0);
+    Object.values(mv).forEach((m) => m.items.forEach(([p, n]) => { const q = MV[p] || [1000, 1000]; g += n * q[0]; v += n * q[1]; }));
+    const peak = Math.round(Math.max(g / c[0], v / c[1]) * 100), now = Math.round(Math.max((i.mass + (i.reservedMass || 0)) / c[0], (i.volume + (i.reservedVolume || 0)) / c[1]) * 100);
+    return { r, refs, ref, cands, store, runs, wantRuns, avail, capTxt: one.capTxt, rows, moves: Object.values(mv), peak, now, x };
+  }
+  function makeHTML(rock, x, units) {
+    const k = K(), esc = k.esc, c = makePlan(rock, x, units);
+    SF.cur = Object.assign({ make: true, rock }, c);
+    if (c.err) return `<div class="hint" style="color:var(--amber);margin-top:8px">${esc(c.err)}</div>`;
+    const kgU = (p, n) => kgTxt(n * k.grams(p) / 1000);
+    const outKg = c.runs * c.r.out[PROP] * uG() / 1000;
+    let h = `<div class="src" style="margin:12px 0 4px"><b>3 · Make it at</b></div><select id="sf-ref">${c.refs.map((b) => `<option value="${b.id}"${b.id === SF.ref ? ' selected' : ''}>${esc(k.nm(b))} – ${k.freeSlot(b) ? 'free' : 'busy'}</option>`).join('')}</select>
+<div class="src" style="margin-top:4px">${esc(c.r.name)} · <b>${c.runs.toLocaleString('en-GB')} runs</b> → <b>${kgTxt(outKg)}</b> straight into ${esc(x.s.name)}'s tank${c.ref && k.procSecs ? ' · about ' + Math.round((k.procSecs(c.r.name, c.runs) || 0) / 360) / 10 + ' h without bonuses' : ''}.</div>`;
+    if (c.runs < c.wantRuns) h += `<div class="hint" style="color:var(--amber)">${c.capTxt ? esc(c.capTxt) : 'Only enough inputs on ' + esc(rock) + ' for ' + kgTxt(outKg) + ' – the tank won’t be full.'}</div>`;
+    h += `<div class="src" style="margin:12px 0 4px"><b>4 · Inputs from</b> <span class="src">(the refinery takes them from this store)</span></div><select id="sf-store">${c.cands.map((b) => `<option value="${b.id}"${b.id === SF.store ? ' selected' : ''}>${esc(k.nm(b))}</option>`).join('')}</select>
+<table style="margin-top:8px"><thead><tr><th>Input</th><th class="num">Needs</th><th class="num">In ${esc(k.nm(c.store))}</th><th class="num">To move in</th></tr></thead><tbody>${c.rows.map((w) => `<tr><td>${esc(k.pname(w.p))}</td><td class="num">${kgU(w.p, w.need)}</td><td class="num">${kgU(w.p, Math.min(w.here, w.need))}</td><td class="num">${w.move > 0 ? kgU(w.p, w.move) : '<span class="ok">✓</span>'}${w.short > 0 ? ' <span style="color:#ff4d4d">short ' + kgU(w.p, w.short) + '</span>' : ''}</td></tr>`).join('')}</tbody></table>`;
+    if (c.moves.length) h += `<div class="src" style="margin-top:6px">Moves: ${c.moves.map((m) => esc(k.nm(m.b)) + ' → ' + m.items.map(([p, n]) => esc(k.pname(p)) + ' ' + kgU(p, n)).join(', ')).join(' · ')}</div>
+<div class="src">${esc(k.nm(c.store))}: ${c.now}% full now → <b style="color:${c.peak > 100 ? '#ff4d4d' : c.peak >= 90 ? '#ffb03b' : '#3fd68a'}">${c.peak}%</b> with the moves in${c.peak > 100 ? ' – <b style="color:#ff4d4d">won’t fit</b>. Pick another store.' : ''}</div>`;
+    // 5 crew
+    const cl = k.crews(rock);
+    if (!cl.find((q) => q.id === SF.crew)) SF.crew = (cl.find((q) => !q.busy) || cl[0] || {}).id || 0;
+    h += `<div class="src" style="margin:12px 0 4px"><b>5 · Crew</b></div>` + (cl.length ? `<select id="sf-crew">${cl.map((q) => `<option value="${q.id}"${q.id === SF.crew ? ' selected' : ''}>${esc(q.name)}${q.busy ? ' – busy' : ' – ready'}</option>`).join('')}</select>` : `<div class="src" style="color:var(--amber)">No crew on ${esc(rock)}.</div>`);
+    const crew = cl.find((q) => q.id === SF.crew), wait = SF.sentAt && Date.now() - SF.sentAt < 180000;
+    const step = c.moves.length ? 'moves' : 'start';
+    const ok = c.runs > 0 && crew && (step === 'moves' ? c.peak <= 100 : c.ref && k.freeSlot(c.ref));
+    const can = k.isOwner() && !SF.busy && !wait && ok;
+    h += `<div style="margin-top:12px"><button id="sf-go" class="dkp-rc" style="border-color:var(--amber);color:#ffd28a"${can ? '' : ' disabled'}>${step === 'moves' ? '🚚 Approve – move the inputs (' + c.moves.length + ')' : '⛽ Approve – start ' + esc(k.nm(c.ref || {})) + ', ' + kgTxt(outKg) + ' into the tank'}</button></div>
+<div class="hint">${step === 'moves' ? 'The refinery can only start once the inputs are in ' + esc(k.nm(c.store)) + ' – when the moves have arrived, come back here and the button starts it.' : c.ref && !k.freeSlot(c.ref) ? '<span style="color:var(--amber)">' + esc(k.nm(c.ref)) + ' is busy – pick a free refinery.</span>' : 'Everything is in ' + esc(k.nm(c.store)) + ' – this starts the refinery.'}</div>
+<div class="hint">${wait ? '<span style="color:var(--amber)">Just sent – wait a moment, then ↻ Check the game again.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>
+<div id="sf-msg" class="hint" style="display:${SF.msg ? 'block' : 'none'};margin-top:8px;padding:10px 12px;border-radius:8px;border:1px solid ${SF.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${SF.msgErr ? '#ffb3ae' : 'var(--ink)'}">${SF.msg || ''}</div>`;
+    SF.cur.step = step; SF.cur.crewObj = crew;
+    return h;
+  }
+  function makeCalls(c) {
+    const k = K();
+    if (c.step === 'moves') return c.moves.map((m) => { const data = [5, m.b.id, k.SLOT, m.items.length, ...m.items.flat().map((n) => Math.floor(n)), 5, c.store.id, k.SLOT, 1, SF.crew];
+      return { contract_address: k.DISPATCHER, entry_point: 'run_system', calldata: [k.short('SendDelivery'), k.hex(data.length), ...data.map(k.hex)] }; });
+    // ProcessProductsStart: [processor(5,id), slot, process, target output, recipes (Fixed n·2^32, sign 0), origin(5,id), slot, destination(6, ship), propellant slot 1, caller crew(1,id)]
+    const data = [5, c.ref.id, k.freeSlot(c.ref), k.PID[c.r.name], PROP, BigInt(c.runs) * 4294967296n, 0, 5, c.store.id, k.SLOT, 6, c.x.s.id, PSLOT, 1, SF.crew];
+    return [{ contract_address: k.DISPATCHER, entry_point: 'run_system', calldata: [k.short('ProcessProductsStart'), k.hex(data.length), ...data.map(k.hex)] }];
+  }
+  function makeChecks(c) {
+    const k = K(), errs = [];
+    if (!k.S.dataAt || Date.now() - k.S.dataAt > 10 * 60000) errs.push('The game data is over 10 minutes old – press ↻ Check the game again first.');
+    const crew = k.crews(c.rock).find((x) => x.id === SF.crew);
+    if (!crew) errs.push('No crew on ' + c.rock + ' picked.'); else if (k.crewReady(crew) - Date.now() / 1000 > 86400) errs.push(crew.name + ' already has more than 24 hours of jobs queued.');
+    const x = ships().find((y) => y.s.id === c.x.s.id);
+    if (!x || !x.ok || x.s.dId !== c.x.s.dId) errs.push(c.x.s.name + ' is no longer parked on ' + c.rock + '.');
+    if (c.step === 'moves') { if (c.peak > 100) errs.push(k.nm(c.store) + " won't hold the inputs."); c.moves.forEach((m) => m.items.forEach(([p, n]) => { if (holds(m.b, p) < n) errs.push(k.nm(m.b) + ' no longer holds that much ' + k.pname(p) + '.'); })); }
+    else {
+      if (!c.ref || !k.freeSlot(c.ref)) errs.push((c.ref ? k.nm(c.ref) : 'The refinery') + ' is not free.');
+      Object.keys(c.r.inp).forEach((p) => { if (holds(c.store, p) < c.r.inp[p] * c.runs) errs.push(k.nm(c.store) + ' no longer holds enough ' + k.pname(+p) + '.'); });
+      if (c.runs * c.r.out[PROP] * uG() / 1000 > TANK[x ? x.s.st : 0] / 1000 - ((x && x.s.prop) || 0) * 1000 + 0.5) errs.push("That's more than the room left in the tank.");
+    }
+    return [...new Set(errs)];
+  }
+
   function wire(el) {
     const again = () => render(host);
     const on = (id, ev, f) => { const e = el.querySelector(id); if (e) e.addEventListener(ev, () => f(e)); };
@@ -109,13 +213,11 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     on('#sf-amt', 'change', (e) => { SF.amt = e.value; again(); });
     on('#sf-unit', 'change', (e) => { SF.unit = e.value; again(); });
     on('#sf-crew', 'change', (e) => { SF.crew = +e.value; again(); });
-    on('#sf-make', 'click', () => {
-      const k = K(), c = SF.cur; if (!c) return;
-      window.YICPRODGO = { p: PROP, q: Math.ceil(c.M.short), rock: c.rock, ship: c.x.s.id }; // output straight into this ship's tank (Mark, 26 Nov)
-      k.S.mode = 'make'; k.render();
-      const s = document.querySelector('#dk-ov .lb-scr'); if (s) s.scrollTop = 0;
-    });
+    on('#sf-make', 'click', () => { SF.how = 'make'; SF.msg = ''; again(); });
     on('#sf-go', 'click', () => { if (!SF.busy) send(); });
+    on('#sf-ref', 'change', (e) => { SF.ref = +e.value; again(); });
+    on('#sf-store', 'change', (e) => { SF.store = +e.value; const c = SF.cur; if (c && c.rock) { const a = lsGet(); a[c.rock] = SF.store; lsPut(a); } again(); });
+    el.querySelectorAll('[data-sfhow]').forEach((b) => b.addEventListener('click', () => { SF.how = b.dataset.sfhow; SF.msg = ''; again(); }));
   }
 
   const say = (html, err) => { SF.msg = html; SF.msgErr = !!err; const e = document.getElementById('sf-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
@@ -140,7 +242,7 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
   }
   async function send() {
     const k = K(), c = SF.cur;
-    if (!k.isOwner() || !c || !c.M.out.length) return;
+    if (!k.isOwner() || !c || (!c.make && !c.M.out.length)) return;
     const ws = k.wallets();
     if (!ws.length) return say('No Starknet wallet found in this browser. Open this page in the browser that has your wallet.', true);
     const w = ws[0];
@@ -149,9 +251,9 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
       const a = await k.account(w);
       if (!a) throw new Error('The wallet did not share an address.');
       if (!k.sameAddr(a, k.D().wallet)) throw new Error('That wallet (' + k.esc(a) + ') is not the one this page is showing. Switch account in your wallet and try again.');
-      const errs = checks(c);
+      const errs = c.make ? makeChecks(c) : checks(c);
       if (errs.length) throw new Error('Checked just before sending – nothing was sent:<br>• ' + errs.map(k.esc).join('<br>• '));
-      const cs = calls(c);
+      const cs = c.make ? makeCalls(c) : calls(c);
       say('Waiting for your wallet… check the wallet window and approve (or reject) it there.');
       let res;
       if (typeof w.request === 'function') res = await w.request({ type: 'wallet_addInvokeTransaction', params: { calls: cs } });
