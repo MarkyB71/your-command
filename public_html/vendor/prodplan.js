@@ -30,7 +30,7 @@
   function snapPlan(W, ST, qty) {
     const k = K();
     return { id: 'p' + Date.now(), wallet: String((k.D() && k.D().wallet) || '').toLowerCase(), rock: k.S.rock, p: P.p, qty, mat: ST.mat, made: Date.now(),
-      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0 })), started: {}, mover: k.S.mover || 0 };
+      steps: W.steps.map((s) => ({ name: s.r.name, p: s.p, runs: s.runs, to: s.to ? s.to.id : 0, ship: s.to && s.to.ship ? 1 : 0 })), started: {}, mover: k.S.mover || 0 };
   }
   function noteStarts(plan, list) {
     (list || []).forEach((c) => { if (c.i == null) return; (plan.started[c.i] = plan.started[c.i] || []).push({ b: c.b.id, runs: c.runs, at: Math.floor(Date.now() / 1000) }); });
@@ -97,7 +97,7 @@
         { const fin = (x) => Math.min(...(x.Processors || []).filter((q) => q.status === 1).map((q) => q.finishTime || Infinity), Infinity); o.wb = (on.filter((x) => x.Building.buildingType === bt).sort((x, y) => fin(x) - fin(y))[0] || {}).id || 0; }
         return nope('no free ' + (k.BTN[bt] || 'building'));
       }
-      const to = byId(st.to) || mat;
+      const to = st.ship ? { ship: true, id: st.to, slot: 1, Name: { name: 'the ship’s tank' } } : (byId(st.to) || mat); // ⛽ straight into a ship (26 Nov)
       used.add(b.id); Object.keys(r.inp).forEach((ip) => { pool[ip] -= r.inp[ip] * one.runs; });
       if (busy) o.why = 'the other ' + one.runs.toLocaleString('en-GB') + ' runs can start now';
       else o.s = 'ready';
@@ -282,6 +282,18 @@
   // EXF (Mark 21 Nov 2026 – LIVE): Export for production step 4 gets a button to spread what's collected over
   // several ships – it hands the pick-up rock and the amounts to 🚀 Load a fleet, with every ship parked there ticked.
   const FUELB = /[?&]beta=1\b/.test(location.search) && true; // ⛽ Fuel a ship – TEST ONLY (?beta=1), Mark 26 Nov 2026
+  // ⛽ Make propellant straight into a ship's tank (Mark, 26 Nov – TEST ONLY ?beta=1): "the game does that – it's too hard to
+  // work out how much to make, and if you make too much the refinery won't let you start". Step 5 gets a "Ship's tank" choice
+  // for Hydrogen Propellant when a ship is parked on the rock: the last process outputs into the ship's propellant slot
+  // (ProcessProductsStart destination [6, shipId, 1]) and makes no more than the room left in the tank.
+  const TANKG = { 1: 2e8, 2: 4e9, 3: 24e9, 4: 2e9 }; // grams of propellant a full tank holds (SDK 2.8.1 Ship.TYPES)
+  function fuelShips() {
+    const k = K(), d = k.D() || {}, Y = window.YIC || {};
+    const an = (id) => { const a = (Y.asts || []).find((x) => x.id === id) || (d.owned || []).find((x) => x.id === id); return a ? (a.name || (a.Name && a.Name.name)) : ''; };
+    return (d.ships || []).filter((s) => TANKG[s.st] && s.sst === 'd' && s.lot && an(s.dId) === k.S.rock);
+  }
+  const tankRoom = (s) => Math.max(0, Math.floor((TANKG[s.st] - (s.prop || 0) * 1e6) / (K().grams(170) || 1000))); // in units of propellant
+  const shipTo = () => { if (!FUELB || P.p !== 170 || P.for !== 'ship') return null; const l = fuelShips(); return l.find((s) => s.id === P.fship) || l[0] || null; };
   function maxMake(target) {
     const ok = (q) => { const W = work(target, q); return W.steps.length && !Object.keys(W.fly).length && !Object.keys(W.mine).length; };
     if (!ok(1)) { const W = work(target, 1); return { q: 0, by: Object.keys(W.fly).concat(Object.keys(W.mine)).map(Number) }; }
@@ -352,7 +364,7 @@
   // End state, by weight or space (whichever is fuller); by-products counted in full.
   function fullAfter(W, ST, byId) {
     const k = K(), MV = k.mv(), mat = byId(ST.mat), d = {};
-    const add = (b, p, n) => { if (!b || !n) return; const v = MV[p] || [1000, 1000]; const x = (d[b.id] = d[b.id] || [0, 0]); x[0] += n * v[0]; x[1] += n * v[1]; };
+    const add = (b, p, n) => { if (!b || !n || b.ship) return; const v = MV[p] || [1000, 1000]; const x = (d[b.id] = d[b.id] || [0, 0]); x[0] += n * v[0]; x[1] += n * v[1]; };
     if (mat) {
       calcMoves(W, ST, mat).moves.forEach((mv) => mv.items.forEach(([p, a]) => { add(mv.b, p, -a); add(mat, p, a); }));
       Object.keys(W.mine).forEach((p) => add(mat, +p, W.mine[p]));
@@ -685,6 +697,7 @@
       window.YICPRODGO = null;
       if (go.rock && rl.includes(go.rock)) S.rock = go.rock;
       P.p = go.p; P.use = ''; P.find = ''; P.track = ''; P.maxTxt = '';
+      if (go.ship) { P.for = 'ship'; P.fship = go.ship; } // ⛽ from Fuel a ship: straight into its tank
       if (k.bulk(P.p)) { const q = go.q || 100000; P.unit = q >= 1e6 ? 'kt' : q >= 1000 ? 't' : 'kg'; P.q = Math.ceil(q / UNITS[P.unit] * 1000) / 1000; } else P.q = go.q || 1;
     }
     if (!rl.includes(S.rock)) S.rock = rl[0];
@@ -712,6 +725,7 @@
     if (P.p && !hit(P.p)) { P.p = 0; P.use = ''; }
     const shown = prods.filter(hit);
     const bulk = P.p ? k.bulk(P.p) : true;
+    const fsh = !cargo && shipTo(), fRoom = fsh ? tankRoom(fsh) : 0;
     const qty = P.p ? Math.max(0, bulk ? Math.round((+P.q || 0) * UNITS[P.unit]) : Math.ceil(+P.q || 0)) : 0;
 
     let h = !cargo ? plansListHTML() : '';
@@ -727,7 +741,7 @@
         (P.maxTxt ? `<div class="hint">${P.maxTxt}</div>` : '') + forHTML() : '') + '</div>';
 
     if (P.p && qty > 0) {
-      const W = work(P.p, qty);
+      const W = work(P.p, fsh ? Math.min(qty, fRoom) : qty);
       if (!W.steps.length) {
         h += `<div class="card"><h2><span class="n">3</span>What you need</h2><div class="src" style="color:var(--red)">✗ ${esc(k.pname(P.p))} can’t be made on ${esc(S.rock)}` +
           (W.noBld[P.p] ? ' – it needs a ' + W.noBld[P.p].join(' or ') + ', and there isn’t one here.' : '.') + '</div>' +
@@ -766,10 +780,12 @@
         }
         // where each process's outputs go
         const ST = stores(W), byId = (id) => ST.wh.concat(ST.tf).find((b) => b.id === +id);
-        const pf = P.for || (P.use ? 'build' : 'stock');
+        const pf = fsh ? 'ship' : (P.for && P.for !== 'ship' ? P.for : (P.use ? 'build' : 'stock'));
         const fin = W.steps[W.steps.length - 1];
         const fluid = (r) => Object.keys(r.out).every((o) => k.TANKOK.has(+o));
         W.steps.forEach((s) => { s.to = s === fin ? (ST.tank && fluid(s.r) ? byId(ST.tank) : byId(ST[pf])) : byId(ST.mat); });
+        // ⛽ into the ship's tank: never more runs than the room left (the refinery won't start if it can't all fit)
+        if (fsh && fin.p === 170 && fluid(fin.r)) { fin.to = { ship: true, id: fsh.id, slot: 1, Name: { name: fsh.name + '’s tank' } }; fin.runs = Math.min(fin.runs, Math.floor(fRoom / fin.r.out[170])); }
         // step 6: the processes to run, in order
         const blds = (bt) => k.onRock().filter((b) => b.Building.buildingType === bt);
         h += `<div class="card"><h2><span class="n">4</span>Processes to run (${W.steps.length}), in order</h2><table><thead><tr><th>#</th><th>Process</th><th>Makes</th><th class="num">Runs</th><th>Building</th><th>Outputs go to</th><th class="num">Time</th></tr></thead><tbody>` +
@@ -785,8 +801,9 @@
         const aft = (key) => { const b = byId(ST[key]); if (!b) return '<td></td>'; const a = after(b), n = ST.full(b); return `<td class="num" style="white-space:nowrap">${n}% → ${pc(a)}${a > 100 ? ' <span style="color:#ff4d4d">won’t fit</span>' : ''}</td>`; };
         const sel = (key, list, none) => `<select data-st="${key}">${none ? `<option value="">${none}</option>` : ''}${list.map((b) => `<option value="${b.id}"${b.id === ST[key] ? ' selected' : ''}>${esc(k.nm(b))} · ${ST.full(b)}% full</option>`).join('')}</select>`;
         h += `<div class="card"><h2><span class="n">5</span>Where things go</h2>
-<div class="row"><span class="src">What it's for</span>${FOR.map(([v, t]) => `<button type="button" class="dk-shipbtn${pf === v ? ' on' : ''}" data-for="${v}">${t}</button>`).join('')}</div>
+<div class="row"><span class="src">What it's for</span>${FOR.concat(FUELB && P.p === 170 && fuelShips().length ? [['ship', '⛽ Ship’s tank']] : []).map(([v, t]) => `<button type="button" class="dk-shipbtn${pf === v ? ' on' : ''}" data-for="${v}">${t}</button>`).join('')}</div>
 <table style="margin-top:10px"><tbody>
+${fsh ? `<tr><td>⛽ Ship’s tank</td><td><select id="pp-fship">${fuelShips().map((s) => `<option value="${s.id}"${s.id === fsh.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select></td><td class="num" style="white-space:nowrap">${Math.round((s0 => (s0.prop || 0) * 1e6 / TANKG[s0.st] * 100)(fsh))}% → ${pc(Math.round(((fsh.prop || 0) * 1e6 + fin.runs * fin.r.out[170] * k.grams(170)) / TANKG[fsh.st] * 100))}</td><td class="src">The Hydrogen Propellant goes straight into the tank – ${fRoom > 0 ? 'room for ' + k.amt(170, fRoom) + ', so it makes no more than that.' : '<span style="color:var(--amber)">the tank is already full.</span>'}</td></tr>` : ''}
 <tr><td>📦 Materials warehouse</td><td>${sel('mat', ST.wh)}</td>${aft('mat')}<td class="src">Everything the processes use is gathered here; in-between products land here too.</td></tr>
 <tr><td>🏷 Stock store</td><td>${sel('stock', ST.wh)}</td>${aft('stock')}<td class="src">Finished goods made for stock.</td></tr>
 <tr><td>🛒 Market store</td><td>${sel('market', ST.wh)}</td>${aft('market')}<td class="src">Finished goods made to sell.</td></tr>
@@ -1228,6 +1245,7 @@
     m.querySelectorAll('[data-track]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); P.track = b.dataset.track; S.msg = ''; k.render(); }));
     m.querySelectorAll('[data-ppforget]').forEach((b) => b.addEventListener('click', () => { plansPut(plansGet().filter((x) => x.id !== b.dataset.ppforget)); k.render(); }));
     m.querySelectorAll('[data-for]').forEach((b) => b.addEventListener('click', () => { P.for = b.dataset.for; k.render(); }));
+    { const fs = m.querySelector('#pp-fship'); if (fs) fs.addEventListener('change', () => { P.fship = +fs.value; k.render(); }); }
     m.querySelectorAll('select[data-st]').forEach((e) => e.addEventListener('change', () => { const all = storesGet(), r = (all[S.rock] = all[S.rock] || {}); r[e.dataset.st] = e.value ? +e.value : ''; storesPut(all); k.render(); }));
     m.querySelectorAll('[data-pp]').forEach((b) => b.addEventListener('click', () => { P.p = +b.dataset.pp; P.use = ''; P.q = k.bulk(P.p) ? 100 : 1; P.unit = 't'; k.render(); }));
     on('pp-use', 'change', (e) => { P.use = e.target.value; P.n = 1; fillFor(); k.render(); });

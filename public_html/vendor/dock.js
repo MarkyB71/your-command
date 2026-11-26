@@ -582,7 +582,7 @@ ${R.map(route).join('')}
   //    origin(5,id), origin_slot, destination(5,id), destination_slot, caller_crew(1,id)]  → 15 values
   function startCall(c) {
     const mag = BigInt(Math.round(c.runs)) * 4294967296n;
-    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, 5, c.to.id, SLOT, 1, c.crew || S.mover]; // c.crew: Production's process crew (Mark, 9 Nov – LIVE 9 Nov)
+    const data = [5, c.b.id, c.slot || 1, PID[c.r.name], c.p, mag, 0, 5, c.from.id, SLOT, ...(c.to.ship ? [6, c.to.id, c.to.slot || 1] : [5, c.to.id, SLOT]), 1, c.crew || S.mover]; // c.to.ship: output straight into a ship's propellant slot (Mark, 26 Nov – TEST ONLY ?beta=1) // c.crew: Production's process crew (Mark, 9 Nov – LIVE 9 Nov)
     return { contract_address: DISPATCHER, entry_point: 'run_system', calldata: [short('ProcessProductsStart'), hex(data.length), ...data.map(hex)] };
   }
   // APPROVAL SIZE (go-live item 1, Mark 8 Nov): one failing action cancels the whole approval, so actions go in

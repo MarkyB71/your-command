@@ -80,8 +80,8 @@
     h += `<div class="src" style="margin-top:6px">In storage on ${esc(rock)}: <b>${kgTxt(haveU * uG() / 1000)}</b></div>`;
     if (units > 0 && M.short > 0) {
       const sk = M.short * uG() / 1000;
-      h += `<div class="hint" style="color:var(--amber)">Short by ${kgTxt(sk)}. Make it first – then come back here and send it.</div>
-<button type="button" id="sf-make" class="dk-shipbtn" style="margin-top:6px">🏭 Make ${kgTxt(sk)} in Production ▸</button>`;
+      h += `<div class="hint" style="color:var(--amber)">Short by ${kgTxt(sk)}. Production can make it and put it straight into the tank (no more than fits).</div>
+<button type="button" id="sf-make" class="dk-shipbtn" style="margin-top:6px">🏭 Make ${kgTxt(sk)} straight into the tank ▸</button>`;
     }
     // 4 crew + moves
     const cl = k.crews(rock);
@@ -111,7 +111,7 @@ ${M.short > 0 && M.out.length ? '<div class="hint">Only what is in storage now c
     on('#sf-crew', 'change', (e) => { SF.crew = +e.value; again(); });
     on('#sf-make', 'click', () => {
       const k = K(), c = SF.cur; if (!c) return;
-      window.YICPRODGO = { p: PROP, q: Math.ceil(c.M.short), rock: c.rock };
+      window.YICPRODGO = { p: PROP, q: Math.ceil(c.M.short), rock: c.rock, ship: c.x.s.id }; // output straight into this ship's tank (Mark, 26 Nov)
       k.S.mode = 'make'; k.render();
       const s = document.querySelector('#dk-ov .lb-scr'); if (s) s.scrollTop = 0;
     });
