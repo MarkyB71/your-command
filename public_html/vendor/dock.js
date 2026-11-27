@@ -685,7 +685,7 @@ ${R.map(route).join('')}
     // 🗄 Storage tidy (Mark, 10 Nov – moved into the hub; LIVE 13 Nov 2026)
     if (LB && S.mode === 'tidy' && LB.storage) { LB.storage(m, S, render); return; } // Storage console: tidy · Storage Management · Deliveries (Mark, 14 Nov – TEST ONLY ?beta=1)
     if (LB && S.mode === 'tidy' && window.YICTIDY) { window.YICTIDY.render(m); return; }
-    if (LB && S.mode === 'core' && window.YICCORE) { window.YICCORE.render(m); return; } // 🧪 Core samples (Mark, 27 Nov – TEST ONLY ?beta=1)
+    if (LB && S.mode === 'core' && window.YICCORE) { window.YICCORE.render(m); return; } // 🧪 Core samples (Mark, 27 Nov – LIVE 27 Nov)
     if (LB && S.mode === 'mine' && window.YICMINE) { window.YICMINE.render(m); return; } // ⛏ Mining (Mark, 26 Nov – LIVE 27 Nov)
     if (LB && window.YICPROD && S.mode !== 'feed') { window.YICPROD.render(m, S.mode === 'ship' ? 'ship' : 'make'); return; } // Cargo bay uses it too (Mark, 9 Nov)
     if (S.mode === 'feed' && window.YICFEED) {

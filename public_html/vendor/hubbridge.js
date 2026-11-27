@@ -195,7 +195,7 @@
     const scr = lb.querySelector('#lb-scr');
     if (mode === 'home') { home(scr, S, render); return null; }
     // ⛏ Mining (Mark, 26 Nov – LIVE 27 Nov, vendor/mining.js): two tabs on the Production screen
-    // 🧪 Core samples (Mark, 27 Nov – TEST ONLY ?beta=1, vendor/coresample.js): a third tab
+    // 🧪 Core samples (Mark, 27 Nov – LIVE 27 Nov, vendor/coresample.js): a third tab
     if ((mode === 'make' || mode === 'mine' || mode === 'core') && window.YICMINE) {
       const n = window.YICMINE.count(), CO = window.YICCORE, nc = CO ? CO.count() : 0;
       const b = (v, x) => `<button type="button" class="dk-shipbtn${mode === v ? ' on' : ''}" data-lb="${v}" style="cursor:pointer">${x}</button>`;

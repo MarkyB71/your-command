@@ -1,4 +1,4 @@
-/* 🧪 Core samples – Logistics Hub (Mark, 27 Nov 2026) – TEST ONLY (?beta=1)
+/* 🧪 Core samples – Logistics Hub (Mark, 27 Nov 2026) – LIVE 27 Nov 21:20 ("we can't hold that one back from the community")
    "We have set up the mining in the Logistics hub. Can you now set up taking core samples?"
    Sits next to ⛏ Mining on the Production screen. Two jobs, one approval:
    1. FINISH samples that are ready (being taken, finish time passed) – they then show up in ⛏ Mining.
@@ -16,7 +16,6 @@
    Samples come from samples.php?core=1. Nothing is sent until the player presses Approve AND approves in the wallet. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK, Y = () => window.YIC || {};
   const DRILL = 175, SAMPLE_SECS = 3600;
   const M = { feed: {}, done: {}, rock: '', res: 0, pick: {}, rsel: {}, drill: {}, crew: {}, fin: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '', ab: {} };

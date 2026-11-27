@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 27 Nov 2026 – Logistics Hub › Production: new 🧪 Core samples tab – finish ready samples and take new ones on your extractors' lots in one approval. Each lot shows its richest resource (the sample is set to it); pick an asteroid and a resource to sample it everywhere it's found. Uses a Core Drill from the nearest storage on the rock, spreads the work over your crews (allowing for their core-sampling bonus and food), feeds free crews first, and checks the game again by itself after approving.
+
 ## 27 Nov 2026 – Logistics Hub › Mining: Feed the crews only offers crews that are free right now – the game won't feed a working crew (E6009 crew resting); a busy crew shows when it's free.
 
 ## 27 Nov 2026 – Logistics Hub › Mining: the Crews list shows when each crew is busy until as a date and time (e.g. Sat 28 Nov, 21:40).

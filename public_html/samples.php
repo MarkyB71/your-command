@@ -13,7 +13,7 @@ if ($wallet !== $default && !in_array('*', $allowed, true) && !in_array($wallet,
 // ---- cache for 5 minutes ----
 // ?used=1 (Logistics Hub ⛏ Mining, 26 Nov 2026): also part-used samples (status 3) with yield left, and the status per row
 $used = !empty($_GET['used']);
-// ?core=1 (Logistics Hub 🧪 Core samples, 27 Nov 2026 – TEST ONLY ?beta=1): EVERY sample of yours (being taken, sampled,
+// ?core=1 (Logistics Hub 🧪 Core samples, 27 Nov 2026): EVERY sample of yours (being taken, sampled,
 // used, used up), each row with status, finish time and the crew that controls it – to finish ready ones and to know
 // which lots already have a sample / what was last mined there
 $core = !empty($_GET['core']);

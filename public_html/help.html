@@ -294,7 +294,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
   <dt>🗄 Storage</dt><dd>Three tabs: <b>Storage tidy</b> (rename your buildings and gather your stock into tidy storage, below), <b>Storage Management</b> (below) and <b>🚚 Deliveries</b> (what's on its way – finish them in the game).</dd>
   <dt>🍽 Galley</dt><dd>Feed your crews: a card per crew with its crewmates and food; every crew that can be fed is ticked – click a card to untick it. Each is fed from the biggest Food stock on its own rock, as much as the game allows. Busy crews start unticked.</dd>
   <dt>📦 What needs doing (the chair)</dt><dd>Crews that could be fed, idle buildings, ships docked and deliveries on their way.</dd>
-  <dt>🏭 Production</dt><dd>Two tabs: <b>Make on this rock</b> (below) and <b>⛏ Mining</b> – restart idle extractors (below).</dd>
+  <dt>🏭 Production</dt><dd>Two tabs: <b>Make on this rock</b> (below), <b>⛏ Mining</b> – restart idle extractors, and <b>🧪 Core samples</b> – finish and take core samples (below).</dd>
   <dt>🚀 Cargo bay</dt><dd>Bring what a rock is missing in by ship (below).</dd>
 </dl>
 <h3>📦 Storage Management</h3>
@@ -339,8 +339,16 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:14px;padding:
   <dt>What it shows</dt><dd>Your idle extractors that have a core sample with yield left on the same lot. Part-used samples come first, then the biggest. Pick an <b>Asteroid</b>, and a <b>Resource</b> (e.g. Pyroxene) to show only the extractors with a sample of it – they're all ticked, ready to go. Extractors that have finished but not been collected are listed separately – finish them in the game first.</dd>
   <dt>Each extractor</dt><dd>Tick it, pick the sample if there's more than one, and the amount in tonnes – by default everything left in the sample, as long as the storage has room. <b>Into</b> picks a storage that takes all of it (where it went last time, else the nearest that fits). The time is a guide, without crew or building bonuses.</dd>
   <dt>Crews</dt><dd>Each start keeps a crew busy for the trip and part of the mining time, and a crew can only queue jobs up to 24 hours ahead – so the starts are spread over your crews on the rock, the way the game counts it. Pick one in the Crew column to choose yourself.</dd>
-  <dt>Feed the crews</dt><dd>Any crew doing the mining that is under 95% fed gets a tick box to feed it first – as much as the game allows, from the biggest Food stock on its rock. Ticked by default; untick to skip.</dd>
+  <dt>Feed the crews</dt><dd>Any crew doing the mining that is under 95% fed gets a tick box to feed it first – as much as the game allows, from the biggest Food stock on its rock. Ticked by default; untick to skip. The game only feeds a crew that's free, so a working crew shows when it's free instead.</dd>
   <dt>Approve</dt><dd>One approval feeds the ticked crews first, then starts every ticked extractor.</dd>
+</dl>
+<h3>🧪 Core samples</h3>
+<dl class="pages">
+  <dt>Finish samples</dt><dd>Your samples that are ready, ticked – finishing shows their yield and they turn up in ⛏ Mining, ready to mine. Ones still being taken show a count and when the last is ready.</dd>
+  <dt>Take new samples</dt><dd>Every one of your extractors' lots. Each shows <b>Richest here</b> – the most plentiful resource on that lot (the game's own maths) – and the sample is set to it; pick another from the list, which shows each resource's %. Idle extractors with no sample are ticked to start with; ones that already have a sample to mine (or one being taken) say so and start unticked. Pick an <b>Asteroid</b>, and a <b>Resource</b> to sample it on every lot that has some.</dd>
+  <dt>Core Drill and crew</dt><dd>Each sample uses one Core Drill from the nearest storage on the same rock that has one. The samples are spread over your crews on the rock within the game's 24-hour queue, allowing for each crew's core-sampling bonus and how well fed it is (a hungry crew is up to 4× slower). Pick a crew yourself in the Crew column.</dd>
+  <dt>Feed the crews</dt><dd>Crews taking samples that are under 95% fed and free right now get a tick box to feed them first, from the biggest Food stock on their rock. The game won't feed a working crew.</dd>
+  <dt>Approve</dt><dd>One approval feeds the ticked crews, finishes the ready samples, then starts the new ones. About a minute and a half later the page checks the game again by itself, so the next lot is planned on your crews' real queues.</dd>
 </dl>
 <h3>⛽ Fuel a ship</h3>
 <dl class="pages">
