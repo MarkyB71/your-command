@@ -17,7 +17,9 @@
     ['Fissiles', '#8a1aff', [15, 22]],
   ];
   const COL = '#4f90ff'; // Scientist blue – the Science Lab colour
-  const S = { sel: new Set(), raw: 0 };
+  const S = { sel: new Set(), raw: 0, rock: '' };
+  // TEST ONLY ?beta=1 (Mark, 27 Nov 2026): pick a type you own a scanned rock of → the tubes fill to that rock's abundance
+  const BETA = /[?&]beta=1/.test(location.search);
 
   const CSS = `.rt-h{color:#c9d6e8;font-size:15px;font-weight:600;margin:4px 0 2px}
 .rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
@@ -67,6 +69,12 @@
 .rt-r.yes .rt-glass{border-color:color-mix(in srgb,var(--gc) 60%,transparent)}
 .rt-r.pick .rt-glass{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.5)}
 .rt-r.pick{color:#fff}
+.rt-rocks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-4px 0 12px;color:#8b9ab0;font-size:13px}
+.rt-rk{all:unset;cursor:pointer;padding:5px 12px;border:1px solid #2a3648;border-radius:14px;color:#c9d6e8;font-size:13px}
+.rt-rk:hover{border-color:${COL}}
+.rt-rk.on{border-color:${COL};background:rgba(79,144,255,.16);color:#fff;box-shadow:0 0 8px rgba(79,144,255,.5)}
+.rt-pc{font-weight:700;font-size:13px;color:#fff;min-height:15px}
+.rt-r.ab0{opacity:.45}
 @media (max-width:700px){.rt-g{grid-template-columns:1fr}}`;
 
   function css() {
@@ -84,6 +92,17 @@
       const c = a.Celestial, sp = c && Y.SPEC[c.celestialType];
       if (!sp) return;
       (out[sp[0]] = out[sp[0]] || []).push((a.Name && a.Name.name) || ('Asteroid #' + a.id));
+    });
+    return out;
+  }
+
+  // your rocks that have had their resource scan, by type
+  function scanned(Y) {
+    const out = {};
+    (Y.D && Y.D.owned || []).forEach((a) => {
+      const c = a.Celestial, sp = c && Y.SPEC[c.celestialType];
+      if (!sp || !c.abundances || (c.scanStatus || 0) < 4) return;
+      (out[sp[0]] = out[sp[0]] || []).push({ id: String(a.id), name: (a.Name && a.Name.name) || ('Asteroid #' + a.id), a });
     });
     return out;
   }
@@ -117,7 +136,23 @@
     const types = Object.keys(SPEC).map((k) => ({ n: SPEC[k][0], r: new Set(SPEC[k][1]) }));
     const my = mine(Y);
     const sel = types.filter((t) => S.sel.has(t.n));
-    const has = (p) => sel.some((t) => t.r.has(p));
+    let has = (p) => sel.some((t) => t.r.has(p));
+    // BETA: one of your scanned rocks picked → its abundances
+    const sc = BETA ? scanned(Y) : {};
+    const rks = sel.flatMap((t) => sc[t.n] || []);
+    if (!rks.some((r) => r.id === S.rock)) S.rock = '';
+    const R = S.rock ? rks.find((r) => r.id === S.rock) : null;
+    let ab = null;
+    if (R) {
+      if (!Y.ABM) {
+        m.innerHTML = '<div class="note">Loading the game\'s resource maths…</div>';
+        import('./abund.js?v=' + Y.VER).then((x) => { Y.ABM = x; page(m); })
+          .catch(() => { S.rock = ''; page(m); });
+        return;
+      }
+      try { ab = Y.ABM.abundances(R.a.Celestial.abundances); } catch (e) { ab = null; }
+      if (ab) has = (p) => (ab[p] || 0) > 0;
+    }
     let h = '<div class="rt-h">Asteroid types</div><p class="rt-note">Pick one or more types to light up the raw materials that can be mined there. Pick a raw material to see which types have it.</p><div class="rt-types">';
     types.forEach((t, i) => {
       const tip = my[t.n] ? 'Your rocks: ' + my[t.n].join(', ') : '';
@@ -127,24 +162,35 @@
     });
     if (S.sel.size || S.raw) h += '<button class="rt-clr" data-clr>Clear</button>';
     h += '</div>';
+    if (rks.length)
+      h += '<div class="rt-rocks">Your scanned rock' + (rks.length > 1 ? 's' : '') + ':' + rks.map((r) => '<button class="rt-rk' + (r.id === S.rock ? ' on' : '') + '" data-rk="' + r.id + '">' + esc(r.name) + '</button>').join('') +
+        (R ? '' : ' <span>← pick to see its abundance</span>') + '</div>';
     const n = sel.length ? GROUPS.reduce((a, g) => a + g[2].filter(has).length, 0) : 0;
-    h += '<div class="rt-h">Raw materials</div><p class="rt-sum">' + (sel.length ? esc(sel.map((t) => t.n).join(' + ')) + ': <b>' + n + ' of 22</b> raw materials can be mined' : 'All 22 raw materials – pick a type above') + '</p>';
+    h += '<div class="rt-h">Raw materials</div><p class="rt-sum">' + (ab ? esc(R.name) + ': <b>' + GROUPS.reduce((a, g) => a + g[2].filter(has).length, 0) + ' of 22</b> raw materials – each tube shows how much is in the rock' : sel.length ? esc(sel.map((t) => t.n).join(' + ')) + ': <b>' + n + ' of 22</b> raw materials can be mined' : 'All 22 raw materials – pick a type above') + '</p>';
     GROUPS.forEach(([g, c, ids]) => {
       h += '<div class="rt-g" style="--gc:' + c + '"><div class="rt-gn">' + g + '</div><div class="rt-raws">';
       ids.slice().sort((a, b) => pn(a).localeCompare(pn(b))).forEach((p) => {
         const cl = sel.length ? (has(p) ? ' yes' : '') : ' all';
         const on = types.filter((t) => t.r.has(p)).map((t) => t.n).join(', ');
-        h += '<button class="rt-r' + cl + (S.raw === p ? ' pick' : '') + '" data-r="' + p + '" title="' + esc(pn(p)) + ' – found on ' + on + '">' +
-          '<span class="rt-tube"><span class="rt-cap"></span><span class="rt-glass"><span class="rt-liq"><i></i><i></i><i></i></span></span><span class="rt-ico">' + Y.ricon(p, 20).replace('margin-right:8px;', '') + '</span></span>' +
-          '<span>' + esc(pn(p)) + '</span></button>';
+        const v = ab ? ab[p] || 0 : null;
+        const lv = v ? ' style="height:' + Math.max(6, Math.min(100, v * 100)).toFixed(0) + '%"' : '';
+        h += '<button class="rt-r' + cl + (v === 0 ? ' ab0' : '') + (S.raw === p ? ' pick' : '') + '" data-r="' + p + '" title="' + esc(pn(p)) + (v != null ? ' – ' + (Math.round(v * 1000) / 10) + '% on ' + R.name : ' – found on ' + on) + '">' +
+          '<span class="rt-tube"><span class="rt-cap"></span><span class="rt-glass"><span class="rt-liq"' + lv + '><i></i><i></i><i></i></span></span><span class="rt-ico">' + Y.ricon(p, 20).replace('margin-right:8px;', '') + '</span></span>' +
+          '<span>' + esc(pn(p)) + '</span>' + (ab ? '<span class="rt-pc">' + (v ? (Math.round(v * 1000) / 10) + '%' : '–') + '</span>' : '') + '</button>';
       });
       h += '</div></div>';
     });
     m.innerHTML = h;
-    m.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.t; S.sel.has(k) ? S.sel.delete(k) : S.sel.add(k); page(m); }));
+    m.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.t;
+      if (S.sel.has(k)) S.sel.delete(k);
+      else { S.sel.add(k); if (!S.rock && sc[k] && sc[k].length) S.rock = sc[k][0].id; } // BETA: straight to your rock's abundance
+      page(m);
+    }));
+    m.querySelectorAll('[data-rk]').forEach((b) => b.addEventListener('click', () => { S.rock = S.rock === b.dataset.rk ? '' : b.dataset.rk; page(m); }));
     m.querySelectorAll('[data-r]').forEach((b) => b.addEventListener('click', () => { S.raw = S.raw === +b.dataset.r ? 0 : +b.dataset.r; page(m); }));
     const c = m.querySelector('[data-clr]');
-    if (c) c.addEventListener('click', () => { S.sel.clear(); S.raw = 0; page(m); });
+    if (c) c.addEventListener('click', () => { S.sel.clear(); S.raw = 0; S.rock = ''; page(m); });
   }
 
   // "Spectral type raws" button in the Science Lab, after Resource map
