@@ -320,7 +320,7 @@ ${c.runs > 0 ? `<div class="hint">${step === 'moves' ? 'The refinery can only st
       const crew = k.crews(c.rock).find((x) => x.id === SF.crew);
       const link = crew ? ' Finish it with <b>' + k.esc(crew.name) + '</b>' + (window.GL && window.GL.on() ? window.GL('/crew/' + crew.id, 'Open this crew in the game') : ' <a href="https://game.influenceth.io/crew/' + crew.id + '" target="influencegame" rel="noopener" style="color:var(--cyan)">in game ↗</a>') + '.' : '';
       SF.sentAt = Date.now(); SF.busy = false;
-      SF.msg = '✓ Sent to the game. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'When it arrives, use Finish All Ready Items – then the propellant is in the tank.' + link;
+      SF.msg = '✓ Sent to the game. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + (c.make && c.step === 'moves' ? 'When the moves arrive, use Finish All Ready Items in the game – then come back here and the same button starts the refinery.' : c.make ? 'The refinery has started. When it’s done, use Finish All Ready Items – then the propellant is in the tank.' : 'When it arrives, use Finish All Ready Items – then the propellant is in the tank.') + link;
       SF.msgErr = false; render(host);
       setTimeout(() => { k.loadDeliveries().then(k.render); }, 150000);
     } catch (e) {

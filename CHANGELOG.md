@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 27 Nov 2026 – Logistics Hub › Fuel a ship: the message after sending now says the right thing – after moving the inputs it tells you to finish the moves and come back to start the refinery; after starting the refinery it says the propellant goes in the tank when it's done.
+
 ## 27 Nov 2026 – Science Lab › Spectral type raws: new "Your rocks compared" table – every scanned rock side by side, a tube and % per raw material, richest rock lit up.
 
 ## 27 Nov 2026 – Science Lab › Spectral type raws: pick a type you own a scanned rock of and the tubes fill to that rock's abundance, with the % under each raw material.
