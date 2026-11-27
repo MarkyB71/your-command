@@ -92,7 +92,8 @@
     // 3 storage – all ticked, nearest first, arrows to change the order
     const src = stores(rock, ships[0]), use = src.filter((z) => !FF.off[z.b.id]);
     h += `<div class="src" style="margin:12px 0 6px"><b>3 · Propellant from</b> <span class="src">– used from the top down; untick any you want to keep</span></div>`;
-    if (!src.length) { el.innerHTML = h + `<div class="hint" style="color:var(--amber)">No propellant in storage on ${esc(rock)}. Make some in Production first (or use ⛽ Fuel a ship to make it straight into one tank).</div></div>`; wire(el); return; }
+    if (!src.length) { const need = ships.reduce((t, s) => t + roomU(s), 0);
+      el.innerHTML = h + `<div class="hint" style="color:var(--amber)">No propellant in storage on ${esc(rock)}.</div><button type="button" class="dk-shipbtn" data-ffmk="${need}" style="cursor:pointer;margin-top:6px">🏭 Make ${kgTxt(uKg(need))} ${esc(k.pname(PROP))} in Production ▸</button><div class="hint">Enough to fill the ticked ships – then come back here.</div></div>`; wire(el); return; }
     h += `<table><thead><tr><th></th><th>Order</th><th>Store</th><th>Propellant</th><th>Distance</th></tr></thead><tbody>${src.map((z, i) => `<tr><td><input type="checkbox" data-ffst="${z.b.id}"${FF.off[z.b.id] ? '' : ' checked'}></td><td style="white-space:nowrap"><button type="button" class="ff-arr" data-ffup="${z.b.id}"${i ? '' : ' disabled'} title="Use earlier">▲</button> <button type="button" class="ff-arr" data-ffdn="${z.b.id}"${i < src.length - 1 ? '' : ' disabled'} title="Use later">▼</button></td><td>${esc(k.nm(z.b))} <span class="src">${z.tank ? 'tank farm' : 'warehouse'}</span></td><td class="num">${kgTxt(uKg(z.h))}</td><td class="src">${z.km < 1e8 ? k.kmTxt(z.km) : '?'}</td></tr>`).join('')}</tbody></table>`;
     // 4 split
     const wants = ships.map(roomU), want = wants.reduce((t, w) => t + w, 0), avail = use.reduce((t, z) => t + z.h, 0);
@@ -136,6 +137,11 @@
     el.querySelectorAll('[data-ffsplit]').forEach((b) => b.addEventListener('click', () => { FF.split = b.dataset.ffsplit; again(); }));
     on('#ff-crew', 'change', (e) => { FF.crew = +e.value; again(); });
     on('#ff-go', 'click', () => { if (!FF.busy) send(); });
+    el.querySelectorAll('[data-ffmk]').forEach((b) => b.addEventListener('click', () => {
+      const k = K(); window.YICPRODGO = { p: PROP, q: +b.dataset.ffmk, rock: FF.rock };
+      k.S.mode = 'make'; k.render();
+      const sc = document.querySelector('#dk-ov .lb-scr'); if (sc) sc.scrollTop = 0;
+    }));
   }
 
   const say = (html, err) => { FF.msg = html; FF.msgErr = !!err; const e = document.getElementById('ff-msg'); if (e) { e.style.display = 'block'; e.innerHTML = html; e.style.color = err ? '#ffb3ae' : 'var(--ink)'; e.style.borderColor = err ? '#ff4d4d88' : '#8fe3ff55'; } };
