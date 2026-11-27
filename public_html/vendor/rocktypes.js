@@ -86,6 +86,11 @@
 .rt-tb .z{color:#3d4757}
 .rt-tb .top{color:#fff;font-weight:700;background:color-mix(in srgb,var(--gc) 28%,transparent);box-shadow:inset 0 0 0 1px var(--gc)}
 .rt-tb tbody tr:hover td{background:rgba(255,255,255,.03)}
+.rt-mt{display:inline-block;vertical-align:middle;position:relative;width:11px;height:28px;margin-right:7px;border:1.5px solid rgba(160,185,215,.3);border-top:0;border-radius:0 0 6px 6px;overflow:hidden;background:rgba(255,255,255,.04)}
+.rt-mt::before{content:'';position:absolute;left:-1px;right:-1px;top:0;height:3px;background:#56657a;z-index:1}
+.rt-mt i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 70%,#000),var(--gc) 50%,color-mix(in srgb,var(--gc) 70%,#000))}
+.rt-tb td.top .rt-mt{border-color:var(--gc);box-shadow:0 0 8px var(--gc)}
+.rt-tb .pv{display:inline-block;min-width:42px;vertical-align:middle}
 @media (max-width:700px){.rt-g{grid-template-columns:1fr}}`;
 
   function css() {
@@ -155,7 +160,7 @@
         const best = Math.max(0, ...rocks.map((r) => r.ab[p] || 0));
         h += '<tr style="--gc:' + c + '"><td>' + Y.ricon(p, 16) + esc(pn(p)) + '</td>' + rocks.map((r) => {
           const v = r.ab[p] || 0;
-          return v ? '<td' + (rocks.length > 1 && v === best ? ' class="top"' : '') + '>' + (Math.round(v * 1000) / 10) + '%</td>' : '<td class="z">–</td>';
+          return v ? '<td' + (rocks.length > 1 && v === best ? ' class="top"' : '') + '><span class="rt-mt"><i style="height:' + Math.max(8, Math.min(100, v * 100)).toFixed(0) + '%"></i></span><span class="pv">' + (Math.round(v * 1000) / 10) + '%</span></td>' : '<td class="z">–</td>';
         }).join('') + '</tr>';
       });
     });
