@@ -363,14 +363,24 @@
     const k = K(), stores = ST.wh.concat(ST.tf), km = (a, b) => k.kmBetween(k.lotOf(a), k.lotOf(b)), mat0 = mat;
     const have = (b, p) => ((k.inv(b) || { contents: [] }).contents || []).filter((c) => c.product === p).reduce((t, c) => t + c.amount, 0);
     const dl = {}, short = [];
+    const used = {}; // how much of each store's stock is already spoken for (a split input is moved from the same stores twice)
+    const take = (b, p) => have(b, p) - (used[b.id + '|' + p] || 0);
     Object.keys(W.stock).forEach((p) => {
-      p = +p; const mat = (W.dest && W.dest[p]) || mat0; // where this input is used (materials warehouse or fuel processing store)
-      let left = W.stock[p] - Math.min(W.stock[p], k.holds(mat, p));
-      stores.filter((b) => b.id !== mat.id && have(b, p) > 0).sort((a, b) => (km(a, mat) ?? 1e9) - (km(b, mat) ?? 1e9)).forEach((b) => {
-        if (left <= 0) return; const q = Math.min(left, have(b, p)); left -= q;
-        (dl[b.id + '>' + mat.id] = dl[b.id + '>' + mat.id] || { from: b.id, to: mat.id, b, tb: mat, items: [] }).items.push([p, q]);
+      p = +p;
+      const fb = W.split && W.split[p] != null && ST.fuel ? ST.wh.concat(ST.tf).find((b) => b.id === +ST.fuel) : null;
+      const parts = fb ? [[fb, W.split[p]], [mat0, W.stock[p] - W.split[p]]] : [[(W.dest && W.dest[p]) || mat0, W.stock[p]]]; // where this input is used (materials warehouse or fuel processing store)
+      let shortP = false;
+      parts.forEach(([mat, need]) => {
+        if (need <= 0) return;
+        const inMat = Math.max(0, Math.min(need, k.holds(mat, p) - (used[mat.id + '|' + p] || 0))); used[mat.id + '|' + p] = (used[mat.id + '|' + p] || 0) + inMat;
+        let left = need - inMat;
+        stores.filter((b) => b.id !== mat.id && take(b, p) > 0).sort((a, b) => (km(a, mat) ?? 1e9) - (km(b, mat) ?? 1e9)).forEach((b) => {
+          if (left <= 0) return; const q = Math.min(left, take(b, p)); left -= q; used[b.id + '|' + p] = (used[b.id + '|' + p] || 0) + q;
+          (dl[b.id + '>' + mat.id] = dl[b.id + '>' + mat.id] || { from: b.id, to: mat.id, b, tb: mat, items: [] }).items.push([p, q]);
+        });
+        if (left > 0) shortP = true;
       });
-      if (left > 0) short.push(p);
+      if (shortP) short.push(p);
     });
     return { moves: Object.values(dl), short };
   }
@@ -825,7 +835,10 @@
           W.steps.forEach((s) => { s.from = fb && s.r.out[170] && fits(fb, Object.keys(s.r.inp)) ? fb : byId(ST.mat); });
           W.steps.forEach((s, i) => { if (s === fin) return; const users = W.steps.slice(i + 1).filter((u) => u.r.inp[s.p]);
             if (fb && users.length && users.every((u) => u.from === fb) && fits(fb, Object.keys(s.r.out))) s.to = fb; });
-          W.dest = {}; Object.keys(W.stock).forEach((p) => { const users = W.steps.filter((u) => u.r.inp[p]); if (fb && users.length && users.every((u) => u.from === fb)) W.dest[p] = fb; }); }
+          W.dest = {}; W.split = {}; Object.keys(W.stock).forEach((p) => { const users = W.steps.filter((u) => u.r.inp[p]); if (fb && users.length && users.every((u) => u.from === fb)) W.dest[p] = fb;
+            // used by BOTH the propellant step and an earlier step (e.g. Hydrogen: propellant + Tungsten Powder) – each store gets
+            // only its own share, so 35 kt of Hydrogen isn't gathered in the materials warehouse (Mark, 27 Nov – TEST ONLY ?beta=1)
+            else if (FLEETFB && fb && users.some((u) => u.from === fb)) W.split[p] = Math.min(W.stock[p], users.filter((u) => u.from === fb).reduce((t, u) => t + u.r.inp[p] * u.runs, 0)); }); }
         if (P.fto && P.fto.p === P.p) { const tb = byId(P.fto.id); if (tb && (tb.Building.buildingType !== k.TANK || fluid(fin.r))) fin.to = tb; }
         // ⛽ into the ship's tank: never more runs than the room left (the refinery won't start if it can't all fit)
         if (fsh && fin.p === 170 && fluid(fin.r)) { fin.to = { ship: true, id: fsh.id, slot: 1, Name: { name: fsh.name + '’s tank' } }; fin.runs = Math.min(fin.runs, Math.floor(fRoom / fin.r.out[170])); }
