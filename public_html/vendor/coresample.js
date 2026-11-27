@@ -4,7 +4,7 @@
    1. FINISH samples that are ready (being taken, finish time passed) – they then show up in ⛏ Mining.
    2. TAKE new samples on the lots of your extractors that have no sample with yield left (and none being taken).
       Pick a resource at the top (e.g. Pyroxene) → every extractor lot with some Pyroxene gets that resource, all ticked.
-      Otherwise each lot defaults to what was last sampled there (if it's on the lot), else its richest resource.
+      Otherwise each lot defaults to its richest resource (Mark, 27 Nov 19:30), shown under the lot as "Richest here".
 
    Game calls (@influenceth/sdk 2.8.1):
      SampleDepositStart(lot, resource, origin, origin_slot, caller_crew) → [4, lot, resource, 5, store, slot, 1, crew]
@@ -115,7 +115,7 @@
       const key = e.ent;
       if (M.pick[key] == null) M.pick[key] = e.idle;
       const has = (r) => e.res.some(([x]) => x === r);
-      const r = (M.res && has(M.res) && M.res) || (has(M.rsel[key]) && M.rsel[key]) || (has(e.last) && e.last) || (e.res[0] && e.res[0][0]) || 0;
+      const r = (M.res && has(M.res) && M.res) || (has(M.rsel[key]) && M.rsel[key]) || (e.res[0] && e.res[0][0]) || 0; // richest on the lot (Mark, 27 Nov 19:30 – was last-sampled first)
       const ab = (e.res.find(([x]) => x === r) || [0, 0])[1];
       const stores = k.allB().filter((b) => k.isStore(b) && b.Building.status === 3 && k.rockOf(b) === e.rock && k.holds(b, DRILL) > 0);
       stores.forEach((b) => { if (drillsLeft[b.id] == null) drillsLeft[b.id] = Math.floor(k.holds(b, DRILL)); });
@@ -140,7 +140,7 @@
       const n0 = ready.length || going.length ? 2 : 1;
       h += `<div class="card"><h2><span class="n">${n0}</span>Take new samples (${rows.length} lot${rows.length === 1 ? '' : 's'})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="cs-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="cs-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor lot</th><th>Sample for</th><th>Core Drill from</th><th>Crew</th></tr></thead><tbody>` +
         rows.map((x) => `<tr><td><input type="checkbox" data-cpick="${x.key}"${M.pick[x.key] ? ' checked' : ''}></td>` +
-          `<td><b>${esc(k.nm(x.e.b))}</b><div class="src">${esc(x.e.rock)} · lot ${x.e.lot} · ${x.e.idle ? '<span style="color:var(--amber)">idle</span>' : 'still mining'}</div></td>` +
+          `<td><b>${esc(k.nm(x.e.b))}</b><div class="src">${esc(x.e.rock)} · lot ${x.e.lot} · ${x.e.idle ? '<span style="color:var(--amber)">idle</span>' : 'still mining'}</div>${x.e.res[0] ? `<div class="src" style="color:var(--cyan)">Richest here: <b>${esc(k.pname(x.e.res[0][0]))}</b> ${(x.e.res[0][1] * 100).toFixed(0)}%</div>` : ''}</td>` +
           `<td>${x.e.res.length ? `<select data-cres="${x.key}">${x.e.res.map(([p, v]) => `<option value="${p}"${p === x.r ? ' selected' : ''}>${esc(k.pname(p))} · ${(v * 100).toFixed(v < 0.1 ? 1 : 0)}%${p === x.e.last ? ' (last time)' : ''}</option>`).join('')}</select>` : '<span class="src">no resource scan for this rock</span>'}</td>` +
           `<td>${x.stores.length ? `<select data-cdrill="${x.key}">${x.stores.map((b) => `<option value="${b.id}"${x.st && b.id === x.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${Math.floor(k.holds(b, DRILL))} drill${Math.floor(k.holds(b, DRILL)) === 1 ? '' : 's'} · ${k.kmTxt(x.km(b))}</option>`).join('')}</select>` + (M.pick[x.key] && !x.st ? '<div class="src" style="color:var(--amber)">all its Core Drills are used by the rows above</div>' : '') : `<span style="color:var(--amber)">no Core Drill on ${esc(x.e.rock)}</span>`}</td>` +
           `<td>${!x.cl.length ? `<span style="color:var(--amber)">no crew on ${esc(x.e.rock)}</span>` : `<select data-ccrew="${x.key}"><option value="">${M.pick[x.key] && x.st && !M.crew[x.key] ? (x.crew ? 'Auto – ' + esc(x.crew.name) : 'Auto – no crew has room') : 'Auto'}</option>${x.cl.map((c) => `<option value="${c.id}"${M.crew[x.key] === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` +
