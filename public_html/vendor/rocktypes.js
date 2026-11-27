@@ -20,6 +20,8 @@
   const S = { sel: new Set(), raw: 0, rock: '' };
   // LIVE 27 Nov 2026 (tested on ?beta=1 – Mark): pick a type you own a scanned rock of → the tubes fill to that rock's abundance
   const BETA = true;
+  // TEST ONLY ?beta=1 (Mark, 27 Nov 2026): a table of every scanned rock's abundances – best rock for each raw lit up
+  const TBL = /[?&]beta=1/.test(location.search);
 
   const CSS = `.rt-h{color:#c9d6e8;font-size:15px;font-weight:600;margin:4px 0 2px}
 .rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
@@ -75,6 +77,15 @@
 .rt-rk.on{border-color:${COL};background:rgba(79,144,255,.16);color:#fff;box-shadow:0 0 8px rgba(79,144,255,.5)}
 .rt-pc{font-weight:700;font-size:13px;color:#fff;min-height:15px}
 .rt-r.ab0{opacity:.45}
+.rt-tw{overflow-x:auto;margin:18px 0 10px}
+.rt-tb{border-collapse:collapse;font-size:13px;color:#c9d6e8;min-width:100%}
+.rt-tb th,.rt-tb td{padding:5px 10px;border-bottom:1px solid #1e2836;text-align:right;white-space:nowrap}
+.rt-tb th:first-child,.rt-tb td:first-child{text-align:left}
+.rt-tb thead th{color:#8b9ab0;font-weight:600;position:sticky;top:0;background:#0c1118}
+.rt-tb .gh td{color:color-mix(in srgb,var(--gc) 80%,#fff);font-weight:600;text-align:left;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 14%,transparent),transparent 60%)}
+.rt-tb .z{color:#3d4757}
+.rt-tb .top{color:#fff;font-weight:700;background:color-mix(in srgb,var(--gc) 28%,transparent);box-shadow:inset 0 0 0 1px var(--gc)}
+.rt-tb tbody tr:hover td{background:rgba(255,255,255,.03)}
 @media (max-width:700px){.rt-g{grid-template-columns:1fr}}`;
 
   function css() {
@@ -130,6 +141,27 @@
       '<text class="rt-lab" x="35" y="74.5">' + t.n + '</text></svg>';
   }
 
+  // every scanned rock side by side: one row per raw material, best rock lit up
+  function table(Y, sc) {
+    const esc = Y.esc, pn = Y.pn;
+    const rocks = Object.keys(sc).flatMap((k) => sc[k].map((r) => Object.assign({ t: k }, r))).sort((a, b) => a.name.localeCompare(b.name));
+    if (!rocks.length || !Y.ABM) return '';
+    rocks.forEach((r) => { try { r.ab = Y.ABM.abundances(r.a.Celestial.abundances) || {}; } catch (e) { r.ab = {}; } });
+    let h = '<div class="rt-h">Your rocks compared</div><p class="rt-note">How much of each raw material is in each of your scanned rocks. The richest rock for each one is lit up.</p>' +
+      '<div class="rt-tw"><table class="rt-tb"><thead><tr><th>Raw material</th>' + rocks.map((r) => '<th>' + esc(r.name) + ' <span style="color:' + COL + '">(' + esc(r.t) + ')</span></th>').join('') + '</tr></thead><tbody>';
+    GROUPS.forEach(([g, c, ids]) => {
+      h += '<tr class="gh" style="--gc:' + c + '"><td colspan="' + (rocks.length + 1) + '">' + g + '</td></tr>';
+      ids.slice().sort((a, b) => pn(a).localeCompare(pn(b))).forEach((p) => {
+        const best = Math.max(0, ...rocks.map((r) => r.ab[p] || 0));
+        h += '<tr style="--gc:' + c + '"><td>' + Y.ricon(p, 16) + esc(pn(p)) + '</td>' + rocks.map((r) => {
+          const v = r.ab[p] || 0;
+          return v ? '<td' + (rocks.length > 1 && v === best ? ' class="top"' : '') + '>' + (Math.round(v * 1000) / 10) + '%</td>' : '<td class="z">–</td>';
+        }).join('') + '</tr>';
+      });
+    });
+    return h + '</tbody></table></div>';
+  }
+
   function page(m) {
     css();
     const Y = window.YIC, esc = Y.esc, pn = Y.pn, SPEC = Y.SPEC;
@@ -180,6 +212,13 @@
       });
       h += '</div></div>';
     });
+    if (TBL) {
+      const all = scanned(Y);
+      if (Object.keys(all).length) {
+        if (!Y.ABM) { if (!Y.abLoad) Y.abLoad = import('./abund.js?v=' + Y.VER).then((x) => { Y.ABM = x; if (m.querySelector('.rt-types')) page(m); }).catch(() => {}); }
+        else h += table(Y, all);
+      }
+    }
     m.innerHTML = h;
     m.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.t;
