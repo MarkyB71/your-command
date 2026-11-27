@@ -287,6 +287,7 @@
   // what to put on it, with an optional "Fill it for something to make" that works out what the rock you'll make it on
   // is missing and fills the amounts in from this rock's storage. The Export for production button goes.
   const MRG = true; // LIVE 26 Nov 2026 (tested on ?beta=1 – Mark)
+  const FLEETFB = /[?&]beta=1\b/.test(location.search); // ⛽ Fuel a fleet – TEST ONLY (?beta=1), Mark 27 Nov 2026: vendor/fleetfuel.js
   const FUELB = true; // ⛽ Fuel a ship – LIVE 26 Nov 2026 (tested on ?beta=1 – Mark)
   // ⛽ Make propellant straight into a ship's tank (Mark, 26 Nov – TEST ONLY ?beta=1): "the game does that – it's too hard to
   // work out how much to make, and if you make too much the refinery won't let you start". Step 5 gets a "Ship's tank" choice
@@ -730,6 +731,12 @@
     if (!rl.includes(S.rock)) S.rock = rl[0];
     // Cargo bay, TEST ONLY (?beta=1): load for making something, or just pick what's in stock and put it on a ship (Mark, 14 Nov)
     // ⛽ Fuel a ship (Mark, 26 Nov – TEST ONLY ?beta=1): vendor/shipfuel.js
+    if (cargo && FLEETFB && P.cmode === 'ffuel' && window.YICFLEETFUEL) {
+      m.innerHTML = cmodeBar() + '<div id="ff-pg"></div>';
+      m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
+      window.YICFLEETFUEL.render(m.querySelector('#ff-pg'));
+      return;
+    }
     if (cargo && FUELB && P.cmode === 'fuel') {
       m.innerHTML = cmodeBar() + '<div id="sf-pg"></div>';
       m.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { P.cmode = b.dataset.cmode; S.msg = ''; k.render(); }));
@@ -863,8 +870,8 @@ ${FUELB ? `<tr><td>⛽ Fuel processing store</td><td>${sel('fuel', ST.tf.concat(
     // Mark (15 Nov – TEST ONLY): three buttons – Export for production / Load one ship / Load a fleet
     {
       const cm = P.cmode || 'make';
-      return `<div class="card"><div class="row" style="gap:8px">${MRG ? '' : b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}${FUELB ? b('fuel', '⛽ Fuel a ship') : ''}</div>` +
-        `<div class="hint" style="margin:8px 0 0">${cm === 'fuel' ? 'Pick a ship parked on a rock – the page works out how much fills its tank and puts it in from storage.' : cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
+      return `<div class="card"><div class="row" style="gap:8px">${MRG ? '' : b('make', '🏭 Export for production')}${b('stock', '📦 Load one ship')}${b('fleet', '🚀 Load a fleet')}${FUELB ? b('fuel', '⛽ Fuel a ship') : ''}${FLEETFB ? b('ffuel', '⛽ Fuel a fleet') : ''}</div>` +
+        `<div class="hint" style="margin:8px 0 0">${cm === 'ffuel' ? 'Pick a rock and tick the ships parked there – the page fills their tanks from the propellant in storage on that rock.' : cm === 'fuel' ? 'Pick a ship parked on a rock – the page works out how much fills its tank and puts it in from storage.' : cm === 'make' ? 'Pick where you’ll make it and what – the page works out what that rock is missing and which of your rocks to collect it from.'
           : cm === 'fleet' ? 'Pick a rock, tick the ships parked there, and what to load – it’s spread so each ship carries about the same weight.'
           : (MRG ? 'Pick a rock, a ship parked there, and what to put on it – type amounts yourself, or let the page fill them in for something you want to make.' : 'Pick a rock, a ship parked there, and what to put on it from that rock’s storage.')}</div></div>`;
     }
