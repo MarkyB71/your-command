@@ -18,8 +18,8 @@
   ];
   const COL = '#4f90ff'; // Scientist blue – the Science Lab colour
   const S = { sel: new Set(), raw: 0, rock: '' };
-  // TEST ONLY ?beta=1 (Mark, 27 Nov 2026): pick a type you own a scanned rock of → the tubes fill to that rock's abundance
-  const BETA = /[?&]beta=1/.test(location.search);
+  // LIVE 27 Nov 2026 (tested on ?beta=1 – Mark): pick a type you own a scanned rock of → the tubes fill to that rock's abundance
+  const BETA = true;
 
   const CSS = `.rt-h{color:#c9d6e8;font-size:15px;font-weight:600;margin:4px 0 2px}
 .rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
