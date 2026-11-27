@@ -19,7 +19,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK, Y = () => window.YIC || {};
   const DRILL = 175, SAMPLE_SECS = 3600;
-  const M = { done: {}, rock: '', res: 0, pick: {}, rsel: {}, drill: {}, crew: {}, fin: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '', ab: {} };
+  const M = { feed: {}, done: {}, rock: '', res: 0, pick: {}, rsel: {}, drill: {}, crew: {}, fin: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '', ab: {} };
   const now = () => Date.now() / 1000;
   const when = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const lotIdx = (id) => Math.floor(id / 4294967296);
@@ -128,6 +128,12 @@
     }
 
     // 2. new samples: resource, Core Drill storage, crew
+    // 🍽 feed the crews first (Mark, 27 Nov 21:11 "can I have a feed crews first?") – same as ⛏ Mining: max food − current
+    // food, from the biggest Food stock (product 129) on the crew's rock, shared out; first in the same approval. A crew
+    // that will be fed is planned at full speed.
+    const food = {};
+    const foodOn = (rock) => { if (!food[rock]) { food[rock] = {}; k.allB().filter((b) => k.isStore(b) && b.Building.status === 3 && k.rockOf(b) === rock).forEach((b) => { food[rock][b.id] = k.holds(b, 129); }); } return food[rock]; };
+    const willFeed = (c, rock) => c.food < 0.95 && M.feed[c.id] !== false && Object.values(foodOn(rock)).some((v) => v > 0);
     const drillsLeft = {}, Q = {}, calls = [], rows = [];
     rows1.forEach((e) => {
       const key = e.ent;
@@ -143,7 +149,7 @@
       // crew time = trip there + sample time ÷ the crew's Core Sample Time bonus (ability 1) × food + trip back.
       // (Mark's test 27 Nov 21:10: well-fed Skippys Sales Crew, one sample on lot 100 → +32 min.) A hungry crew (food
       // under 50%) works up to 4× slower – the likely cause of the 21:01 E6009 (13 crews hungry then).
-      const cost = (c) => Math.ceil(SAMPLE_SECS / sampleBonus(c)) + 2 * (k.tripSecs(k.kmBetween(c.lot, e.lot, e.ast), c) || 0);
+      const cost = (c) => Math.ceil(SAMPLE_SECS / sampleBonus(willFeed(c, e.rock) ? Object.assign({}, c, { fm: 1 }) : c)) + 2 * (k.tripSecs(k.kmBetween(c.lot, e.lot, e.ast), c) || 0);
       const qEnd = (c) => Q[c.id] != null ? Q[c.id] : Math.max(now(), k.crewReady(c));
       const lim = now() + 86400;
       let crew = null, over = false;
@@ -171,17 +177,34 @@
     } else if (!ready.length && !going.length) {
       h += `<div class="card"><div class="src">${M.res ? 'None of your extractor lots without a sample has any ' + esc(k.pname(M.res)) + '.' : 'Every one of your extractor lots has a sample to mine or one being taken.'}</div></div>`;
     }
+    const used = []; calls.forEach((c) => { if (!used.some((u) => u.c.id === c.crew.id)) used.push({ c: c.crew, rock: c.e.rock, n: 0 }); used.find((u) => u.c.id === c.crew.id).n++; });
+    const feeds = [];
+    const fl = used.map((u) => {
+      const c = u.c;
+      if (c.food >= 0.95) return `<div class="src" style="margin:3px 0">✓ <b>${esc(c.name)}</b> is ${Math.round(c.food * 100)}% fed · ${u.n} sample${u.n === 1 ? '' : 's'}</div>`;
+      const fr = foodOn(u.rock), need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food));
+      const sid = Object.keys(fr).filter((id) => fr[id] > 0).sort((a, b) => fr[b] - fr[a])[0];
+      const src = sid && k.allB().find((b) => b.id === +sid);
+      const f = src && need > 0 ? { src: src.id, give: Math.min(need, fr[sid]), crew: c.id } : null;
+      if (M.feed[c.id] == null) M.feed[c.id] = true;
+      if (f) { fr[sid] -= f.give; if (M.feed[c.id]) feeds.push(f); }
+      return `<div style="margin:6px 0;padding:8px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:4px">${c.fm < 1 ? '⚠ ' + esc(c.name) + ' is hungry – slower.' : esc(c.name) + ' is ' + Math.round(c.food * 100) + '% fed.'} ${u.n} sample${u.n === 1 ? '' : 's'}</div>` +
+        (f ? `<label style="margin:0"><input type="checkbox" data-cfeed="${c.id}"${M.feed[c.id] ? ' checked' : ''}> Feed ${esc(c.name)} first: ${k.tonnes(f.give)} Food from ${esc(k.nm(src))}</label>` : `<div class="src">No Food stored on ${esc(u.rock)} to feed it.</div>`) + '</div>';
+    });
+    if (used.length) h += `<div class="card"><h2><span class="n">🍽</span>Feed the crews</h2>${fl.join('')}<div class="hint">Feeding goes in the same wallet approval, before the samples start. Well-fed crews work faster.</div></div>`;
+    M.feeds = feeds;
     M.calls = calls; M.fcalls = fcalls;
     if (rows.length || ready.length) {
       const waitChk = !!(M.sentAt && (k.S.dataAt || 0) < M.sentAt);
-      const can = k.isOwner() && !M.busy && (calls.length || fcalls.length) && !waitChk;
-      const parts = [fcalls.length ? 'FINISH ' + fcalls.length : '', calls.length ? 'TAKE ' + calls.length : ''].filter(Boolean).join(' + ');
-      h += `<div class="card"><button type="button" id="cs-go" class="approve"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${M.busy ? 'WAITING FOR YOUR WALLET…' : '🧪 APPROVE – ' + (parts || 'NOTHING TICKED') + (parts ? ' SAMPLE' + (fcalls.length + calls.length === 1 ? '' : 'S') : '')}</button>` +
+      const can = k.isOwner() && !M.busy && (calls.length || fcalls.length || feeds.length) && !waitChk;
+      const parts = [feeds.length ? 'FEED ' + feeds.length + ' CREW' + (feeds.length === 1 ? '' : 'S') : '', fcalls.length ? 'FINISH ' + fcalls.length : '', calls.length ? 'TAKE ' + calls.length : ''].filter(Boolean).join(' + ');
+      h += `<div class="card"><button type="button" id="cs-go" class="approve"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${M.busy ? 'WAITING FOR YOUR WALLET…' : '🧪 APPROVE – ' + (parts || 'NOTHING TICKED') + (fcalls.length + calls.length ? ' SAMPLE' + (fcalls.length + calls.length === 1 ? '' : 'S') : '')}</button>` +
         `<div class="hint">${waitChk ? '<span style="color:var(--amber)">Just sent – checking the game again by itself in about a minute and a half.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>` +
         `<div class="hint" style="display:${M.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${M.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${M.msgErr ? '#ffb3ae' : 'var(--ink)'}">${M.msg || ''}</div></div>`;
     }
     host.innerHTML = h;
     const re = () => k.render(), q = (s) => host.querySelector(s);
+    host.querySelectorAll('[data-cfeed]').forEach((x) => x.addEventListener('change', () => { M.feed[x.dataset.cfeed] = x.checked; re(); }));
     host.querySelectorAll('[data-cfin]').forEach((x) => x.addEventListener('change', () => { M.fin[x.dataset.cfin] = x.checked; re(); }));
     host.querySelectorAll('[data-cpick]').forEach((x) => x.addEventListener('change', () => { M.pick[x.dataset.cpick] = x.checked; re(); }));
     host.querySelectorAll('[data-cres]').forEach((x) => x.addEventListener('change', () => { M.rsel[x.dataset.cres] = +x.value; re(); }));
@@ -200,8 +223,8 @@
 
   function say(t, err) { M.msg = t; M.msgErr = !!err; K().render(); }
   async function send() {
-    const k = K(), cs = M.calls || [], fs = M.fcalls || [];
-    if (!k.isOwner() || !(cs.length || fs.length)) return;
+    const k = K(), cs = M.calls || [], fs = M.fcalls || [], fd = M.feeds || [];
+    if (!k.isOwner() || !(cs.length || fs.length || fd.length)) return;
     const ws = k.wallets();
     if (!ws.length) return say('No Starknet wallet found in this browser. Open this page in the browser that has your wallet.', true);
     const w = ws[0];
@@ -220,8 +243,8 @@
       Object.keys(used).forEach((id) => { const b = k.allB().find((x) => x.id === +id); if (!b || k.holds(b, DRILL) < used[id]) errs.push((b ? k.nm(b) : 'A storage') + ' doesn’t have ' + used[id] + ' Core Drill' + (used[id] > 1 ? 's' : '') + ' any more.'); });
       if (errs.length) throw new Error('Checked just before sending – nothing was sent:<br>• ' + errs.map(k.esc).join('<br>• '));
       const run = (name, data) => ({ contract_address: k.DISPATCHER, entry_point: 'run_system', calldata: [k.short(name), k.hex(data.length), ...data.map(k.hex)] });
-      const calls = fs.map((f) => run('SampleDepositFinish', [7, f.dep, 1, f.crew]))
-        .concat(cs.map((c) => run('SampleDepositStart', [4, c.e.ent, c.r, 5, c.st.id, k.SLOT, 1, c.crew.id])));
+      const calls = fd.map((f) => run('ResupplyFood', [5, f.src, k.SLOT, f.give, 1, f.crew])).concat(fs.map((f) => run('SampleDepositFinish', [7, f.dep, 1, f.crew]))
+        .concat(cs.map((c) => run('SampleDepositStart', [4, c.e.ent, c.r, 5, c.st.id, k.SLOT, 1, c.crew.id]))));
       say('Waiting for your wallet… check the wallet window and approve (or reject) it there.');
       let res;
       if (typeof w.request === 'function') res = await w.request({ type: 'wallet_addInvokeTransaction', params: { calls } });
@@ -240,7 +263,7 @@
         const hb = document.getElementById('dk-hrc') || document.getElementById('dk-recheck');
         if (hb) hb.click(); else { const rf = document.getElementById('rf'); if (rf) rf.click(); k.S.dataAt = Date.now(); k.render(); }
       }, 90000);
-      say('✓ Sent to the game – ' + [fs.length ? fs.length + ' sample' + (fs.length > 1 ? 's' : '') + ' finished' : '', cs.length ? cs.length + ' new sample' + (cs.length > 1 ? 's' : '') + ' started' : ''].filter(Boolean).join(', ') + '. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'It’ll check the game again by itself in about a minute and a half.');
+      say('✓ Sent to the game – ' + [fd.length ? fd.length + ' crew' + (fd.length > 1 ? 's' : '') + ' fed' : '', fs.length ? fs.length + ' sample' + (fs.length > 1 ? 's' : '') + ' finished' : '', cs.length ? cs.length + ' new sample' + (cs.length > 1 ? 's' : '') + ' started' : ''].filter(Boolean).join(', ') + '. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'It’ll check the game again by itself in about a minute and a half.');
     } catch (e) {
       const t = String((e && e.message) || e || '');
       M.busy = false;
