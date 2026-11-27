@@ -178,7 +178,7 @@
           (mv ? `<span>Finish them with <b>${esc(mv.name)}</b>${gl('/crew/' + mv.id, 'Open ' + mv.name + ' in the game')}</span>` : '') +
           (matB ? `<span class="src">or at <b>${esc(k.nm(matB))}</b>${gl('/building/' + matB.id, 'Open ' + k.nm(matB) + ' in the game – any crew can finish the delivery there')}</span>` : '') + '</div>' +
           `<table style="margin-top:8px"><thead><tr><th>Goods</th><th>From</th><th>Status</th></tr></thead><tbody>` +
-          ow.map((r) => `<tr><td>${r[5].map((x) => esc(k.pname(x[0])) + ' ' + k.amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(r[3][0] === 5 ? (byId(r[3][1]) ? k.nm(byId(r[3][1])) : 'Building #' + r[3][1]) : 'elsewhere')}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
+          ow.map((r) => `<tr><td>${r[5].map((x) => esc(k.pname(x[0])) + ' ' + k.amt(x[0], x[1])).join('<br>')}</td><td class="src">${esc(r[3][0] === 5 ? (byId(r[3][1]) ? k.nm(byId(r[3][1])) : 'Building #' + r[3][1]) : 'elsewhere')}</td><td class="src">${r[2] <= now ? '<span class="ok">ready – Finish All Ready Items</span>' + (mv ? gl('/crew/' + mv.id, 'Open ' + mv.name + ' in the game to finish it') : matB ? gl('/building/' + matB.id, 'Open ' + k.nm(matB) + ' in the game to finish it') : '') : 'arrives in ' + Math.max(1, Math.round((r[2] - now) / 60)) + ' min'}</td></tr>`).join('') +
           `</tbody></table>${ready ? '<div class="hint">Once they’re finished in the game, press ↻ Check the game again.</div>' : ''}</div>`;
       }
     }
