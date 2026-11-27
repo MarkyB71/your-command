@@ -84,7 +84,7 @@
 .rt-tb thead th{color:#8b9ab0;font-weight:600;position:sticky;top:0;background:#0c1118}
 .rt-tb .gh td{color:color-mix(in srgb,var(--gc) 80%,#fff);font-weight:600;text-align:left;background:linear-gradient(90deg,color-mix(in srgb,var(--gc) 14%,transparent),transparent 60%)}
 .rt-tb .z{color:#3d4757}
-.rt-tb .top{color:#fff;font-weight:700;background:color-mix(in srgb,var(--gc) 28%,transparent);box-shadow:inset 0 0 0 1px var(--gc)}
+.rt-tb .top{color:color-mix(in srgb,var(--gc) 70%,#fff);font-weight:700}
 .rt-tb tbody tr:hover td{background:rgba(255,255,255,.03)}
 .rt-mt{display:inline-block;vertical-align:middle;position:relative;width:11px;height:28px;margin-right:7px;border:1.5px solid rgba(160,185,215,.3);border-top:0;border-radius:0 0 6px 6px;overflow:hidden;background:rgba(255,255,255,.04)}
 .rt-mt::before{content:'';position:absolute;left:-1px;right:-1px;top:0;height:3px;background:#56657a;z-index:1}
