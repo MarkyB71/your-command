@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 27 Nov 2026 – Logistics Hub › Mining: new "Feed the crews" step – crews doing the mining that aren't full are fed first in the same approval, from the biggest Food stock on their rock (ticked by default). Help page updated.
+
 ## 27 Nov 2026 – Logistics Hub › Production: new ⛏ Mining tab – restart your idle extractors from core samples with yield left on the same lot, in one approval. Pick an asteroid and a resource (e.g. Pyroxene) to tick every extractor with a sample of it. Mines everything left in the sample by default, into a storage that takes it all, with the starts spread over your crews (24 h queue each). The ⛏ tile on What needs doing opens it. Help page updated.
 
 ## 26 Nov 2026 – Logistics Hub › Cargo bay: new ⛽ Fuel a ship – pick a ship, fill its tank (or set an amount) from storage or by making Hydrogen Propellant at a refinery straight into the tank; moves the inputs first if needed, says what's short and what's already being made. Export for production and Load one ship are now one tool: Load one ship has an optional "Fill it for something to make" (products, buildings or ships) that fills in what the build rock is missing, with "Make in Production" buttons for anything short. Production can make propellant straight into a parked ship's tank. Help page updated.

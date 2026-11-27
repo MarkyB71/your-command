@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const K = () => window.YICDOCK;
-  const M = { rock: '', res: 0, samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
+  const M = { rock: '', res: 0, feed: {}, samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
   const MAXY = 10000e6, YEAR = 365 * 86400;
   const now = () => Date.now() / 1000;
 
@@ -89,7 +89,7 @@
     }
     // plan: per extractor, sample, amount, storage, crew
     const promised = {}, Q = {}; // store id → [g, v]; crew id → when its queue ends (this plan)
-    const calls = [], rows = [];
+    const calls = [], rows = []; M.feeds = [];
     ready.forEach((e) => {
       const key = e.b.id + ':' + e.slot;
       if (M.pick[key] == null) M.pick[key] = true;
@@ -155,12 +155,31 @@
       const ul = Object.values(used);
       h += `<div class="card"><h2><span class="n">2</span>Crews</h2>` + (ul.length ? ul.map((u) => `<div class="src" style="margin:3px 0"><b>${esc(u.c.name)}</b> starts ${u.n} · busy until about ${hrs(Math.max(60, u.end - now()))} from now</div>`).join('') : '<div class="src">Nothing ticked.</div>') +
         '<div class="hint">Each start keeps a crew busy for a while, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock, the way the game counts it. Pick one in the Crew column to choose yourself.</div></div>';
+      // 🍽 feed the crews first (Mark, 27 Nov) – same as Production / Storage Management: as much as the game allows
+      // (max food − current food), from the biggest Food stock on the crew's rock (shared out); first in the same approval
+      const food = {}, feeds = [], rockOf = {};
+      rows.filter((r) => r.on).forEach((r) => { rockOf[r.crew.id] = r.e.rock; });
+      const fl = ul.map((u) => {
+        const c = u.c, rock = rockOf[c.id];
+        if (c.food >= 0.95) return `<div class="src" style="margin:3px 0">✓ <b>${esc(c.name)}</b> is ${Math.round(c.food * 100)}% fed.</div>`;
+        if (!food[rock]) { food[rock] = {}; k.allB().filter((b) => k.isStore(b) && b.Building.status === 3 && k.rockOf(b) === rock).forEach((b) => { food[rock][b.id] = ((k.inv(b) || { contents: [] }).contents || []).reduce((t, x) => t + (x.product === 129 ? x.amount : 0), 0); }); }
+        const fr = food[rock], need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food));
+        const sid = Object.keys(fr).filter((id) => fr[id] > 0).sort((a, b) => fr[b] - fr[a])[0];
+        const src = sid && k.allB().find((b) => b.id === +sid);
+        const f = src && need > 0 ? { src: src.id, give: Math.min(need, fr[sid]), crew: c.id } : null;
+        if (M.feed[c.id] == null) M.feed[c.id] = true;
+        if (f) { fr[sid] -= f.give; if (M.feed[c.id]) feeds.push(f); }
+        return `<div style="margin:6px 0;padding:8px 12px;border-radius:8px;background:#3fd68a12;border:1px solid #3fd68a55"><div style="color:var(--amber);margin-bottom:4px">${c.fm < 1 ? '⚠ ' + esc(c.name) + ' is hungry – slower.' : esc(c.name) + ' is ' + Math.round(c.food * 100) + '% fed.'}</div>` +
+          (f ? `<label style="margin:0"><input type="checkbox" data-mfeed="${c.id}"${M.feed[c.id] ? ' checked' : ''}> Feed ${esc(c.name)} first: ${k.tonnes(f.give)} Food from ${esc(k.nm(src))}</label>` : `<div class="src">No Food stored on ${esc(rock)} to feed it.</div>`) + '</div>';
+      });
+      M.feeds = feeds;
+      if (ul.length) h += `<div class="card"><h2><span class="n">3</span>Feed the crews</h2>${fl.join('')}<div class="hint">Feeding goes in the same wallet approval, before the extractors start. Well-fed crews work faster.</div></div>`;
     }
     if (none.length) h += `<details class="card dkp-fold"><summary>Idle with no core sample on their lot (${none.length})</summary><div class="src">${none.map((e) => esc(k.nm(e.b)) + ' (' + esc(e.rock) + ')').join(' · ')}</div><div class="hint">Take a core sample on that lot in the game first.</div></details>`;
     M.calls = calls;
     if (rows.length) {
       const can = k.isOwner() && !M.busy && calls.length && !(M.sentAt && Date.now() - M.sentAt < 180000);
-      h += `<div class="card"><button type="button" id="mn-go" class="approve"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${M.busy ? 'WAITING FOR YOUR WALLET…' : '⛏ APPROVE – START ' + calls.length + ' EXTRACTOR' + (calls.length === 1 ? '' : 'S')}</button>` +
+      h += `<div class="card"><button type="button" id="mn-go" class="approve"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${M.busy ? 'WAITING FOR YOUR WALLET…' : '⛏ APPROVE – ' + (M.feeds.length ? 'FEED ' + M.feeds.length + ' CREW' + (M.feeds.length === 1 ? '' : 'S') + ' + ' : '') + 'START ' + calls.length + ' EXTRACTOR' + (calls.length === 1 ? '' : 'S')}</button>` +
         `<div class="hint">${M.sentAt && Date.now() - M.sentAt < 180000 ? '<span style="color:var(--amber)">Just sent – wait a moment, then ↻ Check the game again.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>` +
         `<div id="mn-msg" class="hint" style="display:${M.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${M.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${M.msgErr ? '#ffb3ae' : 'var(--ink)'}">${M.msg || ''}</div></div>`;
     }
@@ -170,6 +189,7 @@
     host.querySelectorAll('[data-msamp]').forEach((x) => x.addEventListener('change', () => { M.samp_[x.dataset.msamp] = +x.value; delete M.amt[x.dataset.msamp]; re(); }));
     host.querySelectorAll('[data-mamt]').forEach((x) => x.addEventListener('change', () => { M.amt[x.dataset.mamt] = x.value; re(); }));
     host.querySelectorAll('[data-mst]').forEach((x) => x.addEventListener('change', () => { M.store[x.dataset.mst] = +x.value; re(); }));
+    host.querySelectorAll('[data-mfeed]').forEach((x) => x.addEventListener('change', () => { M.feed[x.dataset.mfeed] = x.checked; re(); }));
     host.querySelectorAll('[data-mcrew]').forEach((x) => x.addEventListener('change', () => { if (x.value) M.crew[x.dataset.mcrew] = +x.value; else delete M.crew[x.dataset.mcrew]; re(); }));
     const q = (id) => host.querySelector(id);
     if (q('#mn-rock')) q('#mn-rock').addEventListener('change', (e) => { M.rock = e.target.value; re(); });
@@ -200,10 +220,11 @@
       if (Date.now() - (k.S.dataAt || 0) > 30 * 60000) errs.push('The game data is over 30 minutes old – press ↻ Check the game again first.');
       cs.forEach((c) => { if (c.e.x.status !== 0) errs.push(k.nm(c.e.b) + ' is no longer idle.'); if (!(c.y > 0) || c.y > c.s[2]) errs.push(k.nm(c.e.b) + ': amount is more than the sample has left.'); });
       if (errs.length) throw new Error('Checked just before sending – nothing was sent:<br>• ' + errs.map(k.esc).join('<br>• '));
-      const calls = cs.map((c) => {
+      const calls = (M.feeds || []).map((f) => ({ contract_address: k.DISPATCHER, entry_point: 'run_system', calldata: [k.short('ResupplyFood'), '0x6', '0x5', k.hex(f.src), k.hex(k.SLOT), k.hex(f.give), '0x1', k.hex(f.crew)] })).concat(cs.map((c) => {
         const data = [7, c.s[0], c.y, 5, c.e.b.id, c.e.slot, 5, c.st.id, k.SLOT, 1, c.crew.id];
         return { contract_address: k.DISPATCHER, entry_point: 'run_system', calldata: [k.short('ExtractResourceStart'), k.hex(data.length), ...data.map(k.hex)] };
-      });
+      }));
+      const nf = (M.feeds || []).length;
       say('Waiting for your wallet… check the wallet window and approve (or reject) it there.');
       let res;
       if (typeof w.request === 'function') res = await w.request({ type: 'wallet_addInvokeTransaction', params: { calls } });
@@ -211,7 +232,7 @@
       else throw new Error('This wallet cannot send transactions from a web page.');
       const hsh = res && (res.transaction_hash || res.transactionHash);
       M.sentAt = Date.now(); M.busy = false; M.samp = null;
-      say('✓ Sent to the game – ' + cs.length + ' extractor' + (cs.length > 1 ? 's' : '') + ' started. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'Press ↻ Check the game again in a minute or two.');
+      say('✓ Sent to the game – ' + (nf ? nf + ' crew' + (nf > 1 ? 's' : '') + ' fed, ' : '') + cs.length + ' extractor' + (cs.length > 1 ? 's' : '') + ' started. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'Press ↻ Check the game again in a minute or two.');
     } catch (e) {
       const t = String((e && e.message) || e || '');
       M.busy = false;
