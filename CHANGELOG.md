@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 27 Nov 2026 – Logistics Hub › Mining: Feed the crews only offers crews that are free right now – the game won't feed a working crew (E6009 crew resting); a busy crew shows when it's free.
+
 ## 27 Nov 2026 – Logistics Hub › Mining: the Crews list shows when each crew is busy until as a date and time (e.g. Sat 28 Nov, 21:40).
 
 ## 27 Nov 2026 – Logistics Hub › Mining: new "Feed the crews" step – crews doing the mining that aren't full are fed first in the same approval, from the biggest Food stock on their rock (ticked by default). Help page updated.

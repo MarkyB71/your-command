@@ -164,6 +164,8 @@
       const fl = ul.map((u) => {
         const c = u.c, rock = rockOf[c.id];
         if (c.food >= 0.95) return `<div class="src" style="margin:3px 0">✓ <b>${esc(c.name)}</b> is ${Math.round(c.food * 100)}% fed.</div>`;
+        // the game only feeds a crew that's FREE – a busy one gives E6009 crew resting (Mark, 27 Nov 21:17, found in 🧪 Core samples)
+        if (k.crewReady(c) > Date.now() / 1000) return `<div class="src" style="margin:3px 0">${c.fm < 1 ? '⚠ ' : ''}<b>${esc(c.name)}</b> is ${Math.round(c.food * 100)}% fed · busy until about ${when(k.crewReady(c))} – the game only lets a free crew be fed</div>`;
         if (!food[rock]) { food[rock] = {}; k.allB().filter((b) => k.isStore(b) && b.Building.status === 3 && k.rockOf(b) === rock).forEach((b) => { food[rock][b.id] = ((k.inv(b) || { contents: [] }).contents || []).reduce((t, x) => t + (x.product === 129 ? x.amount : 0), 0); }); }
         const fr = food[rock], need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food));
         const sid = Object.keys(fr).filter((id) => fr[id] > 0).sort((a, b) => fr[b] - fr[a])[0];
