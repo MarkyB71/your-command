@@ -837,8 +837,8 @@
             if (fb && users.length && users.every((u) => u.from === fb) && fits(fb, Object.keys(s.r.out))) s.to = fb; });
           W.dest = {}; W.split = {}; Object.keys(W.stock).forEach((p) => { const users = W.steps.filter((u) => u.r.inp[p]); if (fb && users.length && users.every((u) => u.from === fb)) W.dest[p] = fb;
             // used by BOTH the propellant step and an earlier step (e.g. Hydrogen: propellant + Tungsten Powder) – each store gets
-            // only its own share, so 35 kt of Hydrogen isn't gathered in the materials warehouse (Mark, 27 Nov – TEST ONLY ?beta=1)
-            else if (FLEETFB && fb && users.some((u) => u.from === fb)) W.split[p] = Math.min(W.stock[p], users.filter((u) => u.from === fb).reduce((t, u) => t + u.r.inp[p] * u.runs, 0)); }); }
+            // only its own share, so 35 kt of Hydrogen isn't gathered in the materials warehouse (Mark, 27 Nov – LIVE 27 Nov, tested on ?beta=1)
+            else if (fb && users.some((u) => u.from === fb)) W.split[p] = Math.min(W.stock[p], users.filter((u) => u.from === fb).reduce((t, u) => t + u.r.inp[p] * u.runs, 0)); }); }
         if (P.fto && P.fto.p === P.p) { const tb = byId(P.fto.id); if (tb && (tb.Building.buildingType !== k.TANK || fluid(fin.r))) fin.to = tb; }
         // ⛽ into the ship's tank: never more runs than the room left (the refinery won't start if it can't all fit)
         if (fsh && fin.p === 170 && fluid(fin.r)) { fin.to = { ship: true, id: fsh.id, slot: 1, Name: { name: fsh.name + '’s tank' } }; fin.runs = Math.min(fin.runs, Math.floor(fRoom / fin.r.out[170])); }

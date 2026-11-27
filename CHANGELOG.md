@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 27 Nov 2026 – Logistics Hub › Production: when an input is used both by the propellant step and an earlier step (e.g. Hydrogen for Hydrogen Propellant and for Tungsten Powder), each store now gets only its own share – the fuel processing store gets what the propellant needs, the materials warehouse the rest. Before, it all went to the materials warehouse and wouldn't fit.
+
 ## 27 Nov 2026 – Logistics Hub › Fuel a ship: the message after sending now says the right thing – after moving the inputs it tells you to finish the moves and come back to start the refinery; after starting the refinery it says the propellant goes in the tank when it's done.
 
 ## 27 Nov 2026 – Science Lab › Spectral type raws: new "Your rocks compared" table – every scanned rock side by side, a tube and % per raw material, richest rock lit up.
