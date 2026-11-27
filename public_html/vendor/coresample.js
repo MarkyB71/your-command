@@ -73,7 +73,7 @@
     });
     return out.sort((a, c) => ((c.idle && c.free) - (a.idle && a.free)) || (c.free - a.free) || (c.idle - a.idle) || a.rock.localeCompare(c.rock) || k.nm(a.b).localeCompare(k.nm(c.b)));
   }
-  function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && r[7] && r[7] <= now() && K().crewReady({ id: r[8] }) <= now()).length + list().filter((e) => e.idle && e.free).length; }
+  function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && r[7] && r[7] <= now() && K().crewReady({ id: r[8] }) <= now() + 86400).length + list().filter((e) => e.idle && e.free).length; }
 
   function render(host) {
     const k = K(), esc = k.esc;
@@ -101,12 +101,12 @@
 
     // 1. finish the ready ones
     const fcalls = [];
-    // E6009 "crew resting" (Mark, 27 Nov 20:48): the game only lets the crew that controls a sample finish it once that
-    // crew is free (Crew.readyAt ≤ now) – and one refused call fails the whole approval. So only free crews' samples
+    // E6009 "crew resting" (Mark, 27 Nov 20:48) – one refused call fails the whole approval. The game DOES let a busy crew
+    // finish a sample (Mark 20:52, in game), so the rule is the usual 24 h queue: crew readyAt ≤ now + 24 h. So only free crews' samples
     // are ticked; the rest wait, grouped by crew with the time it's free.
     const rdy = (id) => k.crewReady({ id });
-    const canFin = ready.filter((r) => rdy(r[8]) <= now());
-    const wait = ready.filter((r) => rdy(r[8]) > now());
+    const canFin = ready.filter((r) => rdy(r[8]) <= now() + 86400);
+    const wait = ready.filter((r) => rdy(r[8]) > now() + 86400);
     const byCrew = {}; wait.forEach((r) => { (byCrew[r[8]] = byCrew[r[8]] || []).push(r); });
     if (ready.length || going.length) {
       h += `<div class="card"><h2><span class="n">1</span>Finish samples (${canFin.length} ready${wait.length ? ', ' + wait.length + ' waiting for their crew' : ''})</h2>` +
@@ -115,7 +115,7 @@
           if (M.fin[r[0]]) fcalls.push({ dep: r[0], crew: r[8], lot: r[3] });
           return `<label style="display:block;margin:4px 0"><input type="checkbox" data-cfin="${r[0]}"${M.fin[r[0]] ? ' checked' : ''}> <b>${esc(k.pname(r[1]))}</b> on ${esc(r[4])} lot ${lotIdx(r[3])} · ${esc(crewNm(r[8]))}</label>`;
         }).join('') +
-        Object.keys(byCrew).map((id) => `<div class="src" style="margin-top:6px;color:var(--amber)">${esc(crewNm(+id))} is busy until ${when(rdy(+id))} – ${byCrew[id].length} sample${byCrew[id].length === 1 ? '' : 's'} to finish then</div>`).join('') +
+        Object.keys(byCrew).map((id) => `<div class="src" style="margin-top:6px;color:var(--amber)">${esc(crewNm(+id))} ’s queue is over 24 h until about ${when(rdy(+id) - 86400)} – ${byCrew[id].length} sample${byCrew[id].length === 1 ? '' : 's'} to finish then</div>`).join('') +
         (going.length ? `<div class="src" style="margin-top:6px">Still being taken: ${going.length} sample${going.length === 1 ? '' : 's'}${going.some((r) => r[7]) ? ', last one ready about ' + when(Math.max(...going.map((r) => r[7] || 0))) : ''}</div>` : '') +
         '<div class="hint">A finished sample shows its yield and turns up in ⛏ Mining, ready to mine.</div></div>';
     }
