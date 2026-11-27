@@ -19,7 +19,7 @@ $used = !empty($_GET['used']);
 $core = !empty($_GET['core']);
 if ($core) $used = false;
 $cf = $CACHE . '/samples_' . ($core ? 'c_' : ($used ? 'u_' : '')) . sha1($wallet) . '.json';
-if (is_file($cf) && time() - filemtime($cf) < 300) { readfile($cf); exit; }
+if (is_file($cf) && time() - filemtime($cf) < ($core ? 60 : 300)) { readfile($cf); exit; } // core: 1 min (Mark, 27 Nov – a just-finished sample came back as ready)
 
 // ---- same fair-use limit as api.php ----
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';

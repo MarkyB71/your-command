@@ -19,7 +19,7 @@
   if (!/[?&]beta=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK, Y = () => window.YIC || {};
   const DRILL = 175, SAMPLE_SECS = 3600;
-  const M = { rock: '', res: 0, pick: {}, rsel: {}, drill: {}, crew: {}, fin: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '', ab: {} };
+  const M = { done: {}, rock: '', res: 0, pick: {}, rsel: {}, drill: {}, crew: {}, fin: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '', ab: {} };
   const now = () => Date.now() / 1000;
   const when = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const lotIdx = (id) => Math.floor(id / 4294967296);
@@ -73,7 +73,7 @@
     });
     return out.sort((a, c) => ((c.idle && c.free) - (a.idle && a.free)) || (c.free - a.free) || (c.idle - a.idle) || a.rock.localeCompare(c.rock) || k.nm(a.b).localeCompare(k.nm(c.b)));
   }
-  function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && r[7] && r[7] <= now() && K().crewReady({ id: r[8] }) <= now() + 86400).length + list().filter((e) => e.idle && e.free).length; }
+  function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && !M.done[r[0]] && r[7] && r[7] <= now() && K().crewReady({ id: r[8] }) <= now() + 86400).length + list().filter((e) => e.idle && e.free).length; }
 
   function render(host) {
     const k = K(), esc = k.esc;
@@ -82,7 +82,9 @@
     // samples being taken: ready to finish, or still going
     const mineCrew = new Set(((k.D() || {}).crewList || []).map((c) => c.id));
     const taking = (M.samp || []).filter((r) => r[6] === 1);
-    const ready = taking.filter((r) => r[7] && r[7] <= now() && mineCrew.has(r[8]));
+    // samples finished from here this session are left out even if the game's data still says 'being taken' (Mark, 27 Nov
+    // 20:58 – E6001 incorrect status: the 2 he'd just finished were offered again)
+    const ready = taking.filter((r) => r[7] && r[7] <= now() && mineCrew.has(r[8]) && !M.done[r[0]]);
     const going = taking.filter((r) => !(r[7] && r[7] <= now()));
     const crewNm = (id) => ((((k.D() || {}).crewList) || []).find((c) => c.id === id) || {}).name || 'crew #' + id;
 
@@ -151,7 +153,7 @@
       const n0 = ready.length || going.length ? 2 : 1;
       h += `<div class="card"><h2><span class="n">${n0}</span>Take new samples (${rows.length} extractor lot${rows.length === 1 ? '' : 's'})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="cs-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="cs-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor lot</th><th>Sample for</th><th>Core Drill from</th><th>Crew</th></tr></thead><tbody>` +
         rows.map((x) => `<tr><td><input type="checkbox" data-cpick="${x.key}"${M.pick[x.key] ? ' checked' : ''}></td>` +
-          `<td><b>${esc(k.nm(x.e.b))}</b><div class="src">${esc(x.e.rock)} · lot ${x.e.lot} · ${x.e.idle ? '<span style="color:var(--amber)">idle</span>' : 'still mining'}</div>${x.e.left.length ? `<div class="src">Sample to mine: ${x.e.left.map((r) => esc(k.pname(r[1])) + ' ' + k.tonnes(r[2])).join(', ')}</div>` : ''}${x.e.taking.length ? `<div class="src">Sample being taken: ${x.e.taking.map((r) => esc(k.pname(r[1]))).join(', ')}</div>` : ''}${x.e.res[0] ? `<div class="src" style="color:var(--cyan)">Richest here: <b>${esc(k.pname(x.e.res[0][0]))}</b> ${(x.e.res[0][1] * 100).toFixed(0)}%</div>` : ''}</td>` +
+          `<td><b>${esc(k.nm(x.e.b))}</b><div class="src">${esc(x.e.rock)} · lot ${x.e.lot} · ${x.e.idle ? '<span style="color:var(--amber)">idle</span>' : 'still mining'}</div>${x.e.left.length ? `<div class="src">Sample to mine: ${(() => { const g = {}; x.e.left.forEach((r) => { const o = g[r[1]] = g[r[1]] || [0, 0]; o[0] += r[2]; o[1]++; }); return Object.keys(g).map((p) => esc(k.pname(+p)) + ' ' + k.tonnes(g[p][0]) + (g[p][1] > 1 ? ' (' + g[p][1] + ' samples)' : '')).join(', '); })()}</div>` : ''}${x.e.taking.length ? `<div class="src">Sample being taken: ${x.e.taking.map((r) => esc(k.pname(r[1]))).join(', ')}</div>` : ''}${x.e.res[0] ? `<div class="src" style="color:var(--cyan)">Richest here: <b>${esc(k.pname(x.e.res[0][0]))}</b> ${(x.e.res[0][1] * 100).toFixed(0)}%</div>` : ''}</td>` +
           `<td>${x.e.res.length ? `<select data-cres="${x.key}">${x.e.res.map(([p, v]) => `<option value="${p}"${p === x.r ? ' selected' : ''}>${esc(k.pname(p))} · ${(v * 100).toFixed(v < 0.1 ? 1 : 0)}%${p === x.e.last ? ' (last time)' : ''}</option>`).join('')}</select>` : '<span class="src">no resource scan for this rock</span>'}</td>` +
           `<td>${x.stores.length ? `<select data-cdrill="${x.key}">${x.stores.map((b) => `<option value="${b.id}"${x.st && b.id === x.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${Math.floor(k.holds(b, DRILL))} drill${Math.floor(k.holds(b, DRILL)) === 1 ? '' : 's'} · ${k.kmTxt(x.km(b))}</option>`).join('')}</select>` + (M.pick[x.key] && !x.st ? '<div class="src" style="color:var(--amber)">all its Core Drills are used by the rows above</div>' : '') : `<span style="color:var(--amber)">no Core Drill on ${esc(x.e.rock)}</span>`}</td>` +
           `<td>${!x.cl.length ? `<span style="color:var(--amber)">no crew on ${esc(x.e.rock)}</span>` : `<select data-ccrew="${x.key}"><option value="">${M.pick[x.key] && x.st && !M.crew[x.key] ? (x.crew ? 'Auto – ' + esc(x.crew.name) : 'Auto – no crew has room') : 'Auto'}</option>${x.cl.map((c) => `<option value="${c.id}"${M.crew[x.key] === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` +
@@ -218,6 +220,7 @@
       else if (w.account && typeof w.account.execute === 'function') res = await w.account.execute(calls.map((q) => ({ contractAddress: q.contract_address, entrypoint: q.entry_point, calldata: q.calldata })));
       else throw new Error('This wallet cannot send transactions from a web page.');
       const hsh = res && (res.transaction_hash || res.transactionHash);
+      fs.forEach((f) => { M.done[f.dep] = 1; });
       M.sentAt = Date.now(); M.busy = false; M.samp = null;
       if (window.YICMINE && window.YICMINE.load) window.YICMINE.load(true);
       // (Mark, 27 Nov 20:55 "can you not just make it automatically check the game again?") – 90 s after sending (the
