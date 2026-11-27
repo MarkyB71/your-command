@@ -133,7 +133,9 @@
     // that will be fed is planned at full speed.
     const food = {};
     const foodOn = (rock) => { if (!food[rock]) { food[rock] = {}; k.allB().filter((b) => k.isStore(b) && b.Building.status === 3 && k.rockOf(b) === rock).forEach((b) => { food[rock][b.id] = k.holds(b, 129); }); } return food[rock]; };
-    const willFeed = (c, rock) => c.food < 0.95 && M.feed[c.id] !== false && Object.values(foodOn(rock)).some((v) => v > 0);
+    // E6009 on ResupplyFood (Mark, 27 Nov 21:15, Skippys Stars Team working 9h 42m): the game only feeds a crew that's FREE
+    const freeNow = (c) => k.crewReady(c) <= now();
+    const willFeed = (c, rock) => c.food < 0.95 && freeNow(c) && M.feed[c.id] !== false && Object.values(foodOn(rock)).some((v) => v > 0);
     const drillsLeft = {}, Q = {}, calls = [], rows = [];
     rows1.forEach((e) => {
       const key = e.ent;
@@ -182,6 +184,7 @@
     const fl = used.map((u) => {
       const c = u.c;
       if (c.food >= 0.95) return `<div class="src" style="margin:3px 0">✓ <b>${esc(c.name)}</b> is ${Math.round(c.food * 100)}% fed · ${u.n} sample${u.n === 1 ? '' : 's'}</div>`;
+      if (!freeNow(c)) return `<div class="src" style="margin:3px 0">${c.fm < 1 ? '⚠ ' : ''}<b>${esc(c.name)}</b> is ${Math.round(c.food * 100)}% fed · ${u.n} sample${u.n === 1 ? '' : 's'} · busy until about ${when(k.crewReady(c))} – the game only lets a free crew be fed</div>`;
       const fr = foodOn(u.rock), need = Math.max(0, c.mates * 1000 - Math.ceil(c.mates * 1000 * c.food));
       const sid = Object.keys(fr).filter((id) => fr[id] > 0).sort((a, b) => fr[b] - fr[a])[0];
       const src = sid && k.allB().find((b) => b.id === +sid);
