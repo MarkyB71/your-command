@@ -194,7 +194,7 @@
     wire(lb.querySelector('.lb-deck'), S, render);
     const scr = lb.querySelector('#lb-scr');
     if (mode === 'home') { home(scr, S, render); return null; }
-    // ⛏ Mining (Mark, 26 Nov – TEST ONLY ?beta=1, vendor/mining.js): two tabs on the Production screen
+    // ⛏ Mining (Mark, 26 Nov – LIVE 27 Nov, vendor/mining.js): two tabs on the Production screen
     if ((mode === 'make' || mode === 'mine') && window.YICMINE) {
       const n = window.YICMINE.count();
       const b = (v, x) => `<button type="button" class="dk-shipbtn${mode === v ? ' on' : ''}" data-lb="${v}" style="cursor:pointer">${x}</button>`;

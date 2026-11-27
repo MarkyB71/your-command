@@ -1,4 +1,4 @@
-/* ⛏ Mining – Logistics Hub (Mark, 26 Nov 2026 – TEST ONLY, ?dock=1&beta=1)
+/* ⛏ Mining – Logistics Hub (Mark, 26 Nov 2026) – LIVE 27 Nov 2026 (tested on ?beta=1 by Mark)
    "Restart idle extractors": every idle extractor that has a core sample with yield left on its own lot is listed.
    Default (Mark): mine everything left in the sample, as long as the storage has room. Tick which ones to restart,
    one approval for all.
@@ -11,7 +11,6 @@
    Nothing is sent until the player presses Approve AND approves again in the wallet. */
 (function () {
   'use strict';
-  if (!/[?&]beta=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK;
   const M = { rock: '', res: 0, samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
   const MAXY = 10000e6, YEAR = 365 * 86400;
