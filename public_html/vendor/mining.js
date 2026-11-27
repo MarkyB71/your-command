@@ -15,8 +15,7 @@
   const M = { rock: '', res: 0, feed: {}, samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
   const MAXY = 10000e6, YEAR = 365 * 86400;
   const now = () => Date.now() / 1000;
-  // busy-until as a date and time (Mark, 27 Nov – TEST ONLY ?beta=1), e.g. "Sat 28 Nov, 21:40"
-  const DT = /[?&]beta=1\b/.test(location.search);
+  // busy-until as a date and time (Mark, 27 Nov – LIVE 27 Nov), e.g. "Sat 28 Nov, 21:40"
   const when = (t) => new Date(t * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
   function loadSamples(force) {
@@ -156,7 +155,7 @@
       // crews used and how far ahead their queue goes
       const used = {}; rows.filter((r) => r.on).forEach((r) => { const u = used[r.crew.id] = used[r.crew.id] || { c: r.crew, n: 0, end: 0 }; u.n++; u.end = Math.max(u.end, Q[r.crew.id]); });
       const ul = Object.values(used);
-      h += `<div class="card"><h2><span class="n">2</span>Crews</h2>` + (ul.length ? ul.map((u) => `<div class="src" style="margin:3px 0"><b>${esc(u.c.name)}</b> starts ${u.n} · busy until about ${DT ? when(u.end) : hrs(Math.max(60, u.end - now())) + ' from now'}</div>`).join('') : '<div class="src">Nothing ticked.</div>') +
+      h += `<div class="card"><h2><span class="n">2</span>Crews</h2>` + (ul.length ? ul.map((u) => `<div class="src" style="margin:3px 0"><b>${esc(u.c.name)}</b> starts ${u.n} · busy until about ${when(u.end)}</div>`).join('') : '<div class="src">Nothing ticked.</div>') +
         '<div class="hint">Each start keeps a crew busy for a while, and a crew can only queue jobs up to 24 hours ahead – so they’re spread over your crews on the rock, the way the game counts it. Pick one in the Crew column to choose yourself.</div></div>';
       // 🍽 feed the crews first (Mark, 27 Nov) – same as Production / Storage Management: as much as the game allows
       // (max food − current food), from the biggest Food stock on the crew's rock (shared out); first in the same approval
