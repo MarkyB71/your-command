@@ -2,6 +2,8 @@
 
 Newest first. Version = the number in the site footer (it rises by one with every commit). Each change was tried on ?beta=1 first, then made live.
 
+## 27 Nov 2026 – Science Lab › Spectral type raws: new "Your rocks compared" table – every scanned rock side by side, a tube and % per raw material, richest rock lit up.
+
 ## 27 Nov 2026 – Science Lab › Spectral type raws: pick a type you own a scanned rock of and the tubes fill to that rock's abundance, with the % under each raw material.
 
 ## 27 Nov 2026 – Logistics Hub › Production: new 🧪 Core samples tab – finish ready samples and take new ones on your extractors' lots in one approval. Each lot shows its richest resource (the sample is set to it); pick an asteroid and a resource to sample it everywhere it's found. Uses a Core Drill from the nearest storage on the rock, spreads the work over your crews (allowing for their core-sampling bonus and food), feeds free crews first, and checks the game again by itself after approving.

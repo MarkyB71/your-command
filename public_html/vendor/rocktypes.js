@@ -20,8 +20,8 @@
   const S = { sel: new Set(), raw: 0, rock: '' };
   // LIVE 27 Nov 2026 (tested on ?beta=1 – Mark): pick a type you own a scanned rock of → the tubes fill to that rock's abundance
   const BETA = true;
-  // TEST ONLY ?beta=1 (Mark, 27 Nov 2026): a table of every scanned rock's abundances – best rock for each raw lit up
-  const TBL = /[?&]beta=1/.test(location.search);
+  // LIVE 27 Nov 2026 (tested on ?beta=1 – Mark): a table of every scanned rock's abundances – best rock for each raw lit up
+  const TBL = true;
 
   const CSS = `.rt-h{color:#c9d6e8;font-size:15px;font-weight:600;margin:4px 0 2px}
 .rt-note{color:#8b9ab0;font-size:13px;margin:0 0 10px}
