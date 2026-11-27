@@ -163,10 +163,11 @@
     }
     M.calls = calls; M.fcalls = fcalls;
     if (rows.length || ready.length) {
-      const can = k.isOwner() && !M.busy && (calls.length || fcalls.length) && !(M.sentAt && Date.now() - M.sentAt < 180000);
+      const waitChk = !!(M.sentAt && (k.S.dataAt || 0) < M.sentAt);
+      const can = k.isOwner() && !M.busy && (calls.length || fcalls.length) && !waitChk;
       const parts = [fcalls.length ? 'FINISH ' + fcalls.length : '', calls.length ? 'TAKE ' + calls.length : ''].filter(Boolean).join(' + ');
       h += `<div class="card"><button type="button" id="cs-go" class="approve"${can ? '' : ' disabled style="opacity:.5;cursor:not-allowed"'}>${M.busy ? 'WAITING FOR YOUR WALLET…' : '🧪 APPROVE – ' + (parts || 'NOTHING TICKED') + (parts ? ' SAMPLE' + (fcalls.length + calls.length === 1 ? '' : 'S') : '')}</button>` +
-        `<div class="hint">${M.sentAt && Date.now() - M.sentAt < 180000 ? '<span style="color:var(--amber)">Just sent – wait a moment, then ↻ Check the game again.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>` +
+        `<div class="hint">${waitChk ? '<span style="color:var(--amber)">Just sent – checking the game again by itself in about a minute and a half.</span> ' : ''}Nothing is sent until you approve it in your wallet.</div>` +
         `<div class="hint" style="display:${M.msg ? 'block' : 'none'};margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid ${M.msgErr ? '#ff4d4d88' : '#8fe3ff55'};color:${M.msgErr ? '#ffb3ae' : 'var(--ink)'}">${M.msg || ''}</div></div>`;
     }
     host.innerHTML = h;
@@ -219,7 +220,16 @@
       const hsh = res && (res.transaction_hash || res.transactionHash);
       M.sentAt = Date.now(); M.busy = false; M.samp = null;
       if (window.YICMINE && window.YICMINE.load) window.YICMINE.load(true);
-      say('✓ Sent to the game – ' + [fs.length ? fs.length + ' sample' + (fs.length > 1 ? 's' : '') + ' finished' : '', cs.length ? cs.length + ' new sample' + (cs.length > 1 ? 's' : '') + ' started' : ''].filter(Boolean).join(', ') + '. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'Press ↻ Check the game again in a minute or two.');
+      // (Mark, 27 Nov 20:55 "can you not just make it automatically check the game again?") – 90 s after sending (the
+      // game's data takes a moment to catch up), fetch fresh game data and samples, so the next approval is planned on
+      // the real crew queues
+      clearTimeout(M.autoT);
+      M.autoT = setTimeout(() => {
+        loadSamples(true).then(() => { if (window.YICMINE && window.YICMINE.load) window.YICMINE.load(true); });
+        const hb = document.getElementById('dk-hrc') || document.getElementById('dk-recheck');
+        if (hb) hb.click(); else { const rf = document.getElementById('rf'); if (rf) rf.click(); k.S.dataAt = Date.now(); k.render(); }
+      }, 90000);
+      say('✓ Sent to the game – ' + [fs.length ? fs.length + ' sample' + (fs.length > 1 ? 's' : '') + ' finished' : '', cs.length ? cs.length + ' new sample' + (cs.length > 1 ? 's' : '') + ' started' : ''].filter(Boolean).join(', ') + '. ' + (hsh ? `Transaction <a href="https://voyager.online/tx/${k.esc(hsh)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${k.esc(String(hsh).slice(0, 10))}…</a>. ` : '') + 'It’ll check the game again by itself in about a minute and a half.');
     } catch (e) {
       const t = String((e && e.message) || e || '');
       M.busy = false;
