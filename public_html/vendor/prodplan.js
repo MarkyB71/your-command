@@ -155,7 +155,7 @@
       ss.map((x) => {
         const st = x.st, b = x.start && x.start.b;
         const cap = x.start && x.start.capTxt ? '<br><span class="src">⏱ ' + esc(x.start.capTxt) + '</span>' : '';
-        const extra = x.s === 'run' ? ' · finishes about ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + cap : '';
+        const extra = x.s === 'run' ? ' · finishes ' + esc(whenTxt(x.runningFin)) : x.s === 'ready' ? ' · ' + esc(k.nm(b)) + cap : '';
         const more = x.start && x.s !== 'ready' ? '<br><span class="ok">▶ ' + esc(x.why) + ' in ' + esc(k.nm(b)) + '</span>' + cap : '';
         const tick = x.start ? `<input type="checkbox" data-pick="${plan.id}:${x.i}"${pick(x.i) ? ' checked' : ''} title="Start this one" style="margin:0 6px 0 0">` : '';
         const c = colOf(x), rs = ` style="box-shadow:inset 4px 0 0 ${c}"`, ss2 = ` style="color:${c}"`;
