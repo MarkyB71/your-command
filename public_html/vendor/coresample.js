@@ -75,6 +75,11 @@
   }
   function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && !M.done[r[0]] && r[7] && r[7] <= now() && K().crewReady({ id: r[8] }) <= now() + 86400).length + list().filter((e) => e.idle && e.free).length; }
 
+  function sampleBonus(c) {
+    const y = Y(), d = K().D() || {}, cm = d.crewmates || {}, cr = (d.crewList || []).find((x) => x.id === c.id);
+    let m = 1; try { m = y.crewMult(1, ((cr && cr.roster) || []).map((id) => cm[id]).filter(Boolean)) || 1; } catch (e) {}
+    return Math.max(0.25, m * (c.fm || 1));
+  }
   function render(host) {
     const k = K(), esc = k.esc;
     if ((!M.samp || !Y().ABM) && !M.err) { host.innerHTML = '<div class="card"><div class="src">Reading your core samples…</div></div>'; Promise.all([loadSamples(), loadMaths()]).then(() => k.render()); return; }
@@ -135,7 +140,10 @@
       const km = (b) => { const d = k.kmBetween(e.lot, k.lotOf(b), e.ast); return d == null ? 9e9 : d; };
       let st = stores.find((b) => b.id === M.drill[key] && drillsLeft[b.id] > 0) || stores.filter((b) => drillsLeft[b.id] > 0).sort((a, c) => km(a) - km(c))[0] || null;
       const cl = k.crews(e.rock);
-      const cost = (c) => SAMPLE_SECS + 2 * (k.tripSecs(k.kmBetween(c.lot, e.lot, e.ast), c) || 0);
+      // crew time = trip there + sample time ÷ the crew's Core Sample Time bonus (ability 1) × food + trip back.
+      // (Mark's test 27 Nov 21:10: well-fed Skippys Sales Crew, one sample on lot 100 → +32 min.) A hungry crew (food
+      // under 50%) works up to 4× slower – the likely cause of the 21:01 E6009 (13 crews hungry then).
+      const cost = (c) => Math.ceil(SAMPLE_SECS / sampleBonus(c)) + 2 * (k.tripSecs(k.kmBetween(c.lot, e.lot, e.ast), c) || 0);
       const qEnd = (c) => Q[c.id] != null ? Q[c.id] : Math.max(now(), k.crewReady(c));
       const lim = now() + 86400;
       let crew = null, over = false;
