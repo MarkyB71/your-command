@@ -13,7 +13,7 @@
   'use strict';
   if (!/[?&]beta=1\b/.test(location.search)) return;
   const K = () => window.YICDOCK;
-  const M = { rock: '', samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
+  const M = { rock: '', res: 0, samp_: {}, pick: {}, store: {}, crew: {}, amt: {}, busy: false, msg: '', msgErr: false, samp: null, sampAt: 0, err: '' };
   const MAXY = 10000e6, YEAR = 365 * 86400;
   const now = () => Date.now() / 1000;
 
@@ -73,10 +73,17 @@
     if (M.rock && !rl.includes(M.rock)) M.rock = '';
     const mine = (e) => !M.rock || e.rock === M.rock;
     const out = all.out.filter(mine), done = all.done.filter(mine);
-    const ready = out.filter((e) => e.samples.length), none = out.filter((e) => !e.samples.length);
+    const ready0 = out.filter((e) => e.samples.length), none = out.filter((e) => !e.samples.length);
+    // pick a resource (Mark, 27 Nov): every resource with a sample ready on these extractors; picking one shows only
+    // the extractors with a sample of it (that sample chosen) and ticks them all
+    const rc = {}; ready0.forEach((e) => [...new Set(e.samples.map((s) => s[1]))].forEach((p) => { rc[p] = (rc[p] || 0) + 1; }));
+    const rlist = Object.keys(rc).map(Number).sort((a, c) => k.pname(a).localeCompare(k.pname(c)));
+    if (M.res && !rc[M.res]) M.res = 0;
+    const ready = M.res ? ready0.filter((e) => e.samples.some((s) => s[1] === M.res)) : ready0;
     let h = `<div class="card"><h2><span class="n">⛏</span>Restart mining</h2><div class="src">Idle extractors that have a core sample with yield left on the same lot. Each one mines everything left in its sample, as long as the storage has room – change the amount if you want less.</div>` +
       (M.err ? `<div class="src" style="color:var(--red);margin-top:8px">${esc(M.err)}</div>` : '') +
-      (rl.length > 1 ? `<div class="row" style="margin-top:10px"><span class="src">Asteroid</span><select id="mn-rock"><option value="">All asteroids</option>${rl.map((r) => `<option${r === M.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>` : '') + '</div>';
+      (rl.length > 1 ? `<div class="row" style="margin-top:10px"><span class="src">Asteroid</span><select id="mn-rock"><option value="">All asteroids</option>${rl.map((r) => `<option${r === M.rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select></div>` : '') +
+      (rlist.length ? `<div class="row" style="margin-top:10px"><span class="src">Resource</span><select id="mn-res"><option value="0">All resources</option>${rlist.map((p) => `<option value="${p}"${p === M.res ? ' selected' : ''}>${esc(k.pname(p))} · ${rc[p]} extractor${rc[p] === 1 ? '' : 's'}</option>`).join('')}</select></div>` : '') + '</div>';
     if (done.length) h += `<div class="card"><div class="src" style="color:var(--amber)">⏳ ${done.length} extractor${done.length > 1 ? 's have' : ' has'} finished but not been collected: ${done.map((e) => '<b>' + esc(k.nm(e.b)) + '</b> (' + esc(e.rock) + ')').join(', ')}. Finish ${done.length > 1 ? 'them' : 'it'} in the game first, then ↻ Check the game again.</div></div>`;
     if (!ready.length) {
       h += `<div class="card"><div class="src">${out.length ? 'None of your idle extractors has a core sample with yield left on its lot.' : 'No idle extractors right now.'}</div></div>`;
@@ -87,7 +94,8 @@
     ready.forEach((e) => {
       const key = e.b.id + ':' + e.slot;
       if (M.pick[key] == null) M.pick[key] = true;
-      const s = e.samples.find((r) => r[0] === M.samp_[key]) || e.samples[0];
+      const sl = M.res ? e.samples.filter((r) => r[1] === M.res) : e.samples;
+      const s = sl.find((r) => r[0] === M.samp_[key]) || sl[0];
       const p = s[1], left = s[2];
       const stores = k.allB().filter((b) => k.isStore(b) && b.Building.status === 3 && k.rockOf(b) === e.rock && !(b.Building.buildingType === k.TANK && !k.TANKOK.has(p)));
       const km = (b) => { const d = k.kmBetween(k.lotOf(e.b), k.lotOf(b), k.astId(e.rock)); return d == null ? 9e9 : d; };
@@ -125,7 +133,7 @@
         calls.push({ e, s, y, st, crew, p });
       }
       const fitsAll = (b) => b === st ? room >= want : roomFor(b, p, pr(b)[0], pr(b)[1]) >= want;
-      rows.push({ e, key, s, p, left, st, stores, room, y, want, crew, cl, km, fitsAll, over, on, ends: crew ? Q[crew.id] : 0 });
+      rows.push({ e, key, sl, s, p, left, st, stores, room, y, want, crew, cl, km, fitsAll, over, on, ends: crew ? Q[crew.id] : 0 });
     });
     if (rows.length) {
       h += `<div class="card"><h2><span class="n">1</span>Extractors to restart (${rows.length})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="mn-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="mn-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor</th><th>Core sample</th><th class="num">Mine</th><th>Into</th><th>Crew</th><th class="num">Time</th></tr></thead><tbody>` +
@@ -133,7 +141,7 @@
           const t = r.y ? realSecs(r.y, r.left, r.p) : 0, short = r.y < r.want;
           return `<tr><td><input type="checkbox" data-mpick="${r.key}"${M.pick[r.key] ? ' checked' : ''}></td>` +
             `<td><b>${esc(k.nm(r.e.b))}</b><div class="src">${esc(r.e.rock)} · lot ${k.lotOf(r.e.b)}</div></td>` +
-            `<td>${r.e.samples.length > 1 ? `<select data-msamp="${r.key}">${r.e.samples.map((s) => `<option value="${s[0]}"${s === r.s ? ' selected' : ''}>${esc(k.pname(s[1]))} · ${k.tonnes(s[2])} left${s[6] === 3 ? ' (used before)' : ''}</option>`).join('')}</select>` : `${esc(k.pname(r.p))}<div class="src">${k.tonnes(r.left)} left${r.s[6] === 3 ? ' · used before' : ' · new sample'}</div>`}</td>` +
+            `<td>${r.sl.length > 1 ? `<select data-msamp="${r.key}">${r.sl.map((s) => `<option value="${s[0]}"${s === r.s ? ' selected' : ''}>${esc(k.pname(s[1]))} · ${k.tonnes(s[2])} left${s[6] === 3 ? ' (used before)' : ''}</option>`).join('')}</select>` : `${esc(k.pname(r.p))}<div class="src">${k.tonnes(r.left)} left${r.s[6] === 3 ? ' · used before' : ' · new sample'}</div>`}</td>` +
             `<td class="num"><input type="number" min="0" step="any" data-mamt="${r.key}" value="${M.amt[r.key] != null ? esc(M.amt[r.key]) : +(r.left / 1000).toFixed(3)}" style="width:100px"> t` +
             (short && r.st ? `<div class="src" style="color:var(--amber)">only ${k.tonnes(r.y)} fits${r.stores.some((b) => b !== r.st && r.fitsAll(b)) ? '' : ' – no storage here takes it all'}</div>` : '') + `</td>` +
             `<td>${r.stores.length ? `<select data-mst="${r.key}">${r.stores.map((b) => `<option value="${b.id}"${r.st && b.id === r.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${k.kmTxt(r.km(b))}${r.fitsAll(b) ? '' : ' · not all fits'}</option>`).join('')}</select>` : '<span style="color:var(--red)">no storage on this rock</span>'}` +
@@ -166,6 +174,11 @@
     host.querySelectorAll('[data-mcrew]').forEach((x) => x.addEventListener('change', () => { if (x.value) M.crew[x.dataset.mcrew] = +x.value; else delete M.crew[x.dataset.mcrew]; re(); }));
     const q = (id) => host.querySelector(id);
     if (q('#mn-rock')) q('#mn-rock').addEventListener('change', (e) => { M.rock = e.target.value; re(); });
+    if (q('#mn-res')) q('#mn-res').addEventListener('change', (e) => {
+      M.res = +e.target.value;
+      if (M.res) ready0.forEach((x) => { if (x.samples.some((s) => s[1] === M.res)) M.pick[x.b.id + ':' + x.slot] = true; });
+      re();
+    });
     if (q('#mn-all')) q('#mn-all').addEventListener('click', () => { rows.forEach((r) => { M.pick[r.key] = true; }); re(); });
     if (q('#mn-none')) q('#mn-none').addEventListener('click', () => { rows.forEach((r) => { M.pick[r.key] = false; }); re(); });
     const go = host.querySelector('#mn-go'); if (go) go.addEventListener('click', () => { if (!M.busy) send(); });
