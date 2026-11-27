@@ -79,6 +79,7 @@
     if (!rocks.length) { el.innerHTML = h + '<div class="src">None of your ships is parked on a rock right now.</div></div>'; return; }
     if (!rocks.includes(FF.rock)) { FF.rock = rocks[0]; FF.fl = []; FF.ord = []; FF.off = {}; }
     const rock = FF.rock, sl = all.filter((x) => x.rock === rock).sort((a, b) => a.s.name.localeCompare(b.s.name));
+    if (FF.init !== rock) { FF.init = rock; FF.fl = sl.filter((x) => roomU(x.s) > 0).map((x) => x.s.id); } // all ticked to start with (Mark, 27 Nov)
     FF.fl = FF.fl.filter((id) => sl.some((x) => x.s.id === id && roomU(x.s) > 0));
     // 1 rock
     h += `<div class="src" style="margin-bottom:6px"><b>1 · Rock</b></div><select id="ff-rock">${rocks.map((r) => `<option${r === rock ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select>`;
