@@ -57,20 +57,23 @@
   // extractor lots with no sample left to mine and none being taken
   function list() {
     const k = K(), samp = M.samp || [], out = [];
-    const busyLot = new Set(samp.filter((r) => r[6] === 1 || ((r[6] === 2 || r[6] === 3) && r[2] > 0 && !r[5])).map((r) => r[3]));
+    // every extractor lot is listed (Mark, 27 Nov 19:32: "only showing me 1 extractor") – ones with a sample still to
+    // mine or one being taken say so and start unticked
     const seen = new Set();
     k.allB().forEach((b) => {
       if (!b.Building || b.Building.status !== 3 || !(b.Extractors || []).length) return;
       const rock = k.rockOf(b), ast = k.astId(rock), lot = k.lotOf(b), ent = lot * 4294967296 + ast;
-      if (!ast || !lot || seen.has(ent) || busyLot.has(ent)) return;
+      if (!ast || !lot || seen.has(ent)) return;
       seen.add(ent);
       const idle = (b.Extractors || []).some((x) => x.status === 0);
       const last = samp.filter((r) => r[3] === ent).sort((a, c) => c[0] - a[0])[0];
-      out.push({ b, rock, ast, lot, ent, idle, last: last ? last[1] : 0, res: lotRes(ast, lot) });
+      const left = samp.filter((r) => r[3] === ent && (r[6] === 2 || r[6] === 3) && r[2] > 0 && !r[5]);
+      const taking = samp.filter((r) => r[3] === ent && r[6] === 1);
+      out.push({ b, rock, ast, lot, ent, idle, left, taking, free: !left.length && !taking.length, last: last ? last[1] : 0, res: lotRes(ast, lot) });
     });
-    return out.sort((a, c) => (c.idle - a.idle) || a.rock.localeCompare(c.rock) || k.nm(a.b).localeCompare(k.nm(c.b)));
+    return out.sort((a, c) => ((c.idle && c.free) - (a.idle && a.free)) || (c.free - a.free) || (c.idle - a.idle) || a.rock.localeCompare(c.rock) || k.nm(a.b).localeCompare(k.nm(c.b)));
   }
-  function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && r[7] && r[7] <= now()).length + list().filter((e) => e.idle).length; }
+  function count() { if (M.err) return 0; if (!M.samp) return null; return M.samp.filter((r) => r[6] === 1 && r[7] && r[7] <= now()).length + list().filter((e) => e.idle && e.free).length; }
 
   function render(host) {
     const k = K(), esc = k.esc;
@@ -113,7 +116,7 @@
     const drillsLeft = {}, Q = {}, calls = [], rows = [];
     rows1.forEach((e) => {
       const key = e.ent;
-      if (M.pick[key] == null) M.pick[key] = e.idle;
+      if (M.pick[key] == null) M.pick[key] = e.idle && e.free;
       const has = (r) => e.res.some(([x]) => x === r);
       const r = (M.res && has(M.res) && M.res) || (has(M.rsel[key]) && M.rsel[key]) || (e.res[0] && e.res[0][0]) || 0; // richest on the lot (Mark, 27 Nov 19:30 – was last-sampled first)
       const ab = (e.res.find(([x]) => x === r) || [0, 0])[1];
@@ -138,15 +141,15 @@
     });
     if (rows.length) {
       const n0 = ready.length || going.length ? 2 : 1;
-      h += `<div class="card"><h2><span class="n">${n0}</span>Take new samples (${rows.length} lot${rows.length === 1 ? '' : 's'})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="cs-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="cs-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor lot</th><th>Sample for</th><th>Core Drill from</th><th>Crew</th></tr></thead><tbody>` +
+      h += `<div class="card"><h2><span class="n">${n0}</span>Take new samples (${rows.length} extractor lot${rows.length === 1 ? '' : 's'})</h2><div class="row" style="gap:8px;margin:0 0 8px"><button type="button" class="dk-shipbtn" id="cs-all" style="cursor:pointer">Select all</button><button type="button" class="dk-shipbtn" id="cs-none" style="cursor:pointer">Clear selected</button></div><table><thead><tr><th></th><th>Extractor lot</th><th>Sample for</th><th>Core Drill from</th><th>Crew</th></tr></thead><tbody>` +
         rows.map((x) => `<tr><td><input type="checkbox" data-cpick="${x.key}"${M.pick[x.key] ? ' checked' : ''}></td>` +
-          `<td><b>${esc(k.nm(x.e.b))}</b><div class="src">${esc(x.e.rock)} · lot ${x.e.lot} · ${x.e.idle ? '<span style="color:var(--amber)">idle</span>' : 'still mining'}</div>${x.e.res[0] ? `<div class="src" style="color:var(--cyan)">Richest here: <b>${esc(k.pname(x.e.res[0][0]))}</b> ${(x.e.res[0][1] * 100).toFixed(0)}%</div>` : ''}</td>` +
+          `<td><b>${esc(k.nm(x.e.b))}</b><div class="src">${esc(x.e.rock)} · lot ${x.e.lot} · ${x.e.idle ? '<span style="color:var(--amber)">idle</span>' : 'still mining'}</div>${x.e.left.length ? `<div class="src">Sample to mine: ${x.e.left.map((r) => esc(k.pname(r[1])) + ' ' + k.tonnes(r[2])).join(', ')}</div>` : ''}${x.e.taking.length ? `<div class="src">Sample being taken: ${x.e.taking.map((r) => esc(k.pname(r[1]))).join(', ')}</div>` : ''}${x.e.res[0] ? `<div class="src" style="color:var(--cyan)">Richest here: <b>${esc(k.pname(x.e.res[0][0]))}</b> ${(x.e.res[0][1] * 100).toFixed(0)}%</div>` : ''}</td>` +
           `<td>${x.e.res.length ? `<select data-cres="${x.key}">${x.e.res.map(([p, v]) => `<option value="${p}"${p === x.r ? ' selected' : ''}>${esc(k.pname(p))} · ${(v * 100).toFixed(v < 0.1 ? 1 : 0)}%${p === x.e.last ? ' (last time)' : ''}</option>`).join('')}</select>` : '<span class="src">no resource scan for this rock</span>'}</td>` +
           `<td>${x.stores.length ? `<select data-cdrill="${x.key}">${x.stores.map((b) => `<option value="${b.id}"${x.st && b.id === x.st.id ? ' selected' : ''}>${esc(k.nm(b))} · ${Math.floor(k.holds(b, DRILL))} drill${Math.floor(k.holds(b, DRILL)) === 1 ? '' : 's'} · ${k.kmTxt(x.km(b))}</option>`).join('')}</select>` + (M.pick[x.key] && !x.st ? '<div class="src" style="color:var(--amber)">all its Core Drills are used by the rows above</div>' : '') : `<span style="color:var(--amber)">no Core Drill on ${esc(x.e.rock)}</span>`}</td>` +
           `<td>${!x.cl.length ? `<span style="color:var(--amber)">no crew on ${esc(x.e.rock)}</span>` : `<select data-ccrew="${x.key}"><option value="">${M.pick[x.key] && x.st && !M.crew[x.key] ? (x.crew ? 'Auto – ' + esc(x.crew.name) : 'Auto – no crew has room') : 'Auto'}</option>${x.cl.map((c) => `<option value="${c.id}"${M.crew[x.key] === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` +
             (M.pick[x.key] && x.st && !x.crew ? '<div class="src" style="color:var(--amber)">every crew’s 24 h queue is full – take this one later</div>' : '') +
             (x.over ? `<div class="src" style="color:var(--red)">${esc(x.crew.name)}’s queue would go past 24 h</div>` : '')}</td></tr>`).join('') +
-        '</tbody></table><div class="hint">The % is how rich the lot is in that resource (the game’s own maths). Idle extractors are ticked to start with. A lot with a sample still to mine, or one being taken, isn’t listed.</div></div>';
+        '</tbody></table><div class="hint">The % is how rich the lot is in that resource (the game’s own maths). Idle extractors with no sample are ticked to start with. Ones that already have a sample to mine (or one being taken) are listed too, unticked – tick them to take another sample.</div></div>';
     } else if (!ready.length && !going.length) {
       h += `<div class="card"><div class="src">${M.res ? 'None of your extractor lots without a sample has any ' + esc(k.pname(M.res)) + '.' : 'Every one of your extractor lots has a sample to mine or one being taken.'}</div></div>`;
     }
