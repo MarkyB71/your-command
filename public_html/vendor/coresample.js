@@ -200,6 +200,9 @@
       if (!a) throw new Error('The wallet did not share an address.');
       if (!k.sameAddr(a, k.D().wallet)) throw new Error('That wallet (' + k.esc(a) + ') is not the one this page is showing. Switch account in your wallet and try again.');
       const errs = [];
+      // (Mark, 27 Nov 20:55) the 20:48 E6009 came with new samples in the same approval – planned from crew queues read
+      // BEFORE the 48 starts at 19:38. So after a send, new starts need fresh game data first.
+      if (cs.length && M.sentAt && (k.S.dataAt || 0) < M.sentAt) errs.push('Your crews’ queues changed with your last approval – press ↻ Check the game again first, so the new samples are planned on the real queues.');
       if (Date.now() - (k.S.dataAt || 0) > 30 * 60000) errs.push('The game data is over 30 minutes old – press ↻ Check the game again first.');
       if (Date.now() - M.sampAt > 30 * 60000) errs.push('The sample list is over 30 minutes old – press ↻ Check the game again first.');
       const used = {}; cs.forEach((c) => { used[c.st.id] = (used[c.st.id] || 0) + 1; });
